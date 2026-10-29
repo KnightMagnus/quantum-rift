@@ -202,6 +202,7 @@
     "ui-polish-browser.ts",
     "planet-cache-budget-browser.ts",
     "pressure-hull-browser.ts",
+    "hud-frame-alpha-browser.ts",
     "protocol-compatibility-browser.ts",
     "hud-controls-browser.ts",
     "asset-recovery-browser.ts",
@@ -209,7 +210,11 @@
     "browser-friend-liveness.ts",
     "fog-of-war-browser.ts",
     "onboarding-browser.ts",
-    "equipped-outfits-browser.ts"
+    "equipped-outfits-browser.ts",
+    "bank-panel-browser.ts",
+    "landed-responsive-browser.ts",
+    "colony-exchange-layout-browser.ts",
+    "landed-colony-responsive-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -756,6 +761,11 @@
       "helpers/mining-fixture.ts",
       "helpers/chromium.ts"
     ],
+    "hud-frame-alpha-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts",
+      "helpers/chromium.ts"
+    ],
     "pressure-hull-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/mining-fixture.ts",
@@ -841,7 +851,19 @@
     "protocol-compatibility-browser.ts": ["helpers/chromium.ts"],
     "hyperspace-arrival.ts": ["helpers/legacy-fixture.ts", "helpers/required.ts"],
     "faction-store-catalog.ts": ["helpers/legacy-fixture.ts", "helpers/required.ts"],
-    "fog-of-war-browser.ts": ["helpers/chromium.ts", "helpers/seed-random.ts"]
+    "fog-of-war-browser.ts": ["helpers/chromium.ts", "helpers/seed-random.ts"],
+    "bank-panel-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/temp-data.ts",
+      "helpers/chromium.ts"
+    ],
+    "helpers/landed-responsive.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/temp-data.ts",
+      "helpers/chromium.ts"
+    ],
+    "landed-responsive-browser.ts": ["helpers/landed-responsive.ts"],
+    "landed-colony-responsive-browser.ts": ["helpers/landed-responsive.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -983,8 +1005,8 @@
       "id": "syndicate",
       "owners": ["server/syndicate.ts"],
       "services": ["syndicate"],
-      "tests": ["v12.ts", "v203.ts", "ship-banking.ts"],
-      "asserts": "Black market/Syndicate career, officer promotion/lower decks, bank deposits/loans/interest, timed delivery contracts."
+      "tests": ["v12.ts", "v203.ts", "ship-banking.ts", "bank-panel-browser.ts"],
+      "asserts": "Black market/Syndicate career, officer promotion/lower decks, bank loans/interest, timed delivery contracts. Compact loan dialog replaces the landed Bank tab, retains authoritative borrowing/repayment and denial, live credit/loan refresh, visitor/flight availability, modal focus/Escape and native keyboard/wheel reachability at ordinary and scaled viewports."
     },
     {
       "id": "faction-arcs",
@@ -1889,8 +1911,12 @@
         "client/render.ts"
       ],
       "services": [],
-      "tests": ["pressure-hull-browser.ts", "hud-controls-browser.ts"],
-      "asserts": "Standard blue physical console at the ordinary game address preserves actual flight/landing/menus at 1920x1080 and 3440x1440, a single integrated landed shell and existing illustration, open-top side/bottom viewport trim, readable populated chat, contained utilities, Hail inbox access while landed/flying and with the Tray closed, original artwork and separated console/sidebar regions. The login console wears the blue hull frame; the landed service strip runs from the panel's left edge at 1.5x size; the gold viewscreen JUMP button sits bottom-right (bottom-left by setting), fades until a system is plotted and shares the J key's action; guest docks show limited services and no dock switcher."
+      "tests": [
+        "pressure-hull-browser.ts",
+        "hud-controls-browser.ts",
+        "hud-frame-alpha-browser.ts"
+      ],
+      "asserts": "Standard blue physical console at the ordinary game address preserves actual flight/landing/menus at 1920x1080 and 3440x1440, a single integrated landed shell and existing illustration, open-top side/bottom viewport trim, readable populated chat, contained utilities, Hail inbox access while landed/flying and with the Tray closed, original artwork and separated console/sidebar regions. Sculpted frame images preserve fully transparent exterior corners and opaque metal/inner backing; login, service, map, settings, chat and console frames preserve transparent or contrasting backgrounds at their exterior corners at 800x650, 1280x720, 1920x1080 and 2560x1440. The login console wears the blue hull frame; the landed service strip runs from the panel's left edge at 1.5x size; the gold viewscreen JUMP button sits bottom-right (bottom-left by setting), fades until a system is plotted and shares the J key's action; guest docks show limited services and no dock switcher."
     },
     {
       "id": "playtest-clarity",
@@ -2036,6 +2062,30 @@
         "onboarding-browser.ts"
       ],
       "asserts": "Mining-only category excludes combat weapons; equipped previews include modular factory gear and remaining built-ins. Outfitter-authorized sales update weapons, quantities, refunds and trade-in without value duplication, deny flight/no-service/unknown/buy requests and persist stripped banks. Ship/Captain shortcuts toggle and switch with default and rebound keys; Settings has no shortcut. Narrow equipment cards remain in the viewport."
+    },
+    {
+      "id": "landed-responsive",
+      "owners": [
+        "client/pressure-hull.css",
+        "client/style-port-services.css",
+        "client/hangar_ui.ts",
+        "client/ui.ts"
+      ],
+      "services": [],
+      "tests": ["landed-responsive-browser.ts", "landed-colony-responsive-browser.ts"],
+      "asserts": "Landed services retain their navigation and footer while a bounded content row scrolls at five landscape viewport sizes, a portrait fallback and two UI scales. Real friend-host fixtures cover hub, owned Tier 5 station departments, colony owner and visitor; narrow Crew, Outfitter and Community avoid body-level horizontal overflow. Crew final actions remain keyboard-focusable and hit-testable after native wheel scrolling."
+    },
+    {
+      "id": "colony-exchange-layout",
+      "owners": [
+        "client/frontier_ui.ts",
+        "client/coop_ui.ts",
+        "client/style-responsive-scenes.css",
+        "client/style-late-components.css"
+      ],
+      "services": [],
+      "tests": ["colony-exchange-layout-browser.ts"],
+      "asserts": "Real friends-host colony owner/visitor/unsettled branches retain decoded stage art and actions; responsive side art and short thumbnails, stockpile wheel/keyboard reachability, labeled Exchange place/send controls without menu horizontal overflow, two-captain order placement/cancellation and missing-goods denial, exact own-station trade guidance."
     }
   ],
   "routes": {
@@ -2192,9 +2242,14 @@
     "duel": ["v26.ts", "message-routing.ts"],
     "goal": ["v06.ts", "message-routing.ts", "network-faults.ts"],
     "store": ["faction-standing.ts", "v06.ts", "message-routing.ts", "faction-stores-browser.ts"],
-    "colony": ["v07.ts", "message-routing.ts"],
+    "colony": ["v07.ts", "message-routing.ts", "colony-exchange-layout-browser.ts"],
     "arena": ["v07.ts", "message-routing.ts"],
-    "exchange": ["cargo-flows.ts", "v07.ts", "message-routing.ts"],
+    "exchange": [
+      "cargo-flows.ts",
+      "v07.ts",
+      "message-routing.ts",
+      "colony-exchange-layout-browser.ts"
+    ],
     "boards": ["v07.ts", "message-routing.ts"],
     "profile": ["v07.ts", "message-routing.ts"],
     "ping": ["core-actions.ts", "message-routing.ts"],
@@ -2214,7 +2269,7 @@
     "arcacc": ["v12.ts", "message-routing.ts"],
     "promote": ["v12.ts", "message-routing.ts"],
     "lower": ["v12.ts", "v203.ts", "message-routing.ts"],
-    "bank": ["v12.ts", "message-routing.ts"],
+    "bank": ["v12.ts", "message-routing.ts", "bank-panel-browser.ts"],
     "pause": ["v10.ts", "message-routing.ts"],
     "mining": ["mining-network.ts", "mining-controls-browser.ts", "message-routing.ts"],
     "refinery": [

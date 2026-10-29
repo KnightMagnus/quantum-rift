@@ -208,7 +208,7 @@ export function crewHtml(clientGameState: ClientGameState): string {
       .join('') +
     '</div>';
   height += lowerDeckHtml(clientGameState); // 1.2
-  return height;
+  return `<div class="crew-services">${height}</div>`;
 }
 
 // ------------------------------------------------------------------ HANGAR: shuttles + job board (remote: send and track) + drydock (at the station)

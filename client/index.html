@@ -494,8 +494,11 @@
         <nav id="ltabs"></nav>
         <div class="landbody well" id="landbody"></div>
         <div class="landfoot">
-          <span id="landcr" class="cr"></span><span id="landcargo" class="dim"></span
-          ><span id="dockchips"></span><span id="storebuttonslot"></span
+          <span class="land-wallet"
+            ><span id="landcr" class="cr"></span
+            ><button class="btn sm hidden" id="bankbtn" aria-haspopup="dialog">BANK</button></span
+          ><span id="landcargo" class="dim"></span><span id="dockchips"></span
+          ><span id="storebuttonslot"></span
           ><button class="btn big" id="depart" title="Depart (L)">DEPART</button>
         </div>
       </div>
@@ -652,6 +655,21 @@
         </figure>
         <p id="storyx"></p>
         <div class="storybtns" id="storyb"></div>
+      </div>
+    </div>
+    <div
+      id="bankbox"
+      class="overlay hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="banktitle"
+    >
+      <div class="metal bank-panel">
+        <div class="bank-head">
+          <h2 id="banktitle">BANK OF THE RIFT</h2>
+          <button id="bankclose" class="btn sm">CLOSE</button>
+        </div>
+        <div id="bankin" tabindex="0" aria-label="Loan details"></div>
       </div>
     </div>
     <div

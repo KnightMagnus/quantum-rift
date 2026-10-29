@@ -143,26 +143,32 @@ try {
     await capture(page, 'landed-' + width + 'x' + height);
     await page.setViewportSize({ width: 1000, height: 900 });
     await page.waitForFunction(() => innerWidth === 1000);
+    const narrowNews = page.locator('.landed-inline-news');
     assert.equal(
-      await page.locator('#landnews').isVisible(),
+      await narrowNews.isVisible(),
       true,
       'Spaceport news stays reachable on narrow screens',
     );
     assert.ok(
-      await page.locator('#landnews .newsit').count(),
+      await narrowNews.locator('.newsit').count(),
       'Narrow landing preserves the actual spaceport reports',
     );
-    await page.locator('#landnews').scrollIntoViewIfNeeded();
+    const lastReport = narrowNews.locator('.newsit').last();
+    await lastReport.scrollIntoViewIfNeeded();
     assert.ok(
-      await page.locator('#landnews').evaluate((news) => {
-        const panel = news.getBoundingClientRect();
-        const shell = document.querySelector('#land .landbox')!.getBoundingClientRect();
-        news.scrollTop = news.scrollHeight;
+      await lastReport.evaluate((report) => {
+        const bounds = report.getBoundingClientRect();
+        const body = document.querySelector('#landbody')!.getBoundingClientRect();
+        const target = document.elementFromPoint(
+          bounds.x + bounds.width / 2,
+          Math.min(bounds.bottom, body.bottom) - 2,
+        );
         return (
-          panel.height > 0 &&
-          panel.top < shell.bottom - 28 &&
-          panel.bottom > shell.top + 28 &&
-          news.scrollTop + news.clientHeight >= news.scrollHeight - 1
+          bounds.height > 0 &&
+          bounds.top < body.bottom &&
+          bounds.bottom > body.top &&
+          !!target &&
+          report.contains(target)
         );
       }),
       'Narrow spaceport news can be reached and scrolled to its last report',

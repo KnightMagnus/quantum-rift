@@ -81,7 +81,7 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 
 **Captain login**
 
-![Blue captain login console with Solo save slots](docs/screenshots/pressure-hull-login.png)
+![Blue captain login console](docs/screenshots/pressure-hull-login.png)
 
 **Flight cockpit and system radar**
 
@@ -103,7 +103,9 @@ Ship details previews equipped outfits, including factory weapons. Land at an ou
 
 **Landed services**
 
-![Station services and spaceport news beside the world illustration](docs/screenshots/pressure-hull-landed.png)
+At trade ports, BANK beside your credits opens loan details and repayment controls.
+
+![Compact loan panel over early-game port services](docs/screenshots/pressure-hull-landed.png)
 
 **Expanded chat**
 

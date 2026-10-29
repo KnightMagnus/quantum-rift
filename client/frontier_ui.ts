@@ -172,20 +172,20 @@ export function colonyHtml(clientGameState: ClientGameState): string {
   const illustration = `<div class="colony-illustration"><img width="612" height="285" src="${artworkUrl(`land/${landscapeScene(stellarBody, component.open ? 0 : component.lv)}.jpg`)}" alt="${escapeHtml2(stellarBody.name)} · ${component.open ? 'unsettled' : `settlement stage ${colonyStage(component.lv)}`}" /></div>`;
   if (component.open)
     return (
-      illustration +
+      `<div class="colony-layout"><div class="colony-content">${illustration}<div class="colony-management">` +
       `<div class="sect" style="margin-top:0">UNSETTLED WORLD</div><p>${escapeHtml2(stellarBody.name)} has no flag. Settle it to build farms, mines, habitats and permanent-buff installations that work while you are away.</p>
     <div class="kv"><span>Charter</span><span>${credits(COLONY.cost)} cr + ${mats(playerPayload, COLONY.mats)}</span></div><div class="kv"><span>Your colonies</span><span>${playerPayload.colonies.length} of ${playerPayload.station.ops >= 5 ? COLONY.maxAtOps5 : COLONY.max}</span></div>
-    <button class="btn" data-act="col" data-op="found">FOUND A COLONY</button>`
+    <button class="btn" data-act="col" data-op="found">FOUND A COLONY</button></div></div></div>`
     );
   if (!component.own)
     return (
-      illustration +
-      `<div class="sect" style="margin-top:0">${escapeHtml2(component.name)}</div><p>Settled by Captain ${escapeHtml2(component.owner)} (level ${component.lv}).</p>`
+      `<div class="colony-layout"><div class="colony-content">${illustration}<div class="colony-management">` +
+      `<div class="sect" style="margin-top:0">${escapeHtml2(component.name)}</div><p>Settled by Captain ${escapeHtml2(component.owner)} (level ${component.lv}).</p></div></div></div>`
     );
   const colonyLevelInfo = COLONY_LEVELS[component.lv]!,
     next = COLONY_LEVELS[component.lv + 1];
   let height =
-    illustration +
+    `<div class="colony-layout"><div class="colony-content">${illustration}<div class="colony-management">` +
     `<div class="sect" style="margin-top:0">${escapeHtml2(component.name.toUpperCase())} · LEVEL ${component.lv}</div><div class="kv"><span>Building slots</span><span>${component.buildings.length} / ${colonyLevelInfo.slots}</span></div><div class="kv"><span>Production</span><span>x${colonyLevelInfo.mult}</span></div>`;
   if (next)
     height += `<div class="kv"><span>Upgrade to level ${component.lv + 1}</span><span>${credits(next.cost!)} + ${mats(playerPayload, next.mats!)} <button class="btn sm" data-act="col" data-op="upgrade">UPGRADE</button></span></div>`;
@@ -223,7 +223,7 @@ export function colonyHtml(clientGameState: ClientGameState): string {
         .join('');
   height +=
     '<div style="margin-top:8px"><button class="btn sm" data-act="col" data-op="abandon">ABANDON COLONY</button></div>';
-  return height;
+  return height + '</div></div></div>';
 }
 
 // ------------------------------------------------------------------ station defense (inside the station dashboard)
@@ -309,7 +309,7 @@ export function exchangeHtml(clientGameState: ClientGameState): string {
         `<option value="com:${commodityDef.id}">${escapeHtml2(commodityDef.name)}</option>`,
     ).join('');
   let height = `<div class="sect" style="margin-top:0">THE EXCHANGE</div><div class="dim small">Player-to-player orders shared across every market in the Rift. Sell orders hold your goods in escrow, and buy orders hold your credits. Crossing orders fill at the resting price, and sellers pay a ${EXCHANGE.fee * 100}% fee. Bought commodities wait in exchange storage, and crates go straight to your stock.</div>
-    <div class="rrow"><select id="xitem">${options}</select><select id="xside"><option value="sell">SELL</option><option value="buy">BUY</option></select><input id="xqty" type="number" min="1" value="1" style="width:70px" title="quantity"><input id="xprice" type="number" min="1" placeholder="price each" style="width:110px"><button class="btn sm" data-act="xplace">PLACE</button></div>`;
+    <div class="exchange-form"><div class="exchange-fields"><label for="xitem">Item<select id="xitem">${options}</select></label><label for="xside">Side<select id="xside"><option value="sell">SELL</option><option value="buy">BUY</option></select></label></div><div class="exchange-fields"><label for="xqty">Quantity<input id="xqty" type="number" min="1" value="1"></label><label for="xprice">Price each (cr)<input id="xprice" type="number" min="1" placeholder="price each"></label></div><div><button class="btn sm" data-act="xplace">PLACE ORDER</button></div></div>`;
   const name = (exchangeItem: import('../server/world-contracts.ts').ExchangeItem) =>
     exchangeItem.kind === 'mat'
       ? `${exchangeItem.mat} ${GRADES[exchangeItem.grade]}`
@@ -317,7 +317,7 @@ export function exchangeHtml(clientGameState: ClientGameState): string {
   height +=
     '<div class="sect">ORDER BOOK</div>' +
     (positionX.book.length
-      ? `<table class="tbl"><tr><th>ITEM</th><th>BEST BID</th><th>BIDS</th><th>BEST ASK</th><th>ASKS</th></tr>${positionX.book.map((secondValue) => `<tr><td>${escapeHtml2(name(secondValue.item))}</td><td class="lo">${secondValue.bid ? credits(secondValue.bid) : '-'}</td><td>${secondValue.bids}</td><td class="hi">${secondValue.ask ? credits(secondValue.ask) : '-'}</td><td>${secondValue.asks}</td></tr>`).join('')}</table>`
+      ? `<div class="exchange-book" role="region" aria-label="Order book, scroll horizontally for all prices" tabindex="0"><table class="tbl"><caption>Scroll horizontally to see all prices.</caption><tr><th>ITEM</th><th>BEST BID</th><th>BIDS</th><th>BEST ASK</th><th>ASKS</th></tr>${positionX.book.map((secondValue) => `<tr><td>${escapeHtml2(name(secondValue.item))}</td><td class="lo">${secondValue.bid ? credits(secondValue.bid) : '-'}</td><td>${secondValue.bids}</td><td class="hi">${secondValue.ask ? credits(secondValue.ask) : '-'}</td><td>${secondValue.asks}</td></tr>`).join('')}</table></div>`
       : '<p class="dim">No orders yet.</p>');
   height +=
     `<div class="sect">YOUR ORDERS (${positionX.mine.length}/${EXCHANGE.maxOrders})</div>` +
@@ -338,8 +338,8 @@ export function exchangeHtml(clientGameState: ClientGameState): string {
         )
         .join('') +
       '<button class="btn sm" data-act="xcollect">LOAD INTO HOLD</button>';
-  height += `<div class="sect">SEND CREDITS</div><div class="rrow"><input id="xto" placeholder="captain name" maxlength="20"><input id="xamt" type="number" min="1000" placeholder="credits" style="width:120px"><button class="btn sm" data-act="xsend">SEND</button></div>`;
-  return height;
+  height += `<div class="sect">SEND CREDITS</div><div class="exchange-form"><div class="exchange-fields"><label for="xto">Captain name<input id="xto" placeholder="captain name" maxlength="20"></label><label for="xamt">Credits<input id="xamt" type="number" min="1000" placeholder="credits"></label></div><div><button class="btn sm" data-act="xsend">SEND CREDITS</button></div></div>`;
+  return `<div class="exchange-layout">${height}</div>`;
 }
 
 // ------------------------------------------------------------------ leaderboards + profile (community tab)

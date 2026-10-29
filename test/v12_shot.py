@@ -20,9 +20,11 @@ async def main():
         await pg.screenshot(path=OUT + 'v12_arc.png'); await pg.click('#storyyes'); await pg.wait_for_timeout(500)
         await pg.click('#ctabs button[data-tab="missions"]'); await pg.wait_for_timeout(300); print('missions:', (await pg.inner_text('#mlist'))[:140].replace('\n', ' | '))
         tabs = await pg.evaluate("[...document.querySelectorAll('#ltabs button')].map(b=>b.dataset.lt).join(',')"); print('tabs at the Korrund capital:', tabs)
-        if 'bank' in tabs:
-            await pg.click('#ltabs button[data-lt="bank"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=OUT + 'v12_bank.png')
-            await pg.click('#landbody [data-act="bank"][data-op="borrow"]'); await pg.wait_for_timeout(400); print('loan:', await pg.evaluate("JSON.stringify(G.you.loan)"))
+        assert await pg.locator('#ltabs button[data-lt="bank"]').count() == 0
+        if await pg.evaluate("!!G.landed.bank"):
+            assert await pg.locator('#bankbtn').is_visible()
+            await pg.click('#bankbtn'); await pg.wait_for_timeout(300); await pg.screenshot(path=OUT + 'v12_bank.png')
+            await pg.click('#bankin [data-act="bank"][data-op="borrow"]'); await pg.wait_for_timeout(400); print('loan:', await pg.evaluate("JSON.stringify(G.you.loan)"))
         print('Envoy:', errs or 'no page errors'); await b.close()
         b, pg, errs = await session(pw, 'KNIGHT', '1234')
         await pg.click('#ltabs button[data-lt="crew"]'); await pg.wait_for_timeout(300); await pg.screenshot(path=OUT + 'v12_crew.png', full_page=False)
