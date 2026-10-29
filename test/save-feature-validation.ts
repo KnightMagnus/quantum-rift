@@ -1,3 +1,7 @@
+import { STORY } from '../shared/story.ts';
+import { ARCS } from '../shared/arcs.ts';
+import { RESEARCH } from '../shared/galaxy.ts';
+import { createStationProgress } from '../server/station-progress.ts';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
@@ -153,6 +157,15 @@ const invalidFields: Record<string, unknown>[] = [
   { story: { step: -1 } },
   { story: { done: 'bad' } },
   { story: { active: { id: 7 } } },
+  { story: { active: { id: 'nonexistent-fixture-story' } } },
+  { station: { ...seed.station, active: { id: 'unknown-fixture-research', ends: 0 } } },
+  { arcs: { [Object.keys(ARCS)[0]]: { step: 99999, done: false, active: { got: 0 } } } },
+  { arcs: { [Object.keys(ARCS)[0]]: { active: { got: 0 } } } },
+  { loan: { bal: 'invalid-fixture-balance', next: 0 } },
+  { loan: { bal: 1, next: 'invalid-fixture-date' } },
+  { loan: { bal: -1, next: 0 } },
+  { loan: { bal: 1 } },
+  { loan: [] },
   { arcs: { one: { step: 0, active: { got: -1 } } } },
   { holdout: { best: -1 } },
   { specState: { one: { tier: 1, comp: { engine: -1 } } } },
@@ -268,6 +281,27 @@ console.log(
     { mats: { ...source.mats, alloy: [-1, 0, 0, 0, 0] } },
     { mats: { ...source.mats, alloy: 'bad' } },
     { rep: { quantum: 'lots' } },
+    { story: { step: 0, done: [], active: { id: 'nonexistent-fixture-story' } } },
+    {
+      station: {
+        ...source.station,
+        claimed: true,
+        site: 'site-meridian',
+        active: { id: 'unknown-fixture-research', ends: 0 },
+      },
+    },
+    { arcs: { [Object.keys(ARCS)[0]]: { step: 99999, done: false, active: { got: 0 } } } },
+    {
+      arcs: {
+        [Object.keys(ARCS)[0]]: {
+          step: ARCS[Object.keys(ARCS)[0]].steps.length,
+          done: true,
+          active: { got: 0 },
+        },
+      },
+    },
+    { loan: { bal: 'invalid-fixture-balance', next: 0 } },
+    { loan: { bal: 1, next: -1 } },
     { missions: [{}, null, 5] },
     { missions: [{ id: 'x', type: 'cargo', qty: 'lots' }] },
     { stats: [] },
@@ -442,3 +476,117 @@ console.log(
     frozen,
   );
 }
+
+// Lookup-driven progress keeps current and original catalog references and terminal arc states.
+{
+  const instance = game();
+  const original = instance.db.create('Reference Import', 'fixture', instance.fresh());
+  const source = structuredClone(original);
+  for (const mission of STORY) {
+    const replacement = structuredClone(source);
+    replacement.story = {
+      step: 0,
+      done: ['legacy-completed-fixture'],
+      active: { id: mission.id, got: 0, ready: false, spawned: false },
+    };
+    replacement.loan = { bal: 1000.25, next: Date.now() + 0.5 };
+    instance.importSave(replacement);
+    const imported = instance.db.get(source.name)!;
+    const payload = instance.features.story.storyPayload(imported);
+    assert.equal(payload.active!.id, mission.id);
+    assert.equal(
+      payload.active!.title,
+      mission.title,
+      'Actual payload lookup resolves every supported active reference',
+    );
+    assert.equal(
+      imported.loan!.bal,
+      1000.25,
+      'Loan balance is continuous, not an inventory counter',
+    );
+    assert.equal(imported.loan!.next, replacement.loan.next);
+    assert.deepEqual(imported.story.done, ['legacy-completed-fixture']);
+  }
+  for (const project of RESEARCH) {
+    const replacement = structuredClone(source);
+    replacement.station = {
+      ...replacement.station,
+      claimed: true,
+      ops: 5,
+      site: 'site-meridian',
+      active: { id: project.id, ends: 0 },
+      queue: ['unknown-retired-queue-fixture'],
+    };
+    instance.importSave(replacement);
+    const imported = instance.db.get(source.name)!;
+    assert.equal(
+      imported.station.queue![0],
+      'unknown-retired-queue-fixture',
+      'Keep queued compatibility cleanup with its existing owner',
+    );
+    const progress = createStationProgress({
+      hangarInit: (player) => instance.features.hangar.hangarInit(player),
+      startQueued: (player) => instance.features.hangar.startQueued(player),
+      log: (player, message) => instance.log(player, message),
+    });
+    progress.advance(imported);
+    assert.equal(imported.station.active, null);
+    assert(
+      imported.station.done.includes(project.id),
+      'Actual research completion resolves its catalog reference',
+    );
+    assert.deepEqual(
+      imported.station.queue,
+      [],
+      'Existing owner discards an unknown queued entry without validator overreach',
+    );
+  }
+  for (const [identifier, definition] of Object.entries(ARCS)) {
+    for (let step = 0; step <= definition.steps.length; step++) {
+      const replacement = structuredClone(source);
+      const completed = step === definition.steps.length;
+      replacement.arcs = {
+        [identifier]: {
+          step,
+          done: completed,
+          active: completed ? null : { got: 0, ready: false },
+        },
+        'unknown-retired-arc-fixture': { step: 99999, done: true, active: null },
+      };
+      instance.importSave(replacement);
+      const imported = instance.db.get(source.name)!;
+      const payload = instance.features.arcs
+        .arcsPayload(imported)
+        .find((arc) => arc.fac === identifier)!;
+      assert.equal(payload.step, step);
+      assert.equal(payload.done, completed);
+      assert.equal(payload.active?.title, completed ? undefined : definition.steps[step].title);
+      assert.equal(
+        imported.arcs['unknown-retired-arc-fixture'].step,
+        99999,
+        'Owner-ignored history is not discarded',
+      );
+    }
+  }
+  const historical = structuredClone(source);
+  const historicalIdentifier = Object.keys(ARCS)[0];
+  historical.arcs = {
+    [historicalIdentifier]: {
+      step: ARCS[historicalIdentifier].steps.length + 1,
+      done: true,
+      active: null,
+    },
+  };
+  instance.importSave(historical);
+  assert.doesNotThrow(() => instance.features.arcs.arcsPayload(instance.db.get(source.name)!));
+  const absent = structuredClone(source);
+  delete (absent as Partial<PlayerAccount>).story;
+  delete (absent as Partial<PlayerAccount>).arcs;
+  absent.station.active = null;
+  absent.loan = null;
+  instance.importSave(absent);
+  assert.equal(instance.db.get(source.name)!.loan, null);
+}
+console.log(
+  'Active references resolve actual story/research/arc owners before import replacement; valid catalogs, completed arcs, ignored history/queues and fractional loans remain compatible.',
+);

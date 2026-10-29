@@ -1,6 +1,8 @@
 import type { GameAssets } from '../shared/rules.ts';
 import { allOutfits } from '../shared/rules.ts';
-import { SYS, STELLARS, MATERIALS, COMMODITIES, GRADES } from '../shared/galaxy.ts';
+import { SYS, STELLARS, MATERIALS, COMMODITIES, GRADES, RESEARCH } from '../shared/galaxy.ts';
+import { STORY } from '../shared/story.ts';
+import { ARCS } from '../shared/arcs.ts';
 import type { PlayerAccount } from './db.ts';
 import { validateTutorialSave } from './save-migrations.ts';
 
@@ -104,6 +106,11 @@ function shipFields(value: unknown, assets?: GameAssets): void {
 /** Present core fields are checked before writes as well as before compatibility owners run. */
 function coreFields(saved: SavedRecord): void {
   optional(saved, 'credits', boundedNumber);
+  optional(saved, 'loan', (value) => {
+    const loan = record(value);
+    boundedNumber(loan.bal);
+    boundedNumber(loan.next);
+  });
   optional(saved, 'ship', shipFields);
   for (const key of ['cargo', 'storage', 'tokens']) optional(saved, key, inventory);
   optional(saved, 'mats', (value) => {
@@ -148,6 +155,7 @@ function coreFields(saved: SavedRecord): void {
     optional(station, 'active', (value) => {
       const active = record(value);
       text(active.id);
+      if (!RESEARCH.some((project) => project.id === active.id)) reject();
       boundedNumber(active.ends);
       optional(active, 'from', boundedNumber);
     });
@@ -288,13 +296,24 @@ export function validateFeaturePlayerSave(value: unknown): void {
     optional(story, 'active', (value) => {
       const active = record(value);
       text(active.id);
+      if (!STORY.some((mission) => mission.id === active.id)) reject();
       optional(active, 'got', count);
       optional(active, 'spawned', boolean);
       optional(active, 'ready', boolean);
     });
   });
   optional(saved, 'arcs', (value) => {
-    for (const arc of Object.values(record(value))) progress(arc);
+    for (const [identifier, entry] of Object.entries(record(value))) {
+      progress(entry);
+      // Retired/append-only history is ignored by the owner; active known arcs index this catalog.
+      if (!Object.hasOwn(ARCS, identifier)) continue;
+      const arc = record(entry),
+        total = ARCS[identifier].steps.length;
+      if (arc.active != null) {
+        count(arc.step);
+        if ((arc.step as number) >= total) reject();
+      }
+    }
   });
   optional(saved, 'specState', (value) => {
     for (const state of Object.values(record(value))) {
