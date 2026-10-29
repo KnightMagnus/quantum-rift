@@ -4,7 +4,7 @@ import { ui as playInterfaceSound } from './audio.ts';
 import { landscapeScene } from '../shared/landscapes.ts';
 import type { PlayerPayload, LandedPayload } from './main.ts';
 import type { Mission } from '../server/game.ts';
-import type { OutfitAsset } from '../shared/rules.ts';
+import type { OutfitAsset, GameAssets } from '../shared/rules.ts';
 import type { RoleId } from '../shared/roles.ts';
 import { elementById } from './dom.ts';
 import type { NetworkMessage } from '../server/message-registry.ts';
@@ -1765,10 +1765,17 @@ export function renderLanded(): void {
     }
     case 'outfit': {
       const allOutfits2 = allOutfits(clientGameState.A!);
+      const categoryOutfits = [
+        ...length2.outfitter!,
+        ...Object.keys(playerPayload.ship.outfits)
+          .filter((identifier) => playerPayload.ship.outfits[identifier] > 0)
+          .map(Number),
+      ];
       const category = clientGameState.ocat || 'all',
         categories = [
           ['all', 'ALL'],
           ['weapons', 'WEAPONS'],
+          ['mining', 'MINING'],
           ['ammo', 'AMMO'],
           ['defense', 'DEFENSE'],
           ['engines', 'ENGINES'],
@@ -1801,15 +1808,16 @@ export function renderLanded(): void {
       }; // 2.5.2
       const list = length2.outfitter!.filter(
         (identifier) =>
-          (category === 'all' || outfitCat(allOutfits2[identifier]) === category) &&
+          (category === 'all' ||
+            outfitCat(allOutfits2[identifier], clientGameState.A!) === category) &&
           (!clientGameState.ofit || fits(allOutfits2[identifier])),
       );
       height = `<div class="ocats"><label class="small ofit"><input type="checkbox" id="ofit"${clientGameState.ofit ? ' checked' : ''}> only what fits</label>${categories
         .filter(
           ([entryKey]) =>
             entryKey === 'all' ||
-            length2.outfitter!.some(
-              (identifier) => outfitCat(allOutfits2[identifier]) === entryKey,
+            categoryOutfits.some(
+              (identifier) => outfitCat(allOutfits2[identifier], clientGameState.A!) === entryKey,
             ),
         )
         .map(
@@ -1871,7 +1879,11 @@ export function renderLanded(): void {
         })
         .join('')}</table>`;
       const owned = Object.entries(playerPayload.ship.outfits).filter(
-        ([identifier]) => !length2.outfitter!.includes(+identifier),
+        ([identifier, count]) =>
+          count > 0 &&
+          !length2.outfitter!.includes(+identifier) &&
+          (category === 'all' ||
+            outfitCat(allOutfits2[identifier], clientGameState.A!) === category),
       );
       if (owned.length)
         height += `<div class="sect">FITTED ELSEWHERE</div>${owned.map(([identifier, count]) => `<div class="kv"><span>${escapeHtml2(allOutfits2[identifier].name)} ×${count}</span><span><button class="btn sm" data-act="outfit" data-id="${identifier}" data-n="-1">SELL</button></span></div>`).join('')}`;
@@ -2117,11 +2129,17 @@ function yardSorted(list: number[] | null): number[] {
 /**
  * Determines the category of an outfit for outfitter filtering.
  * @param outfitAsset Outfit item definition
- * @returns Category name ('weapons', 'ammo', 'defense', 'engines', or 'utility')
+ * @returns Outfitter category, with mining weapons and towing gear grouped separately
  */
-function outfitCat(outfitAsset: OutfitAsset): string {
+function outfitCat(outfitAsset: OutfitAsset, assets: GameAssets): string {
   if (!outfitAsset) return 'utility';
   const event = outfitAsset.eff || {};
+  if (
+    outfitAsset.category === 'mining' ||
+    (event.weapon && assets.weapons[event.weapon]?.mining) ||
+    event.towRig
+  )
+    return 'mining';
   if (event.weapon) return 'weapons';
   if (event.ammo) return 'ammo';
   if (

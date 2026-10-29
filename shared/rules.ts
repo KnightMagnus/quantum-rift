@@ -165,6 +165,9 @@ export type OutfitAsset = {
   /** Sold only in its faction's store, never stocked by an outfitter. */
   storeOnly?: boolean;
 
+  /** Optional outfitter grouping for non-weapon mining equipment. */
+  category?: 'mining';
+
   /** Space requirement. */
   space?: number;
 };
