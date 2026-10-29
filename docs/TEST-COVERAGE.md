@@ -1389,7 +1389,7 @@ that idle application probes receive replies without reconnecting. In flight, th
 proxy then drops all server bytes and FIN while allowing outbound controls. The
 browser must detect loss, reconnect on a new link, restore authoritative state and
 clear held controls without replaying gameplay requests. Timings are the production
-10-second idle probe and 15-second reply window, not shortened test settings. A separate four-second early probe lets healthy idle/paused peers reply before feedback. A persistent, non-intercepting connection banner appears after five seconds of reply silence, remains visible during reconnect and clears on authoritative welcome; this early feedback does not shorten the disconnect threshold.
+10-second idle probe and 15-second reply window, not shortened test settings. A separate three-second early probe lets healthy idle/paused peers reply before feedback. A persistent, non-intercepting connection banner appears after five seconds of reply silence, remains visible during reconnect and clears on authoritative welcome; this early feedback does not shorten the disconnect threshold.
 
 `nakama-client-connection.ts` also advances a deterministic monotonic clock through
 native-match reply loss, healthy idle replies, malformed packets, teardown and

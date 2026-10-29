@@ -75,7 +75,7 @@ export class ConnectionLiveness {
     if (now - this.checkedAt > 15000) this.probeAt = undefined;
     this.checkedAt = now;
     // Idle/paused peers can answer before the warning; keep the hard 10s + 15s window.
-    if (!this.earlyProbeSent && now - this.heardAt >= 4000 && now - this.heardAt < 10000) {
+    if (!this.earlyProbeSent && now - this.heardAt >= 3000 && now - this.heardAt < 10000) {
       this.earlyProbeSent = true;
       this.probe();
     }

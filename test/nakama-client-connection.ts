@@ -1071,7 +1071,7 @@ await test('healthy paused peers answer the early probe without a false warning'
     (value) => status.push(value),
   );
   time.advance(60);
-  assert.equal(probes, 15, 'quiet peers are probed before the five-second warning');
+  assert.equal(probes, 20, 'quiet peers are probed before the five-second warning');
   assert.deepEqual(status, [], 'accepted replies prevent idle warning flashes');
   watch.stop();
 });
