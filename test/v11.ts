@@ -122,6 +122,19 @@ assertCondition(
   ),
   'each is somewhere in the Rift, flying a real ship',
 );
+const pausedCareers = JSON.stringify(worldData.rivals);
+const anonymousSocket = legacySocket();
+anonymousSocket.open = true;
+anonymousSocket.backlog = 0;
+anonymousSocket.send = () => {};
+anonymousSocket.close = () => {};
+game.connect(anonymousSocket, '13.0.0.200');
+for (let index = 0; index < 6; index++) game.features.rivals.rivalsTick();
+assertCondition(
+  JSON.stringify(worldData.rivals) === pausedCareers,
+  'anonymous connections do not advance rival credits, kills, ships or locations',
+);
+const firstEntry = fake('Talker');
 const event0 = Object.values(worldData.rivals).reduce(
   (firstValue, result) => firstValue + result.earned,
   0,
@@ -131,11 +144,29 @@ const event1 = Object.values(worldData.rivals).reduce(
   (firstValue, result) => firstValue + result.earned,
   0,
 );
-assertCondition(event1 > event0, 'their careers move on (they earn credits over time)');
+assertCondition(event1 > event0, 'their careers move on while a captain is online');
+const onlineCareers = JSON.stringify(worldData.rivals);
+firstEntry.sock.open = false;
+const originalCareerTime = Date.now;
+try {
+  Date.now = () => originalCareerTime() + 180 * 24 * 60 * 60 * 1000;
+  for (let index = 0; index < 600; index++) game.features.rivals.rivalsTick();
+  assertCondition(
+    JSON.stringify(worldData.rivals) === onlineCareers,
+    'closed authenticated connections do not advance careers or accrue offline catch-up',
+  );
+} finally {
+  Date.now = originalCareerTime;
+  firstEntry.sock.open = true;
+}
+game.features.rivals.rivalsTick();
+assertCondition(
+  Object.values(worldData.rivals).reduce((total, rival) => total + rival.earned, 0) > event1,
+  'careers resume for an online captain without retroactive offline income',
+);
 assertCondition(worldData.news.length > 0 || true, 'they make the news (feed exists)');
 // a rival shows up in the system you are in
-const firstEntry = fake('Talker'),
-  playerData = requiredFixtureValue(firstEntry.s).data;
+const playerData = requiredFixtureValue(firstEntry.s).data;
 playerData.credits = 2e6;
 playerData.ship.hull = 713;
 const rivalDefinition = RIVALS.find((entry) => entry.kind === 'trader'),

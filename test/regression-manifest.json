@@ -978,7 +978,7 @@
       "owners": ["server/rivals.ts", "shared/rivals.ts"],
       "services": ["rivals"],
       "tests": ["v11.ts", "core-actions.ts", "planet-portrait-art.ts"],
-      "asserts": "Named career population, unique captain/ship names and matching stable portrait IDs; original seeded luck without the former floors; equal fresh-world wealth rules for all thirty rivals and preservation of existing rival careers on reload. Relationships, hunters, damage/death/bounty, news/market flashes and status route remain covered."
+      "asserts": "Named career population, unique captain/ship names and matching stable portrait IDs; original seeded luck without the former floors; equal fresh-world wealth rules for all thirty rivals and preservation of existing rival careers on reload. Careers pause with no authenticated open connection and resume without offline catch-up; anonymous and closed connections do not advance income, kills, hulls or location. Relationships, hunters, damage/death/bounty, news/market flashes and status route remain covered."
     },
     {
       "id": "hailing",

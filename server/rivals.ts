@@ -259,6 +259,8 @@ export const RivalsOperations = {
    * Advance rival captains simulation tick: upgrade ships, trigger news, move between systems, spawn hunters.
    */
   rivalsTick(this: RivalsCapabilities) {
+    // Native matches keep ticking while empty; careers advance only during play.
+    if (![...this.sessions.values()].some((session) => session.data && session.sock.open)) return;
     const worldData = this.db.world,
       currentTime = Date.now();
     let hasAnyMatch = false;
