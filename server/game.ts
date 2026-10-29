@@ -1231,6 +1231,7 @@ export class Game<Storage extends Database = Database> {
    * @param session Session disconnecting.
    */
   disconnect(session: Session): void {
+    if (this.sessions.get(session.id) !== session) return;
     this.health?.observe('disconnects', 1);
     if (session.data) this.features.towing.detach(session);
     if (session.data) this.features.industrial.stop(session);

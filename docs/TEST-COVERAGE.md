@@ -1803,3 +1803,5 @@ Friend lifecycle coverage includes clean occupied-port failure/retry and SIGHUP 
 `gameplay-safety.ts` also exercises repeated borrow/partial-pay/full-pay cycles without rating gains, unchanged early repayment costs, and rating gains from scheduled payments.
 
 Delivery warning cases in `gameplay-safety.ts` cover ordinary goods without grade ledgers, zero and positive reservations, and common-first raw-grade sales.
+
+`gameplay-safety.ts` checks duplicate real disconnect calls for exactly one final save and departure notice, and rejects late cleanup from a replaced session identity.

@@ -117,3 +117,41 @@ assert.equal(
 console.log(
   'Delivery previews: ordinary goods, positive reservations and raw-grade ownership passed.',
 );
+
+const departing = refineryPilot(game, 'Disconnect once');
+const observer = refineryPilot(game, 'Disconnect observer');
+let finalFlushes = 0;
+const originalFlush = game.db.flush.bind(game.db);
+game.db.flush = () => {
+  finalFlushes++;
+  return originalFlush();
+};
+game.disconnect(departing);
+const afterDisconnect = JSON.stringify(departing.data);
+const notices = observer.sock.out.filter(
+  (packet) => packet.t === 'chat' && packet.msg.includes('Disconnect once left'),
+).length;
+assert.equal(notices, 1);
+game.disconnect(departing);
+assert.equal(finalFlushes, 1);
+assert.equal(JSON.stringify(departing.data), afterDisconnect);
+assert.equal(
+  observer.sock.out.filter(
+    (packet) => packet.t === 'chat' && packet.msg.includes('Disconnect once left'),
+  ).length,
+  1,
+);
+const replacement = refineryPilot(game, 'Replacement session');
+game.sessions.delete(replacement.id);
+replacement.id = departing.id;
+game.sessions.set(replacement.id, replacement);
+const beforeLateClose = finalFlushes;
+game.disconnect(departing);
+assert.equal(
+  game.sessions.get(replacement.id),
+  replacement,
+  'late close cannot detach a replacement identity',
+);
+assert.equal(finalFlushes, beforeLateClose);
+game.db.flush = originalFlush;
+console.log('Disconnect cleanup: one save/notice and replacement-session identity preserved.');
