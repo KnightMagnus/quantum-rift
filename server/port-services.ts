@@ -27,7 +27,13 @@ export interface PortOperations {
     stellarBody: StellarBody,
     playerData?: PlayerData,
   ): number[] | null;
-  outfit(this: PortCapabilities, session: Session, outfitId: number, quantity: number): void;
+  outfit(
+    this: PortCapabilities,
+    session: Session,
+    outfitId: number,
+    quantity: number,
+    fixed?: boolean,
+  ): void;
   outfitInstallProblem(
     this: PortCapabilities,
     playerData: PlayerData,
@@ -97,6 +103,7 @@ import {
   ensureStockOutfits,
   stockOutfitLimit,
   outfitSaleValue,
+  fixedWeaponSaleValue,
 } from '../shared/rules.ts';
 import { purchaseValue, saleValue, realizedTradeProfit } from './trade-pricing.ts';
 import { assertLots, addLots, commonLots, planTake, applyTake } from '../shared/cargo-lots.ts';
@@ -534,13 +541,50 @@ const PortOperations: PortOperations = {
   /**
    * Purchases or sells a ship outfit or ammunition batch.
    * @param session Player session.
-   * @param outfitId Outfit ID.
+   * @param outfitId Outfit ID, or weapon ID for a built-in sale.
    * @param quantity Quantity to buy (>0) or sell (<0).
+   * @param fixed Sell a built-in weapon instead of a modular outfit.
    */
-  outfit(this: PortCapabilities, session: Session, outfitId: number, quantity: number) {
+  outfit(
+    this: PortCapabilities,
+    session: Session,
+    outfitId: number,
+    quantity: number,
+    fixed = false,
+  ) {
     const playerData = session.data,
       port = STELLARS[playerData.stellar!];
     if (!port || session.ent || !quantity) return;
+    if (fixed) {
+      if (quantity >= 0 || playerData.shipless || !this.outfitter(port, playerData)) return;
+      // Legacy loadouts may omit fixed; materialize the same hull fallback used by shipStats.
+      const banks =
+        playerData.ship.fixed ??
+        this.A.ships[playerData.ship.hull].weapons.map(([identifier, count, ammo]) => [
+          identifier,
+          count,
+          ammo,
+        ]);
+      const bank = banks.find(
+        ([identifier, count]) => Number(identifier) === outfitId && count > 0,
+      );
+      if (!bank || !this.A.weapons[outfitId]) return;
+      const sold = Math.min(bank[1], -quantity);
+      const refund = sold * fixedWeaponSaleValue(this.A, playerData.ship, outfitId);
+      bank[1] -= sold;
+      playerData.ship.fixed = banks.filter(([, count]) => count > 0);
+      if (
+        !playerData.ship.fixed.some(([identifier]) => Number(identifier) === outfitId) &&
+        !Object.entries(playerData.ship.outfits).some(
+          ([identifier, count]) => count > 0 && this.O[identifier]?.eff?.weapon === outfitId,
+        )
+      )
+        delete playerData.ship.ammo[outfitId];
+      playerData.credits += refund;
+      this.db.touch();
+      this.you(session);
+      return;
+    }
     const outfit = this.O[outfitId];
     if (!outfit) return;
     if (outfitId === 9021) return this.toast(session, 'The Rift Harness cannot be bought or sold.');

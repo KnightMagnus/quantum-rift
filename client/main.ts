@@ -954,6 +954,8 @@ function onMessage(serverMessage: ServerMessage) {
       break;
     case 'you':
       projectPlayer(clientGameState, serverMessage.d, playerProjectionEffects);
+      if (!elementById2('infobox').classList.contains('hidden') && clientGameState.itab === 'ship')
+        renderInfo();
       onboarding.start();
       break;
     case 'landed':
@@ -1914,6 +1916,18 @@ elementById2('itabs').addEventListener('click', (pointerEvent) => {
   renderInfo();
 });
 elementById2('infobody').addEventListener('click', (pointerEvent) => {
+  const sale = (pointerEvent.target as HTMLElement).closest<HTMLButtonElement>(
+    '[data-sell-outfit]',
+  );
+  if (sale && !sale.disabled) {
+    send({
+      t: 'outfit',
+      id: Number(sale.dataset.sellOutfit),
+      n: -1,
+      ...(sale.dataset.fixedWeapon ? { fixed: true } : {}),
+    });
+    return;
+  }
   const htmlElement = (pointerEvent.target as HTMLInputElement).closest<HTMLElement>('[data-plot]');
   if (htmlElement) {
     plot(htmlElement.dataset.plot!);

@@ -91,6 +91,8 @@ export type PortPurchaseAction =
       t: 'outfit';
       /** Catalog outfit, converted by the route. */
       id: PurchaseNumber;
+      /** Sell a built-in weapon by weapon ID instead of a modular outfit. */
+      fixed?: boolean;
       /** Signed buy/sell quantity, converted by the route. */
       n: PurchaseNumber;
     }
@@ -268,7 +270,10 @@ export function parsePortPurchaseAction(value: unknown): PortPurchaseAction | nu
       ? (value as PortPurchaseAction)
       : null;
   if (value.t === 'outfit')
-    return fields(value, ['t', 'id', 'n']) && numeric(value.id) && numeric(value.n)
+    return fields(value, ['t', 'id', 'n', 'fixed']) &&
+      numeric(value.id) &&
+      numeric(value.n) &&
+      (value.fixed === undefined || typeof value.fixed === 'boolean')
       ? (value as PortPurchaseAction)
       : null;
   if (value.t === 'buymat')

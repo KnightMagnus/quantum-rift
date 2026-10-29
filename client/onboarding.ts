@@ -195,7 +195,7 @@ const tourSteps: TourStep[] = [
   {
     target: '#shipshortcut',
     title: 'Ship Details',
-    text: 'INFO shows your ship, cargo, and fitted equipment.',
+    text: 'INFO shows your ship, cargo, and equipped outfits. At an outfitter, you can sell equipment here.',
   },
   {
     target: '#jumpholo',

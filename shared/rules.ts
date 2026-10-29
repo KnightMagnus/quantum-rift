@@ -260,7 +260,7 @@ export type ShipLoadout = {
   /** Map of weapon ID to current ammunition count. */
   ammo: Record<string | number, number>;
 
-  /** Built-in non-swappable weapon slots. */
+  /** Remaining built-in weapon banks without modular outfit equivalents. */
   fixed: Array<[number | string, number, number?]>;
 
   /** Extra outfit space refunded from built-in weapon conversion. */
@@ -863,6 +863,13 @@ export function loadoutValue(assets: GameAssets, ship: ShipLoadout): number {
   const { stock, chassis, scale } = loadoutBasis(assets, ship.hull),
     allOutfits2 = allOutfits(assets);
   let value = chassis;
+  const remaining = ship.fixed ?? makeLoadout(assets, ship.hull).fixed;
+  for (const [weaponId, count] of makeLoadout(assets, ship.hull).fixed) {
+    const fitted = remaining
+      .filter(([identifier]) => String(identifier) === String(weaponId))
+      .reduce((total, [, quantity]) => total + quantity, 0);
+    value -= Math.max(0, count - fitted) * fixedWeaponSaleValue(assets, ship, weaponId) * 2;
+  }
   for (const [identifier, count] of Object.entries(ship.outfits || {})) {
     const original = Math.max(
       0,
@@ -875,6 +882,19 @@ export function loadoutValue(assets: GameAssets, ship: ShipLoadout): number {
     value += (allOutfits2[identifier]?.cost || 0) * (count - original + original * scale);
   }
   return Math.round(value * 0.5);
+}
+
+/** Resale of one remaining built-in weapon, funded from the hull's existing chassis value. */
+export function fixedWeaponSaleValue(
+  assets: GameAssets,
+  ship: ShipLoadout,
+  weaponId: string | number,
+): number {
+  const stock = makeLoadout(assets, ship.hull);
+  if (!stock.fixed.some(([identifier]) => String(identifier) === String(weaponId))) return 0;
+  const units = stock.fixed.reduce((total, [, count]) => total + count, 0);
+  // Half the chassis remains hull; the other half covers all built-in banks.
+  return units ? Math.floor(loadoutBasis(assets, ship.hull).chassis / (4 * units)) : 0;
 }
 
 // Call before decrementing outfits. Stock is sold first; paid additions retain normal resale.
