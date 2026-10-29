@@ -1817,3 +1817,5 @@ Insurance departure grants thirty seconds of NPC-only exit grace once per rebuil
 Assist missile policy uses the existing persisted Settings preferences. `combat-assist.ts` checks automated lead/wingmate denial, retained primary/manual secondary fire and re-enabling. `combat-browser.ts` toggles the native checkbox, reloads the actual client, verifies persistence and restores the legacy enabled default before its combat route.
 
 `syndicate-safety.ts` kills a real contract target and checks illegal-hit faction consequences, no lawful bounty/tokens, once-only contract pay and Syndicate standing. Forged papers preview and settlement share the same eligible worst-grudge selector, preserving other factions and refusing unnecessary purchases without charging.
+
+Faction-store catalogue checks cover eligibility-before-fitting, exact standing labels, shared client/server fitting reasons, consistent material defaults, and credit-only/token-nonrefundable sale previews in the existing equipped-item cards.

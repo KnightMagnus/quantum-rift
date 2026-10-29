@@ -101,7 +101,7 @@ import {
   loadoutValue,
   makeLoadout,
   ensureStockOutfits,
-  stockOutfitLimit,
+  outfitInstallProblem as sharedOutfitInstallProblem,
   outfitSaleValue,
   fixedWeaponSaleValue,
 } from '../shared/rules.ts';
@@ -522,21 +522,15 @@ const PortOperations: PortOperations = {
     outfitId: number,
     quantity: number,
   ): string | null {
-    const outfit = this.O[outfitId];
-    if (!outfit) return 'Unknown outfit.';
-    if (playerData.shipless)
-      return 'You have no active ship. Choose FLY THIS in your drydock, or buy one at a shipyard.';
-    const shipStats = this.features.shipStats!.stats(playerData)!;
     ensureStockOutfits(this.A, playerData.ship);
-    const installedQuantity = playerData.ship.outfits[outfitId] || 0;
-    const limit = stockOutfitLimit(this.A, playerData.ship, outfitId);
-    if (installedQuantity + quantity > limit) return `You can carry at most ${limit}.`;
-    if ((outfit.mass || 0) * quantity > shipStats.free) return 'Not enough free space.';
-    if (outfit.eff!.weapon && outfit.turret && shipStats.turrets + quantity > shipStats.maxTurrets)
-      return 'No free turret mounts.';
-    if (outfit.eff!.weapon && !outfit.turret && shipStats.guns + quantity > shipStats.maxGuns)
-      return 'No free gun mounts.';
-    return null;
+    return sharedOutfitInstallProblem(
+      this.A,
+      playerData.ship,
+      this.features.shipStats!.stats(playerData)!,
+      outfitId,
+      quantity,
+      !!playerData.shipless,
+    );
   },
   /**
    * Purchases or sells a ship outfit or ammunition batch.

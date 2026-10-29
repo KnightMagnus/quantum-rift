@@ -1,3 +1,4 @@
+import { FACTION_STORE_OUTFITS } from '../shared/faction-outfits.ts';
 import { storySystemVisible } from '../shared/story-world.ts';
 import type { StellarBody } from '../server/game.ts';
 import type { ClientGameState } from './main.ts';
@@ -180,7 +181,7 @@ function equippedOutfitsHtml(state: ClientGameState): string {
   ) {
     return `<article class="equipment-card" data-equipped="${escapeHtml(identifier)}"${fixed ? ' data-built-in="true"' : ''}>
       ${icon ? `<img src="${artworkUrl(icon)}" alt="" loading="lazy">` : '<span class="equipment-fallback" aria-hidden="true">⚙</span>'}
-      <div class="equipment-detail"><b>${escapeHtml(name)} ×${count}</b><div class="dim small">${escapeHtml(detail)}</div>${description ? `<div class="small">${escapeHtml(description)}</div>` : ''}</div>
+      <div class="equipment-detail"><b>${escapeHtml(name)} ×${count}</b><div class="dim small">${escapeHtml(detail)}</div>${description ? `<div class="small">${escapeHtml(description)}</div>` : ''}${!fixed && FACTION_STORE_OUTFITS.some((outfit) => String(outfit.id) === identifier) ? '<div class="dim small">Selling refunds credits only. Store tokens are not refunded.</div>' : ''}</div>
       ${tradeable ? `<button class="btn sm" data-sell-outfit="${escapeHtml(identifier)}"${fixed ? ' data-fixed-weapon="true"' : ''} aria-label="Sell one ${escapeHtml(name)} for ${credits2(refund)} credits"${atOutfitter ? '' : ' disabled title="Land at an outfitter to sell"'}>SELL 1<span class="dim small">${credits2(refund)} cr</span></button>` : '<span class="dim small">Not for sale</span>'}
     </article>`;
   }
