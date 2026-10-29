@@ -218,6 +218,24 @@ try {
     'held controls are cleared before replacement login',
   );
   await page.keyboard.up('ArrowUp');
+  // Feedback must remain above the highest ordinary confirmation modal too.
+  await page.evaluate(async () => (await import('/ui.js')).ask('Connection test', () => {}));
+  const replacementLink = links.filter((entry) => entry.websocket).at(-1)!;
+  replacementLink.replies = false;
+  await page.waitForFunction(
+    () => !document.querySelector('#connectionstatus')?.classList.contains('hidden'),
+    undefined,
+    { timeout: 8500 },
+  );
+  assert.ok(
+    await page.evaluate(
+      () =>
+        Number(getComputedStyle(document.querySelector('#connectionstatus')!).zIndex) >
+        Number(getComputedStyle(document.querySelector('#askbox')!).zIndex),
+    ),
+    'connection feedback stays above confirmation dialogs',
+  );
+  await page.screenshot({ path: path.join(output, 'connection-feedback-modal.png') });
   assert.deepEqual(errors, []);
   fileSystem.writeFileSync(
     path.join(output, 'results.json'),

@@ -2250,6 +2250,7 @@ elementById2('ctrlkeys').onclick = () => {
   openOpts(true);
 };
 // Key binding editor remains available through Options and Controls.
+elementById2('gclose').onclick = closeMap;
 elementById2('cbmap').onclick = () =>
   elementById2('gmap').classList.contains('hidden') ? openMap() : closeMap();
 /**
@@ -3224,6 +3225,7 @@ if (
     button.addEventListener('pointerdown', (event) => {
       if (event.button !== 0 || typing() || clientGameState.landed || overlays.blocksFlight())
         return;
+      if (!button.dataset.k) return;
       event.preventDefault();
       event.stopPropagation();
       audio.unlock();
@@ -3231,6 +3233,14 @@ if (
       touchPointers.set(event.pointerId, button);
       button.classList.add('on');
       if (button.dataset.k) touch.keys[button.dataset.k] = true;
+    });
+    // Open dialogs after release so a tap cannot click through into the new dialog.
+    button.addEventListener('click', (event) => {
+      if (!button.dataset.tap || typing() || clientGameState.landed || overlays.blocksFlight())
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      audio.unlock();
       const action = button.dataset.tap;
       if (action === 'target') nearestHostile();
       else if (action === 'land') landRequest();

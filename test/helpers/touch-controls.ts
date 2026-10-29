@@ -22,6 +22,7 @@ export async function runTouchControls(origin: string, output: string): Promise<
   const browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const packets: TouchCommand[] = [];
   const errors: string[] = [];
+  const inputTrace: string[] = [];
   try {
     const context = await browser.newContext({
       hasTouch: true,
@@ -30,6 +31,26 @@ export async function runTouchControls(origin: string, output: string): Promise<
     });
     const page = await context.newPage();
     page.on('pageerror', (error) => errors.push(error.message));
+    page.on('console', (message) => {
+      if (message.text().startsWith('touch-probe')) inputTrace.push(message.text());
+    });
+    await page.addInitScript(() => {
+      for (const type of ['pointerdown', 'pointerup', 'pointercancel', 'click'])
+        document.addEventListener(
+          type,
+          (event) =>
+            console.debug(
+              'touch-probe',
+              JSON.stringify({
+                type,
+                target: (event.target as HTMLElement)?.outerHTML.slice(0, 100),
+                active: document.activeElement?.id,
+                trusted: event.isTrusted,
+              }),
+            ),
+          true,
+        );
+    });
     page.on('websocket', (socket) =>
       socket.on('framesent', (frame) => {
         const packet = JSON.parse(String(frame.payload)) as TouchCommand;
@@ -69,6 +90,7 @@ export async function runTouchControls(origin: string, output: string): Promise<
         document.documentElement.style.setProperty('--ui', String(scale));
         document.body.classList.toggle('scaled', scale !== 1);
       }, scale!);
+      inputTrace.push(`viewport ${width}x${height} ui ${scale}`);
       const fire = await point(page, '[data-k="fire1"]');
       const map = await point(page, '[data-tap="map"]');
       await point(page, '[data-tap="land"]');
@@ -88,7 +110,7 @@ export async function runTouchControls(origin: string, output: string): Promise<
         !packets.slice(blockedAt).some((packet) => packet.f1 === 1),
         'dialog taps do not fire through',
       );
-      await page.keyboard.press('Escape');
+      await page.locator('#gclose').tap();
       await page.locator('#gmap').waitFor({ state: 'hidden' });
       for (const release of ['touchEnd', 'touchCancel'] as const) {
         const started = packets.length;
@@ -177,6 +199,10 @@ export async function runTouchControls(origin: string, output: string): Promise<
       'Touch controls: MAP modal precedence, FIRE hold/release/cancel/drag and authoritative LAND passed.',
     );
   } catch (error) {
+    fs.writeFileSync(
+      path.join(output, 'touch-input-trace.json'),
+      JSON.stringify(inputTrace, null, 2),
+    );
     fs.writeFileSync(path.join(output, 'touch-packets.json'), JSON.stringify(packets, null, 2));
     await failureEvidence(browser, output, error);
     throw error;

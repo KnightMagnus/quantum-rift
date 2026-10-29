@@ -221,6 +221,8 @@ export async function runLandedResponsive(
         );
       }
       assert.equal(await page.locator('#chatlog').getAttribute('role'), 'log');
+      assert.equal(await page.locator('#llist').getAttribute('role'), 'log');
+      assert.equal(await page.locator('#rq').getAttribute('aria-label'), 'Filter radio stations');
       assert.equal(await page.locator('#landbody').getAttribute('aria-label'), 'Dock services');
       const tabs = await page
         .locator('#ltabs [data-lt]')

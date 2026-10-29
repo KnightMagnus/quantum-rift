@@ -2158,7 +2158,7 @@
       "owners": ["client/main.ts", "client/style-controls-login.css"],
       "services": [],
       "tests": ["touch-controls-browser.ts"],
-      "asserts": "Trusted Chromium touch events hit MAP/FIRE/LAND above the cockpit; map/dock dialogs retain input precedence. Primary fire holds, releases, cancels and drags without latching; joystick cancellation and modal entry release input; LAND completes through the authoritative game handler. Two tablet sizes and UI scales 1/1.4; no physical-device claim."
+      "asserts": "Trusted Chromium touch events hit MAP/FIRE/LAND above the cockpit; map/dock dialogs retain input precedence and the map has a native touch-close control. Primary fire holds, releases, cancels and drags without latching; joystick cancellation and modal entry release input; LAND completes through the authoritative game handler. Two tablet sizes and UI scales 1/1.4; no physical-device claim."
     }
   ],
   "routes": {

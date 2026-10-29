@@ -96,12 +96,11 @@
             </div>
           </div>
           <div class="rrow">
-            <input id="rq" placeholder="Filter stations or moods..." /><button
-              class="btn sm"
-              id="rgo"
-            >
-              SCAN
-            </button>
+            <input
+              id="rq"
+              aria-label="Filter radio stations"
+              placeholder="Filter stations or moods..."
+            /><button class="btn sm" id="rgo">SCAN</button>
           </div>
           <div class="rrow">
             <button class="btn sm on" id="rfav">FAVORITES</button
@@ -111,7 +110,13 @@
           <div class="list" id="rlist"></div>
         </div>
         <div class="tab" id="t-codex">
-          <div class="rrow"><input id="cq" placeholder="Search ships and outfits..." /></div>
+          <div class="rrow">
+            <input
+              id="cq"
+              aria-label="Search ships and outfits"
+              placeholder="Search ships and outfits..."
+            />
+          </div>
           <div class="chips" id="cchips"></div>
           <div class="list" id="clist"></div>
         </div>
@@ -132,11 +137,21 @@
         <div class="tab" id="t-captains"><div id="capview"></div></div>
         <div class="tab" id="t-log">
           <div class="rrow">
-            <input id="lq" placeholder="Captain's log..." /><button class="btn sm" id="lgo">
+            <input id="lq" aria-label="Captain log entry" placeholder="Captain's log..." /><button
+              class="btn sm"
+              id="lgo"
+            >
               LOG
             </button>
           </div>
-          <div class="list" id="llist"></div>
+          <div
+            class="list"
+            id="llist"
+            role="log"
+            aria-live="off"
+            aria-label="Captain log"
+            tabindex="0"
+          ></div>
         </div>
       </section>
     </aside>
@@ -659,8 +674,8 @@
               HOME</button
             ><button class="btn sm" id="gfit">WHOLE GALAXY</button
             ><button class="btn sm on" id="glegend" title="Show or hide the map legend">
-              LEGEND
-            </button></span
+              LEGEND</button
+            ><button class="btn sm" id="gclose" aria-label="Close galaxy map">CLOSE</button></span
           >
         </h2>
         <canvas id="gcanvas"></canvas>
