@@ -1376,3 +1376,35 @@ body.pressure-hull #land .landbody {
     display: none;
   }
 }
+/* The landed surface must leave the Tray rail and its open column unobstructed. */
+body.pressure-hull:has(#land:not(.hidden)) #traytrim {
+  z-index: 11;
+}
+@media (max-width: 1100px) {
+  body.pressure-hull #land {
+    width: calc(100vw - var(--hud));
+  }
+  body.pressure-hull #land > .landbox.metal {
+    width: calc((100vw - var(--hud) - 24px) / var(--ui, 1));
+    max-width: calc((100vw - var(--hud) - 16px) / var(--ui, 1));
+  }
+}
+@container (max-width: 380px) {
+  body.pressure-hull #land > .landbox.metal {
+    border-width: 8px;
+    border-image-width: 8px;
+  }
+  body.pressure-hull #land .landhead h2 {
+    font-size: 16px;
+  }
+  body.pressure-hull #land #landfac {
+    font-size: 11px;
+  }
+  body.pressure-hull #land .landfoot {
+    font-size: 10px;
+  }
+  body.pressure-hull #land .landfoot .cr {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+}
