@@ -1068,7 +1068,7 @@
       "owners": ["shared/galaxy.ts", "shared/gen.ts", "shared/rules.ts"],
       "services": [],
       "tests": ["v04.ts", "v08.ts", "v23.ts", "eventide.ts"],
-      "asserts": "Seeded galaxy generation, reachable routes, Sol/Farside gates and authored Eventide landmarks."
+      "asserts": "Seeded galaxy generation, reachable routes, Sol Minor/Farside gates with stable sol/earth/luna IDs, consistent gateway names and authored Eventide landmarks."
     },
     {
       "id": "map-fog-of-war",

@@ -96,7 +96,7 @@ export const CONTINUATION: StoryMission[] = [
     dest: 'glasswake-foundry',
     pay: 100000,
     rep: 0,
-    text: '"The night your stars changed was my doing," the Core says. Its makers wished for someone like themselves before they drifted apart. In its sleep it reached across the dark and pulled Sol here. "I expected you to become the person every people would see. Here, my expectations come true. Calling you made it so." Where did its makers come from? "Go through the Rift, and see."',
+    text: '"The night your stars changed was my doing," the Core says. Its makers wished for someone like themselves before they drifted apart. In its sleep it reached across the dark and pulled Sol Minor here. "I expected you to become the person every people would see. Here, my expectations come true. Calling you made it so." Where did its makers come from? "Go through the Rift, and see."',
     brief: 'Carry the waking Core’s account to the Archive at Glasswake.',
     acc: 'Take its account',
     ref: 'Not yet',

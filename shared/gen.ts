@@ -1015,7 +1015,7 @@ export function addSolGateway(SYSTEMS: SpaceSystem[]): {
     }
   const starSystem: SpaceSystem = {
     id: 'sol',
-    name: 'Sol',
+    name: 'Sol Minor',
     faction: 'quantum',
     x: Math.round(best!.x),
     y: Math.round(best!.y),
@@ -1053,7 +1053,7 @@ export function addSolGateway(SYSTEMS: SpaceSystem[]): {
       },
       {
         id: 'sol-gateway',
-        name: 'The Sol Gateway',
+        name: 'The Sol Minor Gateway',
         kind: 'wormhole',
         color: '#9ac8ff',
         r: 110,
