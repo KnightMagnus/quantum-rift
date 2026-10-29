@@ -408,9 +408,10 @@ const JobOperations: JobOperations = {
             text: 'Lyra, Miri and Solenne hand you a digital copy of their album. "For our favourite captain. Keep us on the radio." Super-Idol Radio has been added to your console.',
           });
         }
-        playerData.rep[systemsById[stellarBody.system].faction] = clampStanding(
-          (playerData.rep[systemsById[stellarBody.system].faction] || 0) + 2,
-        );
+        if (mission.syn !== 'hit')
+          playerData.rep[systemsById[stellarBody.system].faction] = clampStanding(
+            (playerData.rep[systemsById[stellarBody.system].faction] || 0) + 2,
+          );
         if (Math.random() < 0.35) {
           const materialId = MATERIALS[Math.floor(Math.random() * 3)],
             gradeIndex = Math.min(4, Math.floor(mission.reward / 9000));

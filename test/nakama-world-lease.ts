@@ -491,3 +491,119 @@ assert.ok(
   'revoked callback cannot evict the legitimate existing captain',
 );
 assert.equal(capacitySessions.size, 30);
+
+// Wall time, not completed tick count, bounds native recovery loss.
+{
+  const savedNow = Date.now;
+  let clock = 1000;
+  let checkpoints = 0;
+  let advances = 0;
+  const sent: unknown[] = [];
+  const state = {
+    authorityReady: true,
+    lastCheckpointAt: clock,
+    tick: 0,
+    dispatcher: {},
+    connections: new Map(),
+    database: {
+      economicFrozen: false,
+      flush: () => {
+        checkpoints++;
+      },
+    },
+    game: {
+      tick: () => {
+        advances++;
+      },
+    },
+    deferred: { advance: () => {} },
+  };
+  const handle = { world: () => state };
+  const advance = (tick: number) =>
+    Reflect.apply(advanceWorld, undefined, [{}, { error: () => {} }, {}, {}, tick, handle, []]);
+  try {
+    Date.now = () => clock;
+    advance(450);
+    assert.equal(checkpoints, 0, 'a tick multiple is not a wall-time checkpoint');
+    clock += 10000;
+    advance(451);
+    assert.equal(checkpoints, 1, 'elapsed ten seconds flushes even at slow effective tick rate');
+    clock -= 5000;
+    advance(452);
+    assert.equal(checkpoints, 2, 'backward wall clock rebases after a safe checkpoint');
+    let actionSequence = 0;
+    const mutations = state.database as typeof state.database & { mutationSequence: number };
+    mutations.mutationSequence = 0;
+    state.connections.set('action', {
+      open: true,
+      presence: { userId: 'action-captain' },
+      lastSequence: 0,
+      receive: (text: string) => {
+        const packet = JSON.parse(text);
+        if (packet.t === 'buyship' || (packet.t === 'station' && packet.op === 'claim'))
+          mutations.mutationSequence++;
+      },
+    });
+    const action = (packet: object) =>
+      Reflect.apply(advanceWorld, undefined, [
+        {},
+        { error: () => {} },
+        { binaryToString: (bytes: Uint8Array) => new TextDecoder().decode(bytes) },
+        {},
+        ++actionSequence,
+        handle,
+        [
+          {
+            sender: { sessionId: 'action', userId: 'action-captain' },
+            opCode: 1,
+            data: new TextEncoder().encode(JSON.stringify(packet)),
+          },
+        ],
+      ]);
+    clock += 300;
+    action({ t: 'bank' });
+    action({ t: 'station', op: 'claim-denied' });
+    assert.equal(
+      checkpoints,
+      2,
+      'denied/no-op requests do not force checkpoints of tick dirtiness',
+    );
+    action({ t: 'buyship', hull: 704 });
+    assert.equal(checkpoints, 3, 'the actual buyship wire route schedules a durable batch');
+    action({ t: 'station', op: 'claim' });
+    assert.equal(
+      checkpoints,
+      3,
+      'adjacent economic mutations coalesce rather than fsync every frame',
+    );
+    clock += 249;
+    advance(455);
+    assert.equal(checkpoints, 3);
+    clock++;
+    advance(456);
+    assert.equal(
+      checkpoints,
+      4,
+      'a pending station mutation flushes at the bounded quarter-second boundary',
+    );
+    state.connections.set('viewer', { send: (packet: unknown) => sent.push(packet) });
+    state.database.flush = () => {
+      checkpoints++;
+      state.database.economicFrozen = true;
+      throw Error('lost write reply');
+    };
+    clock += 10000;
+    assert.equal(advance(453), null, 'failed/uncertain checkpoint retires its old authority');
+    assert.equal((sent[0] as { code: string }).code, 'WORLD_RECOVERING');
+    const retiredAdvances = advances;
+    const retiredWrites = checkpoints;
+    assert.equal(advance(454), null);
+    assert.equal(advances, retiredAdvances, 'a frozen VM cannot advance gameplay');
+    assert.equal(checkpoints, retiredWrites, 'a frozen VM cannot retry an uncertain write');
+  } finally {
+    Date.now = savedNow;
+  }
+}
+console.log(
+  'Native checkpoints follow wall time; rejected/uncertain authority retires without an unsafe write retry.',
+);

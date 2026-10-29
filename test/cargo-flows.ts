@@ -723,3 +723,105 @@ assert.equal(JSON.stringify([playerData.cargo, playerData.cargoLots]), protected
 invariant(playerData);
 console.log('Death clears paired inventory; Lodestar preserves paired premium inventory.');
 console.log('ALL PRODUCTION CARGO FLOW TESTS PASSED');
+
+// Real wire offers and final settlement share the same inventory identity boundary.
+{
+  const first = pilot('Alias Trader One'),
+    second = pilot('Alias Trader Two');
+  ownedShip(first, 'site-qgate');
+  ownedShip(second, 'site-meridian');
+  first.data.friends = [second.data.name];
+  second.data.friends = [first.data.name];
+  const send = (session: Session, message: object) => {
+    session.msgs = 0;
+    game.onMessage(session, message);
+  };
+  const inventory = () =>
+    JSON.stringify(
+      [first, second].map(({ data }) => ({
+        credits: data.credits,
+        mats: data.mats,
+        bp: data.bp,
+        parts: data.parts,
+        cargo: data.cargo,
+        cargoLots: data.cargoLots,
+        storage: data.storage,
+        storageLots: data.storageLots,
+      })),
+    );
+  const aliasOffers: Record<string, number>[] = [
+    { 'mat:alloy:0': 1, 'mat:alloy:00': 1, 'mat:alloy:0.0': 1 },
+    { 'mat:alloy:0': 1, 'mat:alloy:0:extra': 1 },
+    { 'bp:704': 1, 'bp:704:extra': 1 },
+    { 'parts:704': 1, 'parts:704:extra': 1 },
+    { 'cargo:food': 1, 'cargo:food:extra': 1 },
+  ];
+  for (const items of aliasOffers) {
+    first.data.mats.alloy[0] = 1;
+    first.data.bp['704'] = 1;
+    first.data.parts['704'] = 1;
+    seed(first.data, 1, 0, 0, 'food');
+    send(first, { t: 'trade2', op: 'open', name: second.data.name });
+    const identifier = requiredFixtureValue(first.trade);
+    const before = inventory();
+    send(first, { t: 'trade2', op: 'offer', give: { items } });
+    assert.deepEqual(
+      game.trades[identifier].give[first.data.name],
+      {},
+      'Alias offer is denied atomically',
+    );
+    // Bypass the offer boundary to prove settlement independently rechecks persisted/in-memory offers.
+    game.trades[identifier].give[first.data.name] = { items };
+    for (const captain of [first, second]) send(captain, { t: 'trade2', op: 'lock', on: true });
+    for (const captain of [first, second]) send(captain, { t: 'trade2', op: 'confirm' });
+    assert.equal(
+      inventory(),
+      before,
+      'Alias settlement cannot create negative donors or usable excess',
+    );
+    assert.equal(first.trade, null);
+    assert.equal(second.trade, null);
+  }
+  // A malformed receiver or overflow cannot partially move credits before a later item fails.
+  for (const corruptReceiver of ['missing-material', 'overflow']) {
+    first.data.credits = 1000;
+    first.data.mats.alloy[0] = 1;
+    second.data.credits = corruptReceiver === 'overflow' ? Number.MAX_SAFE_INTEGER : 0;
+    const savedMaterial = second.data.mats.alloy;
+    if (corruptReceiver === 'missing-material') delete second.data.mats.alloy;
+    send(first, { t: 'trade2', op: 'open', name: second.data.name });
+    send(first, { t: 'trade2', op: 'offer', give: { credits: 100, items: { 'mat:alloy:0': 1 } } });
+    const before = inventory();
+    for (const captain of [first, second]) send(captain, { t: 'trade2', op: 'lock', on: true });
+    for (const captain of [first, second]) send(captain, { t: 'trade2', op: 'confirm' });
+    assert.equal(inventory(), before, 'Both complete staged sides must validate before publishing');
+    second.data.mats.alloy = savedMaterial;
+    second.data.credits = 0;
+  }
+  send(first, { t: 'trade2', op: 'open', name: second.data.name });
+  send(first, {
+    t: 'trade2',
+    op: 'offer',
+    give: { items: { 'mat:alloy:0': 1, 'bp:704': 1, 'parts:704': 1 } },
+  });
+  for (const captain of [first, second]) send(captain, { t: 'trade2', op: 'lock', on: true });
+  for (const captain of [first, second]) send(captain, { t: 'trade2', op: 'confirm' });
+  assert.equal(first.data.mats.alloy[0], 0);
+  assert.equal(second.data.mats.alloy[0], 1);
+  assert.equal(first.data.bp['704'], 0);
+  assert.equal(second.data.bp['704'], 1);
+  assert.equal(first.data.parts['704'], 0);
+  assert.equal(second.data.parts['704'], 1);
+  game.db.touch();
+  game.db.flush();
+  const reopened = new Database(game.db.dir);
+  assert.equal(
+    reopened.get(second.data.name)!.mats.alloy[0],
+    1,
+    'Canonical transfer reloads without corrupting any account',
+  );
+  assert.equal(reopened.get(first.data.name)!.bp['704'], 0);
+  console.log(
+    'Canonical captain trades deny aliases, partial failures and overflow; valid inventory survives reload.',
+  );
+}

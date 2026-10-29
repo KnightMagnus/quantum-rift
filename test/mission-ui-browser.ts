@@ -160,6 +160,61 @@ try {
     'Shared escaping preserves text and attribute boundaries',
   );
 
+  const chartKnowledge = await firstCaptain.evaluate(async () => {
+    const { missionRouteButton, missionsHtml } = await import('/missions.js');
+    const { captainRoute } = await import('/map-fog.js');
+    const { SYS } = await import('/shared/galaxy.js');
+    const { storySystemVisible } = await import('/shared/story-world.js');
+    const state = { ...G, you: { ...G.you!, explored: [G.sys!], charted: [] } };
+    const destination = Object.values(SYS).find(
+      (system) =>
+        !system.farside &&
+        storySystemVisible(undefined, system.id) &&
+        system.id !== G.sys &&
+        captainRoute(state, system.id).length === 0,
+    )!.id;
+    state.you.missions = [
+      {
+        id: 'uncharted-test',
+        title: 'Distant work',
+        text: 'An advertised distant delivery.',
+        type: 'cargo',
+        qty: 1,
+        reward: 100,
+        sys: destination,
+      },
+    ];
+    const before = JSON.stringify({ explored: state.you.explored, charted: state.you.charted });
+    const root = document.createElement('div');
+    root.innerHTML = missionRouteButton(state, destination);
+    const work = document.createElement('div');
+    work.innerHTML = missionsHtml({
+      ...state,
+      missionType: 'all',
+      missionFeasible: false,
+      missionNearby: false,
+    });
+    return {
+      disabled: (root.querySelector('button') as HTMLButtonElement).disabled,
+      explanation: root.textContent,
+      offeredWorkRetained: !!work.querySelector('[data-mission-key="uncharted-test"]'),
+      unchanged:
+        before === JSON.stringify({ explored: state.you.explored, charted: state.you.charted }),
+    };
+  });
+  assert.equal(chartKnowledge.disabled, true);
+  assert.match(chartKnowledge.explanation!, /Route not charted.*explore or buy a chart/);
+  assert.equal(
+    chartKnowledge.offeredWorkRetained,
+    true,
+    'distant accepted work remains listed without revealing a route',
+  );
+  assert.equal(
+    chartKnowledge.unchanged,
+    true,
+    'route explanation never changes discovery or charts',
+  );
+
   await login(courier, 'Courier review');
   await courier.click('[data-lt="jobs"]');
   const courierOffers = await courier.evaluate(() => ({

@@ -58,11 +58,9 @@ export const HailOperations = {
             ((COMMODITIES.find((commodityDef) => commodityDef.id === component) || {}).base || 100),
         0,
       );
-    return (
-      Math.max(
-        800,
-        Math.round(((shipHullAsset && shipHullAsset.cost) || 0) * 0.02 + cargo * 0.4) / 100,
-      ) * 100
+    return Math.max(
+      800,
+      Math.round((((shipHullAsset && shipHullAsset.cost) || 0) * 0.02 + cargo * 0.4) / 100) * 100,
     );
   },
   /**

@@ -578,6 +578,11 @@ export const FrontsOperations = {
       (factionStoreItem) => factionStoreItem.id === message.id,
     );
     if (!factionStoreItem) return;
+    if ((playerData.rep[faction] || 0) < factionStoreItem.rep)
+      return this.toast(
+        session,
+        `${FACTIONS[faction].short} standing ${factionStoreItem.rep} needed.`,
+      );
     // Refuse before charging: a chart that reveals nothing new, or an outfit that will not fit.
     const chartFaction = factionStoreItem.give.chart as string | undefined;
     const newlyCharted = chartFaction
@@ -592,11 +597,6 @@ export const FrontsOperations = {
       const problem = this.outfitInstallProblem(playerData, storeOutfit, 1);
       if (problem) return this.toast(session, problem + ' The store outfit was not bought.');
     }
-    if ((playerData.rep[faction] || 0) < factionStoreItem.rep)
-      return this.toast(
-        session,
-        `${FACTIONS[faction].short} standing ${factionStoreItem.rep} needed.`,
-      );
     playerData.tokens = playerData.tokens || {};
     const owner = playerData.tokens[faction] || 0,
       scrip = playerData.tokens.any || 0;
@@ -1078,7 +1078,7 @@ export const FrontsOperations = {
     const playerData = session.data,
       faction2 = systemsById[position.system].faction,
       count = 1 + Math.min(2, Math.floor(mission.reward / 12000));
-    this.token(playerData, faction2, count);
+    if (mission.syn !== 'hit') this.token(playerData, faction2, count);
     this.goal(session, 'jobs');
     if (mission.chain) {
       playerData.chains = playerData.chains || {};

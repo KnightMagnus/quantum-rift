@@ -1,3 +1,6 @@
+import { infoHtml } from '../client/info_ui.ts';
+import { storeHtml } from '../client/fronts_ui.ts';
+import type { ClientGameState } from '../client/main.ts';
 // Faction stores: store-only outfits install on purchase and never appear at outfitters;
 // star charts reveal a faction's systems; fog of war limits what the map and routes show.
 import assert from 'node:assert/strict';
@@ -252,6 +255,50 @@ const throughKnowledge = mapKnowledge(SYS, through);
 assert.ok(throughKnowledge.visible.has(gateway.gate!), 'going through reveals the far mouth');
 assert.ok(laneKnown(throughKnowledge, through, gateway.id, gateway.gate!), 'and the dashed lane');
 assert.ok(FACTIONS.quantum, 'Concord store exists');
+
+// The store explains eligibility before fit and uses the same fitting owner as purchase.
+playerData.stellar = 'meridian-yards';
+playerData.sys = STELLARS['meridian-yards'].system;
+playerData.rep.quantum = 0;
+const deniedMessages: string[] = [];
+const originalSend = socket.send.bind(socket);
+socket.send = (value) => {
+  const packet = typeof value === 'string' ? JSON.parse(value) : value;
+  if (packet.t === 'toast') deniedMessages.push(packet.msg);
+};
+game.features.fronts.storeBuy(session, { fac: 'quantum', id: 'outfit-' + lance.id });
+assert.match(deniedMessages.at(-1)!, /standing .* needed/);
+socket.send = originalSend;
+const storeState = {
+  A: game.A,
+  you: game.playerPayload(session, playerData, game.features.shipStats.stats(playerData)),
+  landed: { store: 'quantum' },
+} as unknown as ClientGameState;
+const storeMarkup = storeHtml(storeState);
+assert.match(storeMarkup, /Standing · store access/);
+assert.match(storeMarkup, new RegExp(`Standing ${lance.rep} needed`));
+assert.ok(!storeMarkup.includes('undefined'));
+playerData.rep.quantum = 100;
+storeState.you = game.playerPayload(session, playerData, game.features.shipStats.stats(playerData));
+const blockedMarkup = storeHtml(storeState);
+assert.match(blockedMarkup, /No free turret mounts|Not enough free space/);
+storeState.you!.ship.outfits[plating.id] = 1;
+storeState.you!.cargo = {};
+assert.match(
+  infoHtml(storeState, 'ship'),
+  /Selling refunds credits only. Store tokens are not refunded/,
+);
+delete playerData.ship.stockOutfits;
+const unknownFit = JSON.stringify(playerData.ship);
+assert.equal(game.outfitInstallProblem(playerData, 99999999, 1), 'Unknown outfit.');
+assert.equal(
+  JSON.stringify(playerData.ship),
+  unknownFit,
+  'unknown fitting request leaves provenance unchanged',
+);
+console.log(
+  'Store clarity: exact standing requirements, shared fitting denial and material labels passed.',
+);
 
 filesystem.rmSync(directory, { recursive: true, force: true });
 console.log('Faction store outfits, star charts and fog-of-war routing passed.');

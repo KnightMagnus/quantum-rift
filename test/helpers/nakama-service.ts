@@ -67,6 +67,7 @@ export class NakamaService {
   private databaseName = 'nakama';
   private configPath = '';
   private nakama?: Child;
+  private postgres?: Child;
   private binary = '';
   private password = randomBytes(24).toString('hex');
   private cleanupPromise?: Promise<unknown>;
@@ -228,6 +229,7 @@ export class NakamaService {
       ['-D', data, '-h', '127.0.0.1', '-p', String(this.pgPort), '-k', ''],
       'postgres',
     );
+    this.postgres = postgres;
     await until(() => {
       assert(!postgres.result, 'Postgres exited early');
       return fs
@@ -326,6 +328,38 @@ export class NakamaService {
       !/default.*(?:key|password)|(?:key|password).*default|insecure.*(?:key|password)/i.test(log),
       'Default-secret warning: ' + log,
     );
+  }
+  /** Stop the complete disposable cluster, including active backends, for a real write outage. */
+  async stopPostgres(): Promise<void> {
+    assert(this.postgres && !this.postgres.result, 'Disposable PostgreSQL is running');
+    process.kill(-this.postgres.process.pid!, 'SIGINT');
+    await this.finish(this.postgres);
+  }
+  /** Restart only this fixture's stopped cluster on its reserved port and existing data. */
+  async resumePostgres(): Promise<void> {
+    assert(this.postgres?.result, 'Disposable PostgreSQL is stopped');
+    const name = 'postgres-resume-' + this.children.length;
+    const postgres = this.start(
+      path.join(process.env.POSTGRES_BIN!, 'postgres'),
+      [
+        '-D',
+        path.join(this.run, 'postgres'),
+        '-h',
+        '127.0.0.1',
+        '-p',
+        String(this.pgPort),
+        '-k',
+        '',
+      ],
+      name,
+    );
+    this.postgres = postgres;
+    await until(() => {
+      assert(!postgres.result, 'PostgreSQL restart exited early');
+      return fs
+        .readFileSync(path.join(this.run, name + '.log'), 'utf8')
+        .includes('database system is ready to accept connections');
+    }, 'PostgreSQL restart');
   }
   async restartNakama() {
     assert(this.nakama);

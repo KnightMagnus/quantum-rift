@@ -1959,7 +1959,7 @@ const opsLevelDefs: OpsLevelDef[] = [
   },
   {
     lv: 2,
-    title: 'Market & Workshop',
+    title: 'Research Lab',
     cost: 60000,
     mats: [
       ['alloy', 1, 1],
@@ -1969,7 +1969,7 @@ const opsLevelDefs: OpsLevelDef[] = [
   },
   {
     lv: 3,
-    title: 'Shipyard, Lab & Warp Core',
+    title: 'Shipyard & Drydock',
     cost: 180000,
     mats: [
       ['alloy', 2, 1],
@@ -1980,7 +1980,7 @@ const opsLevelDefs: OpsLevelDef[] = [
   },
   {
     lv: 4,
-    title: 'Academy & Workshop Mk II',
+    title: 'Wingmates & Workshop Mk II',
     cost: 400000,
     mats: [
       ['alloy', 3, 1],
@@ -1991,7 +1991,7 @@ const opsLevelDefs: OpsLevelDef[] = [
   },
   {
     lv: 5,
-    title: 'Defense Grid',
+    title: 'Exotics & Concordance',
     cost: 900000,
     mats: [
       ['alloy', 4, 1],

@@ -209,6 +209,22 @@ try {
   await page.click('#traytoggle');
   assert.equal(Math.round((await page.locator('#hud').boundingBox())!.width), 520);
   assert.match(await page.locator('#commsheader').innerText(), /COMMS \/ MERIDIAN SECTOR/);
+  // Project a known system ID through the live refresh path without changing save/routes.
+  const previousSystem = await page.evaluate(() => {
+    const previous = G.sys;
+    G.sys = 'sol';
+    return previous;
+  });
+  await page.waitForFunction(
+    () => document.getElementById('commssector')!.textContent === 'COMMS / SOL MINOR SECTOR',
+  );
+  await page.evaluate((system) => {
+    G.sys = system;
+  }, previousSystem);
+  await page.waitForFunction(
+    () => document.getElementById('commssector')!.textContent === 'COMMS / MERIDIAN SECTOR',
+  );
+
   assert.equal(await page.locator('#consoleutilities .utility-label').count(), 3);
   for (const scale of [0.8, 1, 1.4]) {
     await page.evaluate((session) => {

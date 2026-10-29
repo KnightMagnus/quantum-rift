@@ -63,8 +63,11 @@ const starSystem = systemsById.sol,
 const centerX = (Math.min(...xScale) + Math.max(...xScale)) / 2,
   centerY = (Math.min(...yScale) + Math.max(...yScale)) / 2;
 assertCondition(
-  starSystem && STELLARS.earth && STELLARS.earth.system === 'sol' && STELLARS.luna,
-  'Sol exists, with Earth and Luna Station',
+  starSystem?.name === 'Sol Minor' &&
+    STELLARS.earth &&
+    STELLARS.earth.system === 'sol' &&
+    STELLARS.luna,
+  'Sol Minor uses its existing system ID, Earth and Luna Station',
 );
 assertCondition(
   Math.hypot(starSystem.x - centerX, starSystem.y - centerY) < 150,

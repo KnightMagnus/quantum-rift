@@ -127,7 +127,7 @@ export const BLACK_MARKET: BlackMarketItem[] = [
     tier: 1,
     name: 'Forged papers',
     price: 25000,
-    desc: "Wipes one power's grudge: your standing with the local power rises to -10 if it was lower.",
+    desc: 'Changes your worst eligible faction grudge to -10 standing. Other faction records are unchanged.',
     give: { papers: 1 },
   },
   {

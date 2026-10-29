@@ -248,6 +248,8 @@ export type Entity = EntityFeatureState & {
 
   /** Grace period timestamp protecting newly arrived players. */
   graceT?: number;
+  /** Insurance departure grace, cancelled by any fleet weapon discharge. */
+  recoveryGraceT?: number;
 
   /** Arrival aperture inhibited until cleared. */
   wormExit?: string;
@@ -2188,6 +2190,11 @@ export class Space {
    * @param angle Fire orientation heading in radians.
    */
   fire(entity: Entity, weaponMount: WeaponMount, entity2: Entity | null, angle: number): void {
+    const commandingShip = this.root(entity);
+    if (commandingShip.recoveryGraceT) {
+      commandingShip.recoveryGraceT = 0;
+      commandingShip.graceT = 0;
+    }
     const weapon = weaponMount.p,
       weaponAsset = this.A.weapons[weaponMount.w];
     const captain = this.root(entity).player?.s.name;
@@ -2485,6 +2492,13 @@ export class Space {
       weaponMount.cd -= tickDuration;
       if (weaponMount.cd > 0 || weaponMount.ammo <= 0) continue;
       const weapon = weaponMount.p;
+      if (
+        automated &&
+        weaponMount.sec &&
+        !weapon.bay &&
+        this.root(entity).player?.s?.combat?.missiles === false
+      )
+        continue;
       if (weapon.pd) {
         // point defense: shoot down missiles and fighters
         let best = null,

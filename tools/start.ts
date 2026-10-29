@@ -1,3 +1,4 @@
+import { GAME_PROTOCOL } from '../shared/protocol.ts';
 import type { RuntimeManifest } from './runtime/contracts.ts';
 import fileSystem from 'node:fs';
 import path from 'node:path';
@@ -70,6 +71,9 @@ child.once('exit', () => {
   cancelled = true;
 });
 if (launchFriends && friendConfig) {
+  const expectedVersion: string = JSON.parse(
+    fileSystem.readFileSync(path.join(rootDirectory, 'package.json'), 'utf8'),
+  ).publicVersion;
   const browserHost =
     friendConfig.bind === '0.0.0.0'
       ? '127.0.0.1'
@@ -87,9 +91,19 @@ if (launchFriends && friendConfig) {
         const response = await fetch(`${browserUrl}/api/status`, {
           signal: AbortSignal.timeout(1000),
         });
-        const status = (await response.json()) as { mode?: string };
+        const status = (await response.json()) as {
+          mode?: string;
+          version?: string;
+          protocol?: number;
+        };
         if (cancelled) return;
-        if (status.mode !== 'friends') continue;
+        if (
+          !response.ok ||
+          status.mode !== 'friends' ||
+          status.version !== expectedVersion ||
+          status.protocol !== GAME_PROTOCOL
+        )
+          continue;
         const command =
           process.platform === 'win32'
             ? 'cmd'
@@ -112,7 +126,16 @@ child.on('error', (error) => {
   console.error(error.message);
   process.exitCode = 1;
 });
-for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => child.kill(signal));
+for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP'] as const)
+  process.on(signal, () => {
+    if (child.connected) child.send('shutdown');
+    else child.kill(signal);
+  });
+if (process.platform === 'win32')
+  process.on('SIGBREAK', () => {
+    if (child.connected) child.send('shutdown');
+    else child.kill('SIGBREAK');
+  });
 // Windows kill(SIGTERM) cannot run shutdown handlers. Supervisors use this private
 // inherited channel instead; there is no HTTP or game-message shutdown endpoint.
 process.on('message', (message) => {

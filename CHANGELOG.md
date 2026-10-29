@@ -2,6 +2,13 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 0.4.2
+
+- Improve save validation, recovery, friend-server shutdown and trade safety.
+- Pause AI captain careers while no authenticated player is connected.
+- Correct gameplay transactions and delivery reservations; add the Assist missile toggle.
+- Improve keyboard/touch controls, dock layouts and connection feedback; display Sol Minor. See the [release notes](docs/RELEASE-0.4.2.md).
+
 ### 0.4 — Delta Quadrant Stable Beta
 
 - Add the cockpit menu tour and ten-slide briefing, with skip, replay and current key bindings.

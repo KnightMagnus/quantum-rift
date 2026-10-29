@@ -75,6 +75,8 @@ for (const entry of ['server/main.ts', 'dist/server/main.js', 'tools/start.ts'])
       throw error;
     } finally {
       await cleanup(server, null, serverLog, directory);
+      assert.equal(server.exitCode, 0, `${entry}: shutdown exits cleanly`);
+      assert.equal(server.signalCode, null, `${entry}: shutdown needs no forced kill`);
     }
   }
 }

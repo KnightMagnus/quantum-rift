@@ -1,4 +1,4 @@
-import type { CargoLedger, CargoTotals, GradeLots } from './cargo-contracts.ts';
+import type { CargoLedger, CargoTotals } from './cargo-contracts.ts';
 export type TradePreviewInput = {
   market: {
     id: string;
@@ -73,14 +73,16 @@ export function tradePreview({
   const warnings = [];
   if (sale.grades.rich || sale.grades.pure)
     warnings.push('This amount includes higher-grade cargo. Common cargo sells first.');
-  const lots: Partial<GradeLots> = cargoLots.byCommodity[market.id] || {};
+  const lots = planTake(cargo, cargoLots, market.id, cargo[market.id] || 0).grades;
   if (
     (['common', 'rich', 'pure'] as const).some(
       (grade) =>
         sale.grades[grade] > 0 &&
         (lots[grade] || 0) - sale.grades[grade] <
           orders
-            .filter((options) => options.cid === market.id && options.grade === grade)
+            .filter(
+              (options) => options.cid === market.id && options.grade === grade && options.qty > 0,
+            )
             .reduce((count, options) => count + options.qty, 0),
     )
   )

@@ -96,7 +96,12 @@ import { ShipCapacity, reservedCargoTonnes } from '../shared/ship-capacity.ts';
 import { stationLanding } from './exotic_scenery.ts';
 import { passengerSeats, occupiedPassengerSeats } from '../shared/passengers.ts';
 // Quantum Rift interface: HUD, landing screens (trade, shipyard, outfitter, jobs, Quantum Station), companion tabs, galaxy map, chat.
-import { missionsHtml, missionTargets, pinnedObjectiveHtml } from './missions.ts';
+import {
+  missionsHtml,
+  missionTargets,
+  pinnedObjectiveHtml,
+  missionRouteButton,
+} from './missions.ts';
 import { playStation, stopRadio, RADIO_STATIONS, setUnlockedStations } from './radio.ts';
 import { blackMarketHtml, bankHtml, arcCardsHtml, bunkInfo, synBadge } from './syn_ui.ts';
 import {
@@ -1730,13 +1735,13 @@ export function renderLanded(): void {
               `<span class="small" style="display:inline-block;width:49%"><span style="color:${factionDef.color}">${factionDef.short}</span> <span class="dim">${repLabel(playerPayload.rep[factionId] || 0)} (${playerPayload.rep[factionId] || 0})</span></span>`,
           )
           .join('')}
-        <div class="sect">RENAME SHIP</div><div class="rrow"><input id="rename" value="${escapeHtml2(playerPayload.ship.name)}" maxlength="28"><button class="btn sm" data-act="rename">RENAME</button></div></div></div>`;
+        <div class="sect">RENAME SHIP</div><div class="rrow"><input id="rename" aria-label="Ship name" value="${escapeHtml2(playerPayload.ship.name)}" maxlength="28"><button class="btn sm" data-act="rename">RENAME</button></div></div></div>`;
       break;
     }
     case 'trade': {
       height += receiptHtml(clientGameState);
       if (length2.market)
-        height += `<table class="tbl"><tr><th>COMMODITY</th><th>PRICE</th><th>HOLD</th><th></th></tr>${length2.market
+        height += `<table class="tbl trade-table"><tr><th>COMMODITY</th><th>PRICE</th><th>HOLD</th><th></th></tr>${length2.market
           .map((marketItem) => {
             const base = COMMODITIES.find(
               (commodityDef) => commodityDef.id === marketItem.id,
@@ -1757,7 +1762,7 @@ export function renderLanded(): void {
             '',
           )}</table><div class="tradefoot"><span class="dim small">Estimates include cargo grade, your perks and the size of the order. There is no separate trading fee. Prices can change before you click; a price here does not promise the same price elsewhere. Green is cheap here, red is high. Hold: ${playerPayload.cargoUsed + (playerPayload.jobCargo || 0)} / ${computedShipStats!.cargo} t${playerPayload.jobCargo ? ` (${playerPayload.jobCargo} t is job cargo)` : ''}.</span>${holdFree(playerPayload) <= 0 ? '<span class="jwarn">Hold full. Sell cargo or finish a delivery to make room.</span>' : ''}${length2.market.some((marketItem) => playerPayload.cargo[marketItem.id]) ? `<button class="btn sm" data-act="sellall">SELL ALL CARGO</button>` : ''}</div>`;
       if (length2.mats.length)
-        height += `<div class="sect">STATION MATERIALS</div><table class="tbl"><tr><th>CRATE</th><th>PRICE</th><th>HELD</th><th></th></tr>${length2.mats.map((message) => `<tr><td>${message.mat} ${GRADES[message.grade]}</td><td>${credits(message.price)}</td><td>${playerPayload.mats[message.mat][message.grade]}</td><td style="text-align:right"><button class="btn sm" data-act="mat" data-m="${message.mat}" data-g="${message.grade}" data-q="1">BUY</button> <button class="btn sm" data-act="mat" data-m="${message.mat}" data-g="${message.grade}" data-q="-1">SELL</button></td></tr>`).join('')}</table>`;
+        height += `<div class="sect">STATION MATERIALS</div><table class="tbl trade-table"><tr><th>CRATE</th><th>PRICE</th><th>HELD</th><th></th></tr>${length2.mats.map((message) => `<tr><td>${message.mat} ${GRADES[message.grade]}</td><td>${credits(message.price)}</td><td>${playerPayload.mats[message.mat][message.grade]}</td><td style="text-align:right"><button class="btn sm" data-act="mat" data-m="${message.mat}" data-g="${message.grade}" data-q="1">BUY</button> <button class="btn sm" data-act="mat" data-m="${message.mat}" data-g="${message.grade}" data-q="-1">SELL</button></td></tr>`).join('')}</table>`;
       break;
     }
     case 'yard': {
@@ -1956,7 +1961,7 @@ export function renderLanded(): void {
               .map((mission) => {
                 if (mission.type === 'quest') return questCard(mission);
                 const jobInfo2 = jobInfo(mission, playerPayload);
-                return `<div class="card" data-offer-type="${escapeHtml2(mission.type)}" style="cursor:default"><div class="t">${escapeHtml2(mission.title)}</div><div>${escapeHtml2(mission.text)}</div>${missionFactsHtml(clientGameState, mission)}${jobInfo2.warn ? `<div class="jwarn">${jobInfo2.warn}</div>` : ''}${jobInfo2.note ? `<div class="jwarn" style="color:#ffb070">⚠ ${escapeHtml2(jobInfo2.note)}</div>` : ''}<div><button class="btn sm" data-act="accept" data-id="${mission.id}"${jobInfo2.warn ? ' disabled' : ''}>${mission.type === 'warband' ? 'PLAN TEAM CONTRACT' : 'ACCEPT'}</button>${mission.sys && mission.sys !== clientGameState.sys ? ` <button class="btn sm" data-plot="${mission.sys}">PLOT</button>` : ''}</div></div>`;
+                return `<div class="card" data-offer-type="${escapeHtml2(mission.type)}" style="cursor:default"><div class="t">${escapeHtml2(mission.title)}</div><div>${escapeHtml2(mission.text)}</div>${missionFactsHtml(clientGameState, mission)}${jobInfo2.warn ? `<div class="jwarn">${jobInfo2.warn}</div>` : ''}${jobInfo2.note ? `<div class="jwarn" style="color:#ffb070">⚠ ${escapeHtml2(jobInfo2.note)}</div>` : ''}<div><button class="btn sm" data-act="accept" data-id="${mission.id}"${jobInfo2.warn ? ' disabled' : ''}>${mission.type === 'warband' ? 'PLAN TEAM CONTRACT' : 'ACCEPT'}</button>${missionRouteButton(clientGameState, mission.sys, 'PLOT')}</div></div>`;
               })
               .join('')
           : '<p class="dim">No jobs match these filters right now. Choose All types or turn off a filter to see the rest. Boards refresh every ten minutes.</p>');
@@ -2152,7 +2157,7 @@ function questCard(mission: LandedOffer): string {
       : (route(systemsById, clientGameState.sys!, mission.sys) || []).length;
   return `<div class="card story quest" style="cursor:default"><div class="storytag">${mission.side ? 'SIDE STORY' : 'CONTACT'} · ${escapeHtml2(mission.giver)}${mission.standing ? ` · <span class="dim">${escapeHtml2(mission.standing)}</span>` : ''}</div><div class="t">${escapeHtml2(mission.title)}</div><div class="qintro">${escapeHtml2(mission.text)}</div>
     <div class="p">${mission.steps} steps, starting in ${systemsById[mission.sys] ? escapeHtml2(systemsById[mission.sys].name) : 'nearby'}${count ? ` (${count} jump${count > 1 ? 's' : ''})` : ''} · each step pays, and finishing earns <span class="cr">${escapeHtml2(mission.rewardText)}</span></div>
-    ${mission.full ? '<div class="jwarn">You are already following three stories.</div>' : ''}${clientGameState.you!.missions.length >= 6 ? '<div class="jwarn">All six job slots are full. Finish or abandon a job first.</div>' : ''}${questNeeds(mission)}<div><button class="btn sm" data-act="accept" data-id="${escapeHtml2(mission.id)}"${mission.full || clientGameState.you!.missions.length >= 6 ? ' disabled' : ''}>TAKE IT ON</button>${mission.sys && mission.sys !== clientGameState.sys ? ` <button class="btn sm" data-plot="${mission.sys}">PLOT</button>` : ''}</div></div>`;
+    ${mission.full ? '<div class="jwarn">You are already following three stories.</div>' : ''}${clientGameState.you!.missions.length >= 6 ? '<div class="jwarn">All six job slots are full. Finish or abandon a job first.</div>' : ''}${questNeeds(mission)}<div><button class="btn sm" data-act="accept" data-id="${escapeHtml2(mission.id)}"${mission.full || clientGameState.you!.missions.length >= 6 ? ' disabled' : ''}>TAKE IT ON</button>${missionRouteButton(clientGameState, mission.sys, 'PLOT')}</div></div>`;
 }
 /**
  * Sorts shipyard hull IDs by the current sort criterion (cost, cargo, speed, strength, shield).

@@ -237,11 +237,14 @@ await test('browser watchdog probes idle native matches and fences silent peers 
   time.advance(10);
   assert.deepEqual(
     subject.sends.map((packet) => JSON.parse(String(packet.data))),
-    [{ t: 'ping', c: 0 }],
+    [
+      { t: 'ping', c: 0 },
+      { t: 'ping', c: 0 },
+    ],
   );
   subject.emit({ t: 'pong', c: 0 });
   time.advance(10);
-  assert.equal(subject.sends.length, 2, 'healthy idle peers get another probe, not a disconnect');
+  assert.equal(subject.sends.length, 4, 'early and hard probes do not prematurely disconnect');
   time.advance(14);
   subject.connection.send('{"t":"input","th":1}');
   subject.emit('{invalid-json');
@@ -276,7 +279,7 @@ await test('watchdog gives suspended pages a fresh probe and stops cleanly on te
   time.advance(10);
   time.tick(120000);
   assert.equal(expired, 0, 'a late browser timer is not proof that the peer is dead');
-  assert.equal(probes, 2, 'resume sends a fresh probe');
+  assert.equal(probes, 3, 'resume sends one fresh hard probe after early/hard checks');
   watch.received();
   time.advance(24);
   assert.equal(expired, 0);
@@ -1014,3 +1017,61 @@ await test(
     await connection.logout();
   },
 );
+
+await test('silence warning is early, recoverable, and separate from disconnection', async () => {
+  const time = watchdogClock();
+  const subject = fixture({ livenessClock: time.clock });
+  const status: boolean[] = [];
+  subject.connection.oninterrupted = (interrupted) => status.push(interrupted);
+  await subject.opened;
+  time.advance(4);
+  assert.deepEqual(status, []);
+  time.advance(1);
+  assert.deepEqual(status, [true]);
+  assert.equal(subject.connection.readyState, 1, 'five seconds of silence does not disconnect');
+  subject.emit({ t: 'pong', c: 0 });
+  assert.deepEqual(status, [true, false], 'an accepted reply removes the warning');
+  time.advance(24);
+  assert.equal(subject.connection.readyState, 1, 'the existing tolerant reply window remains');
+  time.advance(1);
+  assert.equal(subject.connection.readyState, 3);
+  assert.equal(subject.counts().closes, 1);
+});
+
+await test('native recovery error closes once for ordinary reconnect, not compatibility logout', async () => {
+  const subject = fixture();
+  await subject.opened;
+  subject.emit({
+    t: 'error',
+    code: 'WORLD_RECOVERING',
+    msg: 'Server is recovering. Reconnecting…',
+  });
+  assert.equal(subject.connection.readyState, 3);
+  assert.deepEqual(subject.errors, ['Server is recovering. Reconnecting...']);
+  assert.equal(subject.counts().closes, 1);
+  subject.emit({
+    t: 'error',
+    code: 'WORLD_RECOVERING',
+    msg: 'Server is recovering. Reconnecting…',
+  });
+  assert.equal(subject.counts().closes, 1);
+});
+
+await test('healthy paused peers answer the early probe without a false warning', () => {
+  const time = watchdogClock();
+  const status: boolean[] = [];
+  let probes = 0;
+  const watch = new ConnectionLiveness(
+    () => {
+      probes++;
+      watch.received();
+    },
+    () => assert.fail('healthy quiet peer expired'),
+    time.clock,
+    (value) => status.push(value),
+  );
+  time.advance(60);
+  assert.equal(probes, 20, 'quiet peers are probed before the five-second warning');
+  assert.deepEqual(status, [], 'accepted replies prevent idle warning flashes');
+  watch.stop();
+});

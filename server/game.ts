@@ -5,7 +5,7 @@ import {
   type StationServiceCapabilities,
 } from './station-service.ts';
 
-import { validateFeaturePlayerSave } from './save-validation.ts';
+import { validateFeaturePlayerSave, validateImportedPlayerSave } from './save-validation.ts';
 import { COMPATIBILITY_MESSAGE, supportedProtocol } from '../shared/protocol.ts';
 import { storySystemVisible } from '../shared/story-world.ts';
 import { utf8Bytes } from '../shared/health.ts';
@@ -242,6 +242,8 @@ export interface FormationTarget {
   gap: number;
 }
 export type Session = {
+  /** One departure after an insurance rebuild receives non-aggressive NPC exit grace. */
+  recoveryGrace?: boolean;
   /** Last real patrol scan, transient and private to this connection. */
   attentionScan?: RecentPatrolScan;
   rep?: Record<string, number>;
@@ -849,6 +851,8 @@ export class Game<Storage extends Database = Database> {
    * @returns Sanitized name of imported captain.
    */
   importSave(playerData: PlayerData): string {
+    if (this.db.hasPendingCheckpoint())
+      throw new Error('Checkpoint recovery required before importing a save.');
     if (
       !playerData ||
       typeof playerData.name !== 'string' ||
@@ -856,13 +860,17 @@ export class Game<Storage extends Database = Database> {
       !playerData.station
     )
       throw new Error('That is not a Quantum Rift save file.');
-    const name = playerData.name.trim().slice(0, 20);
-    if (!/^[A-Za-z0-9 _'-]{3,20}$/.test(name)) throw new Error('Bad captain name in the save.');
+    const name = playerData.name.trim();
+    if (
+      !/^[A-Za-z0-9 _'-]{3,20}$/.test(name) ||
+      /^(__proto__|constructor|prototype|hasownproperty|tostring|valueof)$/i.test(name)
+    )
+      throw new Error('Bad captain name in the save.');
     for (const session of this.sessions.values())
       if (session.data && session.data.name.toLowerCase() === name.toLowerCase())
         throw new Error('That captain is playing right now.');
     const imported = structuredClone(playerData);
-    validateFeaturePlayerSave(imported);
+    validateImportedPlayerSave(imported, this.A);
     migrateCargoLots(imported); // validate before replacing any existing slot
     const ownerKey = this.db.key(name);
     const site = imported.station.claimed ? imported.station.site : null;
@@ -877,18 +885,33 @@ export class Game<Storage extends Database = Database> {
           'That station location belongs to another captain. Choose another location.',
         );
     }
-    const playerAccount = this.db.create(name, 'solo', {});
+    const sanitized = {} as PlayerData;
     for (const entryKey of Object.keys(imported))
       if (!['__proto__', 'constructor', 'prototype', 'salt', 'hash'].includes(entryKey))
-        (playerAccount as Record<keyof PlayerData, unknown>)[entryKey as keyof PlayerData] =
+        (sanitized as Record<keyof PlayerData, unknown>)[entryKey as keyof PlayerData] =
           imported[entryKey as keyof PlayerData];
-    playerAccount.name = name;
-    // Save files contain captain data, not world ownership. Reconcile both on import.
-    for (const [ownedSite, owner] of Object.entries(this.db.world.sites))
-      if (owner === ownerKey) delete this.db.world.sites[ownedSite];
-    if (site) this.db.world.sites[site] = ownerKey;
-    this.db.touch();
-    this.db.flush();
+    sanitized.name = name;
+    const previousAccount = this.db.get(name),
+      previousSites = this.db.world.sites,
+      previousDirty = this.db.dirty;
+    const sites = { ...previousSites };
+    for (const [ownedSite, owner] of Object.entries(sites))
+      if (owner === ownerKey) delete sites[ownedSite];
+    if (site) sites[site] = ownerKey;
+    this.db.world.sites = sites;
+    try {
+      // Creation commits the complete replacement and reconciled world once, never an empty slot.
+      this.db.create(name, 'solo', sanitized);
+    } catch (error) {
+      // Before the commit point, restore the original slot. An uncertain journal must recover forward.
+      if (!this.db.hasPendingCheckpoint()) {
+        if (previousAccount) this.db.players[ownerKey] = previousAccount;
+        else delete this.db.players[ownerKey];
+        this.db.world.sites = previousSites;
+        this.db.dirty = previousDirty;
+      }
+      throw error;
+    }
     return name; // own keys only
   }
   /**
@@ -1210,6 +1233,7 @@ export class Game<Storage extends Database = Database> {
    * @param session Session disconnecting.
    */
   disconnect(session: Session): void {
+    if (this.sessions.get(session.id) !== session) return;
     this.health?.observe('disconnects', 1);
     if (session.data) this.features.towing.detach(session);
     if (session.data) this.features.industrial.stop(session);
@@ -1883,6 +1907,7 @@ export class Game<Storage extends Database = Database> {
     this.features.story.storyInit(playerAccount);
     this.features.syndicate.synInit(playerAccount);
     this.features.arcs.arcsInit(playerAccount);
+    this.features.quests.questReconcile(session);
     if (!playerAccount.explored)
       playerAccount.explored = SYSTEMS.filter((starSystem) => starSystem.anchor).map(
         (starSystem) => starSystem.id,
@@ -2101,6 +2126,13 @@ export class Game<Storage extends Database = Database> {
       firstValue,
       40,
     );
+    const rebuiltEntity = session.ent as Entity | null; // spawnPlayer installs the new entity.
+    if (session.recoveryGrace && rebuiltEntity) {
+      const expires = this.spaces[playerData.sys].t + 30;
+      rebuiltEntity.graceT = expires;
+      rebuiltEntity.recoveryGraceT = expires;
+      session.recoveryGrace = false;
+    }
     this.you(session);
   }
   /**
@@ -2557,7 +2589,15 @@ export class Game<Storage extends Database = Database> {
     if (entity.faction === 'nhal') {
       this.features.fronts.goal(session, 'kills');
       this.tut(session, 'kill');
-    } else if (factionDef.pirate || factionDef.alwaysHostile || entity.mission) {
+    } else if (
+      (factionDef.pirate || factionDef.alwaysHostile || entity.mission) &&
+      !playerData.missions.some(
+        (mission) =>
+          mission.syn === 'hit' &&
+          entity.mission?.owner === session.id &&
+          mission.id === entity.mission.id,
+      )
+    ) {
       const stateBountyMultiplier = (() => {
         const livingState = this.features.living.stateOf(space.id);
         return (livingState && STATES[livingState.kind].bounty) || 1;
@@ -2653,16 +2693,45 @@ export class Game<Storage extends Database = Database> {
     }
     if (!this.features.specialists.flying(playerData, 'lodestar'))
       clearLots(playerData.cargo, playerData.cargoLots); // the Lodestar's hold is protected; wingmates fly home
-    const back =
-      playerData.station &&
-      playerData.station.site &&
-      STELLARS[playerData.station.site] &&
-      this.ownSite(playerData, STELLARS[playerData.station.site])
-        ? playerData.station.site
-        : START.stellar; // your own station hull if you have one, otherwise the hub
+    const eligibleRecovery = (port: StellarBody) =>
+      port.svc.includes('L') &&
+      storySystemVisible(undefined, port.system) &&
+      systemsById[port.system].faction !== 'deep' &&
+      (!port.site || this.ownSite(playerData, port)) &&
+      !landingRefused({
+        standing: playerData.rep[systemsById[port.system].faction] || 0,
+        outlawPort: !!port.outlaw,
+        ownStation: this.ownSite(playerData, port),
+        // A temporary landing pass must not decide an insurance recovery location.
+        passExpires: 0,
+        now: Date.now(),
+      });
+    const ownStation = playerData.station?.site && STELLARS[playerData.station.site];
+    let back =
+      ownStation && this.ownSite(playerData, ownStation) && eligibleRecovery(ownStation)
+        ? ownStation.id
+        : eligibleRecovery(STELLARS[START.stellar])
+          ? START.stellar
+          : '';
+    if (!back) {
+      for (const [systemId] of galaxyGraph.walk(playerData.sys, {
+        canEnter: (id) => storySystemVisible(undefined, id) && systemsById[id].faction !== 'deep',
+      })) {
+        const port = systemsById[systemId].stellars
+          .map((stellar) => STELLARS[stellar.id])
+          .find(eligibleRecovery);
+        if (port) {
+          back = port.id;
+          break;
+        }
+      }
+    }
+    // The public galaxy always includes outlaw berths, including for universally wanted captains.
+    back ||= Object.values(STELLARS).find((port) => port.outlaw && eligibleRecovery(port))!.id;
+    session.recoveryGrace = true;
     playerData.stellar = back;
     playerData.sys = STELLARS[back].system;
-    if (session.retaliationVisit?.sys !== playerData.sys) session.retaliationVisit = undefined;
+    session.retaliationVisit = undefined; // The destroyed fleet's retaliation cannot cancel its rebuilt exit grace.
     playerData.fuel = undefined;
     for (const mission of playerData.missions) if (mission.type === 'cargo') mission.lost = true;
     playerData.missions = playerData.missions.filter((mission) => !mission.lost);

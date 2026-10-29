@@ -63,6 +63,8 @@ export interface ClientOptions {
   /** Disable story shimmer and flashing transitions without hiding targeting. */
   reducedEffects?: boolean;
   mouseAim: boolean;
+  /** Persisted local policy for automated missile spending; manual fire is unchanged. */
+  assistMissiles?: boolean;
   /** Place the viewscreen JUMP button in the bottom-left corner instead of bottom-right. */
   jumpLeft?: boolean;
   notify: boolean;
@@ -400,6 +402,7 @@ const clientGameState: ClientGameState = (window.G = {
       shake: true,
       reducedEffects: false,
       mouseAim: false,
+      assistMissiles: true,
       jumpLeft: false,
       notify: false,
       cb: false,
@@ -881,8 +884,7 @@ const connectionLifecycle = new ConnectionLifecycle({
     landingFeedback.reset();
     flightEngine.input.clear();
     mouse.down = false;
-    touch.keys = {};
-    touch.stick = null;
+    releaseTouchControls();
     clientGameState._look = null;
     clientGameState._lookT = null;
     elementById2('lbtn').disabled = false;
@@ -892,7 +894,15 @@ const connectionLifecycle = new ConnectionLifecycle({
     elementById2('lerr').textContent = message;
     elementById2('lbtn').disabled = false;
   },
-  reconnecting: (first) => {
+  interrupted: (interrupted) => {
+    const banner = elementById2('connectionstatus');
+    banner.textContent = interrupted ? 'Connection interrupted. Waiting for the server...' : '';
+    banner.classList.toggle('hidden', !interrupted);
+  },
+  reconnecting: (first, reason) => {
+    const banner = elementById2('connectionstatus');
+    banner.textContent = reason || 'Connection lost. Reconnecting...';
+    banner.classList.remove('hidden');
     if (first) toast('Connection lost. Reconnecting...');
     elementById2('lstat').textContent = 'Reconnecting to the server...';
   },
@@ -902,6 +912,10 @@ const connectionLifecycle = new ConnectionLifecycle({
 });
 
 function onMessage(serverMessage: ServerMessage) {
+  if (serverMessage.t === 'welcome') {
+    elementById2('connectionstatus').classList.add('hidden');
+    elementById2('connectionstatus').textContent = '';
+  }
   if (profileUI.onMessage(serverMessage)) return;
   if (hailUI.onMessage(serverMessage)) return;
   switch (serverMessage.t) {
@@ -915,6 +929,7 @@ function onMessage(serverMessage: ServerMessage) {
       }
       break;
     case 'welcome':
+      send({ t: 'combat', op: 'missiles', on: clientGameState.opts.assistMissiles !== false });
       compatibilityRefresh.classList.add('hidden');
       if (!clientGameState.solo && !localReferenceTransport && !friendHostTransport) {
         // Welcome establishes this native presence before its first controls, even if join/onopen is pending.
@@ -959,6 +974,7 @@ function onMessage(serverMessage: ServerMessage) {
       onboarding.start();
       break;
     case 'landed':
+      releaseTouchControls();
       updateAttention();
       elementById2('combatcontrols').classList.add('hidden');
       clientGameState.combat = {};
@@ -1619,6 +1635,13 @@ const typing = () =>
     !elementById2('captainprofile').classList.contains('hidden')) ||
   editingText();
 window.addEventListener('keydown', (keyboardEvent) => {
+  // Dock navigation and browser shortcuts must not become flight commands.
+  if (keyboardEvent.ctrlKey || keyboardEvent.metaKey) return;
+  if (
+    clientGameState.landed &&
+    ['Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(keyboardEvent.code)
+  )
+    return;
   // Native activation/focus keys belong to the focused control. Steering and
   // remapped actions still work after clicking a HUD button; separators consume
   // only their own sizing keys locally.
@@ -2227,6 +2250,7 @@ elementById2('ctrlkeys').onclick = () => {
   openOpts(true);
 };
 // Key binding editor remains available through Options and Controls.
+elementById2('gclose').onclick = closeMap;
 elementById2('cbmap').onclick = () =>
   elementById2('gmap').classList.contains('hidden') ? openMap() : closeMap();
 /**
@@ -2459,13 +2483,7 @@ flightEngine.engine.input.pointers.on('move', (event) => {
   setCursor(cursorFor(pickAt2));
 });
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) return;
-  mouse.down = false;
-  clientGameState._look = null;
-  clientGameState._lookT = null;
-  touch.keys = {};
-  touch.stick = null;
-  padding.blocked = true;
+  if (document.hidden) clearManualFlightInput();
 });
 canvas.addEventListener('pointercancel', () => {
   mouse.down = false;
@@ -2700,7 +2718,17 @@ elementById2('tutskip').onclick = () => {
 };
 
 // ------------------------------------------------------------------ options
-const CHECKS = ['dmg', 'shake', 'reducedEffects', 'mouseAim', 'jumpLeft', 'notify', 'cb', 'mute'];
+const CHECKS = [
+  'dmg',
+  'shake',
+  'reducedEffects',
+  'mouseAim',
+  'assistMissiles',
+  'jumpLeft',
+  'notify',
+  'cb',
+  'mute',
+];
 let rebinding: string | null = null;
 /**
  * Formats a KeyboardEvent.code string into a readable label.
@@ -2889,6 +2917,8 @@ for (const cHECKS of CHECKS)
       Notification.permission === 'default'
     )
       void Notification.requestPermission();
+    if (cHECKS === 'assistMissiles')
+      send({ t: 'combat', op: 'missiles', on: clientGameState.opts.assistMissiles !== false });
     applyOpts();
     saveOpts();
   };
@@ -3127,86 +3157,109 @@ function touchInput(clientInput: ClientInput): void {
     clientInput.turn = Math.sign(distance);
   if (magnitude > 0.6 && Math.abs(distance) < 0.8) clientInput.thrust = 1;
 }
+const touchPointers = new Map<number, HTMLElement>();
+let touchStickPointer: number | null = null;
+
+/** Release touch holds across physical cancellation, modal changes and hidden pages. */
+function releaseTouchControls(): void {
+  touchPointers.clear();
+  touchStickPointer = null;
+  touch.keys = {};
+  touch.stick = null;
+  for (const button of elementById2('tbtns').querySelectorAll('.on')) button.classList.remove('on');
+  const knob = elementById2('tstick').querySelector<HTMLElement>('i');
+  if (knob) knob.style.transform = '';
+}
 if (
   'ontouchstart' in window ||
   ((window.matchMedia as typeof matchMedia | undefined) && matchMedia('(pointer: coarse)').matches)
 ) {
   elementById2('touch').classList.remove('hidden');
-  const cachedElement = elementById2('tstick'),
-    knob = cachedElement.querySelector<HTMLElement>('i')!;
-  const move = (touch2: Touch) => {
-    const domRect = cachedElement.getBoundingClientRect(),
-      centerX = domRect.left + domRect.width / 2,
-      centerY = domRect.top + domRect.height / 2;
-    let deltaX = (touch2.clientX - centerX) / (domRect.width / 2),
-      deltaY = (touch2.clientY - centerY) / (domRect.height / 2);
-    const message = Math.hypot(deltaX, deltaY);
-    if (message > 1) {
-      deltaX /= message;
-      deltaY /= message;
+  const stick = elementById2('tstick');
+  const knob = stick.querySelector<HTMLElement>('i')!;
+  const move = (event: PointerEvent) => {
+    const bounds = stick.getBoundingClientRect();
+    let dx = (event.clientX - bounds.left - bounds.width / 2) / (bounds.width / 2);
+    let dy = (event.clientY - bounds.top - bounds.height / 2) / (bounds.height / 2);
+    const magnitude = Math.hypot(dx, dy);
+    if (magnitude > 1) {
+      dx /= magnitude;
+      dy /= magnitude;
     }
-    touch.stick = { dx: deltaX, dy: deltaY };
-    knob.style.transform = `translate(${deltaX * 50}px,${deltaY * 50}px)`;
+    touch.stick = { dx, dy };
+    knob.style.transform = `translate(${dx * 50}px,${dy * 50}px)`;
   };
-  cachedElement.addEventListener(
-    'touchstart',
-    (touchEvent) => {
-      touchEvent.preventDefault();
-      if (typing() || overlays.blocksFlight()) return;
-      audio.unlock();
-      move(touchEvent.targetTouches[0]);
-    },
-    { passive: false },
-  );
-  cachedElement.addEventListener(
-    'touchmove',
-    (touchEvent) => {
-      touchEvent.preventDefault();
-      if (typing() || overlays.blocksFlight()) return;
-      move(touchEvent.targetTouches[0]);
-    },
-    { passive: false },
-  );
-  cachedElement.addEventListener('touchend', () => {
+  stick.addEventListener('pointerdown', (event) => {
+    if (
+      event.button !== 0 ||
+      typing() ||
+      clientGameState.landed ||
+      overlays.blocksFlight() ||
+      touchStickPointer !== null
+    )
+      return;
+    event.preventDefault();
+    event.stopPropagation();
+    audio.unlock();
+    touchStickPointer = event.pointerId;
+    stick.setPointerCapture(event.pointerId);
+    move(event);
+  });
+  stick.addEventListener('pointermove', (event) => {
+    if (touchStickPointer === event.pointerId && !overlays.blocksFlight()) move(event);
+  });
+  const releaseStick = (event: PointerEvent) => {
+    if (touchStickPointer !== event.pointerId) return;
+    touchStickPointer = null;
     touch.stick = null;
     knob.style.transform = '';
-  });
-  for (const htmlElement of elementById2('tbtns').querySelectorAll<HTMLElement>('button')) {
-    htmlElement.addEventListener(
-      'touchstart',
-      (touchEvent) => {
-        touchEvent.preventDefault();
-        if (htmlElement.dataset.tap === 'map' && !typing() && overlays.isTop('gmap')) {
-          closeMap();
-          return;
-        }
-        if (typing() || overlays.blocksFlight()) return;
-        audio.unlock();
-        htmlElement.classList.add('on');
-        if (htmlElement.dataset.k!) touch.keys[htmlElement.dataset.k!] = true;
-        const time = htmlElement.dataset.tap!;
-        if (time === 'target') nearestHostile();
-        else if (time === 'land') landRequest();
-        else if (time === 'map')
-          elementById2('gmap').classList.contains('hidden') ? openMap() : closeMap();
-        else if (time === 'board') openBoard();
-        else if (time === 'jump') jumpNext();
-      },
-      { passive: false },
-    );
-    htmlElement.addEventListener('touchend', () => {
-      htmlElement.classList.remove('on');
-      if (htmlElement.dataset.k!) touch.keys[htmlElement.dataset.k!] = false;
+  };
+  for (const name of ['pointerup', 'pointercancel', 'lostpointercapture'] as const)
+    stick.addEventListener(name, releaseStick);
+  for (const button of elementById2('tbtns').querySelectorAll<HTMLElement>('button')) {
+    button.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0 || typing() || clientGameState.landed || overlays.blocksFlight())
+        return;
+      if (!button.dataset.k) return;
+      event.preventDefault();
+      event.stopPropagation();
+      audio.unlock();
+      button.setPointerCapture(event.pointerId);
+      touchPointers.set(event.pointerId, button);
+      button.classList.add('on');
+      if (button.dataset.k) touch.keys[button.dataset.k] = true;
     });
+    // Open dialogs after release so a tap cannot click through into the new dialog.
+    button.addEventListener('click', (event) => {
+      if (!button.dataset.tap || typing() || clientGameState.landed || overlays.blocksFlight())
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      audio.unlock();
+      const action = button.dataset.tap;
+      if (action === 'target') nearestHostile();
+      else if (action === 'land') landRequest();
+      else if (action === 'map') openMap();
+      else if (action === 'board') openBoard();
+      else if (action === 'jump') jumpNext();
+    });
+    const release = (event: PointerEvent) => {
+      touchPointers.delete(event.pointerId);
+      const held = [...touchPointers.values()].includes(button);
+      button.classList.toggle('on', held);
+      if (button.dataset.k) touch.keys[button.dataset.k] = held;
+    };
+    for (const name of ['pointerup', 'pointercancel', 'lostpointercapture'] as const)
+      button.addEventListener(name, release);
   }
+  window.addEventListener('blur', releaseTouchControls);
 }
 function clearManualFlightInput(): void {
   flightEngine.input.clear();
   mouse.down = false;
   clientGameState._look = null;
   clientGameState._lookT = null;
-  touch.keys = {};
-  touch.stick = null;
+  releaseTouchControls();
   padding.blocked = true;
   if (clientGameState.view && !clientGameState.landed)
     send({ t: 'input', seq: prediction.nextSequence(), th: 0, tu: 0, ab: 0, rv: 0, f1: 0, f2: 0 });
@@ -3228,8 +3281,7 @@ function fixedTick(): void {
   if (overlays.blocksFlight()) {
     flightEngine.input.clear();
     mouse.down = false;
-    touch.keys = {};
-    touch.stick = null;
+    releaseTouchControls();
     padding.blocked = true;
   }
   // Preserve automatic-control intent even if guidance completes or refuses this tick.
@@ -3430,13 +3482,18 @@ setInterval(() => {
 elementById2('combatassist').onclick = () => {
   clientGameState.autoRoute = false;
   setAuto(null);
+  send({ t: 'combat', op: 'missiles', on: clientGameState.opts.assistMissiles !== false });
   send({ t: 'combat', op: 'assist', on: !(clientGameState.combat && clientGameState.combat.on) });
 };
 elementById2('combatstop').onclick = () => send({ t: 'combat', op: 'off' });
-elementById2('combatdelegate').onchange = (event) =>
+elementById2('combatdelegate').onchange = (event) => {
+  send({ t: 'combat', op: 'missiles', on: clientGameState.opts.assistMissiles !== false });
   send({ t: 'combat', op: 'delegate', on: (event.target as HTMLInputElement).checked });
-elementById2('combatcoordinate').onchange = (event) =>
+};
+elementById2('combatcoordinate').onchange = (event) => {
+  send({ t: 'combat', op: 'missiles', on: clientGameState.opts.assistMissiles !== false });
   send({ t: 'combat', op: 'coordinate', on: (event.target as HTMLInputElement).checked });
+};
 
 // Escape belongs to existing dialogs/text inputs first. Logging out is always explicit.
 let quitPaused = false;
@@ -3494,8 +3551,7 @@ async function logOut(reason = '') {
   account = _lastSnapT = 0;
   mouse.down = mouse.in = false;
   padding.prev = [];
-  touch.keys = {};
-  touch.stick = null;
+  releaseTouchControls();
   storyQ.length = 0;
   quitPaused = false;
   overlays.reset();

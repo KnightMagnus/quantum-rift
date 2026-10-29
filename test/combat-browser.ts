@@ -103,6 +103,7 @@ interface CombatTelemetry {
   distance: number;
   shots: number;
   combat: import('../server/combat-assist.ts').CombatPayload;
+  assistMissiles: boolean;
   playerHealth: { shield: number; armor: number };
   retaliating: string[];
   npcTargets: [string, number][];
@@ -180,6 +181,29 @@ try {
   await page.locator('[data-slot="Browser Assist"]').click();
   assert.equal(await page.evaluate(() => G.solo), true, 'actual Solo launch path');
   await page.waitForFunction(() => window.G?.you && G.landed);
+  await page.click('#optbtn');
+  assert.equal(
+    await page.locator('#opt-assistMissiles').isChecked(),
+    true,
+    'legacy default permits missiles',
+  );
+  await page.locator('#opt-assistMissiles').uncheck();
+  assert.equal(
+    await page.evaluate(() => JSON.parse(localStorage.getItem('rift.opts') || '{}').assistMissiles),
+    false,
+  );
+  await page.click('#optclose');
+  await page.reload();
+  await page.locator('[data-slot="Browser Assist"]').click();
+  await page.waitForFunction(() => window.G?.you && G.landed);
+  await page.click('#optbtn');
+  assert.equal(
+    await page.locator('#opt-assistMissiles').isChecked(),
+    false,
+    'missile preference survives reload',
+  );
+  await page.click('#optclose');
+
   for (let index = 0; index < 10 && (await page.locator('#storybox').isVisible()); index++)
     await page.locator('#storyb button').first().click();
   await page.click('#depart');
@@ -188,6 +212,15 @@ try {
     (telemetry3) => telemetry3.foe.id && telemetry3.player.target === 0,
     'spawn fixture',
   );
+  assert.equal(
+    initial.assistMissiles,
+    false,
+    'saved policy reaches the authoritative session after reload',
+  );
+  await page.click('#optbtn');
+  await page.locator('#opt-assistMissiles').check();
+  await page.click('#optclose');
+  await until((telemetry) => telemetry.assistMissiles, 'restored missile policy');
   assert.equal(initial.newcomer, true);
   assert.equal(initial.ops, 0);
   assert.equal(initial.foe.target, 0);

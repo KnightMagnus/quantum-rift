@@ -20,6 +20,7 @@
   </head>
   <body class="pressure-hull">
     <canvas id="view"></canvas>
+    <div id="connectionstatus" class="hidden" role="status" aria-live="polite"></div>
 
     <!-- right-hand HUD column: status bar plus the built-in companion -->
     <aside id="hud" class="metal">
@@ -87,7 +88,7 @@
           ALLIES</button
         ><button data-tab="log">LOG</button>
       </nav>
-      <section class="well" id="cpanel">
+      <section class="well" id="cpanel" aria-label="Ship console" tabindex="0">
         <div class="tab" id="t-radio">
           <div class="rnow" id="rnow">
             <div class="nosig">
@@ -95,12 +96,11 @@
             </div>
           </div>
           <div class="rrow">
-            <input id="rq" placeholder="Filter stations or moods..." /><button
-              class="btn sm"
-              id="rgo"
-            >
-              SCAN
-            </button>
+            <input
+              id="rq"
+              aria-label="Filter radio stations"
+              placeholder="Filter stations or moods..."
+            /><button class="btn sm" id="rgo">SCAN</button>
           </div>
           <div class="rrow">
             <button class="btn sm on" id="rfav">FAVORITES</button
@@ -110,7 +110,13 @@
           <div class="list" id="rlist"></div>
         </div>
         <div class="tab" id="t-codex">
-          <div class="rrow"><input id="cq" placeholder="Search ships and outfits..." /></div>
+          <div class="rrow">
+            <input
+              id="cq"
+              aria-label="Search ships and outfits"
+              placeholder="Search ships and outfits..."
+            />
+          </div>
           <div class="chips" id="cchips"></div>
           <div class="list" id="clist"></div>
         </div>
@@ -131,11 +137,21 @@
         <div class="tab" id="t-captains"><div id="capview"></div></div>
         <div class="tab" id="t-log">
           <div class="rrow">
-            <input id="lq" placeholder="Captain's log..." /><button class="btn sm" id="lgo">
+            <input id="lq" aria-label="Captain log entry" placeholder="Captain's log..." /><button
+              class="btn sm"
+              id="lgo"
+            >
               LOG
             </button>
           </div>
-          <div class="list" id="llist"></div>
+          <div
+            class="list"
+            id="llist"
+            role="log"
+            aria-live="off"
+            aria-label="Captain log"
+            tabindex="0"
+          ></div>
         </div>
       </section>
     </aside>
@@ -147,7 +163,12 @@
         ><button data-ch="sys" title="Only this system">SYSTEM</button
         ><button data-ch="armada" title="Only your Armada (/a)">ARMADA</button>
       </div>
-      <input id="chatin" placeholder="Press Enter to chat" maxlength="240" />
+      <input
+        aria-label="Chat message"
+        id="chatin"
+        placeholder="Press Enter to chat"
+        maxlength="240"
+      />
       <div class="cbtns">
         <button class="cb" id="cbmap" title="Galaxy map (M)">MAP</button
         ><button class="cb" id="cbvol" title="Volume (N mutes)">🔉</button
@@ -169,7 +190,7 @@
     </aside>
     <div id="flightstatus" aria-label="Ship status"></div>
     <div id="viewscreen-trim" aria-hidden="true"></div>
-    <div id="cockpit" class="metal">
+    <div id="cockpit" class="metal" tabindex="0" role="region" aria-label="Flight instruments">
       <div id="functiondock" aria-label="Ship function shortcuts">
         <button
           id="captainshortcut"
@@ -393,7 +414,16 @@
           </div>
         </div>
       </div>
-      <div id="chat"><div id="chatlog" tabindex="0" aria-label="Chat history"></div></div>
+      <div id="chat">
+        <div
+          id="chatlog"
+          tabindex="0"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+          aria-label="Chat history"
+        ></div>
+      </div>
       <button
         id="jumpholo"
         class="hidden"
@@ -459,9 +489,16 @@
         </div>
         <div class="splash-tag">Your ship. Your crew. An open galaxy.</div>
         <div class="loginbox metal">
-          <input id="lname" placeholder="Captain name" maxlength="20" autocomplete="username" />
+          <input
+            id="lname"
+            aria-label="Captain name"
+            placeholder="Captain name"
+            maxlength="20"
+            autocomplete="username"
+          />
           <input
             id="lpass"
+            aria-label="Password"
             placeholder="Password (new names are registered)"
             type="password"
             autocomplete="current-password"
@@ -484,7 +521,7 @@
       <div class="landbox metal">
         <div class="landscene">
           <div class="landpic" id="landpic"></div>
-          <div id="landnews"></div>
+          <section id="landnews" aria-label="Spaceport news"></section>
         </div>
         <div class="landhead">
           <h2 id="landname"></h2>
@@ -492,7 +529,13 @@
           <p id="landdesc"></p>
         </div>
         <nav id="ltabs"></nav>
-        <div class="landbody well" id="landbody"></div>
+        <div
+          class="landbody well"
+          id="landbody"
+          tabindex="0"
+          role="region"
+          aria-label="Dock services"
+        ></div>
         <div class="landfoot">
           <span class="land-wallet"
             ><span id="landcr" class="cr"></span
@@ -518,6 +561,10 @@
           <section class="options-section" aria-label="Flight and display">
             <div class="osect">FLIGHT</div>
             <label><input type="checkbox" id="opt-dmg" /> Damage numbers</label>
+            <label
+              ><input type="checkbox" id="opt-assistMissiles" /> Assist uses missiles (restocking
+              costs credits)</label
+            >
             <label><input type="checkbox" id="opt-shake" /> Screen shake</label>
             <label
               ><input type="checkbox" id="opt-notify" /> Desktop notifications when the game is in
@@ -627,8 +674,8 @@
               HOME</button
             ><button class="btn sm" id="gfit">WHOLE GALAXY</button
             ><button class="btn sm on" id="glegend" title="Show or hide the map legend">
-              LEGEND
-            </button></span
+              LEGEND</button
+            ><button class="btn sm" id="gclose" aria-label="Close galaxy map">CLOSE</button></span
           >
         </h2>
         <canvas id="gcanvas"></canvas>

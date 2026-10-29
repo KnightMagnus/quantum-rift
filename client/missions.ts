@@ -310,9 +310,7 @@ export function missionsHtml(clientGameState: ClientGameState): string {
           else {
             const route2 = captainRoute(clientGameState, missionTarget.sys);
             jumps =
-              route2 && route2.length
-                ? `${route2.length} jump${route2.length > 1 ? 's' : ''}`
-                : 'no known route';
+              route2 && route2.length ? `${route2.length} jump${route2.length > 1 ? 's' : ''}` : '';
           }
         }
         return `<div data-mission-key="${escapeHtml(missionTarget.key)}" class="mcard${missionTarget.kind === 'story' || missionTarget.kind === 'arc' ? ' story' : missionTarget.kind === 'career' ? ' career' : ''}${missionTarget.urgent ? ' urgent' : ''}">
@@ -320,12 +318,24 @@ export function missionsHtml(clientGameState: ClientGameState): string {
       <div class="t">${escapeHtml(missionTarget.title)}</div>
       <div class="mstat">${escapeHtml(missionTarget.status)}</div>${missionFactsHtml(clientGameState, missionTarget, true)}
       ${missionTarget.kind === 'story' && missionTargets2.some((missionTarget) => missionTarget.kind === 'career') ? `<details class="small dim"><summary>The story can wait until you know the ropes. Read more</summary>${escapeHtml(missionTarget.text)}</details>` : `<div class="dim small">${escapeHtml(missionTarget.text)}</div>`}
-      <div class="mfoot"><button class="btn sm" data-pin="${escapeHtml(missionTarget.key)}" aria-pressed="${clientGameState.pinnedObjective === missionTarget.key}">${clientGameState.pinnedObjective === missionTarget.key ? 'UNPIN' : 'PIN'}</button><span class="dim small">${jumps}</span>${missionTarget.sys && missionTarget.sys !== clientGameState.sys ? `<button class="btn sm" data-plot="${escapeHtml(missionTarget.sys)}">PLOT COURSE</button>` : ''}${missionTarget.pendingQuest ? `<button class="btn sm mab" data-questdrop="${escapeHtml(missionTarget.pendingQuest)}" title="Abandon this story">✕</button>` : missionTarget.kind === 'job' || missionTarget.quest || (missionTarget.kind === 'arc' && missionTarget.tag === 'FARSIDE EXPEDITION') ? `<button class="btn sm mab" data-abandon="${escapeHtml(missionTarget.key)}" title="Drop this job">✕</button>` : ''}</div>
+      <div class="mfoot"><button class="btn sm" data-pin="${escapeHtml(missionTarget.key)}" aria-pressed="${clientGameState.pinnedObjective === missionTarget.key}">${clientGameState.pinnedObjective === missionTarget.key ? 'UNPIN' : 'PIN'}</button><span class="dim small">${jumps}</span>${missionRouteButton(clientGameState, missionTarget.sys)}${missionTarget.pendingQuest ? `<button class="btn sm mab" data-questdrop="${escapeHtml(missionTarget.pendingQuest)}" title="Abandon this story">✕</button>` : missionTarget.kind === 'job' || missionTarget.quest || (missionTarget.kind === 'arc' && missionTarget.tag === 'FARSIDE EXPEDITION') ? `<button class="btn sm mab" data-abandon="${escapeHtml(missionTarget.key)}" title="Drop this job">✕</button>` : ''}</div>
     </div>`;
       })
       .join('') +
     journalHtml(clientGameState)
   );
+}
+
+/** Explain chart knowledge without revealing routes or hiding available work. */
+export function missionRouteButton(
+  clientGameState: ClientGameState,
+  destination: string | null | undefined,
+  label = 'PLOT COURSE',
+): string {
+  if (!destination || destination === clientGameState.sys) return '';
+  const charted = captainRoute(clientGameState, destination).length > 0;
+  const reason = 'Route not charted — explore or buy a chart.';
+  return `<button class="btn sm" data-plot="${escapeHtml(destination)}"${charted ? '' : ` disabled title="${reason}"`}>${label}</button>${charted ? '' : `<span class="dim small">${reason}</span>`}`;
 }
 
 // One deliberate next step, inside the existing Tray; all other tracking stays visible.
@@ -334,5 +344,5 @@ export function pinnedObjectiveHtml(clientGameState: ClientGameState) {
     (missionTarget) => missionTarget.key === clientGameState.pinnedObjective,
   );
   if (!missionTarget) return '';
-  return `<b class="small">PINNED · ${escapeHtml(missionTarget.title)}</b><div class="small">${escapeHtml(missionTarget.status)}</div><div class="mfoot">${missionTarget.sys && missionTarget.sys !== clientGameState.sys ? `<button class="btn sm" data-plot="${escapeHtml(missionTarget.sys)}">PLOT COURSE</button>` : ''}<button class="btn sm" data-pin="${escapeHtml(missionTarget.key)}" aria-label="Unpin objective">UNPIN</button></div>`;
+  return `<b class="small">PINNED · ${escapeHtml(missionTarget.title)}</b><div class="small">${escapeHtml(missionTarget.status)}</div><div class="mfoot">${missionRouteButton(clientGameState, missionTarget.sys)}<button class="btn sm" data-pin="${escapeHtml(missionTarget.key)}" aria-label="Unpin objective">UNPIN</button></div>`;
 }

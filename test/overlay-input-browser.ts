@@ -562,13 +562,11 @@ try {
   await page.evaluate(() => {
     window.fixturePad = null;
   });
-  for (const state of ['visible', 'hidden'] as const) {
-    await page.locator('#tbtns [data-tap="map"]').evaluate((button) => {
-      button.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, cancelable: true }));
-      button.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
-    });
-    await page.locator('#gmap').waitFor({ state });
-  }
+  await page.locator('#tbtns [data-tap="map"]').tap();
+  await page.locator('#gmap').waitFor({ state: 'visible' });
+  assert.equal(await page.locator('#touch').isVisible(), false, 'map owns touch input while open');
+  await page.locator('#gclose').tap();
+  await page.locator('#gmap').waitFor({ state: 'hidden' });
 
   // Seed an existing navigation intent, then exercise actual guidance while manual input is blocked.
   await page.evaluate(async () => {

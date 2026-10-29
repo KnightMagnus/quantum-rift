@@ -781,6 +781,29 @@ export function stockOutfitLimit(
   );
 }
 
+/** Explain a non-ammunition installation denial without mutating the loadout. */
+export function outfitInstallProblem(
+  assets: GameAssets,
+  ship: ShipLoadout,
+  stats: Pick<ComputedShipStats, 'free' | 'guns' | 'turrets' | 'maxGuns' | 'maxTurrets'>,
+  outfitId: number,
+  quantity: number,
+  shipless = false,
+): string | null {
+  const outfit = allOutfits(assets)[outfitId];
+  if (!outfit) return 'Unknown outfit.';
+  if (shipless)
+    return 'You have no active ship. Choose FLY THIS in your drydock, or buy one at a shipyard.';
+  const limit = stockOutfitLimit(assets, ship, outfitId);
+  if ((ship.outfits[outfitId] || 0) + quantity > limit) return `You can carry at most ${limit}.`;
+  if ((outfit.mass || 0) * quantity > stats.free) return 'Not enough free space.';
+  if (outfit.eff?.weapon && outfit.turret && stats.turrets + quantity > stats.maxTurrets)
+    return 'No free turret mounts.';
+  if (outfit.eff?.weapon && !outfit.turret && stats.guns + quantity > stats.maxGuns)
+    return 'No free gun mounts.';
+  return null;
+}
+
 // Factory equipment is included in the hull price, not a second retail purchase.
 // Reserve at most half that price for removable stock gear; the rest is chassis.
 /**

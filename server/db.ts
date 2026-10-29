@@ -1,3 +1,4 @@
+import { preparedLogin } from './local-login.ts';
 import { validateFeatureSnapshots } from './save-validation.ts';
 import type { IndexFleetWorld } from './index-fleet.ts';
 import type { NhalPopulation } from './nhal.ts';
@@ -240,8 +241,9 @@ export class DB implements GameStorage {
    * @returns Newly created player account record.
    */
   create(name: string, pass: string, fresh: Partial<Omit<PlayerData, 'name'>>): PlayerAccount {
-    const salt = crypto.randomBytes(16).toString('hex');
-    const hash = crypto.scryptSync(pass, salt, 32).toString('hex');
+    const prepared = preparedLogin(this, name, pass);
+    const salt = prepared?.salt ?? crypto.randomBytes(16).toString('hex');
+    const hash = prepared?.hash ?? crypto.scryptSync(pass, salt, 32).toString('hex');
     const playerAccount = {
       name: String(name).trim(),
       salt,
@@ -262,7 +264,11 @@ export class DB implements GameStorage {
    * @returns True if the password matches the stored hash, false otherwise.
    */
   check(playerAccount: PlayerAccount, pass: string): boolean {
-    const nonSharedBuffer = crypto.scryptSync(pass, playerAccount.salt, 32);
+    const prepared = preparedLogin(this, playerAccount.name, pass);
+    const nonSharedBuffer =
+      prepared?.account === playerAccount && prepared.salt === playerAccount.salt
+        ? Buffer.from(prepared.hash, 'hex')
+        : crypto.scryptSync(pass, playerAccount.salt, 32);
     return crypto.timingSafeEqual(nonSharedBuffer, Buffer.from(playerAccount.hash, 'hex'));
   }
 
@@ -306,6 +312,8 @@ export class DB implements GameStorage {
     // Never overwrite a committed journal after a failed flush: require restart/recovery.
     if (fileSystem.existsSync(this.journal))
       throw new Error('Pending database checkpoint requires recovery');
+    // Reject invalid live mutations before installing a journal that startup cannot load.
+    validateLocalSnapshots(this.players, this.world);
     const players = JSON.stringify(this.players),
       world = JSON.stringify(this.world);
     this.writeDurable(this.journal + '.tmp', JSON.stringify({ version: 1, players, world }));

@@ -1015,7 +1015,7 @@ export function addSolGateway(SYSTEMS: SpaceSystem[]): {
     }
   const starSystem: SpaceSystem = {
     id: 'sol',
-    name: 'Sol',
+    name: 'Sol Minor',
     faction: 'quantum',
     x: Math.round(best!.x),
     y: Math.round(best!.y),
@@ -1053,7 +1053,7 @@ export function addSolGateway(SYSTEMS: SpaceSystem[]): {
       },
       {
         id: 'sol-gateway',
-        name: 'The Sol Gateway',
+        name: 'The Sol Minor Gateway',
         kind: 'wormhole',
         color: '#9ac8ff',
         r: 110,
@@ -1131,7 +1131,7 @@ export function addSolGateway(SYSTEMS: SpaceSystem[]): {
         tech: 0,
         wormhole: 'sol',
         exit: 'sol-gateway',
-        desc: 'The far mouth of the Sol Gateway. Through it, faintly, the light of home.',
+        desc: 'The far mouth of the Sol Minor Gateway. Through it, faintly, the light of home.',
       });
     }
     for (const rawStellarBody of starSystem.stellars) rawStellarBody.outlaw = false;

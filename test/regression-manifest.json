@@ -149,7 +149,14 @@
     "trade-safety.ts",
     "hyperspace-arrival.ts",
     "index-survey-tour.ts",
-    "faction-store-catalog.ts"
+    "faction-store-catalog.ts",
+    "local-login.ts",
+    "native-recovery.ts",
+    "gameplay-safety.ts",
+    "recovery-safety.ts",
+    "story-order-safety.ts",
+    "syndicate-safety.ts",
+    "quest-directions.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -214,7 +221,10 @@
     "bank-panel-browser.ts",
     "landed-responsive-browser.ts",
     "colony-exchange-layout-browser.ts",
-    "landed-colony-responsive-browser.ts"
+    "landed-colony-responsive-browser.ts",
+    "landed-zoom-browser.ts",
+    "touch-controls-browser.ts",
+    "combat-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -835,7 +845,11 @@
     "performance-budgets.ts": ["helpers/browser-fixture.ts", "helpers/native-performance.ts"],
     "station-service.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
     "combat-playability.ts": ["helpers/combat-playability-simulation.ts"],
-    "save-feature-validation.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
+    "save-feature-validation.ts": [
+      "helpers/refinery-fixture.ts",
+      "helpers/temp-data.ts",
+      "fixtures/import-checkpoint-crash.ts"
+    ],
     "save-postgres-restore.ts": ["helpers/nakama-service.ts", "helpers/temp-data.ts"],
     "browser-server-liveness.ts": [
       "helpers/temp-data.ts",
@@ -860,10 +874,22 @@
     "helpers/landed-responsive.ts": [
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
-      "helpers/chromium.ts"
+      "helpers/chromium.ts",
+      "helpers/landed-zoom.ts",
+      "helpers/touch-controls.ts"
     ],
     "landed-responsive-browser.ts": ["helpers/landed-responsive.ts"],
-    "landed-colony-responsive-browser.ts": ["helpers/landed-responsive.ts"]
+    "landed-colony-responsive-browser.ts": ["helpers/landed-responsive.ts"],
+    "gameplay-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"],
+    "recovery-safety.ts": ["helpers/refinery-fixture.ts"],
+    "story-order-safety.ts": ["helpers/refinery-fixture.ts"],
+    "syndicate-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"],
+    "quest-directions.ts": ["helpers/refinery-fixture.ts"],
+    "landed-zoom-browser.ts": ["helpers/landed-responsive.ts"],
+    "helpers/landed-zoom.ts": ["helpers/browser-fixture.ts"],
+    "touch-controls-browser.ts": ["helpers/landed-responsive.ts"],
+    "helpers/touch-controls.ts": ["helpers/chromium.ts", "helpers/browser-fixture.ts"],
+    "combat-browser.ts": ["helpers/chromium.ts", "fixtures/preload-combat-browser.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -877,7 +903,8 @@
         "client/hails_ui.ts",
         "client/render.ts",
         "server/save-migrations.ts",
-        "server/save-validation.ts"
+        "server/save-validation.ts",
+        "server/local-login.ts"
       ],
       "services": [],
       "tests": [
@@ -893,16 +920,23 @@
         "save-generator-browser.ts",
         "save-migrations.ts",
         "save-feature-validation.ts",
-        "save-postgres-restore.ts"
+        "save-postgres-restore.ts",
+        "local-login.ts",
+        "gameplay-safety.ts"
       ],
-      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Empty default seeds in online/Solo startup, preserved existing accounts/credentials and claims, explicit operator fixtures, no name-based radio unlocks; Python-generated saves across every hull/site/tier/port, real import/login and file-picker UI, invalid settings and overwrite denial, station-claim conflict/release/reload safety. Escape logout confirmation online/Solo, modal priority, cancel and prior pause, durable flight disconnect, cleared credentials/private UI state, refreshed Solo slots, repeated account switching without reload or auto-reconnect. Ordered detached cargo/tutorial migration and disposable restore rehearsal preserve source bytes, reject corrupt/unsupported ledgers, tutorial state and malformed/unreadable local snapshots, and retain journal freeze/reopen behavior; production native CAS fixture drills cover frozen retries, pre/postcommit restart, stale writers and exact co-op fleet/directive refunds without duplicate balances or log entries. Present-field feature validation rejects corrupt compatibility state before local/native load, journal recovery, import and login mutations; committed synthetic default/dock/progress fixtures exercise real login and repeat reloads. Disposable native PostgreSQL pg_dump/pg_restore preserves storage permissions/CAS versions and authenticated identity, exact refunds and restart logs in a separate database."
+      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Empty default seeds in online/Solo startup, preserved existing accounts/credentials and claims, explicit operator fixtures, no name-based radio unlocks; Python-generated saves across every hull/site/tier/port, real import/login and file-picker UI, invalid settings and overwrite denial, station-claim conflict/release/reload safety. Escape logout confirmation online/Solo, modal priority, cancel and prior pause, durable flight disconnect, cleared credentials/private UI state, refreshed Solo slots, repeated account switching without reload or auto-reconnect. Ordered detached cargo/tutorial migration and disposable restore rehearsal preserve source bytes, reject corrupt/unsupported ledgers, tutorial state and malformed/unreadable local snapshots, and retain journal freeze/reopen behavior; production native CAS fixture drills cover frozen retries, pre/postcommit restart, stale writers and exact co-op fleet/directive refunds without duplicate balances or log entries. Core import catalog/reference/balance validation, known active story/research/arc lookups and continuous loan fields, and one complete replacement checkpoint preserve fractions and legacy defaults, deny invalid inventory before journal installation, and recover old-or-complete-new slots and station ownership across four real SIGKILL boundaries. Present-field feature validation rejects corrupt compatibility state before local/native load, journal recovery, import and login mutations; committed synthetic default/dock/progress fixtures exercise real login and repeat reloads. Disposable native PostgreSQL pg_dump/pg_restore preserves storage permissions/CAS versions and authenticated identity, exact refunds and restart logs in a separate database. Local network handshakes use bounded background password derivation, scoped credentials, durable admission, disconnect cancellation and bounded new-account/socket admission."
     },
     {
       "id": "protocol-http",
-      "owners": ["server/main.ts"],
+      "owners": [
+        "server/main.ts",
+        "server/local-main.ts",
+        "server/nakama-host.ts",
+        "server/static-path.ts"
+      ],
       "services": [],
       "tests": ["http-api.ts"],
-      "asserts": "Real HTTP public beta version/static/MIME/cache/404/traversal checks and online-vs-solo API permissions."
+      "asserts": "Real HTTP public beta version/static/MIME/cache/404 checks, independently contained client/shared/emitted roots including symlink denial and bounded malformed URL replies on local and native HTTP hosts, and online-vs-solo API permissions."
     },
     {
       "id": "protocol-websocket",
@@ -935,7 +969,7 @@
       "id": "hangar",
       "owners": ["server/hangar.ts"],
       "services": ["hangar"],
-      "tests": ["v05.ts", "v12.ts", "v21.ts"],
+      "tests": ["v05.ts", "v12.ts", "v21.ts", "gameplay-safety.ts"],
       "asserts": "Shuttle dispatch/resolution/repair, officer assignment/XP/ranks, research prerequisites/queue, refining, stored loadouts and boarding."
     },
     {
@@ -978,7 +1012,7 @@
       "owners": ["server/rivals.ts", "shared/rivals.ts"],
       "services": ["rivals"],
       "tests": ["v11.ts", "core-actions.ts", "planet-portrait-art.ts"],
-      "asserts": "Named career population, unique captain/ship names and matching stable portrait IDs; original seeded luck without the former floors; equal fresh-world wealth rules for all thirty rivals and preservation of existing rival careers on reload. Relationships, hunters, damage/death/bounty, news/market flashes and status route remain covered."
+      "asserts": "Named career population, unique captain/ship names and matching stable portrait IDs; original seeded luck without the former floors; equal fresh-world wealth rules for all thirty rivals and preservation of existing rival careers on reload. Careers pause with no authenticated open connection and resume without offline catch-up; anonymous and closed connections do not advance income, kills, hulls or location. Relationships, hunters, damage/death/bounty, news/market flashes and status route remain covered."
     },
     {
       "id": "hailing",
@@ -990,7 +1024,8 @@
         "network-systems.ts",
         "index-presentation.ts",
         "ui-polish-browser.ts",
-        "station-docking.ts"
+        "station-docking.ts",
+        "gameplay-safety.ts"
       ],
       "asserts": "NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls. Rescue rendezvous marking is free; repair requires range and affordable supplies, settles once, and Index machines never request rescue. Index and Nhal calls preserve ship-only identity for outgoing, incoming and archived transmissions; missing artwork falls back to a machine ship or no image, never a captain portrait. A captain's own Personal Station always clears them to land, never asks for a bribe and keeps its home refinery open, whatever their record in that system. Landing bribes recheck current refusal through authoritative dispatch, reject docked/cleared/pass/home/outlaw/invalid targets without save mutations, and charge a genuinely refused captain once."
     },
@@ -1005,7 +1040,14 @@
       "id": "syndicate",
       "owners": ["server/syndicate.ts"],
       "services": ["syndicate"],
-      "tests": ["v12.ts", "v203.ts", "ship-banking.ts", "bank-panel-browser.ts"],
+      "tests": [
+        "v12.ts",
+        "v203.ts",
+        "ship-banking.ts",
+        "bank-panel-browser.ts",
+        "gameplay-safety.ts",
+        "syndicate-safety.ts"
+      ],
       "asserts": "Black market/Syndicate career, officer promotion/lower decks, bank loans/interest, timed delivery contracts. Compact loan dialog replaces the landed Bank tab, retains authoritative borrowing/repayment and denial, live credit/loan refresh, visitor/flight availability, modal focus/Escape and native keyboard/wheel reachability at ordinary and scaled viewports."
     },
     {
@@ -1068,7 +1110,7 @@
       "owners": ["shared/galaxy.ts", "shared/gen.ts", "shared/rules.ts"],
       "services": [],
       "tests": ["v04.ts", "v08.ts", "v23.ts", "eventide.ts"],
-      "asserts": "Seeded galaxy generation, reachable routes, Sol/Farside gates and authored Eventide landmarks."
+      "asserts": "Seeded galaxy generation, reachable routes, Sol Minor/Farside gates with stable sol/earth/luna IDs, consistent gateway names and authored Eventide landmarks."
     },
     {
       "id": "map-fog-of-war",
@@ -1150,8 +1192,8 @@
       "id": "combat-assist",
       "owners": ["server/combat-assist.ts"],
       "services": [],
-      "tests": ["combat-assist.ts", "network-systems.ts"],
-      "asserts": "Consent-only autopilot/delegation, group odds, independent isolation, manual takeover and Hold Fire."
+      "tests": ["combat-assist.ts", "network-systems.ts", "combat-browser.ts"],
+      "asserts": "Consent-only autopilot/delegation, group odds, independent isolation, manual takeover and Hold Fire. Persisted local automated missile policy retains primary/manual fire and applies to wingmates; native Settings checkbox survives browser reload."
     },
     {
       "id": "newcomer-standing",
@@ -1187,7 +1229,8 @@
         "gateway-navigation.ts",
         "gateway-browser.ts",
         "wormhole-loop.ts",
-        "landing-autopilot-browser.ts"
+        "landing-autopilot-browser.ts",
+        "recovery-safety.ts"
       ],
       "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading with sustained ordinary thrust and no afterburner, wormhole steering-noise deadband, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input. L lands on a clicked nav point, then the pinned objective, then the nearest mission destination, before the nearest landable body."
     },
@@ -1363,7 +1406,7 @@
         "server/port-services.ts"
       ],
       "tests": ["cargo-lots.ts", "cargo-flows.ts", "cargo-ui-browser.ts"],
-      "asserts": "Strict cargo/storage migration plus real production: weighted raw sales/depth, common purchases, exact grade denial, jettison/job-aware recollection, owner/fleet simulation-time grace with foreign partial pickup and expiry, frozen partial mining/progression, unchanged station processing/supply, colony/plunder, exchange graded escrow/fill/refund/offline storage, two-sided captain trade/full-hold storage, death/Lodestar. Browser grade rows, explicit premium sale/jettison during asynchronous rivals refresh, and live Captains refresh."
+      "asserts": "Canonical captain trade identities reject alias offers at receive and settlement; both detached sides preflight inventory/credit overflow without partial changes, then valid transfers reload. Strict cargo/storage migration plus real production: weighted raw sales/depth, common purchases, exact grade denial, jettison/job-aware recollection, owner/fleet simulation-time grace with foreign partial pickup and expiry, frozen partial mining/progression, unchanged station processing/supply, colony/plunder, exchange graded escrow/fill/refund/offline storage, two-sided captain trade/full-hold storage, death/Lodestar. Browser grade rows, explicit premium sale/jettison during asynchronous rivals refresh, and live Captains refresh."
     },
     {
       "id": "mining-cutting",
@@ -1553,7 +1596,8 @@
         "trade-amount-browser.ts",
         "refinery-network.ts",
         "refinery-persistence.ts",
-        "trade-safety.ts"
+        "trade-safety.ts",
+        "gameplay-safety.ts"
       ],
       "asserts": "Automatic single-action refinery cost/output with retained authoritative settlement, stale/expired/duplicate denial, trip recap attribution and persistence, exact current-port order-size/grade estimates, reserved cargo warnings, malformed/full/poor requests and measurement report completeness without fabricated baseline data. The ordinary port boundary reads a replaced market provider through a receiver-preserving live core call and denies removed markets without changing credits or grade lots. Positive integrated market spreads, bonus caps, conservative rounding, all-commodity shared impact/saturation/split-order safety, production Fixer/multi-captain cycles, quote parity, proportional persisted purchase basis and forward-only sale-loss carryover prevent recycled volume from advancing trade income/goals."
     },
@@ -1597,8 +1641,15 @@
         "server/jobs.ts"
       ],
       "services": [],
-      "tests": ["mission-consent.ts", "mission-ui-browser.ts", "v26.ts", "qol-browser.ts"],
-      "asserts": "Plain travel/capacity/risk/turn-in/personal-payout details and remembered optional type/feasible/nearby filters retain inaccessible offers with reasons. Expired team-offer IDs are rejected across the ten-minute boundary without changing jobs or credits; a current replacement creates a plan but cannot bypass consent. Real Ready/Start consent assigns only the frozen roster; exact pool conservation, stale/duplicate/full/refused/disconnected denial, offline completion and saved accepted rewards survive reconnect without automatic late enrollment."
+      "tests": [
+        "mission-consent.ts",
+        "mission-ui-browser.ts",
+        "v26.ts",
+        "qol-browser.ts",
+        "story-order-safety.ts",
+        "quest-directions.ts"
+      ],
+      "asserts": "Plain travel/capacity/risk/turn-in/personal-payout details and remembered optional type/feasible/nearby filters retain inaccessible offers with reasons. Expired team-offer IDs are rejected across the ten-minute boundary without changing jobs or credits; a current replacement creates a plan but cannot bypass consent. Real Ready/Start consent assigns only the frozen roster; exact pool conservation, stale/duplicate/full/refused/disconnected denial, offline completion and saved accepted rewards survive reconnect without automatic late enrollment. Uncharted distant work remains listed with a disabled plot action and visible explanation; rendering never changes discovery or charts."
     },
     {
       "id": "cargo-courier-progression",
@@ -1677,9 +1728,10 @@
         "nakama-network.ts",
         "nakama-browser.ts",
         "nakama-diagnostics.ts",
-        "nakama-world-lease.ts"
+        "nakama-world-lease.ts",
+        "native-recovery.ts"
       ],
-      "asserts": "Actual Game.chat packets preserve null docked/global/Armada markers and finite system-flight markers through native, Solo and friend adapters, while malformed markers are rejected. Native SDK principal-bound authentication, private atomic PostgreSQL checkpoints and uncertain-commit freeze; actual Game/Space match clock, latest-control scheduling, finite private snapshots and sequence/replay denials. Native flood traffic retains peer progress and authoritative physics; deterministic actual-callback batches verify exactly eight admissions per session, independent peer budgets and next-tick reset. Legacy hash upgrade, reconnect/logout/restart and browser-rendered prediction under latency remain covered. Reference/Solo tests are separate and no full native-feature coverage is implied. Full-instance same-principal replacement retires old native/Game slots before allocating, sends the exact displaced-login error before kick, preserves the replacement under delayed old leave and duplicate callbacks, and denies new or revoked principals without evicting existing captains."
+      "asserts": "Actual Game.chat packets preserve null docked/global/Armada markers and finite system-flight markers through native, Solo and friend adapters, while malformed markers are rejected. Native SDK principal-bound authentication, private atomic PostgreSQL checkpoints and uncertain-commit freeze; actual Game/Space match clock, latest-control scheduling, finite private snapshots and sequence/replay denials. Native flood traffic retains peer progress and authoritative physics; deterministic actual-callback batches verify exactly eight admissions per session, independent peer budgets and next-tick reset. Legacy hash upgrade, reconnect/logout/restart and browser-rendered prediction under latency remain covered. Reference/Solo tests are separate and no full native-feature coverage is implied. Full-instance same-principal replacement retires old native/Game slots before allocating, sends the exact displaced-login error before kick, preserves the replacement under delayed old leave and duplicate callbacks, and denies new or revoked principals without evicting existing captains. Native checkpoints follow ten-second wall time across slow ticks and clock reversal; rejected or uncertain writes retire the frozen authority, notify clients and never retry its write. Real PostgreSQL stop/start after a market write retires the frozen match, notifies clients, elects a new lease owner, restores exact durable credits/cargo and rejects the old match without restarting Nakama."
     },
     {
       "id": "friend-hosting",
@@ -1699,7 +1751,7 @@
         "packaged-runtime.ts",
         "friend-save-owner.ts"
       ],
-      "asserts": "Explicit password-protected listen-server hosting with one Game and durable independent friend saves; three captain ownership, movement and interaction; denial of Solo-only import/pause and foreign Origins; browser physical controls, reconnect, restart and extracted artifact execution without native service dependencies."
+      "asserts": "Explicit password-protected listen-server hosting with one Game and durable independent friend saves; three captain ownership, movement and interaction; denial of Solo-only import/pause and foreign Origins; browser physical controls, reconnect, restart and extracted artifact execution without native service dependencies. Clean bind failure releases only its own finalized save lock; supported console-close signals preserve restart safety. Friend launcher readiness verifies the advertised version and protocol."
     },
     {
       "id": "faction-store-locations",
@@ -1714,7 +1766,7 @@
       ],
       "services": ["fronts"],
       "tests": ["faction-standing.ts", "faction-stores-browser.ts", "faction-store-catalog.ts"],
-      "asserts": "Every landable public faction port offers only its faction store, including ports without trade service. Actual local purchases, foreign request resource-preserving denial, own Personal Station all-store selection and purchases, visitor/neutral/flight denial, stale selection recovery, decoded faction crests and no Bulletin store or chat Live label. Store button is absent from the DOM at neutral and visitor landings; selected faction standing is visible on open and refreshes from authoritative purchase payloads. Each store sells three standing-gated store-only outfits that never stock at outfitters, install on purchase, refuse before charging when they do not fit, and sell back at outfitters; star charts reveal the faction's systems once."
+      "asserts": "Every landable public faction port offers only its faction store, including ports without trade service. Actual local purchases, foreign request resource-preserving denial, own Personal Station all-store selection and purchases, visitor/neutral/flight denial, stale selection recovery, decoded faction crests and no Bulletin store or chat Live label. Store button is absent from the DOM at neutral and visitor landings; selected faction standing is visible on open and refreshes from authoritative purchase payloads. Each store sells three standing-gated store-only outfits that never stock at outfitters, install on purchase, refuse before charging when they do not fit, and sell back at outfitters; star charts reveal the faction's systems once. Store eligibility precedes fitting; client previews use the shared fitting reason and material fallback."
     },
     {
       "id": "responsive-hud-attention",
@@ -1969,16 +2021,24 @@
     },
     {
       "id": "client-connection-lifecycle",
-      "owners": ["client/connection-lifecycle.ts", "client/connection-liveness.ts"],
+      "owners": [
+        "client/connection-lifecycle.ts",
+        "client/connection-liveness.ts",
+        "client/connection.ts",
+        "client/main.ts",
+        "client/index.html",
+        "client/pressure-hull.css"
+      ],
       "services": [],
       "tests": [
         "connection-lifecycle.ts",
         "logout-browser.ts",
         "protocol-compatibility-browser.ts",
         "browser-server-liveness.ts",
-        "browser-friend-liveness.ts"
+        "browser-friend-liveness.ts",
+        "nakama-client-connection.ts"
       ],
-      "asserts": "Independent pre-extraction traces preserve current-socket/epoch guards, native/local hello, packet dispatch, live credentials/configuration, bounded backoff, terminal compatibility/duplicate-login denial and account detach; existing browser tests cover actual sign-in/logout."
+      "asserts": "Independent pre-extraction traces preserve current-socket/epoch guards, native/local hello, packet dispatch, live credentials/configuration, bounded backoff, terminal compatibility/duplicate-login denial and account detach; existing browser tests cover actual sign-in/logout. An early idle probe prevents false warnings; five-second persistent silence feedback is distinct from the unchanged tolerant reconnect deadline, clears on accepted reply/welcome, and WORLD_RECOVERING triggers bounded credentialed reconnect even before initial player state, rather than permanent compatibility logout."
     },
     {
       "id": "client-player-projection",
@@ -2069,11 +2129,17 @@
         "client/pressure-hull.css",
         "client/style-port-services.css",
         "client/hangar_ui.ts",
-        "client/ui.ts"
+        "client/ui.ts",
+        "client/main.ts",
+        "client/index.html"
       ],
       "services": [],
-      "tests": ["landed-responsive-browser.ts", "landed-colony-responsive-browser.ts"],
-      "asserts": "Landed services retain their navigation and footer while a bounded content row scrolls at five landscape viewport sizes, a portrait fallback and two UI scales. Real friend-host fixtures cover hub, owned Tier 5 station departments, colony owner and visitor; narrow Crew, Outfitter and Community avoid body-level horizontal overflow. Crew final actions remain keyboard-focusable and hit-testable after native wheel scrolling."
+      "tests": [
+        "landed-responsive-browser.ts",
+        "landed-colony-responsive-browser.ts",
+        "landed-zoom-browser.ts"
+      ],
+      "asserts": "Landed services retain their navigation and footer while a bounded content row scrolls at original desktop sizes, short landscape, large viewports, a portrait fallback and two UI scales. Real friend-host fixtures cover hub, owned Tier 5 station departments, colony owner and visitor; narrow Crew, Trade, Outfitter and Community avoid body-level horizontal overflow. Crew and Trade final actions remain keyboard-focusable and hit-testable after native wheel scrolling. Fresh BODY Tab and Shift+Tab enter native navigation instead of flight targeting; dock scrolling and chat/news have named semantic regions. Headed Chromium page zoom at 125%/150% records changed CSS viewport/DPR and retains useful content, clickable navigation and departure at both UI scales."
     },
     {
       "id": "colony-exchange-layout",
@@ -2086,6 +2152,13 @@
       "services": [],
       "tests": ["colony-exchange-layout-browser.ts"],
       "asserts": "Real friends-host colony owner/visitor/unsettled branches retain decoded stage art and actions; responsive side art and short thumbnails, stockpile wheel/keyboard reachability, labeled Exchange place/send controls without menu horizontal overflow, two-captain order placement/cancellation and missing-goods denial, exact own-station trade guidance."
+    },
+    {
+      "id": "touch-flight-controls",
+      "owners": ["client/main.ts", "client/style-controls-login.css"],
+      "services": [],
+      "tests": ["touch-controls-browser.ts"],
+      "asserts": "Trusted Chromium touch events hit MAP/FIRE/LAND above the cockpit; map/dock dialogs retain input precedence and the map has a native touch-close control. Primary fire holds, releases, cancels and drags without latching; joystick cancellation and modal entry release input; hiding without blur synchronously sends neutral before RAF; LAND completes through the authoritative game handler. Two tablet sizes and UI scales 1/1.4; no physical-device claim."
     }
   ],
   "routes": {
@@ -2318,7 +2391,6 @@
   "supplemental": {
     "background-scale-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "catalog-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
-    "combat-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "comet-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "eventide-mission-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "exotic-scenery-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",

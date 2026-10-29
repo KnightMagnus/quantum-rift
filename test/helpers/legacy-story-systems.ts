@@ -37,6 +37,9 @@ export function legacyStorySystems(systems: StarSystem[]): StarSystem[] {
   // this pre-existing generation golden. Transit and new descriptions have their
   // own behavior checks; generated worlds, prices and RNG remain under this hash.
   const legacySol = legacy.find((system) => system.id === 'sol')!;
+  assert.equal(legacySol.name, 'Sol Minor');
+  // Display-only rename; preserve the original topology/content golden.
+  legacySol.name = 'Sol';
   const legacyConcordia = legacy.find((system) => system.id === 'qgate')!;
   const legacyColdharbor = legacy.find((system) => system.id === 'coldharbor')!;
   const legacyGateway = legacyConcordia.stellars.find((stellar) => stellar.id === 'sol-gateway')!;

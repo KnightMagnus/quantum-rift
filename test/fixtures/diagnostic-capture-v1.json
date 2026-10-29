@@ -152,9 +152,7 @@
             "pure": 0
           }
         },
-        "warnings": [
-          "Some of this cargo is still needed for a delivery. Selling it means replacing it later."
-        ]
+        "warnings": []
       }
     },
     {

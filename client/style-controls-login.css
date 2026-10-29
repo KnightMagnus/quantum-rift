@@ -2,9 +2,9 @@
 #touch {
   position: fixed;
   left: 0;
-  bottom: 0;
+  bottom: var(--cbar);
   right: var(--hud);
-  height: 230px;
+  height: min(230px, calc(100dvh - var(--cbar)));
   pointer-events: none;
   z-index: 6;
 }
@@ -460,4 +460,26 @@ body.scaled #ctabs button {
 .landfoot {
   flex-wrap: wrap;
   row-gap: 6px;
+}
+
+/* Flight touch input stays below dialogs and never covers landed services. */
+body:has(.overlay:not(.hidden)) #touch {
+  display: none;
+}
+@media (max-height: 600px) {
+  #tstick {
+    width: 110px;
+    height: 110px;
+    left: 12px;
+    bottom: 12px;
+  }
+  #tbtns {
+    grid-template-columns: repeat(4, 48px);
+    right: 8px;
+    bottom: 12px;
+    gap: 4px;
+  }
+  #tbtns button {
+    height: 44px;
+  }
 }

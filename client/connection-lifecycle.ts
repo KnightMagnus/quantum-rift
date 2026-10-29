@@ -24,7 +24,9 @@ export interface ConnectionLifecycleCapabilities {
   /** Show a pre-login connection error and re-enable sign-in. */
   loginError: (message: string) => void;
   /** Update reconnect presentation; only the first failure gets a toast. */
-  reconnecting: (first: boolean) => void;
+  reconnecting: (first: boolean, reason?: string) => void;
+  /** Present early silence without treating a slow peer as disconnected. */
+  interrupted?: (interrupted: boolean) => void;
   /** Run the composition root's complete account teardown. */
   terminal: (reason: string) => void;
 }
@@ -70,11 +72,12 @@ export class ConnectionLifecycle {
     this.timers.cancel(this.reconnectTimer);
     const previous = this.socket;
     this.socket = null;
+    this.capabilities.interrupted?.(false);
     return previous;
   }
 
   /** Open or retry with the existing bounded backoff and live account guards. */
-  open(tries: number): void {
+  open(tries: number, recoveringLogin = false): void {
     const capabilities = this.capabilities;
     const credentials = capabilities.credentials();
     if (!credentials) return;
@@ -83,7 +86,11 @@ export class ConnectionLifecycle {
     const socket = capabilities.createConnection({ name, pass });
     this.socket = socket;
     let compatibilityFailure = false;
+    let recovering = recoveringLogin;
     const current = () => this.socket === socket && capabilities.epoch() === epoch;
+    socket.oninterrupted = (interrupted) => {
+      if (current()) capabilities.interrupted?.(interrupted);
+    };
     socket.onopen = () => {
       if (!current()) {
         socket.close();
@@ -92,21 +99,31 @@ export class ConnectionLifecycle {
       if (capabilities.sendsHello()) this.send({ t: 'hello', name, pass });
     };
     socket.onmessage = (event) => {
-      if (current()) capabilities.receive(event.data);
+      if (current()) {
+        capabilities.receive(event.data);
+        if (capabilities.hasPlayer()) recovering = false;
+      }
     };
     socket.onclose = () => {
       if (!current()) return;
       capabilities.disconnected();
-      if (!capabilities.hasPlayer()) return;
+      if (!capabilities.hasPlayer() && !recovering) {
+        capabilities.interrupted?.(false);
+        return;
+      }
       if (compatibilityFailure) {
         capabilities.terminal(COMPATIBILITY_MESSAGE);
         return;
       }
       if (!capabilities.kicked() && tries < 30) {
-        capabilities.reconnecting(!tries);
+        capabilities.reconnecting(
+          !tries,
+          recovering ? 'Server is recovering. Reconnecting...' : undefined,
+        );
         this.reconnectTimer = this.timers.schedule(
           () => {
-            if (capabilities.epoch() === epoch && capabilities.credentials()) this.open(tries + 1);
+            if (capabilities.epoch() === epoch && capabilities.credentials())
+              this.open(tries + 1, recovering && !capabilities.hasPlayer());
           },
           Math.min(8000, 1000 + tries * 700),
         );
@@ -119,6 +136,7 @@ export class ConnectionLifecycle {
       );
     };
     socket.onerror = (message) => {
+      if (current() && message === 'Server is recovering. Reconnecting...') recovering = true;
       if (current() && message === COMPATIBILITY_MESSAGE) {
         compatibilityFailure = true;
         capabilities.incompatible();

@@ -75,7 +75,10 @@ export const commandFields = {
   portrait: { portraitId: text, portraitRequestId: text, name: text, target: identifier },
   miningPressure: { op: choices('join', 'leave') },
   mining: { op: choices('survey') },
-  combat: { op: choices('off', 'manual', 'assist', 'coordinate', 'delegate'), on: boolean },
+  combat: {
+    op: choices('off', 'manual', 'assist', 'coordinate', 'delegate', 'missiles'),
+    on: boolean,
+  },
   input: {
     seq: numeric,
     th: flag,

@@ -130,7 +130,14 @@ try {
   );
   for (const [window, expected] of Object.entries(baseline.freight)) {
     assert.deepEqual(freightOffers(STELLARS['sol-gateway'], +window), []);
-    const offers = legacyPortIds.map((id) => [id, freightOffers(STELLARS[id], +window)]);
+    const offers = legacyPortIds.map((id) => [
+      id,
+      freightOffers(STELLARS[id], +window).map((offer) => ({
+        ...offer,
+        // Compare original generation and payouts independently of the display rename.
+        text: offer.text.replace('in Sol Minor (', 'in Sol ('),
+      })),
+    ]);
     assert.equal(sha256(offers), expected, `Freight offers window ${window}`);
   }
 } finally {

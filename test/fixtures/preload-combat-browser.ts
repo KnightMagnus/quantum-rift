@@ -156,6 +156,7 @@ Game.prototype.tick = function (...args) {
         distance: Math.hypot(active.ent.x - targetShip.x, active.ent.y - targetShip.y),
         shots,
         combat: this.combatAssist.payload(active, space!),
+        assistMissiles: active.combat?.missiles !== false,
         playerHealth: { shield: active.ent.shield, armor: active.ent.armor },
         retaliating: [...(active.retaliationVisit?.factions || [])],
         npcTargets: [...space!.ships.values()]

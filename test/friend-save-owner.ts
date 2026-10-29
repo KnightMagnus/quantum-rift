@@ -118,6 +118,18 @@ try {
   await until(() => aliasHost.child.exitCode !== null, 'canonical save alias contender exits');
   assert.notEqual(aliasHost.child.exitCode, 0);
   assert.match(aliasHost.output(), /already owned or has a stale lock/);
+  const failedBindData = path.join(fixture, 'failed-bind');
+  const failedBind = start(port, failedBindData);
+  await until(() => failedBind.child.exitCode !== null, 'occupied-port host exits');
+  assert.notEqual(failedBind.child.exitCode, 0);
+  assert.equal(
+    fs.existsSync(path.join(failedBindData, '.friend-host.lock')),
+    false,
+    'clean bind failure releases only its own save lock',
+  );
+  const bindRetry = start(await availablePort(), failedBindData);
+  await until(() => bindRetry.output().includes('running at'), 'retry after clean bind failure');
+  await stop(bindRetry.child);
   assert.equal(await request(port, '127.0.0.1:' + port), 200);
   assert.equal(await request(port, 'localhost:' + port), 200);
   assert.equal(await request(port, 'attacker.example:' + port), 403);
@@ -171,7 +183,9 @@ try {
   assert.equal(fs.existsSync(checkpoint), false);
   privateTree(data);
   assert.equal(fs.readFileSync(path.join(data, 'players.json'), 'utf8'), players);
-  await stop(restart.child);
+  await stop(restart.child, process.platform === 'win32' ? 'SIGTERM' : 'SIGHUP');
+  assert.equal(restart.child.exitCode, 0, 'supported console-close signal finalizes saves');
+  assert.equal(fs.existsSync(path.join(data, '.friend-host.lock')), false);
   // An unclean death leaves an unreclaimed lock, including a dead PID.
   const crash = start(await availablePort());
   await until(() => crash.output().includes('running at'), 'crash fixture ready');

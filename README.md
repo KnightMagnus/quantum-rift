@@ -95,6 +95,10 @@ Ship-function controls open above the console. INFO (I) shows ship details and e
 
 ![Combat assist controls above the console beside the system radar](docs/screenshots/flight-functions.png)
 
+On-screen touch controls sit above the instrument console. Hold FIRE to shoot and lift your finger to stop. MAP opens the chart; LAND starts the landing approach.
+
+![Touch controls above the instrument console](docs/screenshots/tablet-controls.png)
+
 **Ship equipment**
 
 Ship details previews equipped outfits, including factory weapons. Land at an outfitter to sell them. The outfitter’s MINING filter groups mining weapons and towing gear.
@@ -106,6 +110,10 @@ Ship details previews equipped outfits, including factory weapons. Land at an ou
 At trade ports, BANK beside your credits opens loan details and repayment controls.
 
 ![Compact loan panel over early-game port services](docs/screenshots/pressure-hull-landed.png)
+
+On short screens, dock services scroll above a compact instrument console. Scroll the console to reach its other controls.
+
+![Enlarged dock services in a short window](docs/screenshots/compact-dock.png)
 
 **Expanded chat**
 
