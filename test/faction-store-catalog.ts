@@ -288,6 +288,14 @@ assert.match(
   infoHtml(storeState, 'ship'),
   /Selling refunds credits only. Store tokens are not refunded/,
 );
+delete playerData.ship.stockOutfits;
+const unknownFit = JSON.stringify(playerData.ship);
+assert.equal(game.outfitInstallProblem(playerData, 99999999, 1), 'Unknown outfit.');
+assert.equal(
+  JSON.stringify(playerData.ship),
+  unknownFit,
+  'unknown fitting request leaves provenance unchanged',
+);
 console.log(
   'Store clarity: exact standing requirements, shared fitting denial and material labels passed.',
 );

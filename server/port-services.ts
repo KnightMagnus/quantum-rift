@@ -522,7 +522,7 @@ const PortOperations: PortOperations = {
     outfitId: number,
     quantity: number,
   ): string | null {
-    ensureStockOutfits(this.A, playerData.ship);
+    if (this.O[outfitId] && !playerData.shipless) ensureStockOutfits(this.A, playerData.ship);
     return sharedOutfitInstallProblem(
       this.A,
       playerData.ship,
