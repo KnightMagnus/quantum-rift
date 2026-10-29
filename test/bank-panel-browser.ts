@@ -24,7 +24,7 @@ const assets = JSON.parse(fs.readFileSync(path.join(root, 'shared/assets.json'),
 augmentAssets(assets);
 const database = new DB(path.join(directory, 'data'));
 const unavailable = Object.values(STELLARS).find((body) => !body.site && body.outlaw)!;
-for (const name of ['Bank Pilot', 'Remote Pilot']) {
+for (const name of ['Bank Pilot', 'Second Bank Pilot', 'Remote Pilot']) {
   const player = Game.prototype.fresh.call({ A: assets });
   player.tut = 999;
   Object.assign(player, { story: { done: ['start'], active: null } });
@@ -205,6 +205,26 @@ try {
   await page.reload();
   await page.locator('[data-slot="Bank Pilot"]').click();
   await page.waitForFunction(() => !!G.landed?.bank);
+  await page.locator('#bankbtn').click();
+  await page.locator('#bankamt').fill('12345');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+  await page.locator('#quitconfirm').click();
+  await page.waitForFunction(() => !G.you);
+  assert.equal(
+    await page.locator('#bankamt').count(),
+    0,
+    'Logout discards the previous captain loan draft',
+  );
+  await page.locator('[data-slot="Second Bank Pilot"]').click();
+  await page.waitForFunction(() => !!G.landed?.bank);
+  await page.locator('#bankbtn').click();
+  assert.notEqual(
+    await page.locator('#bankamt').inputValue(),
+    '12345',
+    'Loan drafts do not cross captain accounts',
+  );
+  await page.keyboard.press('Escape');
   await page.locator('#depart').click();
   await page.waitForFunction(() => !G.landed);
   await page.evaluate(async () =>

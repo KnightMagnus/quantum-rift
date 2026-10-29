@@ -1619,6 +1619,7 @@ overlays.register({
   id: 'bankbox',
   priority: 15,
   dismiss: () => overlays.close('bankbox'),
+  reset: () => elementById2('bankin').replaceChildren(),
   initialFocus: () => elementById2('bankclose'),
 });
 

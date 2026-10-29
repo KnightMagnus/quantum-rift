@@ -68,6 +68,7 @@ try {
     for (const selector of [
       '#login .loginbox',
       '#land .landbox',
+      '#bankbox > .bank-panel',
       '#gmap .gbox',
       '#opts .optbox',
       '#chatprojection',
@@ -113,6 +114,17 @@ try {
           },
           { style, background },
         );
+        await probe.evaluate(async () => {
+          const source = getComputedStyle(document.getElementById('frame')!).borderImageSource;
+          const url = source.match(/url\(["']?(.*?)["']?\)/)?.[1];
+          if (!url) throw Error('Frame image source is missing');
+          const image = new Image();
+          image.src = url;
+          await image.decode();
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          );
+        });
         const screenshot = await probe.screenshot({ omitBackground: true });
         const rendered = await probe.evaluate(async (encoded) => {
           const image = new Image();
