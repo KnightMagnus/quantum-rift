@@ -242,6 +242,7 @@ export const StoryOperations = {
         return;
       const flags = (savedStory.flags ||= {});
       Object.assign(flags, { [current.decision]: message.choice });
+      this.questReconcile(session);
       if (current.decision === 'main_ending' && message.choice === 'unsettling') {
         // A second, landed choice records the people whose reality the captain joins.
         delete flags.main_ending;

@@ -1907,6 +1907,7 @@ export class Game<Storage extends Database = Database> {
     this.features.story.storyInit(playerAccount);
     this.features.syndicate.synInit(playerAccount);
     this.features.arcs.arcsInit(playerAccount);
+    this.features.quests.questReconcile(session);
     if (!playerAccount.explored)
       playerAccount.explored = SYSTEMS.filter((starSystem) => starSystem.anchor).map(
         (starSystem) => starSystem.id,

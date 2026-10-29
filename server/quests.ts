@@ -2,6 +2,7 @@ import type { QuestChain, QuestReward } from '../shared/quests.ts';
 import type { StellarBody } from '../shared/galaxy.ts';
 import type { SavedQuests } from './save-contracts.ts';
 export interface QuestOperations {
+  questReconcile(this: QuestsCapabilities, session: Session): void;
   questInit(this: QuestsCapabilities, playerData: PlayerData): SavedQuests;
   contactAt(
     this: QuestsCapabilities,
@@ -93,7 +94,7 @@ import {
 import { CHAINS, SIDE_STORIES, CONTACT_TITLES } from '../shared/quests.ts';
 import { OFFICER_NAMES, RACE_ROLES, ROLES } from '../shared/hangar.ts';
 import { SPECIALISTS } from '../shared/specialty.ts';
-import { sideStoryAvailable } from '../shared/story-quest-gates.ts';
+import { sideStoryAvailable, sideStoryCompatible } from '../shared/story-quest-gates.ts';
 import { credits } from '../shared/rules.ts';
 import { occupiedPassengerSeats } from '../shared/passengers.ts';
 
@@ -990,12 +991,21 @@ export const QuestOperations = {
         savedQuests.contacts[quest.contact!] || {});
       cargoSpace.cool = Date.now() + CONTACT_COOL_MIN * 60000;
     }
+    const sideStory = quest.side && SIDE_STORIES.find((story) => story.id === quest.side);
     this.toast(
       session,
-      `Story ended: ${quest.name} (${reason}).${quest.side ? ' You can start it again where it began.' : ''}`,
+      `Story ended: ${quest.name} (${reason}).${sideStory && sideStoryCompatible(sideStory, playerData.story?.flags) ? ' You can start it again where it began.' : ''}`,
     );
     this.log(playerData, `Story ended: ${quest.name} (${reason}).`);
     this.db.touch();
+  },
+  /** Retire only unfinished work that conflicts with an authored story outcome. */
+  questReconcile(this: QuestsCapabilities, session: Session) {
+    for (const quest of Object.values(this.questInit(session.data).active)) {
+      const definition = SIDE_STORIES.find((story) => story.id === quest.side);
+      if (definition && !sideStoryCompatible(definition, session.data.story?.flags))
+        this.questFail(session, quest.qid, 'no longer available after your story choice');
+    }
   },
   // every two seconds: a step lost with your ship, a missed deadline or a destroyed convoy gets one more chance
   /**
@@ -1003,6 +1013,7 @@ export const QuestOperations = {
    * @param session - Player session.
    */
   questSweep(this: QuestsCapabilities, session: Session) {
+    this.questReconcile(session);
     const playerData = session.data,
       savedQuests = playerData.quests;
     if (!savedQuests || !savedQuests.active) return;

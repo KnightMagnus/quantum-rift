@@ -1811,3 +1811,5 @@ Fleet boarding cases in `gameplay-safety.ts` reject own and Armada wingmate plun
 `recovery-safety.ts` exercises actual death, eligible insurance berths, wanted and universally hostile standing, owned stations, depleted credits, and production departure/jump without moving the captain to an artificial escape location.
 
 Insurance departure grants thirty seconds of NPC-only exit grace once per rebuild; firing by the fleet cancels it. `recovery-safety.ts` verifies one-time consumption and cancellation, alongside real wanted departure.
+
+`story-order-safety.ts` checks optional-work outcome exclusions on offer and authoritative acceptance, retirement of incompatible unfinished work, preserved completed progress, no invented rewards, and once-only notices after checkpoint/relogin. Narrative fixtures stay out of public announcements.

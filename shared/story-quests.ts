@@ -439,6 +439,7 @@ export const STORY_QUESTS: SideStory[] = [
   },
   {
     id: 'keepers-vigil',
+    excludedEndings: ['table'],
     name: 'The Founding Vigil',
     at: 'vigil-lamp',
     giver: 'Keeper Ansel Morrow',

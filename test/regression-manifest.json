@@ -153,7 +153,8 @@
     "local-login.ts",
     "native-recovery.ts",
     "gameplay-safety.ts",
-    "recovery-safety.ts"
+    "recovery-safety.ts",
+    "story-order-safety.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -873,7 +874,8 @@
     "landed-responsive-browser.ts": ["helpers/landed-responsive.ts"],
     "landed-colony-responsive-browser.ts": ["helpers/landed-responsive.ts"],
     "gameplay-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"],
-    "recovery-safety.ts": ["helpers/refinery-fixture.ts"]
+    "recovery-safety.ts": ["helpers/refinery-fixture.ts"],
+    "story-order-safety.ts": ["helpers/refinery-fixture.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1624,7 +1626,13 @@
         "server/jobs.ts"
       ],
       "services": [],
-      "tests": ["mission-consent.ts", "mission-ui-browser.ts", "v26.ts", "qol-browser.ts"],
+      "tests": [
+        "mission-consent.ts",
+        "mission-ui-browser.ts",
+        "v26.ts",
+        "qol-browser.ts",
+        "story-order-safety.ts"
+      ],
       "asserts": "Plain travel/capacity/risk/turn-in/personal-payout details and remembered optional type/feasible/nearby filters retain inaccessible offers with reasons. Expired team-offer IDs are rejected across the ten-minute boundary without changing jobs or credits; a current replacement creates a plan but cannot bypass consent. Real Ready/Start consent assigns only the frozen roster; exact pool conservation, stale/duplicate/full/refused/disconnected denial, offline completion and saved accepted rewards survive reconnect without automatic late enrollment."
     },
     {

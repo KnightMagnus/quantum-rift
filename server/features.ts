@@ -211,7 +211,10 @@ export type StoryCapabilities = Pick<
   Pick<
     BoundOperations<StoryOperations>,
     'storyComplete' | 'storyDone' | 'storyGift' | 'storyInit' | 'storyOffer'
-  > & { nhal: FeatureServices['nhal'] } & Pick<BoundOperations<FrontsOperations>, 'stats'>;
+  > &
+  Pick<BoundOperations<QuestOperations>, 'questReconcile'> & {
+    nhal: FeatureServices['nhal'];
+  } & Pick<BoundOperations<FrontsOperations>, 'stats'>;
 export type RivalsCapabilities = Pick<
   Game,
   'A' | 'db' | 'live' | 'log' | 'rivalEnts' | 'sessions' | 'spaces' | 'toast'
@@ -301,6 +304,7 @@ export type QuestsCapabilities = Pick<
     | 'contactStory'
     | 'fill'
     | 'questFail'
+    | 'questReconcile'
     | 'questFinish'
     | 'questInit'
     | 'questPlan'
@@ -944,6 +948,9 @@ export function createFeatures(core: Game): FeatureServices {
   features.hostile = bindOperations(HostileOperations, hostileCapabilities);
 
   const storyCapabilities: StoryCapabilities = {
+    get questReconcile() {
+      return features.quests.questReconcile;
+    },
     get stats() {
       return features.fronts.stats;
     },
@@ -1330,6 +1337,9 @@ export function createFeatures(core: Game): FeatureServices {
   features.living = bindOperations(LivingOperations, livingCapabilities);
 
   const questsCapabilities: QuestsCapabilities = {
+    get questReconcile() {
+      return features.quests.questReconcile;
+    },
     get A() {
       return core.A;
     },

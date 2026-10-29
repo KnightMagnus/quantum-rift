@@ -113,6 +113,8 @@ export type SideStoryReward = {
   bp?: number;
 };
 export type SideStory = {
+  /** Main-story outcomes that make this optional work unavailable. */
+  excludedEndings?: string[];
   /** All listed side-story IDs must be completed before this offer exists. */
   afterSides?: string[];
   /** Main-story completion prerequisites, checked both on offer and acceptance. */
