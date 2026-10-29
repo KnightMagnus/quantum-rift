@@ -2015,16 +2015,24 @@
     },
     {
       "id": "client-connection-lifecycle",
-      "owners": ["client/connection-lifecycle.ts", "client/connection-liveness.ts"],
+      "owners": [
+        "client/connection-lifecycle.ts",
+        "client/connection-liveness.ts",
+        "client/connection.ts",
+        "client/main.ts",
+        "client/index.html",
+        "client/pressure-hull.css"
+      ],
       "services": [],
       "tests": [
         "connection-lifecycle.ts",
         "logout-browser.ts",
         "protocol-compatibility-browser.ts",
         "browser-server-liveness.ts",
-        "browser-friend-liveness.ts"
+        "browser-friend-liveness.ts",
+        "nakama-client-connection.ts"
       ],
-      "asserts": "Independent pre-extraction traces preserve current-socket/epoch guards, native/local hello, packet dispatch, live credentials/configuration, bounded backoff, terminal compatibility/duplicate-login denial and account detach; existing browser tests cover actual sign-in/logout."
+      "asserts": "Independent pre-extraction traces preserve current-socket/epoch guards, native/local hello, packet dispatch, live credentials/configuration, bounded backoff, terminal compatibility/duplicate-login denial and account detach; existing browser tests cover actual sign-in/logout. Five-second persistent silence feedback is distinct from the unchanged tolerant reconnect deadline, clears on accepted reply/welcome, and WORLD_RECOVERING triggers ordinary reconnect rather than permanent compatibility logout."
     },
     {
       "id": "client-player-projection",

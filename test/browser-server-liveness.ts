@@ -162,6 +162,28 @@ try {
   link.replies = false;
   const lostAt = Date.now();
   await page.waitForFunction(
+    () => !document.querySelector('#connectionstatus')?.classList.contains('hidden'),
+    undefined,
+    { timeout: 8500 },
+  );
+  assert.ok(Date.now() - lostAt < 8500, 'silence feedback appears before tolerant timeout');
+  assert.match(
+    (await page.locator('#connectionstatus').textContent()) || '',
+    /Connection interrupted/,
+  );
+  assert.equal(connections, 1, 'early warning does not reconnect a merely slow link');
+  assert.ok(
+    await page.locator('#connectionstatus').evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return (
+        rect.top >= 0 &&
+        rect.bottom <= innerHeight &&
+        getComputedStyle(element).pointerEvents === 'none'
+      );
+    }),
+    'persistent feedback is visible and does not swallow input',
+  );
+  await page.waitForFunction(
     () => document.querySelector('#lstat')?.textContent === 'Reconnecting to the server...',
     undefined,
     { timeout: 32000 },
@@ -177,6 +199,11 @@ try {
     { timeout: 15000 },
   );
   assert.equal(connections, 2, 'one replacement connection restores the captain');
+  assert.equal(
+    await page.locator('#connectionstatus').isVisible(),
+    false,
+    'authoritative welcome clears recovery feedback',
+  );
   assert.ok(Date.now() - lostAt < 40000, 'foreground loss detection and recovery are bounded');
   assert.ok(
     sent.some((packet) => packet.socket === 1 && packet.t === 'ping'),

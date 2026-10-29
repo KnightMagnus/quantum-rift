@@ -15,6 +15,8 @@ export class ConnectionLiveness {
   private checkedAt: number;
   private probeAt: number | undefined;
   private stopped = false;
+  private interrupted = false;
+  private readonly statusChanged: (interrupted: boolean) => void;
   private readonly probe: () => void;
   private readonly expired: () => void;
   private readonly clock: LivenessClock;
@@ -32,7 +34,9 @@ export class ConnectionLiveness {
       },
       cancel: (timer) => clearTimeout(timer),
     },
+    statusChanged: (interrupted: boolean) => void = () => {},
   ) {
+    this.statusChanged = statusChanged;
     this.probe = probe;
     this.expired = expired;
     this.clock = clock;
@@ -44,6 +48,10 @@ export class ConnectionLiveness {
   received(): void {
     this.heardAt = this.clock.now();
     this.probeAt = undefined;
+    if (this.interrupted) {
+      this.interrupted = false;
+      this.statusChanged(false);
+    }
   }
 
   /** Teardown is idempotent; a canceled callback can never expire a later socket. */
@@ -64,6 +72,10 @@ export class ConnectionLiveness {
     // No browser watchdog can promise a wall-clock deadline while JS is suspended.
     if (now - this.checkedAt > 15000) this.probeAt = undefined;
     this.checkedAt = now;
+    if (!this.interrupted && now - this.heardAt >= 5000) {
+      this.interrupted = true;
+      this.statusChanged(true);
+    }
     if (this.probeAt !== undefined && now - this.probeAt >= 15000) {
       this.stop();
       this.expired();

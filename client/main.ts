@@ -895,7 +895,15 @@ const connectionLifecycle = new ConnectionLifecycle({
     elementById2('lerr').textContent = message;
     elementById2('lbtn').disabled = false;
   },
-  reconnecting: (first) => {
+  interrupted: (interrupted) => {
+    const banner = elementById2('connectionstatus');
+    banner.textContent = interrupted ? 'Connection interrupted. Waiting for the server...' : '';
+    banner.classList.toggle('hidden', !interrupted);
+  },
+  reconnecting: (first, reason) => {
+    const banner = elementById2('connectionstatus');
+    banner.textContent = reason || 'Connection lost. Reconnecting...';
+    banner.classList.remove('hidden');
     if (first) toast('Connection lost. Reconnecting...');
     elementById2('lstat').textContent = 'Reconnecting to the server...';
   },
@@ -905,6 +913,10 @@ const connectionLifecycle = new ConnectionLifecycle({
 });
 
 function onMessage(serverMessage: ServerMessage) {
+  if (serverMessage.t === 'welcome') {
+    elementById2('connectionstatus').classList.add('hidden');
+    elementById2('connectionstatus').textContent = '';
+  }
   if (profileUI.onMessage(serverMessage)) return;
   if (hailUI.onMessage(serverMessage)) return;
   switch (serverMessage.t) {

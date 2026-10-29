@@ -1014,3 +1014,42 @@ await test(
     await connection.logout();
   },
 );
+
+await test('silence warning is early, recoverable, and separate from disconnection', async () => {
+  const time = watchdogClock();
+  const subject = fixture({ livenessClock: time.clock });
+  const status: boolean[] = [];
+  subject.connection.oninterrupted = (interrupted) => status.push(interrupted);
+  await subject.opened;
+  time.advance(4);
+  assert.deepEqual(status, []);
+  time.advance(1);
+  assert.deepEqual(status, [true]);
+  assert.equal(subject.connection.readyState, 1, 'five seconds of silence does not disconnect');
+  subject.emit({ t: 'pong', c: 0 });
+  assert.deepEqual(status, [true, false], 'an accepted reply removes the warning');
+  time.advance(24);
+  assert.equal(subject.connection.readyState, 1, 'the existing tolerant reply window remains');
+  time.advance(1);
+  assert.equal(subject.connection.readyState, 3);
+  assert.equal(subject.counts().closes, 1);
+});
+
+await test('native recovery error closes once for ordinary reconnect, not compatibility logout', async () => {
+  const subject = fixture();
+  await subject.opened;
+  subject.emit({
+    t: 'error',
+    code: 'WORLD_RECOVERING',
+    msg: 'Server is recovering. Reconnecting…',
+  });
+  assert.equal(subject.connection.readyState, 3);
+  assert.deepEqual(subject.errors, ['Server is recovering. Reconnecting...']);
+  assert.equal(subject.counts().closes, 1);
+  subject.emit({
+    t: 'error',
+    code: 'WORLD_RECOVERING',
+    msg: 'Server is recovering. Reconnecting…',
+  });
+  assert.equal(subject.counts().closes, 1);
+});

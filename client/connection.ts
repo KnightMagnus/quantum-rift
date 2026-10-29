@@ -42,6 +42,8 @@ export interface ClientConnection {
   onmessage: ((event: { data: string }) => void) | null;
   onclose: (() => void) | null;
   onerror: ((message?: string) => void) | null;
+  /** Early silence warning; it does not shorten the disconnect deadline. */
+  oninterrupted?: ((interrupted: boolean) => void) | null;
   send(data: string): void;
   close(code?: number, reason?: string): void;
   /** Cancel pending work, disconnect, and revoke both native session tokens. */
@@ -223,6 +225,10 @@ export function createGameConnection(
       fail(COMPATIBILITY_MESSAGE);
       return;
     }
+    if (record(packet) && packet.t === 'error' && packet.code === 'WORLD_RECOVERING') {
+      fail('Server is recovering. Reconnecting...');
+      return;
+    }
     if (validPacket(packet) && state < 2) {
       liveness?.received();
       connection.onmessage?.({ data });
@@ -233,6 +239,7 @@ export function createGameConnection(
       () => connection.send(JSON.stringify({ t: 'ping', c: 0 })),
       () => fail(),
       services.livenessClock,
+      (interrupted) => connection.oninterrupted?.(interrupted),
     );
   };
   const connection: ClientConnection = {

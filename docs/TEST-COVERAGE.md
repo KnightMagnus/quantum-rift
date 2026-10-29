@@ -1389,7 +1389,7 @@ that idle application probes receive replies without reconnecting. In flight, th
 proxy then drops all server bytes and FIN while allowing outbound controls. The
 browser must detect loss, reconnect on a new link, restore authoritative state and
 clear held controls without replaying gameplay requests. Timings are the production
-10-second idle probe and 15-second reply window, not shortened test settings.
+10-second idle probe and 15-second reply window, not shortened test settings. A persistent, non-intercepting connection banner appears after five seconds of reply silence, remains visible during reconnect and clears on authoritative welcome; this early feedback does not shorten the disconnect threshold.
 
 `nakama-client-connection.ts` also advances a deterministic monotonic clock through
 native-match reply loss, healthy idle replies, malformed packets, teardown and
@@ -1399,7 +1399,7 @@ delayed by more than the reply window starts a fresh probe rather than treating
 page suspension as proof of server failure. Detection is bounded while browser
 JavaScript is scheduled, not while the OS or browser suspends it. The TCP browser
 fixture is local/Solo; native watchdog decisions use the SDK adapter fixture, not
-a live Nakama network blackhole.
+a live Nakama network blackhole. The transport fixture also verifies the real WORLD_RECOVERING error shape closes the current transport once for ordinary reconnect rather than permanent compatibility logout.
 
 Legacy purchases such as `buyship`, `buymat` and `trade` carry no request
 identifier, so a client that deliberately sends one twice buys twice; the browser
