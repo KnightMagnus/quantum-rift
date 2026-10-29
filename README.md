@@ -81,7 +81,7 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 
 **Captain login**
 
-![Blue captain login console with Solo save slots](docs/screenshots/pressure-hull-login.png)
+![Blue captain login console](docs/screenshots/pressure-hull-login.png)
 
 **Flight cockpit and system radar**
 
