@@ -3481,10 +3481,14 @@ elementById2('combatassist').onclick = () => {
   send({ t: 'combat', op: 'assist', on: !(clientGameState.combat && clientGameState.combat.on) });
 };
 elementById2('combatstop').onclick = () => send({ t: 'combat', op: 'off' });
-elementById2('combatdelegate').onchange = (event) =>
+elementById2('combatdelegate').onchange = (event) => {
+  send({ t: 'combat', op: 'missiles', on: clientGameState.opts.assistMissiles !== false });
   send({ t: 'combat', op: 'delegate', on: (event.target as HTMLInputElement).checked });
-elementById2('combatcoordinate').onchange = (event) =>
+};
+elementById2('combatcoordinate').onchange = (event) => {
+  send({ t: 'combat', op: 'missiles', on: clientGameState.opts.assistMissiles !== false });
   send({ t: 'combat', op: 'coordinate', on: (event.target as HTMLInputElement).checked });
+};
 
 // Escape belongs to existing dialogs/text inputs first. Logging out is always explicit.
 let quitPaused = false;
