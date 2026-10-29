@@ -37,7 +37,7 @@ export function initTowingUI({
   const recipient = document.createElement('input');
   recipient.id = 'towrecipient';
   recipient.placeholder = 'Nearby captain name';
-  recipient.setAttribute('aria-label', 'Consensual transfer recipient');
+  recipient.setAttribute('aria-label', 'Transfer recipient');
   recipient.style.width = '160px';
   const offer = document.createElement('button');
   offer.id = 'towoffer';
@@ -50,7 +50,7 @@ export function initTowingUI({
   const help = document.createElement('div');
   help.className = 'small';
   help.textContent =
-    'Scan the deposit first. Towing needs a fitted Tow Rig and at least 60 t of hold capacity (built in on the Dredge). Towing limits speed to 60 on a Dredge or 30 on other ships. Bring the load to an ACCEPTS MOTHERLODE marker for automatic delivery at any towing speed. Keep enough hold space; a full hold leaves the load safely detached and reserved at the port. Deliver or detach before landing or jumping. A detached load stays reserved for its owner for 300 seconds of active simulation. Delivery gives the material, not extra credits.';
+    'Scan the deposit first. Towing needs a fitted Tow Rig and at least 60 t of hold capacity (built in on the Dredge). Towing limits speed to 60 on a Dredge or 30 on other ships. Bring the load to an ACCEPTS MOTHERLODE marker for automatic delivery at any towing speed. Keep enough hold space; a full hold leaves the load safely detached and reserved at the port. Deliver or detach before landing or jumping. A detached load stays reserved for its owner for 300 seconds of active game time. Delivery gives the material, not extra credits.';
   const details = document.createElement('details');
   const summary = document.createElement('summary');
   summary.textContent = 'Transfer & towing help';
@@ -187,7 +187,7 @@ export function initTowingUI({
       : 'The other captain must accept; nothing transfers automatically.';
     accept.hidden = !wire2.offers.length;
     if (wire2.offers.length)
-      accept.textContent = `ACCEPT ${wire2.offers[0].from}'S TRANSFER · ${label(bound('towAccept'))} (explicit consent)`;
+      accept.textContent = `ACCEPT ${wire2.offers[0].from}'S TRANSFER · ${label(bound('towAccept'))}`;
   }
   return { invoke, refresh };
 }
