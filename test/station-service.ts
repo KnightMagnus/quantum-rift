@@ -133,7 +133,7 @@ try {
     } else if (scenario === 'research-queue') {
       message.op = 'research';
       message.id = 'fixture-next';
-      player.station.active = { id: 'fixture-current', ends: currentTime + 100000 };
+      player.station.active = { id: galaxy.RESEARCH[0].id, ends: currentTime + 100000 };
       game.features = {
         ...game.features,
         hangar: {

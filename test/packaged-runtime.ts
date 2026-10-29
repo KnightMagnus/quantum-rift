@@ -2,6 +2,7 @@ import { NakamaService, until } from './helpers/nakama-service.ts';
 import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import path from 'node:path';
+import operatingSystem from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
 import { request } from 'node:http';
 import { randomBytes, createHash } from 'node:crypto';
@@ -10,16 +11,7 @@ import type { ServerMessage, SnapshotMessage } from '../client/protocol.ts';
 import type { PlayerPayload, LandedPayload } from '../client/main.ts';
 import { root, availablePort, ready, cleanup, evidenceDir } from './helpers/browser-fixture.ts';
 
-process.umask(0o077);
-const privateRoot = path.resolve(root, '..');
-for (const name of ['temp', 'npm-cache', 'evidence']) {
-  const directory = path.join(privateRoot, name);
-  fileSystem.mkdirSync(directory, { recursive: true, mode: 0o700 });
-  assert.equal(fileSystem.statSync(directory).mode & 0o077, 0, 'Private fixture directory');
-}
-process.env.TMPDIR = process.env.TMP = process.env.TEMP = path.join(privateRoot, 'temp');
-process.env.npm_config_cache = path.join(privateRoot, 'npm-cache');
-const scratch = fileSystem.mkdtempSync(path.join(privateRoot, 'temp', 'rift-package-'));
+const scratch = fileSystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-package-'));
 const checkout = path.join(scratch, 'source');
 const output = path.join(scratch, 'archives');
 const extracted = path.join(scratch, 'extracted');

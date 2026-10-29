@@ -228,21 +228,23 @@ try {
     window.fixtureInputs = [];
   });
 
-  // Dispatch genuine TouchEvent objects into the production handlers.
-  await page.locator('#tbtns [data-k="fire1"]').evaluate((button) => {
-    button.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, cancelable: true }));
+  // Use trusted touch input so Chromium supplies pointer capture and click events.
+  const touchSession = await context.newCDPSession(page);
+  const fireButton = await page.locator('#tbtns [data-k="fire1"]').boundingBox();
+  assert.ok(fireButton);
+  await touchSession.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [
+      { x: fireButton.x + fireButton.width / 2, y: fireButton.y + fireButton.height / 2 },
+    ],
   });
   await page.waitForFunction(() => window.fixtureInputs.some((input) => input.f1 === 1));
-  await page.locator('#tbtns [data-k="fire1"]').evaluate((button) => {
-    button.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+  await page.evaluate(() => {
     window.fixtureInputs = [];
   });
+  await touchSession.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await page.waitForFunction(() => window.fixtureInputs.some((input) => !input.f1));
-  await page
-    .locator('#tbtns [data-tap="map"]')
-    .evaluate((button) =>
-      button.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, cancelable: true })),
-    );
+  await page.locator('#tbtns [data-tap="map"]').tap();
   await page.waitForFunction(
     () => !document.querySelector<HTMLElement>('#gmap')!.classList.contains('hidden'),
   );
