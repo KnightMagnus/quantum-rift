@@ -177,8 +177,15 @@ export function localLoginConnection(
           return;
         }
         if (authenticated && message?.t === 'hello') return;
-        const name = String(message?.name ?? '').trim();
-        const password = String(message?.pass ?? '');
+        if (
+          message?.t === 'hello' &&
+          (typeof message.name !== 'string' || typeof message.pass !== 'string')
+        ) {
+          socket.send({ t: 'error', msg: 'Captain name and password must be text.' });
+          return;
+        }
+        const name = typeof message?.name === 'string' ? message.name.trim() : '';
+        const password = typeof message?.pass === 'string' ? message.pass : '';
         if (
           !authenticated &&
           message?.t === 'hello' &&
