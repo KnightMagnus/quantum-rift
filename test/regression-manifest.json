@@ -209,7 +209,8 @@
     "browser-friend-liveness.ts",
     "fog-of-war-browser.ts",
     "onboarding-browser.ts",
-    "equipped-outfits-browser.ts"
+    "equipped-outfits-browser.ts",
+    "bank-panel-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -841,7 +842,12 @@
     "protocol-compatibility-browser.ts": ["helpers/chromium.ts"],
     "hyperspace-arrival.ts": ["helpers/legacy-fixture.ts", "helpers/required.ts"],
     "faction-store-catalog.ts": ["helpers/legacy-fixture.ts", "helpers/required.ts"],
-    "fog-of-war-browser.ts": ["helpers/chromium.ts", "helpers/seed-random.ts"]
+    "fog-of-war-browser.ts": ["helpers/chromium.ts", "helpers/seed-random.ts"],
+    "bank-panel-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/temp-data.ts",
+      "helpers/chromium.ts"
+    ]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -983,8 +989,8 @@
       "id": "syndicate",
       "owners": ["server/syndicate.ts"],
       "services": ["syndicate"],
-      "tests": ["v12.ts", "v203.ts", "ship-banking.ts"],
-      "asserts": "Black market/Syndicate career, officer promotion/lower decks, bank deposits/loans/interest, timed delivery contracts."
+      "tests": ["v12.ts", "v203.ts", "ship-banking.ts", "bank-panel-browser.ts"],
+      "asserts": "Black market/Syndicate career, officer promotion/lower decks, bank loans/interest, timed delivery contracts. Compact loan dialog replaces the landed Bank tab, retains authoritative borrowing/repayment and denial, live credit/loan refresh, visitor/flight availability, modal focus/Escape and native keyboard/wheel reachability at ordinary and scaled viewports."
     },
     {
       "id": "faction-arcs",
@@ -2214,7 +2220,7 @@
     "arcacc": ["v12.ts", "message-routing.ts"],
     "promote": ["v12.ts", "message-routing.ts"],
     "lower": ["v12.ts", "v203.ts", "message-routing.ts"],
-    "bank": ["v12.ts", "message-routing.ts"],
+    "bank": ["v12.ts", "message-routing.ts", "bank-panel-browser.ts"],
     "pause": ["v10.ts", "message-routing.ts"],
     "mining": ["mining-network.ts", "mining-controls-browser.ts", "message-routing.ts"],
     "refinery": [

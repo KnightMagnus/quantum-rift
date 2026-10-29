@@ -370,6 +370,11 @@ openers remain available from hails; the Captain toggle and Options remain avail
 from Captain. Map, help and Options controls remain available outside the map; other outside clicks cannot activate
 underlying commands. Storage loss of availability closes through the same owner.
 
+`client/ui.ts` owns the compact Bank loan dialog opened beside landed credits.
+It retains the existing bank action handler, refreshes from authoritative player
+and landed payloads, and closes when the port loses availability or the captain
+departs. The shared overlay controller owns its keyboard and focus behavior.
+
 Login remains the session gate, not a dismissible game dialog. The landing screen
 is not a flight-blocking modal in this context; its existing docked-state gates
 remain authoritative. Mining retains its additional landed-state denial.

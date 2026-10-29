@@ -572,3 +572,43 @@
 #ginfo .hi {
   color: #ff8a6a;
 }
+
+/* Loan dialog: fixed header and a scrollable body within the usable viewscreen. */
+.land-wallet,
+.bank-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+#bankbox > .bank-panel {
+  width: 440px;
+  max-height: calc((100vh - var(--cbar) - 20px) / var(--ui, 1));
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.bank-head {
+  flex: 0 0 auto;
+  justify-content: space-between;
+}
+.bank-head h2 {
+  margin: 0;
+  font-size: 16px;
+}
+#bankin {
+  min-height: 0;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+#bankin .kv,
+#bankin .rrow {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+#bankamt {
+  min-width: 0;
+  width: 110px;
+  max-width: 100%;
+}

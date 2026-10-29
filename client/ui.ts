@@ -258,6 +258,13 @@ export function initUI(
     }
   });
   elementById2('storein').addEventListener('click', onAct);
+  elementById2('bankin').addEventListener('click', onAct);
+  elementById2('bankclose').onclick = () => overlays.close('bankbox');
+  elementById2('bankbtn').onclick = () => {
+    if (!bankAvailable()) return;
+    renderBank();
+    overlays.open('bankbox');
+  };
 
   elementById2('landbody').addEventListener('click', onAct);
   elementById2('landbody').addEventListener('click', (pointerEvent) => {
@@ -1455,7 +1462,6 @@ const TABS = [
   ['arena', 'ARENA'],
   ['station', 'STATION'],
   ['blackmarket', 'BLACK MARKET'],
-  ['bank', 'BANK'],
 ];
 /** Services a visitor may use from the guest dock of another captain's Personal Station. */
 const GUEST_DOCK_TABS = new Set(['overview', 'trade', 'jobs', 'crew']);
@@ -1527,7 +1533,6 @@ export function showLanded(): void {
     ([entryKey]) =>
       (entryKey === 'refinery' && length2.refinery?.available) ||
       (entryKey === 'blackmarket' && length2.blackmarket) ||
-      (entryKey === 'bank' && length2.bank) ||
       entryKey === 'overview' ||
       (entryKey === 'community' && length2.community) ||
       (entryKey === 'trade' && (length2.market || length2.mats.length)) ||
@@ -1578,6 +1583,45 @@ export function showLanded(): void {
     );
   renderLanded();
 }
+/** Current port capability controls both the opener and loan action route. */
+function bankAvailable(): boolean {
+  return !!(
+    clientGameState.you &&
+    clientGameState.landed?.bank &&
+    !clientGameState.landed.site?.guest
+  );
+}
+
+/** Keep the amount and native focus while authoritative balances refresh. */
+function renderBank(): void {
+  const body = elementById2('bankin');
+  const amount = body.querySelector<HTMLInputElement>('#bankamt');
+  const draft = amount?.value;
+  const focused = body.contains(document.activeElement)
+    ? (document.activeElement as HTMLElement)
+    : null;
+  const focusSelector = focused?.id
+    ? '#' + focused.id
+    : focused?.dataset.op
+      ? '[data-op="' + focused.dataset.op + '"]'
+      : null;
+  const scroll = body.scrollTop;
+  body.innerHTML = bankHtml(clientGameState);
+  if (draft !== undefined) body.querySelector<HTMLInputElement>('#bankamt')!.value = draft;
+  if (focusSelector)
+    (body.querySelector<HTMLElement>(focusSelector) || elementById2('bankclose')).focus({
+      preventScroll: true,
+    });
+  body.scrollTop = scroll;
+}
+
+overlays.register({
+  id: 'bankbox',
+  priority: 15,
+  dismiss: () => overlays.close('bankbox'),
+  initialFocus: () => elementById2('bankclose'),
+});
+
 /**
  * Opens the faction storehouse / item storage dialog.
  */
@@ -1603,6 +1647,7 @@ export function refreshStores(): void {
  * Hides the landed screen dialog.
  */
 export function hideLanded(): void {
+  overlays.close('bankbox');
   clientGameState.views.capture(elementById2('landbody'));
   clientGameState.views.remember();
   elementById2('land').classList.add('hidden');
@@ -1637,6 +1682,9 @@ export function renderLanded(): void {
     ? ''
     : dockChips(clientGameState, !!length2.site?.own); // 2.1
   elementById2('landcr').textContent = credits(playerPayload.credits) + ' credits';
+  elementById2('bankbtn').classList.toggle('hidden', !bankAvailable());
+  if (!bankAvailable()) overlays.close('bankbox');
+  else if (!elementById2('bankbox').classList.contains('hidden')) renderBank();
   elementById2('landcargo').textContent = playerPayload.shipless
     ? 'No active ship: choose one to depart'
     : `Cargo ${playerPayload.cargoUsed + (playerPayload.jobCargo || 0)}/${computedShipStats!.cargo} t${playerPayload.jobCargo ? ` (${playerPayload.jobCargo} t for jobs)` : ''} · Passengers ${occupiedPassengerSeats(playerPayload.missions)}/${passengerSeats(clientGameState.A!.ships[playerPayload.ship.hull], playerPayload.ship)} seats · Outfit space ${computedShipStats!.free} t free`;
@@ -1932,9 +1980,6 @@ export function renderLanded(): void {
     case 'blackmarket':
       height = blackMarketHtml(clientGameState);
       break; // 1.2
-    case 'bank':
-      height = bankHtml(clientGameState);
-      break;
     case 'colony':
       height = colonyHtml(clientGameState);
       break;
@@ -2408,6 +2453,7 @@ function onAct(mouseEvent: MouseEvent): void {
       break;
     }
     case 'bank': {
+      if (!bankAvailable()) return;
       const value2 = +((elementById('bankamt') || {}).value || 0);
       send({
         t: 'bank',

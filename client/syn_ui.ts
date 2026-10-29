@@ -131,15 +131,16 @@ export function bankHtml(clientGameState: ClientGameState): string {
       ? Math.max(0, Math.ceil((playerPayload.loan.next - Date.now()) / 60000))
       : 0,
     room = Math.max(0, bank2.max - balance);
-  return `<div class="igrid"><div><div class="sect" style="margin-top:0">THE BANK OF THE RIFT</div>
+  return `<div class="bank-details"><div class="kv"><span>Credits</span><span class="cr">${credits2(playerPayload.credits)}</span></div>
       <div class="kv"><span>Credit rating</span><span><b>${playerPayload.credit || bank2.credit}</b> <span class="dim small">(300 to 850)</span></span></div>
       <div class="kv"><span>Interest</span><span>${(bank2.rate * 100).toFixed(2)}% every ${bank2.period} minutes of play</span></div>
       <div class="kv"><span>You can borrow up to</span><span class="cr">${credits2(bank2.max)}</span></div>
-      <p class="dim small">Payments are taken automatically every ${bank2.period} minutes while you play. Paying on time raises your rating and lowers your interest; missing one adds interest and drops your rating. Bigger earnings unlock bigger loans.</p>
-    </div><div><div class="sect" style="margin-top:0">YOUR LOAN</div>
+
+    <div class="sect">YOUR LOAN</div>
       ${balance ? `<div class="kv"><span>Balance</span><span class="cr">${credits2(balance)}</span></div><div class="kv"><span>Next payment</span><span>about ${credits2(bank2.pay)} in ${minutes} min</span></div>` : '<p class="dim">No loan.</p>'}
-      <div class="rrow"><input id="bankamt" type="number" min="1000" step="1000" placeholder="Amount" value="${Math.min(room, 50000)}"><button class="btn sm" data-act="bank" data-op="borrow"${room < 1000 ? ' disabled' : ''}>BORROW</button>${balance ? `<button class="btn sm" data-act="bank" data-op="pay">PAY</button><button class="btn sm" data-act="bank" data-op="payall">PAY ALL</button>` : ''}</div>
-    </div></div>`;
+      <div class="rrow"><label for="bankamt">Amount</label><input id="bankamt" aria-label="Loan amount in credits" type="number" min="1000" step="1000" placeholder="Amount" value="${Math.min(room, 50000)}"><button class="btn sm" data-act="bank" data-op="borrow"${room < 1000 ? ' disabled' : ''}>BORROW</button>${balance ? `<button class="btn sm" data-act="bank" data-op="pay">PAY</button><button class="btn sm" data-act="bank" data-op="payall">PAY ALL</button>` : ''}</div>
+      <p class="dim small">Payments are automatic while you play. Paying on time raises your rating and lowers interest. Missing a payment adds interest and lowers your rating. Bigger earnings unlock bigger loans.</p>
+    </div>`;
 }
 
 // officer rank, traits and the promote button (added to each officer card in the CREW tab)
