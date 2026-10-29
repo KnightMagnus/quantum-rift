@@ -274,13 +274,14 @@ server.on('upgrade', (incomingMessage, duplex) => {
   } else duplex.destroy();
 });
 
+let shuttingDown = false;
 server.on('error', (error2) => {
   if ('code' in error2 && error2.code === 'EADDRINUSE')
     console.error(
       `\nPort ${PORT} is already in use: another Quantum Rift server (maybe an older version) is still running.\nClose its window first, then start this one again.\n`,
     );
   else console.error(error2);
-  process.exit(1);
+  shutdown(1);
 });
 
 server.listen(PORT, friendConfig?.bind || process.env.HOST || '127.0.0.1', () => {
@@ -312,26 +313,28 @@ server.listen(PORT, friendConfig?.bind || process.env.HOST || '127.0.0.1', () =>
 });
 
 /** Stop accepting work, synchronously persist, then release only a clean owner's lock. */
-function shutdown(): void {
+function shutdown(exitCode = 0): void {
+  if (shuttingDown) return;
+  shuttingDown = true;
   server.close();
   try {
     database.flush();
     releaseFriendSave?.();
-    process.exit(0);
+    process.exit(exitCode);
   } catch (error) {
     console.error('Save shutdown failed; ownership lock retained for operator recovery.', error);
     process.exit(1);
   }
 }
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP'] as const) process.on(signal, () => shutdown());
+if (process.platform === 'win32') process.on('SIGBREAK', () => shutdown());
 // The launcher owns this inherited IPC channel, including on Windows where
 // terminating a process with SIGTERM does not deliver a graceful signal.
 if (process.connected) {
   process.on('message', (message) => {
     if (message === 'shutdown') shutdown();
   });
-  process.on('disconnect', shutdown);
+  process.on('disconnect', () => shutdown());
 }
 
 // log anything that slips through rather than letting the server die mid-game

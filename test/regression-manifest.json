@@ -1702,7 +1702,7 @@
         "packaged-runtime.ts",
         "friend-save-owner.ts"
       ],
-      "asserts": "Explicit password-protected listen-server hosting with one Game and durable independent friend saves; three captain ownership, movement and interaction; denial of Solo-only import/pause and foreign Origins; browser physical controls, reconnect, restart and extracted artifact execution without native service dependencies."
+      "asserts": "Explicit password-protected listen-server hosting with one Game and durable independent friend saves; three captain ownership, movement and interaction; denial of Solo-only import/pause and foreign Origins; browser physical controls, reconnect, restart and extracted artifact execution without native service dependencies. Clean bind failure releases only its own finalized save lock; supported console-close signals preserve restart safety. Friend launcher readiness verifies the advertised version and protocol."
     },
     {
       "id": "faction-store-locations",

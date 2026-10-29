@@ -25,6 +25,11 @@ try {
     );
     fileSystem.mkdirSync(path.join(directory, 'tools/runtime'), { recursive: true });
     fileSystem.mkdirSync(path.join(directory, 'server'), { recursive: true });
+    fileSystem.mkdirSync(path.join(directory, 'shared'), { recursive: true });
+    fileSystem.copyFileSync(
+      path.join(root, 'shared/protocol.ts'),
+      path.join(directory, 'shared/protocol.ts'),
+    );
     fileSystem.mkdirSync(path.join(directory, 'dist/server'), { recursive: true });
     fileSystem.copyFileSync(
       path.join(root, 'tools/start.ts'),
