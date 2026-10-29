@@ -86,6 +86,8 @@ export class NakamaDatabase implements GameStorage {
   world: WorldData;
   economicFrozen = false;
   dirty = false;
+  /** In-memory mutation sequence; isolates action effects from later simulation ticks. */
+  mutationSequence = 0;
   private backend: StorageBackend;
   private version: string;
   private revision: number;
@@ -155,6 +157,7 @@ export class NakamaDatabase implements GameStorage {
   }
   touch(): void {
     if (this.economicFrozen) throw new Error('Database frozen; restart required');
+    this.mutationSequence++;
     this.dirty = true;
   }
   hasPendingCheckpoint(): boolean {

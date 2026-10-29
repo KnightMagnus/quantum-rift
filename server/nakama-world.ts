@@ -1,3 +1,4 @@
+import type { ClientAction } from '../shared/wire-commands.ts';
 import { GAME_PROTOCOL, COMPATIBILITY_MESSAGE, supportedProtocol } from '../shared/protocol.ts';
 import { HealthMonitor } from '../shared/health.ts';
 export { denyUnsupportedIdentity, identityHooks } from './nakama-identity-gates.ts';
@@ -27,6 +28,8 @@ export interface WorldState {
   authorityReady: boolean;
   /** Wall-clock time of the last successful native checkpoint. */
   lastCheckpointAt: number;
+  /** A successful high-value action awaits the bounded durable batch. */
+  pendingEconomicCheckpoint: boolean;
 }
 /** Nakama exports state through Go maps between callbacks. A callable handle retains the
  * original objects in this match's dedicated VM instead of erasing class prototypes/Map methods.
@@ -175,6 +178,7 @@ export const initializeWorld: nkruntime.MatchInitFunction<WorldHandle> = functio
     matchId,
     authorityReady: false,
     lastCheckpointAt: Date.now(),
+    pendingEconomicCheckpoint: false,
   };
   return { state: { world: () => world }, tickRate: 30, label: 'quantum-rift-world-v1' };
 };
@@ -354,7 +358,16 @@ export const advanceWorld: nkruntime.MatchLoopFunction<WorldHandle> = function a
     state.authorityReady = true;
   }
   if (retireFrozenWorld(state, logger)) return null;
-  let durableAction = false;
+  const durableActions = [
+    'trade2',
+    'trade',
+    'buyship',
+    'outfit',
+    'station',
+    'colony',
+    'exchange',
+    'bank',
+  ] as const satisfies readonly ClientAction['t'][];
   const counts = new Map<string, number>();
   for (const message of messages) {
     const connection = state.connections.get(message.sender.sessionId);
@@ -380,13 +393,13 @@ export const advanceWorld: nkruntime.MatchLoopFunction<WorldHandle> = function a
       if (!validInput(packet, connection.lastSequence)) continue;
       connection.lastSequence = Number(packet.seq);
     }
+    const mutationBefore = state.database.mutationSequence;
     connection.receive(text);
     if (
-      ['trade2', 'trade', 'yard', 'outfit', 'claim', 'colony', 'exchange', 'bank'].includes(
-        packet.t,
-      )
+      mutationBefore !== state.database.mutationSequence &&
+      durableActions.some((action) => action === packet.t)
     )
-      durableAction = true;
+      state.pendingEconomicCheckpoint = true;
     if (retireFrozenWorld(state, logger)) return null;
   }
   try {
@@ -395,12 +408,13 @@ export const advanceWorld: nkruntime.MatchLoopFunction<WorldHandle> = function a
     const checkpointTime = Date.now();
     state.lastCheckpointAt ??= checkpointTime;
     if (
-      durableAction ||
+      (state.pendingEconomicCheckpoint && checkpointTime - state.lastCheckpointAt >= 250) ||
       checkpointTime < state.lastCheckpointAt ||
       checkpointTime - state.lastCheckpointAt >= 10000
     ) {
       state.database.flush();
       state.lastCheckpointAt = checkpointTime;
+      state.pendingEconomicCheckpoint = false;
     }
   } catch {
     logger.error('World tick failed; health counters contain no payloads.');
