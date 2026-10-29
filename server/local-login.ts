@@ -35,6 +35,8 @@ interface LoginJob {
   password: string;
   /** Synchronous game dispatch after derivation. */
   dispatch: () => void;
+  /** Whether this handshake still owns an open transport. */
+  isCurrent: () => boolean;
   /** Complete the admission promise. */
   resolve: () => void;
   /** Reject admission without an account mutation. */
@@ -70,6 +72,7 @@ export class LocalLoginQueue {
     password: string,
     address: string,
     dispatch: () => void,
+    isCurrent: () => boolean = () => true,
   ): Promise<void> {
     if (this.jobs.length >= 16)
       return Promise.reject(new Error('Sign-in is busy. Try again shortly.'));
@@ -91,7 +94,7 @@ export class LocalLoginQueue {
       window.count++;
     }
     return new Promise<void>((resolve, reject) => {
-      this.jobs.push({ database, name, password, dispatch, resolve, reject });
+      this.jobs.push({ database, name, password, dispatch, isCurrent, resolve, reject });
       this.drain();
     });
   }
@@ -104,6 +107,10 @@ export class LocalLoginQueue {
   }
   private async execute(job: LoginJob): Promise<void> {
     try {
+      if (!job.isCurrent()) {
+        job.resolve();
+        return;
+      }
       const account = job.database.get(job.name);
       const salt = account?.salt ?? crypto.randomBytes(16).toString('hex');
       const oldHash = account?.hash;
@@ -113,6 +120,10 @@ export class LocalLoginQueue {
           else resolve(key.toString('hex'));
         });
       });
+      if (!job.isCurrent()) {
+        job.resolve();
+        return;
+      }
       if (
         job.database.get(job.name) !== account ||
         (account && (account.salt !== salt || account.hash !== oldHash))
@@ -194,9 +205,16 @@ export function localLoginConnection(
         ) {
           pending = true;
           void queue
-            .run(database, name, password, address, () => {
-              if (socket.open) receive(text);
-            })
+            .run(
+              database,
+              name,
+              password,
+              address,
+              () => {
+                if (socket.open) receive(text);
+              },
+              () => socket.open,
+            )
             .catch((error: Error) => {
               if (socket.open) socket.send({ t: 'error', msg: error.message });
             })

@@ -1831,3 +1831,5 @@ The landed service fixtures also start native Tab and Shift+Tab from BODY, witho
 `touch-controls-browser.ts` reuses the isolated friend-host landed fixture with a touch-enabled Chromium context. Real browser touch protocol events verify MAP/FIRE/LAND center hit targets, map and dock precedence, primary-fire hold/release/cancel/drag commands, joystick cancellation, modal-entry release and a complete authoritative landing. Tablet 1024×768 and 1093×614 views exercise normal/enlarged UI. This does not certify physical iOS/Android hardware or full portrait-phone playability.
 
 `combat-browser.ts` is registered in the browser CI group for persisted missile settings and the real target/Assist/steering/firing path; optional environment variants remain diagnostic extensions, not claims of every combat scenario.
+
+Urgent native checkpoint batches follow actual economic action mutations, not packet names or unrelated tick dirtiness. Denied/no-op requests cannot force writes; successful `buyship`/`station` and other economic changes coalesce within 250 ms. Cancelled queued local handshakes are skipped before starting another password worker.

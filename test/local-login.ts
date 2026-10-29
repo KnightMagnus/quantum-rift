@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+import { mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { LocalLoginQueue, localLoginConnection, preparedLogin } from '../server/local-login.ts';
@@ -101,6 +103,30 @@ assert.ok(
     .filter((result) => result.status === 'rejected')
     .every((result) => /Too many new captains/.test(String(result.reason))),
 );
+const cancelledQueue = new LocalLoginQueue();
+const derivations = mock.method(crypto, 'scrypt');
+try {
+  const first = cancelledQueue.run(database, 'Async Pilot', 'local-fixture-pass', 'one', () => {});
+  const second = cancelledQueue.run(database, 'Async Pilot', 'local-fixture-pass', 'two', () => {});
+  const cancelled = cancelledQueue.run(
+    database,
+    'Async Pilot',
+    'local-fixture-pass',
+    'three',
+    () => {
+      throw Error('cancelled dispatch');
+    },
+    () => false,
+  );
+  await Promise.all([first, second, cancelled]);
+  assert.equal(
+    derivations.mock.callCount(),
+    2,
+    'a cancelled queued handshake never starts another scrypt worker',
+  );
+} finally {
+  derivations.mock.restore();
+}
 console.log(
   'Local login: background scrypt, scoped credentials, durable admission, denied passwords, close cancellation and bounded registration/socket admission.',
 );
