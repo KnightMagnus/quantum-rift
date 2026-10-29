@@ -23,11 +23,17 @@ try {
       player.stellar = null;
       game.spawnPlayer(session, 0, 0, 0, 0);
       assert.ok(session.ent);
+      session.retaliationVisit = { sys: player.sys, factions: new Set(['quantum']) };
       const previous = session.ent;
       const origin = game.spaces[player.sys];
       origin.remove(previous);
       game.onPlayerDeath(game.pref(session), origin);
       assert.equal(player.credits, 0);
+      assert.equal(
+        session.retaliationVisit,
+        undefined,
+        'prior fleet retaliation does not bypass rebuilt exit grace',
+      );
       assert.ok(player.stellar);
       const recovery = STELLARS[player.stellar];
       assert.ok(

@@ -2731,7 +2731,7 @@ export class Game<Storage extends Database = Database> {
     session.recoveryGrace = true;
     playerData.stellar = back;
     playerData.sys = STELLARS[back].system;
-    if (session.retaliationVisit?.sys !== playerData.sys) session.retaliationVisit = undefined;
+    session.retaliationVisit = undefined; // The destroyed fleet's retaliation cannot cancel its rebuilt exit grace.
     playerData.fuel = undefined;
     for (const mission of playerData.missions) if (mission.type === 'cargo') mission.lost = true;
     playerData.missions = playerData.missions.filter((mission) => !mission.lost);

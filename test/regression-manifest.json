@@ -223,7 +223,8 @@
     "colony-exchange-layout-browser.ts",
     "landed-colony-responsive-browser.ts",
     "landed-zoom-browser.ts",
-    "touch-controls-browser.ts"
+    "touch-controls-browser.ts",
+    "combat-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -887,7 +888,8 @@
     "landed-zoom-browser.ts": ["helpers/landed-responsive.ts"],
     "helpers/landed-zoom.ts": ["helpers/browser-fixture.ts"],
     "touch-controls-browser.ts": ["helpers/landed-responsive.ts"],
-    "helpers/touch-controls.ts": ["helpers/chromium.ts", "helpers/browser-fixture.ts"]
+    "helpers/touch-controls.ts": ["helpers/chromium.ts", "helpers/browser-fixture.ts"],
+    "combat-browser.ts": ["helpers/chromium.ts", "fixtures/preload-combat-browser.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -2389,7 +2391,6 @@
   "supplemental": {
     "background-scale-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "catalog-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
-    "combat-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "comet-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "eventide-mission-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",
     "exotic-scenery-browser.ts": "Legacy/specialist browser probe; environment-specific or overlapping canonical system coverage, not independently claimed as CI behavior coverage.",

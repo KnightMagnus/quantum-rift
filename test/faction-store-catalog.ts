@@ -261,7 +261,7 @@ playerData.stellar = 'meridian-yards';
 playerData.sys = STELLARS['meridian-yards'].system;
 playerData.rep.quantum = 0;
 const deniedMessages: string[] = [];
-const originalSend = socket.send;
+const originalSend = socket.send.bind(socket);
 socket.send = (value) => {
   const packet = typeof value === 'string' ? JSON.parse(value) : value;
   if (packet.t === 'toast') deniedMessages.push(packet.msg);
