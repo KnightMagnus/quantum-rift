@@ -289,6 +289,37 @@ for (const [name, scenario] of Object.entries(scenarios)) {
   assert.deepEqual(current.snapshot(), legacy.snapshot(), name + ': root-owned state/effects');
   assert.equal(current.timers.size, 0, name + ': no orphaned retry');
 }
+// A recovering world can reject a valid login before the first captain projection.
+{
+  const subject = harness(false);
+  subject.open();
+  subject.sockets[0].onerror!('Server is recovering. Reconnecting...');
+  subject.sockets[0].onclose!();
+  assert.equal(subject.state.you, null);
+  assert.equal(
+    subject.timers.size,
+    1,
+    'pre-player recovery schedules a bounded credentialed retry',
+  );
+  subject.fireTimer();
+  assert.equal(subject.sockets.length, 2);
+  subject.sockets[1].onerror!();
+  subject.sockets[1].onclose!();
+  assert.equal(subject.timers.size, 1, 'temporary join failures retain the bounded recovery chain');
+  subject.fireTimer();
+  assert.equal(subject.sockets.length, 3);
+  subject.state.you = {};
+  subject.sockets[2].onmessage!({ data: '{"t":"welcome"}' });
+  assert.ok(subject.trace.some((event) => event[0] === 'receive'));
+}
+{
+  const subject = harness(false);
+  subject.open(30);
+  subject.sockets[0].onerror!('Server is recovering. Reconnecting...');
+  subject.sockets[0].onclose!();
+  assert.equal(subject.timers.size, 0, 'pre-player recovery obeys the existing retry cap');
+  assert.ok(subject.trace.some((event) => event[0] === 'terminal'));
+}
 console.log(
   'Connection lifecycle: independent before/after callback, backoff, stale epoch, live credentials, denial and teardown traces passed.',
 );

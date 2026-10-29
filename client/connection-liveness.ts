@@ -16,6 +16,7 @@ export class ConnectionLiveness {
   private probeAt: number | undefined;
   private stopped = false;
   private interrupted = false;
+  private earlyProbeSent = false;
   private readonly statusChanged: (interrupted: boolean) => void;
   private readonly probe: () => void;
   private readonly expired: () => void;
@@ -48,6 +49,7 @@ export class ConnectionLiveness {
   received(): void {
     this.heardAt = this.clock.now();
     this.probeAt = undefined;
+    this.earlyProbeSent = false;
     if (this.interrupted) {
       this.interrupted = false;
       this.statusChanged(false);
@@ -72,6 +74,11 @@ export class ConnectionLiveness {
     // No browser watchdog can promise a wall-clock deadline while JS is suspended.
     if (now - this.checkedAt > 15000) this.probeAt = undefined;
     this.checkedAt = now;
+    // Idle/paused peers can answer before the warning; keep the hard 10s + 15s window.
+    if (!this.earlyProbeSent && now - this.heardAt >= 4000 && now - this.heardAt < 10000) {
+      this.earlyProbeSent = true;
+      this.probe();
+    }
     if (!this.interrupted && now - this.heardAt >= 5000) {
       this.interrupted = true;
       this.statusChanged(true);

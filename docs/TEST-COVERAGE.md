@@ -1389,7 +1389,7 @@ that idle application probes receive replies without reconnecting. In flight, th
 proxy then drops all server bytes and FIN while allowing outbound controls. The
 browser must detect loss, reconnect on a new link, restore authoritative state and
 clear held controls without replaying gameplay requests. Timings are the production
-10-second idle probe and 15-second reply window, not shortened test settings. A persistent, non-intercepting connection banner appears after five seconds of reply silence, remains visible during reconnect and clears on authoritative welcome; this early feedback does not shorten the disconnect threshold.
+10-second idle probe and 15-second reply window, not shortened test settings. A separate four-second early probe lets healthy idle/paused peers reply before feedback. A persistent, non-intercepting connection banner appears after five seconds of reply silence, remains visible during reconnect and clears on authoritative welcome; this early feedback does not shorten the disconnect threshold.
 
 `nakama-client-connection.ts` also advances a deterministic monotonic clock through
 native-match reply loss, healthy idle replies, malformed packets, teardown and
@@ -1828,7 +1828,7 @@ The landed service fixtures also start native Tab and Shift+Tab from BODY, witho
 
 ## Touch flight controls (`touch-flight-controls`)
 
-`touch-controls-browser.ts` reuses the isolated friend-host landed fixture with a touch-enabled Chromium context. Real browser touch protocol events verify MAP/FIRE/LAND center hit targets, map and dock precedence, primary-fire hold/release/cancel/drag commands, joystick cancellation, modal-entry release and a complete authoritative landing. Tablet 1024×768 and 1093×614 views exercise normal/enlarged UI. This does not certify physical iOS/Android hardware or full portrait-phone playability.
+`touch-controls-browser.ts` reuses the isolated friend-host landed fixture with a touch-enabled Chromium context. Real browser touch protocol events verify MAP/FIRE/LAND center hit targets, map and dock precedence, primary-fire hold/release/cancel/drag commands, joystick cancellation, modal-entry release and a complete authoritative landing. A visibility-state seam without window blur checks the immediate neutral send synchronously, before another animation frame can mask the behavior; it is not a physical background-tab timing certification. Tablet 1024×768 and 1093×614 views exercise normal/enlarged UI. This does not certify physical iOS/Android hardware or full portrait-phone playability.
 
 `combat-browser.ts` is registered in the browser CI group for persisted missile settings and the real target/Assist/steering/firing path; optional environment variants remain diagnostic extensions, not claims of every combat scenario.
 

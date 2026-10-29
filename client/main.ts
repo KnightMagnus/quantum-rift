@@ -2483,12 +2483,7 @@ flightEngine.engine.input.pointers.on('move', (event) => {
   setCursor(cursorFor(pickAt2));
 });
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) return;
-  mouse.down = false;
-  clientGameState._look = null;
-  clientGameState._lookT = null;
-  releaseTouchControls();
-  padding.blocked = true;
+  if (document.hidden) clearManualFlightInput();
 });
 canvas.addEventListener('pointercancel', () => {
   mouse.down = false;

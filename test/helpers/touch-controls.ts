@@ -5,6 +5,15 @@ import type { CDPSession, Page } from 'playwright';
 import { launchChromium } from './chromium.ts';
 import { delay, failureEvidence } from './browser-fixture.ts';
 
+declare global {
+  interface Window {
+    /** Synchronous production sends, sampled before the browser can run another frame. */
+    touchCommands: TouchCommand[];
+    /** Actual window blur events; hiding-state coverage must not rely on one. */
+    touchBlurEvents: number;
+  }
+}
+
 /** Outgoing game commands observed on the real fixture WebSocket. */
 interface TouchCommand {
   /** Production action discriminator. */
@@ -35,6 +44,18 @@ export async function runTouchControls(origin: string, output: string): Promise<
       if (message.text().startsWith('touch-probe')) inputTrace.push(message.text());
     });
     await page.addInitScript(() => {
+      window.touchCommands = [];
+      window.touchBlurEvents = 0;
+      window.addEventListener('blur', () => window.touchBlurEvents++);
+      // oxlint-disable-next-line typescript/unbound-method -- Preserve receiver with call below.
+      const send = WebSocket.prototype.send;
+      WebSocket.prototype.send = function (data) {
+        if (typeof data === 'string') {
+          const packet = JSON.parse(data) as TouchCommand;
+          if (packet.t === 'input') window.touchCommands.push(packet);
+        }
+        return send.call(this, data);
+      };
       for (const type of ['pointerdown', 'pointerup', 'pointercancel', 'click'])
         document.addEventListener(
           type,
@@ -176,6 +197,32 @@ export async function runTouchControls(origin: string, output: string): Promise<
       );
       await page.screenshot({ path: path.join(output, `tablet-${width}x${height}-${scale}.png`) });
       measurements.push({ width, height, scale, fire, map, packets: packets.length });
+    }
+    const fireBeforeHide = await point(page, '[data-k="fire1"]');
+    const firingBeforeHide = packets.length;
+    await touch(session, 'touchStart', fireBeforeHide);
+    try {
+      await waitPacket(firingBeforeHide, (packet) => packet.f1 === 1);
+      const hidden = await page.evaluate(() => {
+        const before = window.touchCommands.length;
+        const blurs = window.touchBlurEvents;
+        const descriptor = Object.getOwnPropertyDescriptor(document, 'hidden');
+        Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+        document.dispatchEvent(new Event('visibilitychange'));
+        const commands = window.touchCommands.slice(before);
+        if (descriptor) Object.defineProperty(document, 'hidden', descriptor);
+        else Reflect.deleteProperty(document, 'hidden');
+        return { commands, blurs, after: window.touchBlurEvents };
+      });
+      assert.equal(hidden.after, hidden.blurs, 'visibility safety does not depend on window blur');
+      assert.ok(
+        hidden.commands.some(
+          (packet) => packet.t === 'input' && packet.f1 === 0 && packet.th === 0 && packet.tu === 0,
+        ),
+        'visibility handler sends neutral synchronously before any later animation frame',
+      );
+    } finally {
+      await touch(session, 'touchEnd');
     }
     const land = await point(page, '[data-tap="land"]');
     await touch(session, 'touchStart', land);

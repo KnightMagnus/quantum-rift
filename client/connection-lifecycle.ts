@@ -77,7 +77,7 @@ export class ConnectionLifecycle {
   }
 
   /** Open or retry with the existing bounded backoff and live account guards. */
-  open(tries: number): void {
+  open(tries: number, recoveringLogin = false): void {
     const capabilities = this.capabilities;
     const credentials = capabilities.credentials();
     if (!credentials) return;
@@ -86,7 +86,7 @@ export class ConnectionLifecycle {
     const socket = capabilities.createConnection({ name, pass });
     this.socket = socket;
     let compatibilityFailure = false;
-    let recovering = false;
+    let recovering = recoveringLogin;
     const current = () => this.socket === socket && capabilities.epoch() === epoch;
     socket.oninterrupted = (interrupted) => {
       if (current()) capabilities.interrupted?.(interrupted);
@@ -99,12 +99,18 @@ export class ConnectionLifecycle {
       if (capabilities.sendsHello()) this.send({ t: 'hello', name, pass });
     };
     socket.onmessage = (event) => {
-      if (current()) capabilities.receive(event.data);
+      if (current()) {
+        capabilities.receive(event.data);
+        if (capabilities.hasPlayer()) recovering = false;
+      }
     };
     socket.onclose = () => {
       if (!current()) return;
       capabilities.disconnected();
-      if (!capabilities.hasPlayer()) return;
+      if (!capabilities.hasPlayer() && !recovering) {
+        capabilities.interrupted?.(false);
+        return;
+      }
       if (compatibilityFailure) {
         capabilities.terminal(COMPATIBILITY_MESSAGE);
         return;
@@ -116,7 +122,8 @@ export class ConnectionLifecycle {
         );
         this.reconnectTimer = this.timers.schedule(
           () => {
-            if (capabilities.epoch() === epoch && capabilities.credentials()) this.open(tries + 1);
+            if (capabilities.epoch() === epoch && capabilities.credentials())
+              this.open(tries + 1, recovering && !capabilities.hasPlayer());
           },
           Math.min(8000, 1000 + tries * 700),
         );

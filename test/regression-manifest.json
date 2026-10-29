@@ -2038,7 +2038,7 @@
         "browser-friend-liveness.ts",
         "nakama-client-connection.ts"
       ],
-      "asserts": "Independent pre-extraction traces preserve current-socket/epoch guards, native/local hello, packet dispatch, live credentials/configuration, bounded backoff, terminal compatibility/duplicate-login denial and account detach; existing browser tests cover actual sign-in/logout. Five-second persistent silence feedback is distinct from the unchanged tolerant reconnect deadline, clears on accepted reply/welcome, and WORLD_RECOVERING triggers ordinary reconnect rather than permanent compatibility logout."
+      "asserts": "Independent pre-extraction traces preserve current-socket/epoch guards, native/local hello, packet dispatch, live credentials/configuration, bounded backoff, terminal compatibility/duplicate-login denial and account detach; existing browser tests cover actual sign-in/logout. An early idle probe prevents false warnings; five-second persistent silence feedback is distinct from the unchanged tolerant reconnect deadline, clears on accepted reply/welcome, and WORLD_RECOVERING triggers bounded credentialed reconnect even before initial player state, rather than permanent compatibility logout."
     },
     {
       "id": "client-player-projection",
@@ -2158,7 +2158,7 @@
       "owners": ["client/main.ts", "client/style-controls-login.css"],
       "services": [],
       "tests": ["touch-controls-browser.ts"],
-      "asserts": "Trusted Chromium touch events hit MAP/FIRE/LAND above the cockpit; map/dock dialogs retain input precedence and the map has a native touch-close control. Primary fire holds, releases, cancels and drags without latching; joystick cancellation and modal entry release input; LAND completes through the authoritative game handler. Two tablet sizes and UI scales 1/1.4; no physical-device claim."
+      "asserts": "Trusted Chromium touch events hit MAP/FIRE/LAND above the cockpit; map/dock dialogs retain input precedence and the map has a native touch-close control. Primary fire holds, releases, cancels and drags without latching; joystick cancellation and modal entry release input; hiding without blur synchronously sends neutral before RAF; LAND completes through the authoritative game handler. Two tablet sizes and UI scales 1/1.4; no physical-device claim."
     }
   ],
   "routes": {

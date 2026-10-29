@@ -98,8 +98,8 @@ try {
   assert.equal(status.solo, !friends);
   browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-  const sent: { socket: number; t: string; th?: number; qty?: number }[] = [];
-  const received: { socket: number; t: string; name?: string }[] = [];
+  const sent: { socket: number; t: string; th?: number; qty?: number; at?: number }[] = [];
+  const received: { socket: number; t: string; name?: string; at?: number }[] = [];
   const errors: string[] = [];
   let connections = 0;
   page.on('pageerror', (error) => errors.push(String(error)));
@@ -107,10 +107,10 @@ try {
     const id = ++connections;
     socket.on('framesent', (frame) => {
       const packet = JSON.parse(String(frame.payload));
-      if (packet.t !== 'hello') sent.push({ socket: id, ...packet });
+      if (packet.t !== 'hello') sent.push({ socket: id, ...packet, at: Date.now() });
     });
     socket.on('framereceived', (frame) =>
-      received.push({ socket: id, ...JSON.parse(String(frame.payload)) }),
+      received.push({ socket: id, ...JSON.parse(String(frame.payload)), at: Date.now() }),
     );
   });
   await page.addInitScript(() => {
@@ -140,11 +140,40 @@ try {
   for (let index = 0; index < 8 && (await page.locator('#storybox').isVisible()); index++)
     await page.locator('#storyb button').first().click();
   if (!friends) {
+    await page.evaluate(() => {
+      const banner = document.querySelector('#connectionstatus')!;
+      new MutationObserver(() => {
+        if (!banner.classList.contains('hidden')) {
+          document.body.dataset.idleConnectionWarning = 'true';
+          document.body.dataset.idleWarningTrace = JSON.stringify({
+            at: Date.now(),
+            text: banner.textContent,
+          });
+        }
+      }).observe(banner, { attributes: true });
+    });
     // Paused Solo remains healthy without simulation snapshots.
     await page.keyboard.press('Escape');
     await page.waitForSelector('#quitbox', { state: 'visible' });
     await page.waitForTimeout(27000);
+    fileSystem.writeFileSync(
+      path.join(output, 'idle-health.json'),
+      JSON.stringify(
+        {
+          sent: sent.filter((packet) => packet.t === 'ping'),
+          received: received.filter((packet) => packet.t === 'pong'),
+          warning: await page.locator('body').getAttribute('data-idle-warning-trace'),
+        },
+        null,
+        2,
+      ),
+    );
     assert.equal(connections, 1, 'paused Solo does not falsely reconnect');
+    assert.equal(
+      await page.locator('body').getAttribute('data-idle-connection-warning'),
+      null,
+      'healthy paused Solo does not flash a silence warning',
+    );
     assert.ok(sent.some((packet) => packet.t === 'ping'));
     assert.ok(received.some((packet) => packet.t === 'pong'));
     await page.keyboard.press('Escape');
