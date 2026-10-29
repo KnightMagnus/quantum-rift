@@ -154,7 +154,8 @@
     "native-recovery.ts",
     "gameplay-safety.ts",
     "recovery-safety.ts",
-    "story-order-safety.ts"
+    "story-order-safety.ts",
+    "syndicate-safety.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -875,7 +876,8 @@
     "landed-colony-responsive-browser.ts": ["helpers/landed-responsive.ts"],
     "gameplay-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"],
     "recovery-safety.ts": ["helpers/refinery-fixture.ts"],
-    "story-order-safety.ts": ["helpers/refinery-fixture.ts"]
+    "story-order-safety.ts": ["helpers/refinery-fixture.ts"],
+    "syndicate-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1031,7 +1033,8 @@
         "v203.ts",
         "ship-banking.ts",
         "bank-panel-browser.ts",
-        "gameplay-safety.ts"
+        "gameplay-safety.ts",
+        "syndicate-safety.ts"
       ],
       "asserts": "Black market/Syndicate career, officer promotion/lower decks, bank loans/interest, timed delivery contracts. Compact loan dialog replaces the landed Bank tab, retains authoritative borrowing/repayment and denial, live credit/loan refresh, visitor/flight availability, modal focus/Escape and native keyboard/wheel reachability at ordinary and scaled viewports."
     },

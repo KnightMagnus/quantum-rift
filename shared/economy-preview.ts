@@ -1,4 +1,4 @@
-import type { CargoLedger, CargoTotals, GradeLots } from './cargo-contracts.ts';
+import type { CargoLedger, CargoTotals } from './cargo-contracts.ts';
 export type TradePreviewInput = {
   market: {
     id: string;

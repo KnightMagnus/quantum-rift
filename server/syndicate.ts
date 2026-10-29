@@ -96,6 +96,20 @@ const DEST_TYPES: string[] = ['cargo', 'smuggle', 'passenger', 'expret', 'supply
  */
 export const destType = (message: { type: string }): boolean => DEST_TYPES.includes(message.type);
 
+/** Select the same eligible grudge for the preview and authoritative purchase. */
+function forgedPapersTarget(reputation: Record<string, number>): [string, number] | undefined {
+  return Object.entries(reputation)
+    .filter(
+      ([faction]) =>
+        FACTIONS[faction] &&
+        !FACTIONS[faction].pirate &&
+        !FACTIONS[faction].alwaysHostile &&
+        !FACTIONS[faction].region,
+    )
+    .sort((left, right) => left[1] - right[1])
+    .find(([, standing]) => standing < -10);
+}
+
 export const SyndicateOperations = {
   /**
    * Initialize or default Syndicate standing, commendations, lower deck crew, and credit rating.
@@ -153,10 +167,16 @@ export const SyndicateOperations = {
   blackMarket(this: SyndicateCapabilities, stellarBody: StellarBody, playerData: PlayerData) {
     if (!this.blackMarketAt(stellarBody, playerData)) return null;
     const time = synTier(playerData.syn).i;
+    const papersTarget = forgedPapersTarget(playerData.rep);
     return {
       tier: synTier(playerData.syn),
       items: BLACK_MARKET.map((blackMarketItem) => ({
         ...blackMarketItem,
+        desc: blackMarketItem.give.papers
+          ? papersTarget
+            ? `Changes ${FACTIONS[papersTarget[0]].name} standing from ${papersTarget[1]} to -10. Other faction records are unchanged.`
+            : 'No eligible faction grudge needs changing.'
+          : blackMarketItem.desc,
         locked: blackMarketItem.tier > time ? SYN_TIERS[blackMarketItem.tier][1] : null,
       })),
     };
@@ -187,15 +207,7 @@ export const SyndicateOperations = {
     };
     if (game.papers) {
       // your worst grudge is quietly forgiven
-      const worst = Object.entries(playerData.rep)
-        .filter(
-          ([factionId]) =>
-            FACTIONS[factionId] &&
-            !FACTIONS[factionId].pirate &&
-            !FACTIONS[factionId].alwaysHostile &&
-            !FACTIONS[factionId].region,
-        )
-        .sort((firstValue, secondValue) => firstValue[1] - secondValue[1])[0];
+      const worst = forgedPapersTarget(playerData.rep);
       if (!worst || worst[1] >= -10)
         return this.toast(session, 'Nobody is looking for you badly enough to need papers.');
       playerData.rep[worst[0]] = -10;

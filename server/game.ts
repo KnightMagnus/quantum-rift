@@ -2589,7 +2589,15 @@ export class Game<Storage extends Database = Database> {
     if (entity.faction === 'nhal') {
       this.features.fronts.goal(session, 'kills');
       this.tut(session, 'kill');
-    } else if (factionDef.pirate || factionDef.alwaysHostile || entity.mission) {
+    } else if (
+      (factionDef.pirate || factionDef.alwaysHostile || entity.mission) &&
+      !playerData.missions.some(
+        (mission) =>
+          mission.syn === 'hit' &&
+          entity.mission?.owner === session.id &&
+          mission.id === entity.mission.id,
+      )
+    ) {
       const stateBountyMultiplier = (() => {
         const livingState = this.features.living.stateOf(space.id);
         return (livingState && STATES[livingState.kind].bounty) || 1;
