@@ -96,7 +96,7 @@ try {
   );
   assert.equal(
     await page.locator('#functiondock .function-icon:not(#hailindicator) img').count(),
-    7,
+    9,
   );
   await page.locator('[data-order="hold"]').click();
   assert.ok(sent.some((message) => message.t === 'order' && message.o === 'hold'));

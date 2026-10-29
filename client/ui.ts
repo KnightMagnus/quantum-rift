@@ -1466,7 +1466,10 @@ export function showLanded(): void {
   clientGameState.views.capture(elementById2('landbody'));
   const length2 = clientGameState.landed!,
     stellarBody = STELLARS[length2.stellar];
-  elementById2('land').classList.remove('hidden');
+  elementById2('land').classList.toggle(
+    'hidden',
+    document.body.classList.contains('onboarding-active'),
+  );
   const site = length2.site;
   const storeSlot = elementById2('storebuttonslot');
   storeSlot.replaceChildren();

@@ -16,6 +16,7 @@
     />
     <link rel="stylesheet" href="cockpit.css" />
     <link rel="stylesheet" href="pressure-hull.css" />
+    <link rel="stylesheet" href="onboarding.css" />
   </head>
   <body class="pressure-hull">
     <canvas id="view"></canvas>
@@ -184,8 +185,8 @@
           id="captainshortcut"
           class="function-icon"
           type="button"
-          title="Ship and captain details (I)"
-          aria-label="Ship and captain details"
+          title="Captain details (I)"
+          aria-label="Captain details"
         >
           <img src="assets/hud/captain.svg" alt="" aria-hidden="true" /><span class="function-label"
             >CAPTAIN</span
@@ -203,6 +204,29 @@
             >ALERT</span
           >
         </div>
+        <button
+          id="shipshortcut"
+          class="function-icon"
+          type="button"
+          title="Ship details"
+          aria-label="Ship details"
+        >
+          <img src="assets/hud/ship-info.svg" alt="" aria-hidden="true" /><span
+            class="function-label"
+            >INFO</span
+          >
+        </button>
+        <button
+          id="ejectshortcut"
+          class="function-icon"
+          type="button"
+          title="Open quit menu (Escape)"
+          aria-label="Eject: open quit menu"
+        >
+          <img src="assets/hud/eject.svg" alt="" aria-hidden="true" /><span class="function-label"
+            >EJECT</span
+          >
+        </button>
       </div>
       <div id="consolechat" class="well">
         <header id="commsheader">
@@ -280,10 +304,11 @@
       tabindex="-1"
     >
       <div class="gbox metal infoin">
-        <h2>SHIP AND CAPTAIN <span class="dim small">I or Esc to close</span></h2>
+        <h2>
+          <span id="infotitle">CAPTAIN</span> <span class="dim small">I or Esc to close</span>
+        </h2>
         <nav class="itabs" id="itabs">
-          <button class="btn sm on" data-it="ship">SHIP</button
-          ><button class="btn sm" data-it="profile">PROFILE</button
+          <button class="btn sm on" data-it="profile">PROFILE</button
           ><button class="btn sm" data-it="career">CAREER</button
           ><button class="btn sm" data-it="fleet">WINGMATES</button
           ><button class="btn sm" data-it="captains">CAPTAINS</button>

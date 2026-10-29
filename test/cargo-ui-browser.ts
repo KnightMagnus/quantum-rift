@@ -145,7 +145,7 @@ try {
   });
   await page.locator('#depart').click();
   await page.waitForFunction(() => G.view && !G.landed);
-  await page.keyboard.press('KeyI');
+  await page.locator('#shipshortcut').click();
   await page.locator('#infobox').waitFor({ state: 'visible' });
   const dump = page.locator('[data-jet="ore"][data-grade="rich"]').first();
   await dump.waitFor();

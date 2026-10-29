@@ -91,7 +91,7 @@ The blue Pressure Hull cockpit is the standard interface for flight, station ser
 
 **Flight controls**
 
-Ship-function controls open above the console. JUMP can sit in either bottom corner.
+Ship-function controls open above the console. INFO shows ship details; EJECT opens the quit menu. JUMP can sit in either bottom corner.
 
 ![Combat assist controls above the console beside the system radar](docs/screenshots/flight-functions.png)
 

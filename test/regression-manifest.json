@@ -207,7 +207,8 @@
     "asset-recovery-browser.ts",
     "browser-server-liveness.ts",
     "browser-friend-liveness.ts",
-    "fog-of-war-browser.ts"
+    "fog-of-war-browser.ts",
+    "onboarding-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -2003,6 +2004,18 @@
       "services": [],
       "tests": ["asset-recovery-browser.ts", "render-cache-budget.ts"],
       "asserts": "Decoded image/audio ownership budgets and live-resource-safe eviction; missing/corrupt asset fallbacks and bounded failure cleanup; repeated actual graphics context loss/restoration preserves captain state and blocks held controls until release."
+    },
+    {
+      "id": "onboarding-shortcuts",
+      "owners": [
+        "client/onboarding.ts",
+        "client/main.ts",
+        "client/ship-functions.ts",
+        "client/cockpit.css"
+      ],
+      "services": [],
+      "tests": ["onboarding-browser.ts"],
+      "asserts": "Title Case tour headings; INFO and REFINE labels; twelve-key HUD containment; EJECT opens quit without logout, cancellation restores Solo play and focus, and Escape remains available."
     }
   ],
   "routes": {

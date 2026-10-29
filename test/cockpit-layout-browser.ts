@@ -126,10 +126,10 @@ try {
       panel.scrollTop = 0;
     });
     await capture(page, 'functional-captain-profile-3440x1440');
-    await page.click('[data-it="ship"]');
+    await page.click('#shipshortcut');
     assert.equal(await page.locator('#captainprofile').isVisible(), false);
     assert.ok((await page.locator('#infobody').innerText()).length > 20);
-    await page.click('[data-it="profile"]');
+    await page.click('#captainshortcut');
     assert.equal(await page.locator('#portraitsave').isEnabled(), true);
     await page.locator('#portraitsave').focus();
     await page.keyboard.press('m');
@@ -165,8 +165,8 @@ try {
     const captain = dock.find((entry) => entry.id === 'captainshortcut')!;
     assert.equal(alert.pressable, false);
     assert.equal(alert.led.content, 'none', 'Warning lens has no button LED');
-    assert.equal(alert.bounds.x, captain.bounds.x);
-    assert.ok(alert.bounds.y < captain.bounds.y);
+    assert.ok(alert.bounds.x > captain.bounds.x);
+    assert.equal(alert.bounds.y, captain.bounds.y);
     assert.equal(Math.max(...dock.map((entry) => entry.bounds.x)), alert.bounds.x);
     for (const entry of dock) {
       assert.ok(

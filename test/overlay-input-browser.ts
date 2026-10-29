@@ -624,13 +624,19 @@ try {
   await page.locator('#captainshortcut').focus();
   await page.keyboard.press('Enter');
   await page.locator('#infobox').waitFor({ state: 'visible' });
-  assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('data-it')), 'ship');
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.getAttribute('data-it')),
+    'profile',
+  );
   await page.click('[data-it="profile"]');
-  await page.locator('[data-it="ship"]').focus();
+  await page.locator('[data-it="profile"]').focus();
   await page.keyboard.press('Shift+Tab');
   assert.equal(await page.evaluate(() => document.activeElement?.id), 'portraitsave');
   await page.keyboard.press('Tab');
-  assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('data-it')), 'ship');
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.getAttribute('data-it')),
+    'profile',
+  );
   await receive({
     t: 'hail',
     player: 987654,

@@ -72,7 +72,7 @@ body.pressure-hull :is(#functiondock, #consolechat, #consoleutilities) {
 body.pressure-hull #functiondock {
   width: 100%;
   padding: 2px 8px 10px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   grid-template-rows: repeat(2, 57px);
   gap: 10px 8px;
   align-content: center;
@@ -1238,4 +1238,13 @@ body.pressure-hull #login #lload .bar i {
     font-size: 16px;
     min-height: 38px;
   }
+}
+
+/* The information label stays within its own key. */
+body.pressure-hull #functiondock .function-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  letter-spacing: 0;
+  line-height: 11px;
+  font-size: 10px;
 }

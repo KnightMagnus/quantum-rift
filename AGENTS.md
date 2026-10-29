@@ -61,6 +61,8 @@ checks and formatting checks; do not weaken checks to accommodate a cleanup.
 
 ## Documentation language
 
+Always review generated player-facing text with the Unslop workflow and a usefulness check: remove filler, repeated implementation reassurance, decorative slogans, and descriptions that add no player-relevant information; prefer plain feature names for instructional headings.
+
 Write documentation for its readers: describe current behavior, usage, architecture
 and necessary limitations accurately. Remove assistant-task instructions, prompt
 residue, conversation references, approval chatter and temporary progress updates

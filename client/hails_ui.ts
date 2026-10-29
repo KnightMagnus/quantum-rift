@@ -86,7 +86,7 @@ export function initHails({ G: hailState, send, toast: _toast, cam: camera }: Ha
     priority: 24,
     dismiss: close,
     initialFocus: () => elementById('hailopts').querySelector<HTMLElement>('button:last-child'),
-    allowOutsidePointer: (target) => !!target.closest('#captainshortcut,#optbtn'),
+    allowOutsidePointer: (target) => !!target.closest('#captainshortcut,#shipshortcut,#optbtn'),
     keyDown: (event) => {
       if (event.key === 'Enter' && (event.target as HTMLElement).id === 'hailcompose') {
         submitHail?.();

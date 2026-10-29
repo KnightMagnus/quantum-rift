@@ -448,3 +448,9 @@ PostgreSQL backup/restore procedure.
 closes an unresponsive peer through the ordinary disconnect/reconnect owner;
 it never queues gameplay commands. The timer does not depend on simulation
 snapshots, so pausing Solo does not imply disconnection.
+
+## First-entry orientation
+
+`client/onboarding.ts` owns the local per-captain menu tour and story/control briefing. It uses the shared overlay controller, current key bindings and existing sidebar owners; it never dispatches gameplay actions. Landing and career-guide presentation wait while the introduction is active. HELP offers replay. `test/onboarding-browser.ts` exercises startup ordering, the clockwise menu tour through targeting and every visible cockpit button, map-before-JUMP ordering, input denial, annotated combat/mining examples, image-frame consistency, navigation, completion, replay and resizing.
+
+The cockpit shortcut registry keeps Captain/Hail/Fleet/Combat/Drones across the first row, Mining/Process/Tow/Map across the second, and Alert above Ship Details in the far-right column. Ship Details opens the existing ship information renderer directly; Captain retains profile, career, wingmate and captain tabs. JUMP remains a separate viewport overlay.

@@ -163,7 +163,7 @@ try {
     initialPixels.cssHeight * initialPixels.dpr,
     'First login has correct backing height before any resize event',
   );
-  assert.equal(await page.locator('#functiondock > button').count(), 9);
+  assert.equal(await page.locator('#functiondock > button').count(), 11);
   assert.equal(await page.locator('#cbkeys').count(), 0, 'No redundant Keys button');
   assert.equal(await page.locator('#traytoggle').getAttribute('aria-expanded'), 'false');
   await page.waitForFunction(() =>
