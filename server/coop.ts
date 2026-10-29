@@ -1033,17 +1033,33 @@ export const CoopOperations = {
   tradeClean(this: CoopCapabilities, playerData: PlayerData, give: TradeOffer) {
     const tradeOffer: TradeOffer = {},
       count = (value: number | undefined) => Math.max(0, Math.floor(+value! || 0));
+    const available = (value: unknown, quantity: number) =>
+      Number.isSafeInteger(value) && (value as number) >= quantity;
+    if (
+      !Number.isFinite(playerData.credits) ||
+      playerData.credits < 0 ||
+      playerData.credits > Number.MAX_SAFE_INTEGER ||
+      (give.credits !== undefined && !Number.isFinite(give.credits))
+    )
+      return 'Invalid trade balance.';
     let lines = 0;
     if (count(give.credits)) {
       if (count(give.credits) > playerData.credits) return 'You do not have that many credits.';
       tradeOffer.credits = count(give.credits);
     }
     for (const [entryKey, value] of Object.entries(give.items || {})) {
+      if (!Number.isFinite(value)) return 'Invalid trade quantity.';
       const quantity = count(value);
+      if (!Number.isSafeInteger(quantity)) return 'Invalid trade quantity.';
       if (!quantity) continue;
       if (++lines > TRADE.maxLines) return `Up to ${TRADE.maxLines} different items per side.`;
-      const [kind, firstValue, secondValue] = String(entryKey).split(':');
+      const [kind, firstValue, secondValue, extra] = entryKey.split(':');
+      // One spelling per inventory identity; aliases must not each spend the same item.
+      if (extra !== undefined || (kind !== 'mat' && secondValue !== undefined))
+        return 'That cannot be traded.';
       if (kind === 'cargo') {
+        if (!COMMODITIES.some((commodity) => commodity.id === firstValue))
+          return 'That cannot be traded.';
         try {
           planTake(
             playerData.cargo,
@@ -1060,14 +1076,15 @@ export const CoopOperations = {
       } else if (kind === 'mat') {
         if (
           !MATERIALS.includes(firstValue) ||
-          !(playerData.mats[firstValue] && playerData.mats[firstValue][+secondValue] >= quantity)
+          !/^[0-4]$/.test(secondValue || '') ||
+          !available(playerData.mats?.[firstValue]?.[+secondValue], quantity)
         )
           return 'You do not have those crates.';
       } else if (kind === 'bp') {
-        if (!((playerData.bp || {})[firstValue] >= quantity))
+        if (!available((playerData.bp || {})[firstValue], quantity))
           return 'You do not have those blueprints.';
       } else if (kind === 'parts') {
-        if (!((playerData.parts || {})[firstValue] >= quantity))
+        if (!available((playerData.parts || {})[firstValue], quantity))
           return 'You do not have those parts.';
       } else return 'That cannot be traded.';
       (tradeOffer.items = tradeOffer.items || {})[entryKey] = quantity;
@@ -1139,105 +1156,122 @@ export const CoopOperations = {
           `Trade cancelled: ${playerAccount3.name} no longer has everything offered.`,
         );
     }
+    let move2: string[], move3: string[];
     try {
-      const playerAccount4 = structuredClone(playerAccount),
-        playerAccount5 = structuredClone(playerAccount2);
-      migrateCargoLots(playerAccount4);
-      migrateCargoLots(playerAccount5);
-      for (const [from, playerAccount, tradeOffer] of [
-        [playerAccount4, playerAccount5, tradeState.give[tradeState.a]],
-        [playerAccount5, playerAccount4, tradeState.give[tradeState.b]],
-      ] as const)
-        for (const [entryKey, quantity] of Object.entries(tradeOffer.items || {}))
-          if (entryKey.startsWith('cargo:'))
+      const stagedFirst = structuredClone(playerAccount),
+        stagedSecond = structuredClone(playerAccount2);
+      migrateCargoLots(stagedFirst);
+      migrateCargoLots(stagedSecond);
+      const move = (from: PlayerData, playerData: PlayerData, tradeOffer: TradeOffer) => {
+        const received = [];
+        if (tradeOffer.credits) {
+          from.credits -= tradeOffer.credits;
+          const network = Math.round(tradeOffer.credits * (1 - TRADE.fee));
+          playerData.credits += network;
+          received.push(`${credits(network)} credits`);
+        }
+        for (const [entryKey, quantity] of Object.entries(tradeOffer.items || {})) {
+          const [kind, firstValue, secondValue] = entryKey.split(':');
+          if (kind === 'cargo') {
             moveLots(
               from.cargo,
               from.cargoLots,
-              playerAccount.storage,
-              playerAccount.storageLots,
-              entryKey.split(':')[1],
+              playerData.storage,
+              playerData.storageLots,
+              firstValue,
               quantity,
-              tradeOffer.lots?.[entryKey.split(':')[1]],
+              tradeOffer.lots?.[firstValue],
             );
+            const commodityDef = COMMODITIES.find((commodityDef) => commodityDef.id === firstValue);
+            received.push(`${quantity} t ${commodityDef ? commodityDef.name : firstValue}`);
+          }
+          if (kind === 'mat') {
+            from.mats[firstValue][+secondValue] -= quantity;
+            playerData.mats[firstValue][+secondValue] += quantity;
+            received.push(`${quantity} ${firstValue} ${GRADES[+secondValue]}`);
+          }
+          if (kind === 'bp') {
+            from.bp[firstValue] -= quantity;
+            playerData.bp = playerData.bp || {};
+            playerData.bp[firstValue] = (playerData.bp[firstValue] || 0) + quantity;
+            received.push(
+              `${quantity} ${this.A.ships[firstValue] ? this.A.ships[firstValue].name : ''} blueprints`,
+            );
+          }
+          if (kind === 'parts') {
+            from.parts[firstValue] -= quantity;
+            playerData.parts = playerData.parts || {};
+            playerData.parts[firstValue] = (playerData.parts[firstValue] || 0) + quantity;
+            received.push(
+              `${quantity} ${this.A.ships[firstValue] ? this.A.ships[firstValue].name : ''} parts`,
+            );
+          }
+        }
+        return received;
+      };
+      move2 = move(stagedFirst, stagedSecond, tradeState.give[tradeState.a]);
+      move3 = move(stagedSecond, stagedFirst, tradeState.give[tradeState.b]);
+      // goods land in station storage, then go into the hold if there is room
+      for (const [playerAccount7, _session] of [
+        [stagedFirst, session],
+        [stagedSecond, session2],
+      ] as const) {
+        if (!playerAccount7.storage) continue;
+        const computedShipStats = this.stats(playerAccount7)!;
+        let room = computedShipStats.cargo - this.holdUsed(playerAccount7);
+        for (const [entryKey, value] of Object.entries(playerAccount7.storage)) {
+          const quantity = Math.min(value, Math.max(0, room));
+          if (quantity > 0) {
+            moveLots(
+              playerAccount7.storage,
+              playerAccount7.storageLots,
+              playerAccount7.cargo,
+              playerAccount7.cargoLots,
+              entryKey,
+              quantity,
+              'common-first',
+              Math.max(0, room),
+            );
+            room -= quantity;
+            if (!playerAccount7.storage[entryKey]) delete playerAccount7.storage[entryKey];
+          }
+        }
+      }
+
+      for (const staged of [stagedFirst, stagedSecond]) {
+        if (
+          !Number.isFinite(staged.credits) ||
+          staged.credits < 0 ||
+          staged.credits > Number.MAX_SAFE_INTEGER
+        )
+          throw new Error('Invalid trade balance');
+        for (const inventory of [staged.bp || {}, staged.parts || {}])
+          for (const amount of Object.values(inventory))
+            if (!Number.isSafeInteger(amount) || amount < 0)
+              throw new Error('Invalid trade inventory');
+        for (const amounts of Object.values(staged.mats || {}))
+          for (const amount of amounts)
+            if (!Number.isSafeInteger(amount) || amount < 0)
+              throw new Error('Invalid trade inventory');
+      }
+      // Publish only after both complete staged transfers and destination checks succeed.
+      for (const [live, staged] of [
+        [playerAccount, stagedFirst],
+        [playerAccount2, stagedSecond],
+      ] as const)
+        for (const key of [
+          'credits',
+          'cargo',
+          'cargoLots',
+          'storage',
+          'storageLots',
+          'mats',
+          'bp',
+          'parts',
+        ] as const)
+          Object.assign(live, { [key]: staged[key] });
     } catch {
-      return this.tradeCancel(tradeState.id, 'Trade cancelled: cargo validation failed.');
-    }
-    migrateCargoLots(playerAccount);
-    migrateCargoLots(playerAccount2);
-    const move = (from: PlayerData, playerData: PlayerData, tradeOffer: TradeOffer) => {
-      const received = [];
-      if (tradeOffer.credits) {
-        from.credits -= tradeOffer.credits;
-        const network = Math.round(tradeOffer.credits * (1 - TRADE.fee));
-        playerData.credits += network;
-        received.push(`${credits(network)} credits`);
-      }
-      for (const [entryKey, quantity] of Object.entries(tradeOffer.items || {})) {
-        const [kind, firstValue, secondValue] = entryKey.split(':');
-        if (kind === 'cargo') {
-          moveLots(
-            from.cargo,
-            from.cargoLots,
-            playerData.storage,
-            playerData.storageLots,
-            firstValue,
-            quantity,
-            tradeOffer.lots?.[firstValue],
-          );
-          const commodityDef = COMMODITIES.find((commodityDef) => commodityDef.id === firstValue);
-          received.push(`${quantity} t ${commodityDef ? commodityDef.name : firstValue}`);
-        }
-        if (kind === 'mat') {
-          from.mats[firstValue][+secondValue] -= quantity;
-          playerData.mats[firstValue][+secondValue] += quantity;
-          received.push(`${quantity} ${firstValue} ${GRADES[+secondValue]}`);
-        }
-        if (kind === 'bp') {
-          from.bp[firstValue] -= quantity;
-          playerData.bp = playerData.bp || {};
-          playerData.bp[firstValue] = (playerData.bp[firstValue] || 0) + quantity;
-          received.push(
-            `${quantity} ${this.A.ships[firstValue] ? this.A.ships[firstValue].name : ''} blueprints`,
-          );
-        }
-        if (kind === 'parts') {
-          from.parts[firstValue] -= quantity;
-          playerData.parts = playerData.parts || {};
-          playerData.parts[firstValue] = (playerData.parts[firstValue] || 0) + quantity;
-          received.push(
-            `${quantity} ${this.A.ships[firstValue] ? this.A.ships[firstValue].name : ''} parts`,
-          );
-        }
-      }
-      return received;
-    };
-    const move2 = move(playerAccount, playerAccount2, tradeState.give[tradeState.a]),
-      move3 = move(playerAccount2, playerAccount, tradeState.give[tradeState.b]);
-    // goods land in station storage, then go into the hold if there is room
-    for (const [playerAccount7, _session] of [
-      [playerAccount, session],
-      [playerAccount2, session2],
-    ] as const) {
-      if (!playerAccount7.storage) continue;
-      const computedShipStats = this.stats(playerAccount7)!;
-      let room = computedShipStats.cargo - this.holdUsed(playerAccount7);
-      for (const [entryKey, value] of Object.entries(playerAccount7.storage)) {
-        const quantity = Math.min(value, Math.max(0, room));
-        if (quantity > 0) {
-          moveLots(
-            playerAccount7.storage,
-            playerAccount7.storageLots,
-            playerAccount7.cargo,
-            playerAccount7.cargoLots,
-            entryKey,
-            quantity,
-            'common-first',
-            Math.max(0, room),
-          );
-          room -= quantity;
-          if (!playerAccount7.storage[entryKey]) delete playerAccount7.storage[entryKey];
-        }
-      }
+      return this.tradeCancel(tradeState.id, 'Trade cancelled: inventory validation failed.');
     }
     const line = (received: string[]) => (received.length ? received.join(', ') : 'nothing');
     this.log(

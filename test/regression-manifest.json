@@ -1372,7 +1372,7 @@
         "server/port-services.ts"
       ],
       "tests": ["cargo-lots.ts", "cargo-flows.ts", "cargo-ui-browser.ts"],
-      "asserts": "Strict cargo/storage migration plus real production: weighted raw sales/depth, common purchases, exact grade denial, jettison/job-aware recollection, owner/fleet simulation-time grace with foreign partial pickup and expiry, frozen partial mining/progression, unchanged station processing/supply, colony/plunder, exchange graded escrow/fill/refund/offline storage, two-sided captain trade/full-hold storage, death/Lodestar. Browser grade rows, explicit premium sale/jettison during asynchronous rivals refresh, and live Captains refresh."
+      "asserts": "Canonical captain trade identities reject alias offers at receive and settlement; both detached sides preflight inventory/credit overflow without partial changes, then valid transfers reload. Strict cargo/storage migration plus real production: weighted raw sales/depth, common purchases, exact grade denial, jettison/job-aware recollection, owner/fleet simulation-time grace with foreign partial pickup and expiry, frozen partial mining/progression, unchanged station processing/supply, colony/plunder, exchange graded escrow/fill/refund/offline storage, two-sided captain trade/full-hold storage, death/Lodestar. Browser grade rows, explicit premium sale/jettison during asynchronous rivals refresh, and live Captains refresh."
     },
     {
       "id": "mining-cutting",
