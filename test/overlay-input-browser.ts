@@ -106,7 +106,7 @@ try {
       before + 1,
     lootOrdersBefore,
   );
-  await page.keyboard.press('KeyO');
+  await page.locator('#optbtn').click();
   assert.equal(
     await page.locator('[data-bind="ordLoot"]').textContent(),
     "'",
@@ -513,7 +513,7 @@ try {
   await page.evaluate(() => {
     window.modalProbe.packets = [];
   });
-  await page.keyboard.press('o');
+  await page.locator('#optbtn').click();
   await page.locator('#opts').waitFor({ state: 'visible' });
   await page.keyboard.down('v');
   await page.evaluate(() => {

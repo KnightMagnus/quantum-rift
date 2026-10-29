@@ -1,6 +1,5 @@
 // Additive migration: explicit null means unbound; never rebuild saved options.
 export const RESERVED_KEYS = new Set([
-  'KeyO',
   'Escape',
   'Enter',
   'F1',

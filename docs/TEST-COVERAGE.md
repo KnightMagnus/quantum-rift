@@ -1,5 +1,9 @@
 # Game regression coverage inventory
 
+## Equipped outfits and mining filter (`equipped-outfits`)
+
+`equipped-outfits-browser.ts` checks the MINING filter against combat weapons, real equipped-item previews, outfitter sales of modular and built-in weapons, refunds, live panel refresh, reconnect persistence, flight denial, narrow cards, and default/reassigned Ship and Captain shortcuts. `ship-economy.ts` checks every player hull with built-in banks for once-only refunds and conservation of sale proceeds plus trade-in, along with flight/no-outfitter/unknown-weapon and purchase denial. `wire-contracts.ts` validates the optional built-in sale selector. Equipment sales still require an outfitter; previews are available in flight.
+
 ## Headless network landing
 
 The two-captain network bot uses the production landing guidance with per-tick prediction between authoritative snapshots, quantized turn packets and the navigation-braking flag. It still flies through the real WebSocket server and must land at Meridian Yards within its existing 40-second approach deadline, inside 90 units and below 60 speed, before checking refuelling and destination trade. Manual thrust, firing and jumping remain part of the same scenario.

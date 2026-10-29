@@ -311,8 +311,11 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
        */
       (session: Session, message: NetworkMessage) => {
         const request = parsePortPurchaseAction(message);
-        if (request?.t === 'outfit')
-          capabilities.outfit(session, Number(request.id) | 0, Number(request.n) | 0);
+        if (request?.t === 'outfit') {
+          if (request.fixed)
+            capabilities.outfit(session, Number(request.id) | 0, Number(request.n) | 0, true);
+          else capabilities.outfit(session, Number(request.id) | 0, Number(request.n) | 0);
+        }
         return;
       },
     ],

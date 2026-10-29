@@ -222,6 +222,14 @@ console.log(
   'Industrial parser, direct/routed no-mutation denials, optional discriminator and all-off selectors passed.',
 );
 
+assert.deepEqual(parsePortPurchaseAction({ t: 'outfit', id: 143, n: -1, fixed: true }), {
+  t: 'outfit',
+  id: 143,
+  n: -1,
+  fixed: true,
+});
+assert.equal(parsePortPurchaseAction({ t: 'outfit', id: 143, n: -1, fixed: 'true' }), null);
+
 // Port requests share one schema before either transport reaches settlement.
 const purchases = [
   { t: 'buyship', hull: '201.9', store: true },

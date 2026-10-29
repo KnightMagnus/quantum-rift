@@ -2962,8 +2962,8 @@ export class Game<Storage extends Database = Database> {
    * @param identifier Outfit ID.
    * @param count Quantity to buy (>0) or sell (<0).
    */
-  outfit(session: Session, identifier: number, count: number): void {
-    return this.portService.outfit(session, identifier, count);
+  outfit(session: Session, identifier: number, count: number, fixed = false): void {
+    return this.portService.outfit(session, identifier, count, fixed);
   }
   /**
    * Checks whether the active ship can take more of an outfit, without buying it.

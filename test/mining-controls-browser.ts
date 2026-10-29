@@ -56,7 +56,7 @@ try {
   );
   await firstCaptain.page.locator('#depart').click();
   await firstCaptain.page.waitForFunction(() => G.view && !G.landed);
-  await firstCaptain.page.keyboard.press('o');
+  await firstCaptain.page.locator('#optbtn').click();
   await firstCaptain.page.keyboard.press('v');
   assert.equal(
     await firstCaptain.page.evaluate(() => wire.filter((message) => message.t === 'mining').length),
@@ -167,7 +167,7 @@ try {
     'context and keyboard same request',
   );
   assert.match((await secondCaptain.page.locator('#miningsurvey').textContent())!, /assign key/);
-  await secondCaptain.page.keyboard.press('o');
+  await secondCaptain.page.locator('#optbtn').click();
   await secondCaptain.page.locator('[data-bind="surveyPulse"]').click();
   await secondCaptain.page.keyboard.press('u');
   await secondCaptain.page.waitForFunction(() => G.opts.keys.surveyPulse === 'KeyU');
@@ -185,7 +185,7 @@ try {
     'explicit unbound persists reload',
   );
   assert.equal(await secondCaptain.page.evaluate(() => G.opts.keys.fire2), 'KeyQ');
-  await secondCaptain.page.keyboard.press('o');
+  await secondCaptain.page.locator('#optbtn').click();
   await secondCaptain.page.locator('#optreset').click();
   assert.equal(
     await secondCaptain.page.evaluate(() => G.opts.keys.fire2),

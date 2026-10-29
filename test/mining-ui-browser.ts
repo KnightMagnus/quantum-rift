@@ -238,7 +238,7 @@ try {
     document.querySelector('#miningmeter')!.textContent.includes('Gas pressure'),
   );
   for (const scale of [0.8, 1, 1.4]) {
-    await page.keyboard.press('o');
+    await page.locator('#optbtn').click();
     await page.locator('#opt-scale').evaluate((input, value) => {
       (input as HTMLInputElement).value = String(String(value));
       input.dispatchEvent(new Event('input', { bubbles: true }));

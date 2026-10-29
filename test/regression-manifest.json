@@ -208,7 +208,8 @@
     "browser-server-liveness.ts",
     "browser-friend-liveness.ts",
     "fog-of-war-browser.ts",
-    "onboarding-browser.ts"
+    "onboarding-browser.ts",
+    "equipped-outfits-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -2016,6 +2017,25 @@
       "services": [],
       "tests": ["onboarding-browser.ts"],
       "asserts": "Title Case tour headings; INFO and REFINE labels; twelve-key HUD containment; EJECT opens quit without logout, cancellation restores Solo play and focus, and Escape remains available."
+    },
+    {
+      "id": "equipped-outfits",
+      "services": [],
+      "owners": [
+        "client/info_ui.ts",
+        "client/ui.ts",
+        "client/action-bindings.ts",
+        "server/port-services.ts",
+        "shared/rules.ts",
+        "shared/wire-actions.ts"
+      ],
+      "tests": [
+        "equipped-outfits-browser.ts",
+        "ship-economy.ts",
+        "wire-contracts.ts",
+        "onboarding-browser.ts"
+      ],
+      "asserts": "Mining-only category excludes combat weapons; equipped previews include modular factory gear and remaining built-ins. Outfitter-authorized sales update weapons, quantities, refunds and trade-in without value duplication, deny flight/no-service/unknown/buy requests and persist stripped banks. Ship/Captain shortcuts toggle and switch with default and rebound keys; Settings has no shortcut. Narrow equipment cards remain in the viewport."
     }
   ],
   "routes": {
@@ -2105,6 +2125,8 @@
     ],
     "questdrop": ["core-actions.ts", "message-routing.ts"],
     "outfit": [
+      "equipped-outfits-browser.ts",
+      "ship-economy.ts",
       "bot.ts",
       "v203.ts",
       "message-routing.ts",

@@ -11,6 +11,7 @@ import {
   loadoutValue,
   ensureStockOutfits,
   repairBasis,
+  fixedWeaponSaleValue,
   type ShipStatsLoadout,
 } from '../shared/rules.ts';
 import { Game } from '../server/game.ts';
@@ -162,6 +163,58 @@ assert.equal(
     loadoutValue(assets, { ...legacy.data.ship, outfits: {} }),
   Math.round(outfits2[legacyId].cost * 0.5),
 );
+// Unmapped built-in weapons use the same outfitter authority and retain stripping conservation.
+for (const hull of Object.values(assets.ships)) {
+  const stock = makeLoadout(assets, hull.id);
+  if (hull.npcOnly || !stock.fixed.length) continue;
+  const pilot = session(hull.id);
+  pilot.data.stellar = 'concordia';
+  const before = pilot.data.credits;
+  const originalValue = loadoutValue(assets, pilot.data.ship);
+  const weaponCounts = { ...shipStats(assets, pilot.data.ship)!.weapons };
+  for (const [weaponId, count] of pilot.data.ship.fixed) {
+    const refund = fixedWeaponSaleValue(assets, pilot.data.ship, weaponId);
+    const beforeBuy = pilot.data.credits;
+    game.outfit(pilot, Number(weaponId), 1, true);
+    assert.equal(pilot.data.credits, beforeBuy, 'built-ins cannot be bought through sale route');
+    game.outfit(pilot, Number(weaponId), -count - 99, true);
+    assert.equal(
+      shipStats(assets, pilot.data.ship)!.weapons[weaponId] || 0,
+      (weaponCounts[weaponId] || 0) - count,
+      `${hull.name}: sold built-in stops firing`,
+    );
+    const afterSale = pilot.data.credits;
+    game.outfit(pilot, Number(weaponId), -1, true);
+    assert.equal(pilot.data.credits, afterSale, 'repeated sale cannot mint credits');
+    assert(refund >= 0);
+  }
+  assert.equal(
+    pilot.data.credits - before + loadoutValue(assets, pilot.data.ship),
+    originalValue,
+    `${hull.name}: built-in sale subtracts exactly from trade-in`,
+  );
+  const restored = JSON.parse(JSON.stringify(pilot.data.ship));
+  assert.deepEqual(
+    shipStats(assets, restored)!.weapons,
+    shipStats(assets, pilot.data.ship)!.weapons,
+    'serialized stripped loadout does not restore weapons',
+  );
+}
+const deniedFixed = session(716);
+deniedFixed.data.stellar = 'longhaul-depot';
+const deniedBefore = JSON.stringify(deniedFixed.data);
+game.outfit(deniedFixed, 143, -1, true);
+assert.equal(JSON.stringify(deniedFixed.data), deniedBefore, 'no outfitter: no fixed sale');
+deniedFixed.data.stellar = 'concordia';
+deniedFixed.ent = {} as typeof deniedFixed.ent;
+const flightBefore = JSON.stringify(deniedFixed.data);
+game.outfit(deniedFixed, 143, -1, true);
+assert.equal(JSON.stringify(deniedFixed.data), flightBefore, 'flight: no fixed sale');
+deniedFixed.ent = null;
+const unknownBefore = JSON.stringify(deniedFixed.data);
+game.outfit(deniedFixed, 999999, -1, true);
+assert.equal(JSON.stringify(deniedFixed.data), unknownBefore, 'unknown built-in: no sale');
+
 const port = Object.values(STELLARS).find((stellarBody) => stellarBody.site);
 const dockGame = mockDocksHost({
   A: assets,

@@ -69,8 +69,7 @@ export type ShipStats = {
 
 import { escapeDoubleQuotedHtml as escapeHtml } from './html.ts';
 import { artworkUrl } from './artwork.ts';
-// the ship and captain panel (I), the player information view: your ship, cargo (with jettison), combat
-// rating, fleet orders, and the rival captains of the Rift with how they feel about you.
+// Ship details (I) and Captain (O) share the information window.
 import {
   SYS as systemsById,
   SYSTEMS,
@@ -84,7 +83,108 @@ import { SPEC, BP_NEED } from '../shared/specialty.ts';
 import { RARITY } from '../shared/hangar.ts';
 import { RANKS } from '../shared/rivals.ts';
 import { synBadge } from './syn_ui.ts';
-import { price } from '../shared/rules.ts';
+import {
+  price,
+  allOutfits,
+  outfitSaleValue,
+  fixedWeaponSaleValue,
+  weaponParams,
+  makeLoadout,
+} from '../shared/rules.ts';
+
+/** Equipped gear previews and authoritative outfitter sale requests. */
+function equippedOutfitsHtml(state: ClientGameState): string {
+  const ship = state.you!.ship;
+  if (state.you!.shipless) return '';
+  const assets = state.A!;
+  const catalog = allOutfits(assets);
+  const atOutfitter = !!state.landed?.outfitter;
+  const entries = Object.entries(ship.outfits || {})
+    .filter(([, count]) => count > 0)
+    .map(([identifier, count]) => {
+      const outfit = catalog[identifier];
+      if (!outfit) return '';
+      const weapon = outfit.eff?.weapon && assets.weapons[outfit.eff.weapon];
+      const stock = makeLoadout(assets, ship.hull).outfits[identifier] || 0;
+      const factory = Math.min(
+        count,
+        ship.stockOutfits ? ship.stockOutfits[identifier] || 0 : stock,
+      );
+      const refund = outfitSaleValue(
+        assets,
+        {
+          ...ship,
+          stockOutfits: ship.stockOutfits ? { ...ship.stockOutfits } : undefined,
+        },
+        identifier,
+        1,
+      );
+      const tradeable = Number(identifier) !== 9021;
+      return equipmentCard(
+        identifier,
+        outfit.name,
+        count,
+        outfit.icon,
+        [
+          weapon ? (weapon.mining ? 'Mining weapon' : 'Weapon') : 'Outfit',
+          factory ? `${factory} factory fitted` : '',
+          `${outfit.mass || 0} t each`,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+        outfit.desc || '',
+        refund,
+        false,
+        tradeable,
+      );
+    });
+  for (const [identifier, count] of ship.fixed ?? assets.ships[ship.hull].weapons) {
+    if (count <= 0) continue;
+    const weapon = assets.weapons[identifier];
+    if (!weapon) continue;
+    const matching = Object.values(catalog).find(
+      (outfit) => outfit.eff?.weapon === Number(identifier),
+    );
+    const detail =
+      weapon.type === 'bay'
+        ? 'Fighter bay'
+        : `${Math.round((weapon.dmgA || 0) + (weapon.dmgS || 0))} damage · ${Math.round(weaponParams(weapon).range)} range`;
+    entries.push(
+      equipmentCard(
+        String(identifier),
+        weapon.name,
+        count,
+        matching?.icon,
+        `Built-in · ${detail}`,
+        'Built-in weapons are not stocked separately. Selling removes one from this ship.',
+        fixedWeaponSaleValue(assets, ship, identifier),
+        true,
+        true,
+      ),
+    );
+  }
+  return `<section class="equipped-outfits" aria-label="Equipped outfits"><div class="sect" style="margin-top:0">EQUIPPED OUTFITS</div>
+    <p class="dim small">${atOutfitter ? 'Sell removes one fitted item.' : 'Land at an outfitter to sell equipment.'}</p>
+    <div class="equipment-list">${entries.join('') || '<p class="dim">No equipment fitted.</p>'}</div></section>`;
+
+  function equipmentCard(
+    identifier: string,
+    name: string,
+    count: number,
+    icon: string | undefined,
+    detail: string,
+    description: string,
+    refund: number,
+    fixed: boolean,
+    tradeable: boolean,
+  ) {
+    return `<article class="equipment-card" data-equipped="${escapeHtml(identifier)}"${fixed ? ' data-built-in="true"' : ''}>
+      ${icon ? `<img src="${artworkUrl(icon)}" alt="" loading="lazy">` : '<span class="equipment-fallback" aria-hidden="true">⚙</span>'}
+      <div class="equipment-detail"><b>${escapeHtml(name)} ×${count}</b><div class="dim small">${escapeHtml(detail)}</div>${description ? `<div class="small">${escapeHtml(description)}</div>` : ''}</div>
+      ${tradeable ? `<button class="btn sm" data-sell-outfit="${escapeHtml(identifier)}"${fixed ? ' data-fixed-weapon="true"' : ''} aria-label="Sell one ${escapeHtml(name)} for ${credits2(refund)} credits"${atOutfitter ? '' : ' disabled title="Land at an outfitter to sell"'}>SELL 1<span class="dim small">${credits2(refund)} cr</span></button>` : '<span class="dim small">Not for sale</span>'}
+    </article>`;
+  }
+}
 
 /**
  * Formats a number to rounded, localized string.
@@ -108,7 +208,7 @@ const MOODC = {
 };
 
 /**
- * Renders the Info panel (I key) including ship stats, cargo jettison, career ledger, wingmate orders, and rival captains.
+ * Renders ship equipment, stats and cargo, or the selected Captain tab.
  * @param clientGameState Game state object
  * @param activeTab Sub-tab to render ('ship', 'career', 'fleet', or 'captains')
  * @returns HTML markup
@@ -142,7 +242,8 @@ export function infoHtml(clientGameState: ClientGameState, activeTab?: string): 
       <div class="kv"><span>Faction stories</span><span>${(playerPayload.arcs || []).filter((firstValue) => firstValue.done).length} of ${(playerPayload.arcs || []).length} complete</span></div>
       <div class="kv"><span>Farside expeditions</span><span>${(playerPayload.expd && playerPayload.expd.n) || 0} decoded</span></div>
     </div><div>
-      <div class="sect" style="margin-top:0">CARGO</div>
+      ${equippedOutfitsHtml(clientGameState)}
+      <div class="sect">CARGO</div>
       ${
         cargo.length
           ? cargo

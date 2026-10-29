@@ -115,7 +115,7 @@ for (const solo of [false, true]) {
     await page.fill('#chatin', 'private draft');
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#quitbox').isVisible(), false, 'Escape blurs chat instead');
-    await page.keyboard.press('o');
+    await page.locator('#optbtn').click();
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#quitbox').isVisible(), false, 'options consume Escape');
     await page.keyboard.press('m');

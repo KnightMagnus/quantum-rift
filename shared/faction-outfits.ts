@@ -448,6 +448,7 @@ export const FACTION_STORE_OUTFITS: FactionStoreOutfit[] = [
     id: 9221,
     faction: 'korrund',
     name: 'Ore Crusher Hold',
+    category: 'mining',
     eff: { cargo: 20 },
     cost: 85000,
     mass: 2,
