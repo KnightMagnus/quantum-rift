@@ -1805,3 +1805,5 @@ Friend lifecycle coverage includes clean occupied-port failure/retry and SIGHUP 
 Delivery warning cases in `gameplay-safety.ts` cover ordinary goods without grade ledgers, zero and positive reservations, and common-first raw-grade sales.
 
 `gameplay-safety.ts` checks duplicate real disconnect calls for exactly one final save and departure notice, and rejects late cleanup from a replaced session identity.
+
+Fleet boarding cases in `gameplay-safety.ts` reject own and Armada wingmate plunder/capture and reward farming, retain their drydock recovery, and preserve the downed-captain rescue route.

@@ -951,7 +951,7 @@
       "id": "hangar",
       "owners": ["server/hangar.ts"],
       "services": ["hangar"],
-      "tests": ["v05.ts", "v12.ts", "v21.ts"],
+      "tests": ["v05.ts", "v12.ts", "v21.ts", "gameplay-safety.ts"],
       "asserts": "Shuttle dispatch/resolution/repair, officer assignment/XP/ranks, research prerequisites/queue, refining, stored loadouts and boarding."
     },
     {

@@ -155,3 +155,47 @@ assert.equal(
 assert.equal(finalFlushes, beforeLateClose);
 game.db.flush = originalFlush;
 console.log('Disconnect cleanup: one save/notice and replacement-session identity preserved.');
+
+const boarding = refineryPilot(game, 'Boarding captain');
+const ally = refineryPilot(game, 'Boarding ally');
+boarding.data.stellar = null;
+ally.data.stellar = null;
+boarding.data.sys = ally.data.sys = 'meridian';
+game.spawnPlayer(boarding, 10000, 10000, 0, 0);
+game.spawnPlayer(ally, 10000, 10000, 0, 0);
+assert.ok(boarding.ent && ally.ent);
+const boardingSpace = game.spaces.meridian;
+boarding.data.armada = ally.data.armada = 'test-fleet';
+for (const owner of [boarding, ally]) {
+  const wingmate = boardingSpace.makeShip({
+    hull: 708,
+    faction: 'quantum',
+    owner: owner.ent!.id,
+    x: boarding.ent.x,
+    y: boarding.ent.y,
+    ai: 'escort',
+  });
+  wingmate.wingOf = owner.id;
+  wingmate.disabled = true;
+  for (const act of ['plunder', 'capture', 'rescue'] as const) {
+    const before = JSON.stringify(boarding.data);
+    game.features.hangar.board(boarding, { id: wingmate.id, act });
+    assert.equal(
+      JSON.stringify(boarding.data),
+      before,
+      'fleet boarding cannot mint rewards or inventory',
+    );
+    assert.equal(wingmate.boarded, undefined);
+    assert.equal(boardingSpace.ships.get(wingmate.id), wingmate);
+  }
+}
+let captainRescues = 0;
+const originalRescue = game.features.coop.rescueBoard;
+game.features.coop.rescueBoard = () => {
+  captainRescues++;
+};
+ally.ent.rescueT = Date.now() + 1000;
+game.features.hangar.board(boarding, { id: ally.ent.id, act: 'rescue' });
+assert.equal(captainRescues, 1, 'downed captain rescue retains its existing authority route');
+game.features.coop.rescueBoard = originalRescue;
+console.log('Fleet boarding: own/allied reward denial preserves captain rescue routing.');

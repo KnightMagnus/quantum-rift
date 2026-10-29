@@ -1025,6 +1025,18 @@ export const HangarOperations = {
       return this.rescueBoard(session, entity2); // patch up a downed Armada captain
     if (!entity2 || !entity2.disabled || entity2.player || entity2.boarded)
       return this.toast(session, 'Only disabled ships can be boarded.');
+    const fleetOwner = space.root(entity2).player?.s;
+    const protectedWingmate =
+      entity2.wingOf === session.id ||
+      fleetOwner === session ||
+      (!!playerData.armada && fleetOwner?.data.armada === playerData.armada);
+    if (protectedWingmate)
+      return this.toast(
+        session,
+        message.act === 'rescue'
+          ? 'Wingmates are towed home for drydock repairs.'
+          : 'You cannot plunder or capture your own or allied ships.',
+      );
     const distance = Math.hypot(entity2.x - entity.x, entity2.y - entity.y),
       relative = Math.hypot(entity2.vx - entity.vx, entity2.vy - entity.vy);
     if (distance > Math.max(120, (entity2.st.size + entity.st.size) * 0.5))
