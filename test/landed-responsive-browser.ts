@@ -30,6 +30,7 @@ async function checkDockedLayout(page: Page, label: string, tab: string) {
       horizontal: body.scrollWidth - body.clientWidth,
       pageHorizontal: document.documentElement.scrollWidth - innerWidth,
       outerOverflow: frame.scrollHeight - frame.clientHeight,
+      footerHorizontal: footer.scrollWidth - footer.clientWidth,
       head: head.getBoundingClientRect().toJSON(),
       footer: footer.getBoundingClientRect().toJSON(),
       frame: frame.getBoundingClientRect().toJSON(),
@@ -44,6 +45,10 @@ async function checkDockedLayout(page: Page, label: string, tab: string) {
     `${label}: outer frame must not scroll ${JSON.stringify(metrics)}`,
   );
   assert.ok(metrics.pageHorizontal <= 1, `${label}: page horizontal overflow`);
+  assert.ok(
+    metrics.footerHorizontal <= 2,
+    `${label}: footer horizontal overflow ${metrics.footerHorizontal}`,
+  );
   if (['crew', 'outfit', 'community'].includes(tab))
     assert.ok(metrics.horizontal <= 2, `${label}: avoidable form overflow ${metrics.horizontal}`);
   assert.ok(
@@ -321,6 +326,24 @@ try {
         });
         await page.locator('#traytoggle').click();
         assert.equal(await page.locator('#traytoggle').getAttribute('aria-expanded'), 'false');
+        await peer.setViewportSize({ width: width!, height: height! });
+        await peer.evaluate((value) => {
+          document.documentElement.style.setProperty('--ui', String(value));
+          document.body.classList.toggle('scaled', value !== 1);
+        }, scale);
+        await peer.locator('#ltabs [data-lt="crew"]').click();
+        await checkDockedLayout(peer, `Armada member station ${width}x${height}/${scale}`, 'crew');
+        const leave = peer.locator('[data-cact="aleave"]');
+        await leave.focus();
+        assert.ok(
+          await leave.evaluate((element) => {
+            const rect = element.getBoundingClientRect();
+            return element.contains(
+              document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2),
+            );
+          }),
+          'Member Leave Armada native hit test',
+        );
       }
       await peer.close();
     }
