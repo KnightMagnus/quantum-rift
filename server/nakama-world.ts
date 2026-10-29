@@ -25,6 +25,8 @@ export interface WorldState {
   leaseId: string;
   matchId: string;
   authorityReady: boolean;
+  /** Wall-clock time of the last successful native checkpoint. */
+  lastCheckpointAt: number;
 }
 /** Nakama exports state through Go maps between callbacks. A callable handle retains the
  * original objects in this match's dedicated VM instead of erasing class prototypes/Map methods.
@@ -172,6 +174,7 @@ export const initializeWorld: nkruntime.MatchInitFunction<WorldHandle> = functio
     leaseId,
     matchId,
     authorityReady: false,
+    lastCheckpointAt: Date.now(),
   };
   return { state: { world: () => world }, tickRate: 30, label: 'quantum-rift-world-v1' };
 };
@@ -312,6 +315,26 @@ function validInput(packet: Record<string, unknown>, previous: number): boolean 
     (packet.nav === undefined || typeof packet.nav === 'boolean')
   );
 }
+/** A frozen VM never resumes or writes again; lease CAS elects its replacement after retirement. */
+function retireFrozenWorld(state: WorldState, logger: nkruntime.Logger): boolean {
+  if (!state.database.economicFrozen) return false;
+  for (const connection of state.connections.values()) {
+    try {
+      connection.send({
+        t: 'error',
+        code: 'WORLD_RECOVERING',
+        msg: 'Server is recovering. Reconnecting…',
+      });
+    } catch {
+      // Retirement must not depend on delivery to a disconnected captain.
+    }
+  }
+  logger.error(
+    'Checkpoint recovery: retiring frozen authority; durable revision and lease govern restart.',
+  );
+  return true;
+}
+
 export const advanceWorld: nkruntime.MatchLoopFunction<WorldHandle> = function advanceWorld(
   _ctx,
   logger,
@@ -330,6 +353,8 @@ export const advanceWorld: nkruntime.MatchLoopFunction<WorldHandle> = function a
     if (ownership === 'pending') return { state: handle };
     state.authorityReady = true;
   }
+  if (retireFrozenWorld(state, logger)) return null;
+  let durableAction = false;
   const counts = new Map<string, number>();
   for (const message of messages) {
     const connection = state.connections.get(message.sender.sessionId);
@@ -356,14 +381,31 @@ export const advanceWorld: nkruntime.MatchLoopFunction<WorldHandle> = function a
       connection.lastSequence = Number(packet.seq);
     }
     connection.receive(text);
+    if (
+      ['trade2', 'trade', 'yard', 'outfit', 'claim', 'colony', 'exchange', 'bank'].includes(
+        packet.t,
+      )
+    )
+      durableAction = true;
+    if (retireFrozenWorld(state, logger)) return null;
   }
-  state.deferred.advance();
   try {
+    state.deferred.advance();
     state.game.tick();
-    if (tick % 450 === 0) state.database.flush();
+    const checkpointTime = Date.now();
+    state.lastCheckpointAt ??= checkpointTime;
+    if (
+      durableAction ||
+      checkpointTime < state.lastCheckpointAt ||
+      checkpointTime - state.lastCheckpointAt >= 10000
+    ) {
+      state.database.flush();
+      state.lastCheckpointAt = checkpointTime;
+    }
   } catch {
     logger.error('World tick failed; health counters contain no payloads.');
   }
+  if (retireFrozenWorld(state, logger)) return null;
   if (state.game.health && tick % 900 === 0)
     logger.info('World health: %s', JSON.stringify(state.game.health.report()));
   return { state: handle };
@@ -372,8 +414,10 @@ export const terminateWorld: nkruntime.MatchTerminateFunction<WorldHandle> =
   function terminateWorld(_ctx, _logger, _nk, dispatcher, _tick, handle) {
     const state = handle.world();
     state.dispatcher = dispatcher;
-    for (const connection of state.connections.values()) connection.left();
-    state.database.flush();
+    if (!state.database.economicFrozen) {
+      for (const connection of state.connections.values()) connection.left();
+      state.database.flush();
+    }
     return { state: handle };
   };
 export const signalWorld: nkruntime.MatchSignalFunction<WorldHandle> = function signalWorld(

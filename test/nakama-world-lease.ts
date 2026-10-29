@@ -491,3 +491,64 @@ assert.ok(
   'revoked callback cannot evict the legitimate existing captain',
 );
 assert.equal(capacitySessions.size, 30);
+
+// Wall time, not completed tick count, bounds native recovery loss.
+{
+  const savedNow = Date.now;
+  let clock = 1000;
+  let checkpoints = 0;
+  let advances = 0;
+  const sent: unknown[] = [];
+  const state = {
+    authorityReady: true,
+    lastCheckpointAt: clock,
+    tick: 0,
+    dispatcher: {},
+    connections: new Map(),
+    database: {
+      economicFrozen: false,
+      flush: () => {
+        checkpoints++;
+      },
+    },
+    game: {
+      tick: () => {
+        advances++;
+      },
+    },
+    deferred: { advance: () => {} },
+  };
+  const handle = { world: () => state };
+  const advance = (tick: number) =>
+    Reflect.apply(advanceWorld, undefined, [{}, { error: () => {} }, {}, {}, tick, handle, []]);
+  try {
+    Date.now = () => clock;
+    advance(450);
+    assert.equal(checkpoints, 0, 'a tick multiple is not a wall-time checkpoint');
+    clock += 10000;
+    advance(451);
+    assert.equal(checkpoints, 1, 'elapsed ten seconds flushes even at slow effective tick rate');
+    clock -= 5000;
+    advance(452);
+    assert.equal(checkpoints, 2, 'backward wall clock rebases after a safe checkpoint');
+    state.connections.set('viewer', { send: (packet: unknown) => sent.push(packet) });
+    state.database.flush = () => {
+      checkpoints++;
+      state.database.economicFrozen = true;
+      throw Error('lost write reply');
+    };
+    clock += 10000;
+    assert.equal(advance(453), null, 'failed/uncertain checkpoint retires its old authority');
+    assert.equal((sent[0] as { code: string }).code, 'WORLD_RECOVERING');
+    const retiredAdvances = advances;
+    const retiredWrites = checkpoints;
+    assert.equal(advance(454), null);
+    assert.equal(advances, retiredAdvances, 'a frozen VM cannot advance gameplay');
+    assert.equal(checkpoints, retiredWrites, 'a frozen VM cannot retry an uncertain write');
+  } finally {
+    Date.now = savedNow;
+  }
+}
+console.log(
+  'Native checkpoints follow wall time; rejected/uncertain authority retires without an unsafe write retry.',
+);
