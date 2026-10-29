@@ -1649,7 +1649,7 @@
         "story-order-safety.ts",
         "quest-directions.ts"
       ],
-      "asserts": "Plain travel/capacity/risk/turn-in/personal-payout details and remembered optional type/feasible/nearby filters retain inaccessible offers with reasons. Expired team-offer IDs are rejected across the ten-minute boundary without changing jobs or credits; a current replacement creates a plan but cannot bypass consent. Real Ready/Start consent assigns only the frozen roster; exact pool conservation, stale/duplicate/full/refused/disconnected denial, offline completion and saved accepted rewards survive reconnect without automatic late enrollment."
+      "asserts": "Plain travel/capacity/risk/turn-in/personal-payout details and remembered optional type/feasible/nearby filters retain inaccessible offers with reasons. Expired team-offer IDs are rejected across the ten-minute boundary without changing jobs or credits; a current replacement creates a plan but cannot bypass consent. Real Ready/Start consent assigns only the frozen roster; exact pool conservation, stale/duplicate/full/refused/disconnected denial, offline completion and saved accepted rewards survive reconnect without automatic late enrollment. Uncharted distant work remains listed with a disabled plot action and visible explanation; rendering never changes discovery or charts."
     },
     {
       "id": "cargo-courier-progression",
