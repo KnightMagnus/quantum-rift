@@ -149,7 +149,8 @@
     "trade-safety.ts",
     "hyperspace-arrival.ts",
     "index-survey-tour.ts",
-    "faction-store-catalog.ts"
+    "faction-store-catalog.ts",
+    "local-login.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -877,7 +878,8 @@
         "client/hails_ui.ts",
         "client/render.ts",
         "server/save-migrations.ts",
-        "server/save-validation.ts"
+        "server/save-validation.ts",
+        "server/local-login.ts"
       ],
       "services": [],
       "tests": [
@@ -893,9 +895,10 @@
         "save-generator-browser.ts",
         "save-migrations.ts",
         "save-feature-validation.ts",
-        "save-postgres-restore.ts"
+        "save-postgres-restore.ts",
+        "local-login.ts"
       ],
-      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Empty default seeds in online/Solo startup, preserved existing accounts/credentials and claims, explicit operator fixtures, no name-based radio unlocks; Python-generated saves across every hull/site/tier/port, real import/login and file-picker UI, invalid settings and overwrite denial, station-claim conflict/release/reload safety. Escape logout confirmation online/Solo, modal priority, cancel and prior pause, durable flight disconnect, cleared credentials/private UI state, refreshed Solo slots, repeated account switching without reload or auto-reconnect. Ordered detached cargo/tutorial migration and disposable restore rehearsal preserve source bytes, reject corrupt/unsupported ledgers, tutorial state and malformed/unreadable local snapshots, and retain journal freeze/reopen behavior; production native CAS fixture drills cover frozen retries, pre/postcommit restart, stale writers and exact co-op fleet/directive refunds without duplicate balances or log entries. Present-field feature validation rejects corrupt compatibility state before local/native load, journal recovery, import and login mutations; committed synthetic default/dock/progress fixtures exercise real login and repeat reloads. Disposable native PostgreSQL pg_dump/pg_restore preserves storage permissions/CAS versions and authenticated identity, exact refunds and restart logs in a separate database."
+      "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Empty default seeds in online/Solo startup, preserved existing accounts/credentials and claims, explicit operator fixtures, no name-based radio unlocks; Python-generated saves across every hull/site/tier/port, real import/login and file-picker UI, invalid settings and overwrite denial, station-claim conflict/release/reload safety. Escape logout confirmation online/Solo, modal priority, cancel and prior pause, durable flight disconnect, cleared credentials/private UI state, refreshed Solo slots, repeated account switching without reload or auto-reconnect. Ordered detached cargo/tutorial migration and disposable restore rehearsal preserve source bytes, reject corrupt/unsupported ledgers, tutorial state and malformed/unreadable local snapshots, and retain journal freeze/reopen behavior; production native CAS fixture drills cover frozen retries, pre/postcommit restart, stale writers and exact co-op fleet/directive refunds without duplicate balances or log entries. Present-field feature validation rejects corrupt compatibility state before local/native load, journal recovery, import and login mutations; committed synthetic default/dock/progress fixtures exercise real login and repeat reloads. Disposable native PostgreSQL pg_dump/pg_restore preserves storage permissions/CAS versions and authenticated identity, exact refunds and restart logs in a separate database. Local network handshakes use bounded background password derivation, scoped credentials, durable admission, disconnect cancellation and bounded new-account/socket admission."
     },
     {
       "id": "protocol-http",
@@ -1679,7 +1682,7 @@
         "nakama-diagnostics.ts",
         "nakama-world-lease.ts"
       ],
-      "asserts": "Actual Game.chat packets preserve null docked/global/Armada markers and finite system-flight markers through native, Solo and friend adapters, while malformed markers are rejected. Native SDK principal-bound authentication, private atomic PostgreSQL checkpoints and uncertain-commit freeze; actual Game/Space match clock, latest-control scheduling, finite private snapshots and sequence/replay denials. Native flood traffic retains peer progress and authoritative physics; deterministic actual-callback batches verify exactly eight admissions per session, independent peer budgets and next-tick reset. Legacy hash upgrade, reconnect/logout/restart and browser-rendered prediction under latency remain covered. Reference/Solo tests are separate and no full native-feature coverage is implied. Full-instance same-principal replacement retires old native/Game slots before allocating, sends the exact displaced-login error before kick, preserves the replacement under delayed old leave and duplicate callbacks, and denies new or revoked principals without evicting existing captains."
+      "asserts": "Actual Game.chat packets preserve null docked/global/Armada markers and finite system-flight markers through native, Solo and friend adapters, while malformed markers are rejected. Native SDK principal-bound authentication, private atomic PostgreSQL checkpoints and uncertain-commit freeze; actual Game/Space match clock, latest-control scheduling, finite private snapshots and sequence/replay denials. Native flood traffic retains peer progress and authoritative physics; deterministic actual-callback batches verify exactly eight admissions per session, independent peer budgets and next-tick reset. Legacy hash upgrade, reconnect/logout/restart and browser-rendered prediction under latency remain covered. Reference/Solo tests are separate and no full native-feature coverage is implied. Full-instance same-principal replacement retires old native/Game slots before allocating, sends the exact displaced-login error before kick, preserves the replacement under delayed old leave and duplicate callbacks, and denies new or revoked principals without evicting existing captains. Native checkpoints follow ten-second wall time across slow ticks and clock reversal; rejected or uncertain writes retire the frozen authority, notify clients and never retry its write."
     },
     {
       "id": "friend-hosting",

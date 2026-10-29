@@ -1,3 +1,4 @@
+import { LocalLoginQueue, localLoginConnection } from './local-login.ts';
 import { GAME_PROTOCOL } from '../shared/protocol.ts';
 import type { GameAssets } from '../shared/rules.ts';
 import type { Server, ServerResponse } from 'node:http';
@@ -241,6 +242,7 @@ const server: Server = http.createServer(async (incomingMessage, response) => {
   );
 });
 
+const loginQueue = new LocalLoginQueue();
 server.on('upgrade', (incomingMessage, duplex) => {
   if (
     FRIENDS &&
@@ -255,11 +257,21 @@ server.on('upgrade', (incomingMessage, duplex) => {
     duplex.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
     return;
   }
-  if (incomingMessage.url?.split('?')[0] === '/ws')
-    upgrade(incomingMessage, duplex as import('node:net').Socket, (socket) =>
-      game.connect(socket, (duplex as import('node:net').Socket).remoteAddress || '?'),
-    );
-  else duplex.destroy();
+  if (incomingMessage.url?.split('?')[0] === '/ws') {
+    const address = (duplex as import('node:net').Socket).remoteAddress || '?';
+    const release = loginQueue.reserve(address);
+    if (!release) {
+      duplex.end('HTTP/1.1 429 Too Many Requests\r\nConnection: close\r\n\r\n');
+      return;
+    }
+    duplex.once('close', release);
+    upgrade(incomingMessage, duplex as import('node:net').Socket, (socket) => {
+      game.connect(
+        SOLO ? socket : localLoginConnection(database, socket, loginQueue, address),
+        address,
+      );
+    });
+  } else duplex.destroy();
 });
 
 server.on('error', (error2) => {

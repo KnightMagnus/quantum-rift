@@ -1777,3 +1777,7 @@ keeps trade opening unavailable away from home. Authoritative settlement and tra
 permissions remain covered by `v07.ts`, `cargo-flows.ts` and `trade-safety.ts`.
 This browser test does not cover every colony level, order-matching permutation
 or native transport; `planet-portrait-browser.ts` covers the stage-art matrix.
+
+Native world authority checks also cover wall-time checkpoints under slow ticks and backward clock changes, recovery notification, and retirement without retrying an uncertain write.
+
+[Local login admission](../test/local-login.ts) verifies background password derivation without blocking initial event-loop progress, correct password checks, complete durable registration, cancellation and bounded queues/connections. Snapshot serialization and journal I/O remain synchronous.
