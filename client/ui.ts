@@ -1875,7 +1875,7 @@ export function renderLanded(): void {
         )
         .join(
           '',
-        )}</div><p class="dim small">Outfit space ${computedShipStats!.free} t free · guns ${computedShipStats!.guns}/${computedShipStats!.maxGuns} · turrets ${computedShipStats!.turrets}/${computedShipStats!.maxTurrets} · passenger seats ${occupiedPassengerSeats(playerPayload.missions)}/${passengerSeats(clientGameState.A!.ships[playerPayload.ship.hull], playerPayload.ship)}</p><p class="dim small">Factory equipment is included in the hull price and sells at its factory value. Separately purchased equipment sells for half its retail price.</p><table class="tbl"><tr><th></th><th>OUTFIT</th><th>EFFECT</th><th>MASS</th><th>PRICE</th><th>OWNED</th><th></th></tr>${list
+        )}</div><p class="dim small">Outfit space ${computedShipStats!.free} t free · guns ${computedShipStats!.guns}/${computedShipStats!.maxGuns} · turrets ${computedShipStats!.turrets}/${computedShipStats!.maxTurrets} · passenger seats ${occupiedPassengerSeats(playerPayload.missions)}/${passengerSeats(clientGameState.A!.ships[playerPayload.ship.hull], playerPayload.ship)}</p><p class="dim small">Factory equipment is included in the hull price and sells at its factory value. Separately purchased equipment sells for half its retail price.</p><table class="tbl outfit-table"><tr><th></th><th>OUTFIT</th><th>EFFECT</th><th>MASS</th><th>PRICE</th><th>OWNED</th><th></th></tr>${list
         .map((identifier) => {
           const outfitAsset = allOutfits2[identifier],
             owner = outfitAsset.eff!.ammo
@@ -1923,7 +1923,7 @@ export function renderLanded(): void {
                             : computedShipStats!.guns >= computedShipStats!.maxGuns)
                         ? `No free ${outfitAsset.turret ? 'turret' : 'gun'} mounts`
                         : '';
-          return `<tr><td>${outfitAsset.icon ? `<img src="${artworkUrl(outfitAsset.icon)}" style="width:32px;height:32px">` : ''}</td><td title="${escapeHtml2(outfitAsset.desc)}">${escapeHtml2(outfitAsset.name)}</td><td class="dim small">${escapeHtml2(effect)}</td><td>${outfitAsset.mass || 0}</td><td class="cr">${credits(outfitAsset.cost)}</td><td>${owner}</td>
+          return `<tr><td>${outfitAsset.icon ? `<img src="${artworkUrl(outfitAsset.icon)}" style="width:32px;height:32px">` : ''}</td><td title="${escapeHtml2(outfitAsset.desc)}">${escapeHtml2(outfitAsset.name)}</td><td class="dim small" data-label="Effect">${escapeHtml2(effect)}</td><td data-label="Mass">${outfitAsset.mass || 0}</td><td class="cr" data-label="Price">${credits(outfitAsset.cost)}</td><td data-label="Owned">${owner}</td>
           <td style="text-align:right"><button class="btn sm" data-act="outfit" data-id="${identifier}" data-n="${count}"${reason ? ` disabled title="${reason}"` : ''}>BUY${outfitAsset.eff!.ammo ? ' 10' : ''}</button>${outfitAsset.eff!.ammo ? '' : ` <button class="btn sm" data-act="outfit" data-id="${identifier}" data-n="-1"${owner ? '' : ' disabled'}>SELL</button>`}</td></tr>`;
         })
         .join('')}</table>`;
@@ -2000,17 +2000,20 @@ export function renderLanded(): void {
         send({ t: 'boards', cat: clientGameState.boardCat || 'earned' });
       }
       const communityPayload = length2.community;
-      height = `<div class="detail" style="grid-template-columns:1fr 1fr"><div>${clientGameState.solo ? '' : `<div class="sect" style="margin-top:0">CAPTAINS ONLINE (${communityPayload!.online.length})</div>`}${clientGameState.solo ? '' : communityPayload!.online.map((options) => `<div class="kv"><span>${escapeHtml2(options.name)}${options.name !== clientGameState.myName ? ` <button class="btn sm" data-act="ainvite" data-n="${escapeHtml2(options.name)}">INVITE</button>` : ''}${options.name !== clientGameState.myName && !(clientGameState.social && clientGameState.social.friends.some((friendEntry) => friendEntry.name === options.name)) ? ` <button class="btn sm" data-act="addfriend" data-n="${escapeHtml2(options.name)}">+ FRIEND</button>` : ''}</span><span>${escapeHtml2(options.sys)}</span></div>`).join('')}
+      height = `<div class="detail community-services"><div>${clientGameState.solo ? '' : `<div class="sect" style="margin-top:0">CAPTAINS ONLINE (${communityPayload!.online.length})</div>`}${clientGameState.solo ? '' : communityPayload!.online.map((options) => `<div class="kv"><span>${escapeHtml2(options.name)}${options.name !== clientGameState.myName ? ` <button class="btn sm" data-act="ainvite" data-n="${escapeHtml2(options.name)}">INVITE</button>` : ''}${options.name !== clientGameState.myName && !(clientGameState.social && clientGameState.social.friends.some((friendEntry) => friendEntry.name === options.name)) ? ` <button class="btn sm" data-act="addfriend" data-n="${escapeHtml2(options.name)}">+ FRIEND</button>` : ''}</span><span>${escapeHtml2(options.sys)}</span></div>`).join('')}
         ${clientGameState.solo ? '' : `<div class="sect">DOCKED HERE</div><div>${communityPayload!.docked.map((count) => `<span class="pill on">${escapeHtml2(count)}</span>`).join('') || '<span class="dim">Nobody else right now.</span>'}</div>`}
         <div class="sect"${clientGameState.solo ? ' style="margin-top:0"' : ''}>STATION REGISTRY</div>${communityPayload!.stations.map((state) => `<div class="kv"><span>${escapeHtml2(state.system)}</span><span>${state.owner ? `${escapeHtml2(state.owner)} · Station Tier ${state.ops}` : '<span class="dim">unclaimed hull</span>'}</span></div>`).join('')}</div>
-        <div><div class="sect" style="margin-top:0">TOP CAPTAINS (credits earned)</div><table class="tbl"><tr><th>#</th><th>CAPTAIN</th><th>SHIP</th><th>EARNED</th><th>KILLS</th></tr>${communityPayload!.top.map((time, index) => `<tr><td>${index + 1}</td><td>${escapeHtml2(time.name)}${time.ai ? ' <span class="aitag">captain</span>' : ''}</td><td class="dim">${escapeHtml2(time.ship)}</td><td class="cr">${credits(time.earned)}</td><td>${time.kills}</td></tr>`).join('')}</table>
+        <div><div class="sect" style="margin-top:0">TOP CAPTAINS (credits earned)</div><div class="service-table-scroll" tabindex="0" role="region" aria-label="Top captains"><table class="tbl"><tr><th>#</th><th>CAPTAIN</th><th>SHIP</th><th>EARNED</th><th>KILLS</th></tr>${communityPayload!.top.map((time, index) => `<tr><td>${index + 1}</td><td>${escapeHtml2(time.name)}${time.ai ? ' <span class="aitag">captain</span>' : ''}</td><td class="dim">${escapeHtml2(time.ship)}</td><td class="cr">${credits(time.earned)}</td><td>${time.kills}</td></tr>`).join('')}</table></div>
         ${boardsHtml(clientGameState)}<p class="dim">Quantum Station is the Rift's meeting place. Claim one of the derelict station hulls listed in the registry to build your Personal Station.</p></div></div>`;
       break;
     }
   }
   clientGameState.views.replace(
     body,
-    height,
+    height +
+      (clientGameState.ltab === 'overview'
+        ? `<div class="landed-inline-news">${landingNews}</div>`
+        : ''),
     'land:' + length2.stellar + ':' + clientGameState.ltab,
   );
   const newsPanel = document.getElementById('landnews')!;

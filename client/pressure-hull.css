@@ -1247,3 +1247,132 @@ body.pressure-hull #functiondock .function-label {
   line-height: 11px;
   font-size: 10px;
 }
+
+/* Landed services keep navigation and departure outside the content scrollport. */
+body.pressure-hull #land > .landbox.metal {
+  overflow: hidden;
+}
+body.pressure-hull #land .landbody {
+  container-type: inline-size;
+  overscroll-behavior: contain;
+}
+@media (max-width: 1100px) {
+  body.pressure-hull #land > .landbox.metal {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+  body.pressure-hull #land .landhead,
+  body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landhead {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  body.pressure-hull #land .landbody,
+  body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landbody {
+    grid-column: 1;
+    grid-row: 3;
+    max-height: none;
+    min-height: 0;
+  }
+  body.pressure-hull #land .landscene,
+  body.pressure-hull #land:has(#ltabs [data-lt='overview'].on) .landscene {
+    display: none;
+  }
+  body.pressure-hull #land .landfoot {
+    grid-row: 4;
+  }
+}
+@media (max-height: 850px) {
+  /* Docked instruments remain available in their existing scrollable console. */
+  body.pressure-hull:has(#land:not(.hidden)) {
+    --cbar: 140px;
+  }
+  body.pressure-hull #land > .landbox.metal {
+    height: calc((100vh - var(--cbar) - 16px) / var(--ui, 1));
+    max-height: calc((100vh - var(--cbar) - 16px) / var(--ui, 1));
+    border-width: 16px;
+    border-image-width: 16px;
+    padding: 6px;
+    gap: 6px;
+  }
+  body.pressure-hull #land #ltabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+    gap: 4px;
+  }
+  body.pressure-hull #land #ltabs button {
+    flex: 0 0 auto;
+    min-height: 34px;
+    font-size: 15px;
+  }
+  body.pressure-hull #land .landhead {
+    padding: 0 4px 4px;
+  }
+  body.pressure-hull #land .landhead h2 {
+    font-size: 20px;
+    letter-spacing: 0;
+  }
+  body.pressure-hull #land .landhead p {
+    margin-top: 2px;
+    font-size: 12px;
+  }
+  body.pressure-hull #land #landdesc {
+    display: none;
+  }
+  body.pressure-hull #land .landbody {
+    padding: 6px;
+  }
+}
+
+.landed-inline-news {
+  display: none;
+}
+@media (max-width: 1100px) {
+  .landed-inline-news {
+    display: block;
+  }
+}
+@media (max-height: 850px) {
+  body.pressure-hull #land .landfoot {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 4px 8px;
+    font-size: 12px;
+    padding-top: 4px;
+  }
+  body.pressure-hull #land .land-wallet {
+    grid-column: 1 / 3;
+    grid-row: 1;
+  }
+  body.pressure-hull #land #depart {
+    grid-column: 3;
+    grid-row: 1;
+    min-width: 90px;
+    padding: 6px 10px;
+    font-size: 15px;
+  }
+  body.pressure-hull #land #landcargo {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  body.pressure-hull #land #dockchips {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  body.pressure-hull #land #storebuttonslot {
+    grid-column: 2 / -1;
+    grid-row: 3;
+  }
+  body.pressure-hull #land .landfoot .btn {
+    min-height: 26px;
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+  body.pressure-hull #land .landfoot .cr {
+    font-size: 15px;
+  }
+  body.pressure-hull #land .landfoot > :empty {
+    display: none;
+  }
+}
