@@ -222,7 +222,8 @@
     "landed-responsive-browser.ts",
     "colony-exchange-layout-browser.ts",
     "landed-colony-responsive-browser.ts",
-    "landed-zoom-browser.ts"
+    "landed-zoom-browser.ts",
+    "touch-controls-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -873,7 +874,8 @@
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
       "helpers/chromium.ts",
-      "helpers/landed-zoom.ts"
+      "helpers/landed-zoom.ts",
+      "helpers/touch-controls.ts"
     ],
     "landed-responsive-browser.ts": ["helpers/landed-responsive.ts"],
     "landed-colony-responsive-browser.ts": ["helpers/landed-responsive.ts"],
@@ -883,7 +885,9 @@
     "syndicate-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"],
     "quest-directions.ts": ["helpers/refinery-fixture.ts"],
     "landed-zoom-browser.ts": ["helpers/landed-responsive.ts"],
-    "helpers/landed-zoom.ts": ["helpers/browser-fixture.ts"]
+    "helpers/landed-zoom.ts": ["helpers/browser-fixture.ts"],
+    "touch-controls-browser.ts": ["helpers/landed-responsive.ts"],
+    "helpers/touch-controls.ts": ["helpers/chromium.ts", "helpers/browser-fixture.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -2146,6 +2150,13 @@
       "services": [],
       "tests": ["colony-exchange-layout-browser.ts"],
       "asserts": "Real friends-host colony owner/visitor/unsettled branches retain decoded stage art and actions; responsive side art and short thumbnails, stockpile wheel/keyboard reachability, labeled Exchange place/send controls without menu horizontal overflow, two-captain order placement/cancellation and missing-goods denial, exact own-station trade guidance."
+    },
+    {
+      "id": "touch-flight-controls",
+      "owners": ["client/main.ts", "client/style-controls-login.css"],
+      "services": [],
+      "tests": ["touch-controls-browser.ts"],
+      "asserts": "Trusted Chromium touch events hit MAP/FIRE/LAND above the cockpit; map/dock dialogs retain input precedence. Primary fire holds, releases, cancels and drags without latching; joystick cancellation and modal entry release input; LAND completes through the authoritative game handler. Two tablet sizes and UI scales 1/1.4; no physical-device claim."
     }
   ],
   "routes": {

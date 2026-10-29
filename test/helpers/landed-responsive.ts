@@ -107,7 +107,9 @@ async function checkDockedLayout(page: Page, label: string, tab: string) {
   );
 }
 
-export async function runLandedResponsive(group: 'ports' | 'colonies' | 'zoom'): Promise<void> {
+export async function runLandedResponsive(
+  group: 'ports' | 'colonies' | 'zoom' | 'touch',
+): Promise<void> {
   const startedAt = performance.now();
   const directory = tempDataDir('rift-landed-responsive-');
   const data = path.join(directory, 'data');
@@ -179,6 +181,11 @@ export async function runLandedResponsive(group: 'ports' | 'colonies' | 'zoom'):
   let browser;
   try {
     await ready(server, origin);
+    if (group === 'touch') {
+      const { runTouchControls } = await import('./touch-controls.ts');
+      await runTouchControls(origin, output);
+      return;
+    }
     if (group === 'zoom') {
       const { runLandedZoom } = await import('./landed-zoom.ts');
       await runLandedZoom(origin, output, directory, checkDockedLayout);
@@ -249,7 +256,11 @@ export async function runLandedResponsive(group: 'ports' | 'colonies' | 'zoom'):
               if (section) await page.locator(`#landbody .stnav [data-k="${section}"]`).click();
               const label = `${account.name}-${tab}-${section}-${width}x${height}-${scale}`;
               await checkDockedLayout(page, label, tab);
-              if (['crew', 'outfit', 'overview'].includes(tab) && width === 800 && scale === 1.4) {
+              if (
+                ['crew', 'outfit', 'overview'].includes(tab) &&
+                [800, 844].includes(width!) &&
+                scale === 1.4
+              ) {
                 if (tab === 'outfit') await page.locator('.outfit-table').scrollIntoViewIfNeeded();
                 await page.screenshot({ path: path.join(output, label + '.png') });
               }

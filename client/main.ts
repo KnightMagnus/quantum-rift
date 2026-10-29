@@ -884,8 +884,7 @@ const connectionLifecycle = new ConnectionLifecycle({
     landingFeedback.reset();
     flightEngine.input.clear();
     mouse.down = false;
-    touch.keys = {};
-    touch.stick = null;
+    releaseTouchControls();
     clientGameState._look = null;
     clientGameState._lookT = null;
     elementById2('lbtn').disabled = false;
@@ -975,6 +974,7 @@ function onMessage(serverMessage: ServerMessage) {
       onboarding.start();
       break;
     case 'landed':
+      releaseTouchControls();
       updateAttention();
       elementById2('combatcontrols').classList.add('hidden');
       clientGameState.combat = {};
@@ -2486,8 +2486,7 @@ document.addEventListener('visibilitychange', () => {
   mouse.down = false;
   clientGameState._look = null;
   clientGameState._lookT = null;
-  touch.keys = {};
-  touch.stick = null;
+  releaseTouchControls();
   padding.blocked = true;
 });
 canvas.addEventListener('pointercancel', () => {
@@ -3162,86 +3161,100 @@ function touchInput(clientInput: ClientInput): void {
     clientInput.turn = Math.sign(distance);
   if (magnitude > 0.6 && Math.abs(distance) < 0.8) clientInput.thrust = 1;
 }
+const touchPointers = new Map<number, HTMLElement>();
+let touchStickPointer: number | null = null;
+
+/** Release touch holds across physical cancellation, modal changes and hidden pages. */
+function releaseTouchControls(): void {
+  touchPointers.clear();
+  touchStickPointer = null;
+  touch.keys = {};
+  touch.stick = null;
+  for (const button of elementById2('tbtns').querySelectorAll('.on')) button.classList.remove('on');
+  const knob = elementById2('tstick').querySelector<HTMLElement>('i');
+  if (knob) knob.style.transform = '';
+}
 if (
   'ontouchstart' in window ||
   ((window.matchMedia as typeof matchMedia | undefined) && matchMedia('(pointer: coarse)').matches)
 ) {
   elementById2('touch').classList.remove('hidden');
-  const cachedElement = elementById2('tstick'),
-    knob = cachedElement.querySelector<HTMLElement>('i')!;
-  const move = (touch2: Touch) => {
-    const domRect = cachedElement.getBoundingClientRect(),
-      centerX = domRect.left + domRect.width / 2,
-      centerY = domRect.top + domRect.height / 2;
-    let deltaX = (touch2.clientX - centerX) / (domRect.width / 2),
-      deltaY = (touch2.clientY - centerY) / (domRect.height / 2);
-    const message = Math.hypot(deltaX, deltaY);
-    if (message > 1) {
-      deltaX /= message;
-      deltaY /= message;
+  const stick = elementById2('tstick');
+  const knob = stick.querySelector<HTMLElement>('i')!;
+  const move = (event: PointerEvent) => {
+    const bounds = stick.getBoundingClientRect();
+    let dx = (event.clientX - bounds.left - bounds.width / 2) / (bounds.width / 2);
+    let dy = (event.clientY - bounds.top - bounds.height / 2) / (bounds.height / 2);
+    const magnitude = Math.hypot(dx, dy);
+    if (magnitude > 1) {
+      dx /= magnitude;
+      dy /= magnitude;
     }
-    touch.stick = { dx: deltaX, dy: deltaY };
-    knob.style.transform = `translate(${deltaX * 50}px,${deltaY * 50}px)`;
+    touch.stick = { dx, dy };
+    knob.style.transform = `translate(${dx * 50}px,${dy * 50}px)`;
   };
-  cachedElement.addEventListener(
-    'touchstart',
-    (touchEvent) => {
-      touchEvent.preventDefault();
-      if (typing() || overlays.blocksFlight()) return;
-      audio.unlock();
-      move(touchEvent.targetTouches[0]);
-    },
-    { passive: false },
-  );
-  cachedElement.addEventListener(
-    'touchmove',
-    (touchEvent) => {
-      touchEvent.preventDefault();
-      if (typing() || overlays.blocksFlight()) return;
-      move(touchEvent.targetTouches[0]);
-    },
-    { passive: false },
-  );
-  cachedElement.addEventListener('touchend', () => {
+  stick.addEventListener('pointerdown', (event) => {
+    if (
+      event.button !== 0 ||
+      typing() ||
+      clientGameState.landed ||
+      overlays.blocksFlight() ||
+      touchStickPointer !== null
+    )
+      return;
+    event.preventDefault();
+    event.stopPropagation();
+    audio.unlock();
+    touchStickPointer = event.pointerId;
+    stick.setPointerCapture(event.pointerId);
+    move(event);
+  });
+  stick.addEventListener('pointermove', (event) => {
+    if (touchStickPointer === event.pointerId && !overlays.blocksFlight()) move(event);
+  });
+  const releaseStick = (event: PointerEvent) => {
+    if (touchStickPointer !== event.pointerId) return;
+    touchStickPointer = null;
     touch.stick = null;
     knob.style.transform = '';
-  });
-  for (const htmlElement of elementById2('tbtns').querySelectorAll<HTMLElement>('button')) {
-    htmlElement.addEventListener(
-      'touchstart',
-      (touchEvent) => {
-        touchEvent.preventDefault();
-        if (htmlElement.dataset.tap === 'map' && !typing() && overlays.isTop('gmap')) {
-          closeMap();
-          return;
-        }
-        if (typing() || overlays.blocksFlight()) return;
-        audio.unlock();
-        htmlElement.classList.add('on');
-        if (htmlElement.dataset.k!) touch.keys[htmlElement.dataset.k!] = true;
-        const time = htmlElement.dataset.tap!;
-        if (time === 'target') nearestHostile();
-        else if (time === 'land') landRequest();
-        else if (time === 'map')
-          elementById2('gmap').classList.contains('hidden') ? openMap() : closeMap();
-        else if (time === 'board') openBoard();
-        else if (time === 'jump') jumpNext();
-      },
-      { passive: false },
-    );
-    htmlElement.addEventListener('touchend', () => {
-      htmlElement.classList.remove('on');
-      if (htmlElement.dataset.k!) touch.keys[htmlElement.dataset.k!] = false;
+  };
+  for (const name of ['pointerup', 'pointercancel', 'lostpointercapture'] as const)
+    stick.addEventListener(name, releaseStick);
+  for (const button of elementById2('tbtns').querySelectorAll<HTMLElement>('button')) {
+    button.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0 || typing() || clientGameState.landed || overlays.blocksFlight())
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      audio.unlock();
+      button.setPointerCapture(event.pointerId);
+      touchPointers.set(event.pointerId, button);
+      button.classList.add('on');
+      if (button.dataset.k) touch.keys[button.dataset.k] = true;
+      const action = button.dataset.tap;
+      if (action === 'target') nearestHostile();
+      else if (action === 'land') landRequest();
+      else if (action === 'map') openMap();
+      else if (action === 'board') openBoard();
+      else if (action === 'jump') jumpNext();
     });
+    const release = (event: PointerEvent) => {
+      touchPointers.delete(event.pointerId);
+      const held = [...touchPointers.values()].includes(button);
+      button.classList.toggle('on', held);
+      if (button.dataset.k) touch.keys[button.dataset.k] = held;
+    };
+    for (const name of ['pointerup', 'pointercancel', 'lostpointercapture'] as const)
+      button.addEventListener(name, release);
   }
+  window.addEventListener('blur', releaseTouchControls);
 }
 function clearManualFlightInput(): void {
   flightEngine.input.clear();
   mouse.down = false;
   clientGameState._look = null;
   clientGameState._lookT = null;
-  touch.keys = {};
-  touch.stick = null;
+  releaseTouchControls();
   padding.blocked = true;
   if (clientGameState.view && !clientGameState.landed)
     send({ t: 'input', seq: prediction.nextSequence(), th: 0, tu: 0, ab: 0, rv: 0, f1: 0, f2: 0 });
@@ -3263,8 +3276,7 @@ function fixedTick(): void {
   if (overlays.blocksFlight()) {
     flightEngine.input.clear();
     mouse.down = false;
-    touch.keys = {};
-    touch.stick = null;
+    releaseTouchControls();
     padding.blocked = true;
   }
   // Preserve automatic-control intent even if guidance completes or refuses this tick.
@@ -3530,8 +3542,7 @@ async function logOut(reason = '') {
   account = _lastSnapT = 0;
   mouse.down = mouse.in = false;
   padding.prev = [];
-  touch.keys = {};
-  touch.stick = null;
+  releaseTouchControls();
   storyQ.length = 0;
   quitPaused = false;
   overlays.reset();

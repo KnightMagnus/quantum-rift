@@ -1825,3 +1825,7 @@ Faction-store catalogue checks cover eligibility-before-fitting, exact standing 
 The landed service fixtures also start native Tab and Shift+Tab from BODY, without pre-focusing a control, and check named dock scrolling and chat log semantics. This is browser keyboard coverage, not a screen-reader or physical-gamepad certification.
 
 `landed-zoom-browser.ts` reuses the landed fixture with headed pinned Chromium and an unpacked local extension calling the browser's page-zoom API at 100%, 125% and 150%. It verifies actual CSS viewport/DPR changes and repeats Crew, Trade and Outfitter at UI sizes 1 and 1.4, retaining useful content height, trusted-click service navigation, departure and final action reachability. Linux without DISPLAY starts and cleans up Xvfb (provided by Playwright's existing `--with-deps chromium` installation). The extension is generated in the isolated fixture directory and needs no network access. This is page-zoom evidence, not physical-device/GPU certification.
+
+## Touch flight controls (`touch-flight-controls`)
+
+`touch-controls-browser.ts` reuses the isolated friend-host landed fixture with a touch-enabled Chromium context. Real browser touch protocol events verify MAP/FIRE/LAND center hit targets, map and dock precedence, primary-fire hold/release/cancel/drag commands, joystick cancellation, modal-entry release and a complete authoritative landing. Tablet 1024×768 and 1093×614 views exercise normal/enlarged UI. This does not certify physical iOS/Android hardware or full portrait-phone playability.
