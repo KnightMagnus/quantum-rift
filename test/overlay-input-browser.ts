@@ -513,7 +513,7 @@ try {
   await page.evaluate(() => {
     window.modalProbe.packets = [];
   });
-  await page.keyboard.press('o');
+  await page.locator('#optbtn').click();
   await page.locator('#opts').waitFor({ state: 'visible' });
   await page.keyboard.down('v');
   await page.evaluate(() => {

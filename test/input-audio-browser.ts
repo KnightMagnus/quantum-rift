@@ -165,7 +165,7 @@ try {
   await page.locator('#depart').click();
   await page.waitForFunction(() => G.view && !G.landed);
 
-  await page.keyboard.press('o');
+  await page.locator('#optbtn').click();
   for (const [identifier, value] of [
     ['vol', 0.35],
     ['radio', 0.45],

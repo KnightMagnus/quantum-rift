@@ -102,7 +102,7 @@ try {
   await page.waitForFunction(() =>
     window.fixtureInputs.slice(-2).every((packet) => packet.th === 0),
   );
-  await page.keyboard.press('o');
+  await page.locator('#optbtn').click();
   await page.locator('#opts').waitFor({ state: 'visible' });
   await page.evaluate(() => {
     window.fixtureInputs = [];

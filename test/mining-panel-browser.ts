@@ -147,7 +147,7 @@ try {
     [800, 600, 1.4],
   ]) {
     await page.setViewportSize({ width, height });
-    await page.keyboard.press('o');
+    await page.locator('#optbtn').click();
     await page.locator('#opt-scale').evaluate((input, value) => {
       (input as HTMLInputElement).value = String(String(value));
       input.dispatchEvent(new Event('input', { bubbles: true }));
