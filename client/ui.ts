@@ -1730,7 +1730,7 @@ export function renderLanded(): void {
               `<span class="small" style="display:inline-block;width:49%"><span style="color:${factionDef.color}">${factionDef.short}</span> <span class="dim">${repLabel(playerPayload.rep[factionId] || 0)} (${playerPayload.rep[factionId] || 0})</span></span>`,
           )
           .join('')}
-        <div class="sect">RENAME SHIP</div><div class="rrow"><input id="rename" value="${escapeHtml2(playerPayload.ship.name)}" maxlength="28"><button class="btn sm" data-act="rename">RENAME</button></div></div></div>`;
+        <div class="sect">RENAME SHIP</div><div class="rrow"><input id="rename" aria-label="Ship name" value="${escapeHtml2(playerPayload.ship.name)}" maxlength="28"><button class="btn sm" data-act="rename">RENAME</button></div></div></div>`;
       break;
     }
     case 'trade': {

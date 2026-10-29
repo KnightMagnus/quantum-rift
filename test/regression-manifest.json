@@ -2111,11 +2111,13 @@
         "client/pressure-hull.css",
         "client/style-port-services.css",
         "client/hangar_ui.ts",
-        "client/ui.ts"
+        "client/ui.ts",
+        "client/main.ts",
+        "client/index.html"
       ],
       "services": [],
       "tests": ["landed-responsive-browser.ts", "landed-colony-responsive-browser.ts"],
-      "asserts": "Landed services retain their navigation and footer while a bounded content row scrolls at five landscape viewport sizes, a portrait fallback and two UI scales. Real friend-host fixtures cover hub, owned Tier 5 station departments, colony owner and visitor; narrow Crew, Outfitter and Community avoid body-level horizontal overflow. Crew final actions remain keyboard-focusable and hit-testable after native wheel scrolling."
+      "asserts": "Landed services retain their navigation and footer while a bounded content row scrolls at five landscape viewport sizes, a portrait fallback and two UI scales. Real friend-host fixtures cover hub, owned Tier 5 station departments, colony owner and visitor; narrow Crew, Outfitter and Community avoid body-level horizontal overflow. Crew final actions remain keyboard-focusable and hit-testable after native wheel scrolling. Fresh BODY Tab and Shift+Tab enter native navigation instead of flight targeting; dock scrolling and chat/news have named semantic regions."
     },
     {
       "id": "colony-exchange-layout",

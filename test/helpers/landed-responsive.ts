@@ -199,6 +199,17 @@ export async function runLandedResponsive(group: 'ports' | 'colonies'): Promise<
       await page.waitForFunction(
         () => !document.querySelector('#toasts > div:not(.newcomer-protection)'),
       );
+      // Start from BODY, not a programmatically focused dock control.
+      for (const key of ['Tab', 'Shift+Tab']) {
+        await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+        await page.keyboard.press(key);
+        assert.ok(
+          await page.evaluate(() => document.activeElement !== document.body),
+          `${account.name}: ${key} enters native dock navigation from BODY`,
+        );
+      }
+      assert.equal(await page.locator('#chatlog').getAttribute('role'), 'log');
+      assert.equal(await page.locator('#landbody').getAttribute('aria-label'), 'Dock services');
       const tabs = await page
         .locator('#ltabs [data-lt]')
         .evaluateAll((elements) => elements.map((element) => (element as HTMLElement).dataset.lt!));

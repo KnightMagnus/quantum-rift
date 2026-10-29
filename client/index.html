@@ -87,7 +87,7 @@
           ALLIES</button
         ><button data-tab="log">LOG</button>
       </nav>
-      <section class="well" id="cpanel">
+      <section class="well" id="cpanel" aria-label="Ship console" tabindex="0">
         <div class="tab" id="t-radio">
           <div class="rnow" id="rnow">
             <div class="nosig">
@@ -147,7 +147,12 @@
         ><button data-ch="sys" title="Only this system">SYSTEM</button
         ><button data-ch="armada" title="Only your Armada (/a)">ARMADA</button>
       </div>
-      <input id="chatin" placeholder="Press Enter to chat" maxlength="240" />
+      <input
+        aria-label="Chat message"
+        id="chatin"
+        placeholder="Press Enter to chat"
+        maxlength="240"
+      />
       <div class="cbtns">
         <button class="cb" id="cbmap" title="Galaxy map (M)">MAP</button
         ><button class="cb" id="cbvol" title="Volume (N mutes)">🔉</button
@@ -393,7 +398,16 @@
           </div>
         </div>
       </div>
-      <div id="chat"><div id="chatlog" tabindex="0" aria-label="Chat history"></div></div>
+      <div id="chat">
+        <div
+          id="chatlog"
+          tabindex="0"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+          aria-label="Chat history"
+        ></div>
+      </div>
       <button
         id="jumpholo"
         class="hidden"
@@ -459,9 +473,16 @@
         </div>
         <div class="splash-tag">Your ship. Your crew. An open galaxy.</div>
         <div class="loginbox metal">
-          <input id="lname" placeholder="Captain name" maxlength="20" autocomplete="username" />
+          <input
+            id="lname"
+            aria-label="Captain name"
+            placeholder="Captain name"
+            maxlength="20"
+            autocomplete="username"
+          />
           <input
             id="lpass"
+            aria-label="Password"
             placeholder="Password (new names are registered)"
             type="password"
             autocomplete="current-password"
@@ -484,7 +505,7 @@
       <div class="landbox metal">
         <div class="landscene">
           <div class="landpic" id="landpic"></div>
-          <div id="landnews"></div>
+          <section id="landnews" aria-label="Spaceport news"></section>
         </div>
         <div class="landhead">
           <h2 id="landname"></h2>
@@ -492,7 +513,13 @@
           <p id="landdesc"></p>
         </div>
         <nav id="ltabs"></nav>
-        <div class="landbody well" id="landbody"></div>
+        <div
+          class="landbody well"
+          id="landbody"
+          tabindex="0"
+          role="region"
+          aria-label="Dock services"
+        ></div>
         <div class="landfoot">
           <span class="land-wallet"
             ><span id="landcr" class="cr"></span

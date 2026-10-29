@@ -1821,3 +1821,5 @@ Assist missile policy uses the existing persisted Settings preferences. `combat-
 Faction-store catalogue checks cover eligibility-before-fitting, exact standing labels, shared client/server fitting reasons, consistent material defaults, and credit-only/token-nonrefundable sale previews in the existing equipped-item cards.
 
 `quest-directions.ts` renders every authored optional-story objective through the production job builder, checks structured system/destination display names and copied-save presentation, and verifies that Station Tier 2/3 guidance uses the current unlock definitions rather than stale menu or key names.
+
+The landed service fixtures also start native Tab and Shift+Tab from BODY, without pre-focusing a control, and check named dock scrolling and chat log semantics. This is browser keyboard coverage, not a screen-reader or physical-gamepad certification.

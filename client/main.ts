@@ -1623,6 +1623,13 @@ const typing = () =>
     !elementById2('captainprofile').classList.contains('hidden')) ||
   editingText();
 window.addEventListener('keydown', (keyboardEvent) => {
+  // Dock navigation and browser shortcuts must not become flight commands.
+  if (keyboardEvent.ctrlKey || keyboardEvent.metaKey) return;
+  if (
+    clientGameState.landed &&
+    ['Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(keyboardEvent.code)
+  )
+    return;
   // Native activation/focus keys belong to the focused control. Steering and
   // remapped actions still work after clicking a HUD button; separators consume
   // only their own sizing keys locally.
