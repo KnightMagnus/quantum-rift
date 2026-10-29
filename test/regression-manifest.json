@@ -213,7 +213,8 @@
     "equipped-outfits-browser.ts",
     "bank-panel-browser.ts",
     "landed-responsive-browser.ts",
-    "colony-exchange-layout-browser.ts"
+    "colony-exchange-layout-browser.ts",
+    "landed-colony-responsive-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -635,11 +636,6 @@
       "helpers/mining-fixture.ts",
       "helpers/chromium.ts"
     ],
-    "landed-responsive-browser.ts": [
-      "helpers/browser-fixture.ts",
-      "helpers/temp-data.ts",
-      "helpers/chromium.ts"
-    ],
     "landed-live-browser.ts": [
       "fixtures/landed-live-preload.ts",
       "helpers/browser-fixture.ts",
@@ -860,7 +856,14 @@
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
       "helpers/chromium.ts"
-    ]
+    ],
+    "helpers/landed-responsive.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/temp-data.ts",
+      "helpers/chromium.ts"
+    ],
+    "landed-responsive-browser.ts": ["helpers/landed-responsive.ts"],
+    "landed-colony-responsive-browser.ts": ["helpers/landed-responsive.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -2069,7 +2072,7 @@
         "client/ui.ts"
       ],
       "services": [],
-      "tests": ["landed-responsive-browser.ts"],
+      "tests": ["landed-responsive-browser.ts", "landed-colony-responsive-browser.ts"],
       "asserts": "Landed services retain their navigation and footer while a bounded content row scrolls at five landscape viewport sizes, a portrait fallback and two UI scales. Real friend-host fixtures cover hub, owned Tier 5 station departments, colony owner and visitor; narrow Crew, Outfitter and Community avoid body-level horizontal overflow. Crew final actions remain keyboard-focusable and hit-testable after native wheel scrolling."
     },
     {
