@@ -152,7 +152,8 @@
     "faction-store-catalog.ts",
     "local-login.ts",
     "native-recovery.ts",
-    "gameplay-safety.ts"
+    "gameplay-safety.ts",
+    "recovery-safety.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -871,7 +872,8 @@
     ],
     "landed-responsive-browser.ts": ["helpers/landed-responsive.ts"],
     "landed-colony-responsive-browser.ts": ["helpers/landed-responsive.ts"],
-    "gameplay-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"]
+    "gameplay-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"],
+    "recovery-safety.ts": ["helpers/refinery-fixture.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1210,7 +1212,8 @@
         "gateway-navigation.ts",
         "gateway-browser.ts",
         "wormhole-loop.ts",
-        "landing-autopilot-browser.ts"
+        "landing-autopilot-browser.ts",
+        "recovery-safety.ts"
       ],
       "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading with sustained ordinary thrust and no afterburner, wormhole steering-noise deadband, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input. L lands on a clicked nav point, then the pinned objective, then the nearest mission destination, before the nearest landable body."
     },

@@ -4,7 +4,6 @@ import assert from 'node:assert/strict';
 import { refineryGame, refineryPilot } from './helpers/refinery-fixture.ts';
 import { mockPlayerData } from './helpers/mocks.ts';
 import { COMMODITIES } from '../shared/galaxy.ts';
-import { HailOperations } from '../server/hail.ts';
 
 const game = refineryGame();
 const captain = refineryPilot(game, 'Gameplay safety');
@@ -24,12 +23,11 @@ for (const cargo of [{}, { food: 5 }, { equipment: 10 }]) {
           100,
       ) * 100,
     );
-    assert.equal(HailOperations.bribeCost.call(game, player), expected);
+    assert.equal(game.features.hail.bribeCost(player), expected);
   }
 }
 assert.equal(
-  HailOperations.bribeCost.call(
-    game,
+  game.features.hail.bribeCost(
     mockPlayerData({ ship: { ...captain.data.ship, hull: 703 }, cargo: {} }),
   ),
   800,

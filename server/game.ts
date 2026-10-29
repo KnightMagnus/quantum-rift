@@ -242,6 +242,8 @@ export interface FormationTarget {
   gap: number;
 }
 export type Session = {
+  /** One departure after an insurance rebuild receives non-aggressive NPC exit grace. */
+  recoveryGrace?: boolean;
   /** Last real patrol scan, transient and private to this connection. */
   attentionScan?: RecentPatrolScan;
   rep?: Record<string, number>;
@@ -2123,6 +2125,13 @@ export class Game<Storage extends Database = Database> {
       firstValue,
       40,
     );
+    const rebuiltEntity = session.ent as Entity | null; // spawnPlayer installs the new entity.
+    if (session.recoveryGrace && rebuiltEntity) {
+      const expires = this.spaces[playerData.sys].t + 30;
+      rebuiltEntity.graceT = expires;
+      rebuiltEntity.recoveryGraceT = expires;
+      session.recoveryGrace = false;
+    }
     this.you(session);
   }
   /**
@@ -2675,13 +2684,42 @@ export class Game<Storage extends Database = Database> {
     }
     if (!this.features.specialists.flying(playerData, 'lodestar'))
       clearLots(playerData.cargo, playerData.cargoLots); // the Lodestar's hold is protected; wingmates fly home
-    const back =
-      playerData.station &&
-      playerData.station.site &&
-      STELLARS[playerData.station.site] &&
-      this.ownSite(playerData, STELLARS[playerData.station.site])
-        ? playerData.station.site
-        : START.stellar; // your own station hull if you have one, otherwise the hub
+    const eligibleRecovery = (port: StellarBody) =>
+      port.svc.includes('L') &&
+      storySystemVisible(undefined, port.system) &&
+      systemsById[port.system].faction !== 'deep' &&
+      (!port.site || this.ownSite(playerData, port)) &&
+      !landingRefused({
+        standing: playerData.rep[systemsById[port.system].faction] || 0,
+        outlawPort: !!port.outlaw,
+        ownStation: this.ownSite(playerData, port),
+        // A temporary landing pass must not decide an insurance recovery location.
+        passExpires: 0,
+        now: Date.now(),
+      });
+    const ownStation = playerData.station?.site && STELLARS[playerData.station.site];
+    let back =
+      ownStation && this.ownSite(playerData, ownStation) && eligibleRecovery(ownStation)
+        ? ownStation.id
+        : eligibleRecovery(STELLARS[START.stellar])
+          ? START.stellar
+          : '';
+    if (!back) {
+      for (const [systemId] of galaxyGraph.walk(playerData.sys, {
+        canEnter: (id) => storySystemVisible(undefined, id) && systemsById[id].faction !== 'deep',
+      })) {
+        const port = systemsById[systemId].stellars
+          .map((stellar) => STELLARS[stellar.id])
+          .find(eligibleRecovery);
+        if (port) {
+          back = port.id;
+          break;
+        }
+      }
+    }
+    // The public galaxy always includes outlaw berths, including for universally wanted captains.
+    back ||= Object.values(STELLARS).find((port) => port.outlaw && eligibleRecovery(port))!.id;
+    session.recoveryGrace = true;
     playerData.stellar = back;
     playerData.sys = STELLARS[back].system;
     if (session.retaliationVisit?.sys !== playerData.sys) session.retaliationVisit = undefined;

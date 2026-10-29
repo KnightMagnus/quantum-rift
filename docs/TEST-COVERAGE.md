@@ -1807,3 +1807,7 @@ Delivery warning cases in `gameplay-safety.ts` cover ordinary goods without grad
 `gameplay-safety.ts` checks duplicate real disconnect calls for exactly one final save and departure notice, and rejects late cleanup from a replaced session identity.
 
 Fleet boarding cases in `gameplay-safety.ts` reject own and Armada wingmate plunder/capture and reward farming, retain their drydock recovery, and preserve the downed-captain rescue route.
+
+`recovery-safety.ts` exercises actual death, eligible insurance berths, wanted and universally hostile standing, owned stations, depleted credits, and production departure/jump without moving the captain to an artificial escape location.
+
+Insurance departure grants thirty seconds of NPC-only exit grace once per rebuild; firing by the fleet cancels it. `recovery-safety.ts` verifies one-time consumption and cancellation, alongside real wanted departure.
