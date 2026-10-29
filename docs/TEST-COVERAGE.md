@@ -1783,3 +1783,5 @@ Native world authority checks also cover wall-time checkpoints under slow ticks 
 [Local login admission](../test/local-login.ts) verifies background password derivation without blocking initial event-loop progress, correct password checks, complete durable registration, cancellation and bounded queues/connections. Snapshot serialization and journal I/O remain synchronous.
 
 Friend lifecycle coverage includes clean occupied-port failure/retry and SIGHUP finalization on POSIX; SIGINT/SIGTERM and stale-lock fail-closed behavior are retained. Physical Windows console behavior remains a platform check.
+
+[Native recovery](../test/native-recovery.ts) stops the complete disposable PostgreSQL cluster and verifies frozen-authority retirement, lease-fenced replacement and exact durable market restoration without a Nakama restart. The fixture does not simulate a successful write whose reply is lost; in-memory CAS tests cover that separate uncertainty boundary.
