@@ -492,7 +492,8 @@ export const ACTIONS: Array<[string, string, string]> = [
   ['mute', 'Mute sound', 'KeyN'],
   ['hail', 'Hail target / planet', 'KeyT'],
   ['hailInbox', 'Incoming hail inbox', 'KeyU'],
-  ['info', 'Ship and captain info', 'KeyI'],
+  ['info', 'Ship details', 'KeyI'],
+  ['captain', 'Captain', 'KeyO'],
   ['face', 'Turn to face target (hold)', 'KeyE'],
   ['stop', 'Full stop', 'KeyQ'],
   ['ordAttack', 'Fleet: attack my target', 'KeyK'],
@@ -1607,12 +1608,14 @@ function onEvent(snapshotEvent: SnapshotEvent) {
 }
 
 // ------------------------------------------------------------------ input
+const editingText = () =>
+  document.activeElement &&
+  (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) ||
+    (document.activeElement as HTMLElement).isContentEditable);
 const typing = () =>
   (!elementById2('infobox').classList.contains('hidden') &&
     !elementById2('captainprofile').classList.contains('hidden')) ||
-  (document.activeElement &&
-    (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) ||
-      (document.activeElement as HTMLElement).isContentEditable));
+  editingText();
 window.addEventListener('keydown', (keyboardEvent) => {
   // Native activation/focus keys belong to the focused control. Steering and
   // remapped actions still work after clicking a HUD button; separators consume
@@ -1653,10 +1656,6 @@ window.addEventListener('keydown', (keyboardEvent) => {
   if (keyboardEvent.code === 'Escape') {
     closeMap();
     setTarget(0);
-    return;
-  }
-  if (keyboardEvent.code === 'KeyO') {
-    openOpts();
     return;
   }
   if (
@@ -1741,7 +1740,10 @@ window.addEventListener('keydown', (keyboardEvent) => {
       hailTarget();
       break;
     case 'info':
-      elementById2('infobox').classList.contains('hidden') ? openInfo() : closeInfo();
+      toggleInfo(true);
+      break;
+    case 'captain':
+      toggleInfo(false);
       break;
     case 'stop':
       setAuto({ mode: 'stop' }, null);
@@ -1860,16 +1862,16 @@ function openInfo(shipDetails = false) {
   renderInfo();
   overlays.open('infobox');
 }
-elementById2('captainshortcut').onclick = () => {
-  if (!elementById2('infobox').classList.contains('hidden') && clientGameState.itab !== 'ship')
+function toggleInfo(shipDetails: boolean) {
+  if (
+    !elementById2('infobox').classList.contains('hidden') &&
+    (clientGameState.itab === 'ship') === shipDetails
+  )
     closeInfo();
-  else openInfo();
-};
-elementById2('shipshortcut').onclick = () => {
-  if (!elementById2('infobox').classList.contains('hidden') && clientGameState.itab === 'ship')
-    closeInfo();
-  else openInfo(true);
-};
+  else openInfo(shipDetails);
+}
+elementById2('captainshortcut').onclick = () => toggleInfo(false);
+elementById2('shipshortcut').onclick = () => toggleInfo(true);
 function closeInfo() {
   profileUI.hide();
   audio.ui('close', 0.6);
@@ -1878,6 +1880,9 @@ function closeInfo() {
 function renderInfo() {
   const shipDetails = clientGameState.itab === 'ship';
   elementById2('infotitle').textContent = shipDetails ? 'SHIP DETAILS' : 'CAPTAIN';
+  const shortcut = bound(shipDetails ? 'info' : 'captain');
+  elementById2('infotitle').nextElementSibling!.textContent =
+    `${shortcut ? keyName(shortcut) + ' or ' : ''}Esc to close`;
   elementById2('infobox').setAttribute('aria-label', shipDetails ? 'Ship details' : 'Captain');
   elementById2('itabs').classList.toggle('hidden', shipDetails);
   const profileSelected = clientGameState.itab === 'profile';
@@ -1940,8 +1945,9 @@ overlays.register({
       : elementById2('itabs').querySelector<HTMLElement>('.on'),
   allowOutsidePointer: (target) => !!target.closest('#captainshortcut,#shipshortcut,#optbtn'),
   keyDown: (event) => {
-    if (event.code !== 'KeyI' || typing()) return false;
-    if (!event.repeat) closeInfo();
+    const action = actionOf(event.code);
+    if (!['info', 'captain'].includes(action!) || editingText()) return false;
+    if (!event.repeat) toggleInfo(action === 'info');
     return true;
   },
 });
@@ -2154,7 +2160,6 @@ const BASICS = [
   ['Double click', 'Land on a planet/station, or fly through a Gateway'],
   ['Mouse wheel', 'Zoom'],
   ['Enter', 'Chat'],
-  ['O', 'Options'],
   ['Esc', 'Close a window / open log out confirmation'],
 ];
 /**
@@ -2717,10 +2722,19 @@ const keyName = (component: string | null): string =>
         .replace(/^Key/, '')
         .replace(/^Digit/, '')
         .replace(/^Numpad/, 'Num ');
-/**
- * Renders keybinding assignment rows in the options menu.
- */
+/** Update cockpit hints from the saved key bindings. */
+function refreshInfoShortcuts(): void {
+  for (const [identifier, label, action] of [
+    ['shipshortcut', 'Ship details', 'info'],
+    ['captainshortcut', 'Captain details', 'captain'],
+  ])
+    elementById2(identifier).title =
+      `${label}${bound(action) ? ` (${keyName(bound(action))})` : ''}`;
+}
+refreshInfoShortcuts();
+/** Render keybinding assignment rows in Settings. */
 function renderKeys(): void {
+  refreshInfoShortcuts();
   const focusedBinding = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>(
     '[data-bind]',
   )?.dataset.bind;
@@ -2916,9 +2930,7 @@ overlays.register({
       renderKeys();
       return true;
     }
-    if (event.code !== 'KeyO') return false;
-    if (!event.repeat) closeOpts();
-    return true;
+    return false;
   },
 });
 overlays.register({

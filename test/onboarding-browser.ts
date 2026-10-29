@@ -334,7 +334,12 @@ try {
   await page.keyboard.press('Escape');
   assert.equal(await page.evaluate(() => document.activeElement?.id), 'shipshortcut');
   await page.keyboard.press('KeyI');
+  assert.equal(await page.locator('#infotitle').textContent(), 'SHIP DETAILS');
+  await page.keyboard.press('KeyO');
   assert.equal(await page.locator('#infotitle').textContent(), 'CAPTAIN');
+  await page.keyboard.press('KeyO');
+  assert.equal(await page.locator('#infobox').isVisible(), false);
+  await page.keyboard.press('KeyI');
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#shipshortcut .function-label').textContent(), 'INFO');
   assert.equal(await page.locator('#industrialindicator .function-label').textContent(), 'Refine');

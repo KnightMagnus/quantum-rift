@@ -106,7 +106,7 @@ try {
       before + 1,
     lootOrdersBefore,
   );
-  await page.keyboard.press('KeyO');
+  await page.locator('#optbtn').click();
   assert.equal(
     await page.locator('[data-bind="ordLoot"]').textContent(),
     "'",

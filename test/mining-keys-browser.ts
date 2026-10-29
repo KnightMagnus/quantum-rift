@@ -118,7 +118,7 @@ try {
   await page.keyboard.press('BracketLeft');
   assert.equal(await count(), before, 'typing blocks actions');
   await page.locator('#towrecipient').blur();
-  await page.keyboard.press('KeyO');
+  await page.locator('#optbtn').click();
   before = await count();
   await page.keyboard.press('Comma');
   await page.keyboard.press('BracketLeft');
@@ -134,7 +134,7 @@ try {
   assert.equal(await count(), before, 'old binding no longer dispatches');
   await page.keyboard.press('F8');
   await page.waitForFunction(() => !G.towing!.attached);
-  await page.keyboard.press('KeyO');
+  await page.locator('#optbtn').click();
   await page.locator('[data-bind="towToggle"]').click();
   await page.keyboard.press('Backspace');
   await page.click('#optclose');
