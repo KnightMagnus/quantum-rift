@@ -377,8 +377,15 @@ export function renderCaptains(): void {
         : clientGameState.ctabSub === 'armada'
           ? armadaHtml()
           : tradeHtml();
-  const keep = elementById2('dmin') ? elementById2('dmin').value : null,
-    focus = document.activeElement && document.activeElement.id;
+  const captain = clientGameState.myName || '';
+  // Live presence updates must not erase a form being typed by the same captain.
+  const drafts =
+    captain && cachedElement.dataset.captain === captain
+      ? [...cachedElement.querySelectorAll<HTMLInputElement>('#fadd, #aname, #ainv, #dmin')].map(
+          (input) => [input.id, input.value] as const,
+        )
+      : [];
+  const focus = document.activeElement && document.activeElement.id;
   if (clientGameState.views)
     clientGameState.views.replace(
       cachedElement,
@@ -386,7 +393,11 @@ export function renderCaptains(): void {
       'captains:' + (clientGameState.ctabSub || 'online'),
     );
   else cachedElement.innerHTML = height;
-  if (keep !== null && elementById2('dmin')) elementById2('dmin').value = keep;
+  cachedElement.dataset.captain = captain;
+  for (const [id, value] of drafts) {
+    const input = cachedElement.querySelector<HTMLInputElement>('#' + id);
+    if (input) input.value = value;
+  }
   if (focus && elementById2(focus)) elementById2(focus).focus();
   const cachedElement2 = elementById2('dmlog');
   if (cachedElement2) cachedElement2.scrollTop = cachedElement2.scrollHeight;

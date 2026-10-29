@@ -18,6 +18,19 @@ import {
   failureEvidence,
 } from './browser-fixture.ts';
 
+async function fillCompanionDraft(page: Page, id: string, value: string) {
+  await page.locator('#' + id).fill(value);
+  await page.evaluate(async () => {
+    const { renderCaptains } = await import('/coop_ui.js');
+    renderCaptains();
+  });
+  assert.equal(await page.locator('#' + id).inputValue(), value, `${id}: refresh retains draft`);
+  assert.ok(
+    await page.locator('#' + id).evaluate((element) => element === document.activeElement),
+    `${id}: refresh retains native focus`,
+  );
+}
+
 async function checkDockedLayout(page: Page, label: string, tab: string) {
   const metrics = await page.evaluate(() => {
     const body = document.querySelector<HTMLElement>('#landbody')!;
@@ -252,24 +265,24 @@ export async function runLandedResponsive(group: 'ports' | 'colonies'): Promise<
           ctab('captains');
         });
         await page.locator('[data-cs="friends"]').click();
-        await page.locator('#fadd').fill('Layout Owner');
+        await fillCompanionDraft(page, 'fadd', 'Layout Owner');
         await page.locator('[data-cact="fadd"]').click();
         await peer.locator('[data-cs="friends"]').click();
         await peer.locator('[data-cact="facc"]').click();
         await page.locator('[data-cact="dm"]').first().click();
-        await page
-          .locator('#dmin')
-          .fill(
-            'Synthetic layout fixture: a long message wraps across the narrow companion panel. This text contains no private correspondence. '.repeat(
-              2,
-            ),
-          );
+        await fillCompanionDraft(
+          page,
+          'dmin',
+          'Synthetic layout fixture: a long message wraps across the narrow companion panel. This text contains no private correspondence. '.repeat(
+            2,
+          ),
+        );
         await page.locator('[data-cact="dmsend"]').click();
         await page.locator('[data-cs="armada"]').click();
-        await page.locator('#aname').fill('Layout Armada');
+        await fillCompanionDraft(page, 'aname', 'Layout Armada');
         await page.locator('[data-cact="aform"]').click();
         await page.locator('[data-cact="aleave"]').waitFor();
-        await page.locator('#ainv').fill('Layout Owner');
+        await fillCompanionDraft(page, 'ainv', 'Layout Owner');
         await page.locator('[data-cact="ainv2"]').click();
         await peer.locator('[data-cs="armada"]').click();
         await peer.locator('[data-cact="aacc"]').click();
@@ -360,6 +373,27 @@ export async function runLandedResponsive(group: 'ports' | 'colonies'): Promise<
           );
         }
         await peer.close();
+        await page.locator('#traytoggle').click();
+        await page.locator('[data-cs="friends"]').click();
+        await fillCompanionDraft(page, 'fadd', 'Unsent fixture draft');
+        await page.locator('#fadd').evaluate((element) => element.blur());
+        await page.keyboard.press('Escape');
+        await page.locator('#quitconfirm').click();
+        await page.locator('#login').waitFor({ state: 'visible' });
+        await page.locator('#lname').fill('Layout Visitor');
+        await page.locator('#lpass').fill('fixture');
+        await page.locator('#lbtn').click();
+        await page.waitForFunction(() => G.you?.name === 'Layout Visitor');
+        for (let index = 0; index < 12 && (await page.locator('#storybox').isVisible()); index++)
+          await page.locator('#storyb button').first().click();
+        if ((await page.locator('#traytoggle').getAttribute('aria-expanded')) !== 'true')
+          await page.locator('#traytoggle').click();
+        await page.evaluate(async () => {
+          const { ctab } = await import('/ui.js');
+          ctab('captains');
+        });
+        await page.locator('[data-cs="friends"]').click();
+        assert.equal(await page.locator('#fadd').inputValue(), '', 'captain switch clears draft');
       }
       assert.deepEqual(errors, []);
       await page.close();
