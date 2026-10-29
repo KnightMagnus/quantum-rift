@@ -204,13 +204,18 @@ server.listen(PORT, process.env.HOST || '127.0.0.1', () =>
   ),
 );
 
-process.on('SIGINT', () => {
+function shutdown(): void {
+  server.close();
   process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  process.exit(0);
-});
+}
+for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP'] as const) process.on(signal, shutdown);
+// The launcher uses the same inherited shutdown channel for both hosting modes.
+if (process.connected) {
+  process.on('message', (message) => {
+    if (message === 'shutdown') shutdown();
+  });
+  process.on('disconnect', shutdown);
+}
 
 // log anything that slips through rather than letting the server die mid-game
 process.on('uncaughtException', (error2) => console.error('uncaught', error2));
