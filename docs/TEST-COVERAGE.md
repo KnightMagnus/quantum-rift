@@ -1758,3 +1758,7 @@ the opener and closes the panel. Native Tab wrapping, Escape/focus return and
 controls at 800×650, 1280×720 and 1920×1080 (1× and 1.4× UI scale) are checked.
 An 800×400 viewport exercises native wheel scrolling. Guest projection coverage
 is not an end-to-end station visit; existing bank authority remains in `v12.ts`.
+
+## Landed responsive services (`landed-responsive`)
+
+`landed-responsive-browser.ts` runs a real isolated friend host with synthetic hub, Tier 5 Personal Station, colony-owner and colony-visitor accounts. It checks every available service tab and station department at 800×650, 1280×720, 1920×1080, 2560×1440 3440×1440 and portrait 390×844, each at UI scale 1 and 1.4. Assertions cover retained navigation/footer, a bounded outer frame, working content height, no page-level horizontal overflow and no whole-body horizontal scrolling in Crew, Outfitter or Community. Crew's final action receives native keyboard focus and a pointer hit test after wheel scrolling. Captures are failure evidence and selected narrow views, not layout snapshots. This does not exercise native Nakama transport, every transaction, every station tier or full assistive-technology navigation.
