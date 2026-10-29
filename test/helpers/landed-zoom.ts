@@ -74,6 +74,7 @@ export async function runLandedZoom(
       ],
     });
     await context.addInitScript(() => {
+      // oxlint-disable-next-line typescript/unbound-method -- Keep the explicit receiver in call below.
       const read = Storage.prototype.getItem;
       Storage.prototype.getItem = function (key) {
         if (key.startsWith('rift.onboarding.v1.') && read.call(this, key) === null)
@@ -93,6 +94,11 @@ export async function runLandedZoom(
     await page.waitForFunction(
       () => !document.querySelector('#toasts > div:not(.newcomer-protection)'),
     );
+    const baseline = await page.evaluate(() => ({
+      width: innerWidth,
+      height: innerHeight,
+      dpr: devicePixelRatio,
+    }));
     const measurements: object[] = [];
     for (const zoom of [1, 1.25, 1.5]) {
       await worker.evaluate(
@@ -104,14 +110,18 @@ export async function runLandedZoom(
         },
         { origin, zoom },
       );
-      await page.waitForFunction((expected) => Math.abs(devicePixelRatio - expected) < 0.01, zoom);
+      await page.waitForFunction(
+        (expected) => Math.abs(devicePixelRatio - expected) < 0.01,
+        baseline.dpr * zoom,
+      );
       const viewport = await page.evaluate(() => ({
         width: innerWidth,
         height: innerHeight,
         dpr: devicePixelRatio,
       }));
       assert.ok(
-        viewport.width <= 1093 / zoom + 1 && viewport.height <= 633 / zoom + 1,
+        viewport.width <= baseline.width / zoom + 1 &&
+          viewport.height <= baseline.height / zoom + 1,
         'browser zoom changes the actual CSS viewport',
       );
       for (const scale of [1, 1.4]) {
