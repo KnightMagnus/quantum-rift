@@ -1177,8 +1177,8 @@
       "id": "combat-assist",
       "owners": ["server/combat-assist.ts"],
       "services": [],
-      "tests": ["combat-assist.ts", "network-systems.ts"],
-      "asserts": "Consent-only autopilot/delegation, group odds, independent isolation, manual takeover and Hold Fire."
+      "tests": ["combat-assist.ts", "network-systems.ts", "combat-browser.ts"],
+      "asserts": "Consent-only autopilot/delegation, group odds, independent isolation, manual takeover and Hold Fire. Persisted local automated missile policy retains primary/manual fire and applies to wingmates; native Settings checkbox survives browser reload."
     },
     {
       "id": "newcomer-standing",

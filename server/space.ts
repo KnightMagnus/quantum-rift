@@ -2492,6 +2492,13 @@ export class Space {
       weaponMount.cd -= tickDuration;
       if (weaponMount.cd > 0 || weaponMount.ammo <= 0) continue;
       const weapon = weaponMount.p;
+      if (
+        automated &&
+        weaponMount.sec &&
+        !weapon.bay &&
+        this.root(entity).player?.s?.combat?.missiles === false
+      )
+        continue;
       if (weapon.pd) {
         // point defense: shoot down missiles and fighters
         let best = null,

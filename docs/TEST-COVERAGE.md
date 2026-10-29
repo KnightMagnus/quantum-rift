@@ -1813,3 +1813,5 @@ Fleet boarding cases in `gameplay-safety.ts` reject own and Armada wingmate plun
 Insurance departure grants thirty seconds of NPC-only exit grace once per rebuild; firing by the fleet cancels it. `recovery-safety.ts` verifies one-time consumption and cancellation, alongside real wanted departure.
 
 `story-order-safety.ts` checks optional-work outcome exclusions on offer and authoritative acceptance, retirement of incompatible unfinished work, preserved completed progress, no invented rewards, and once-only notices after checkpoint/relogin. Narrative fixtures stay out of public announcements.
+
+Assist missile policy uses the existing persisted Settings preferences. `combat-assist.ts` checks automated lead/wingmate denial, retained primary/manual secondary fire and re-enabling. `combat-browser.ts` toggles the native checkbox, reloads the actual client, verifies persistence and restores the legacy enabled default before its combat route.

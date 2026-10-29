@@ -10,6 +10,8 @@ export type CombatConsent = {
 
 /** Transient combat assist state tracked per player session. */
 export type CombatState = {
+  /** Local persisted preference applied to this session; absent retains legacy firing. */
+  missiles?: boolean;
   /** Whether automated combat assistance is currently active. */
   on: boolean;
 
@@ -65,7 +67,7 @@ export type CombatPayload = {
 /** Client command payload for toggling or updating combat assist mode. */
 export type CombatCommand = {
   /** Combat operation command. */
-  op: 'off' | 'manual' | 'assist' | 'coordinate' | 'delegate';
+  op: 'off' | 'manual' | 'assist' | 'coordinate' | 'delegate' | 'missiles';
 
   /** Enable/disable flag for state toggling. */
   on?: boolean;
@@ -295,6 +297,10 @@ export class CombatAssist {
   command(session: CombatSession, combatCommand: CombatCommand): void {
     const combatState = this.state(session),
       entity = session.ent;
+    if (combatCommand.op === 'missiles') {
+      if (typeof combatCommand.on === 'boolean') combatState.missiles = combatCommand.on;
+      return;
+    }
     if (combatCommand.op === 'off') return this.stop(session, 'Combat assist off');
     if (combatCommand.op === 'manual') return this.manual(session);
     if (!available(entity) || this.game.spaces[session.data.sys].sys.arena || entity.rescueT)

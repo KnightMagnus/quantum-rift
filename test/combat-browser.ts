@@ -180,6 +180,30 @@ try {
   await page.locator('[data-slot="Browser Assist"]').click();
   assert.equal(await page.evaluate(() => G.solo), true, 'actual Solo launch path');
   await page.waitForFunction(() => window.G?.you && G.landed);
+  await page.click('#optbtn');
+  assert.equal(
+    await page.locator('#opt-assistMissiles').isChecked(),
+    true,
+    'legacy default permits missiles',
+  );
+  await page.locator('#opt-assistMissiles').uncheck();
+  assert.equal(
+    await page.evaluate(() => JSON.parse(localStorage.getItem('rift.opts') || '{}').assistMissiles),
+    false,
+  );
+  await page.click('#optclose');
+  await page.reload();
+  await page.locator('[data-slot="Browser Assist"]').click();
+  await page.waitForFunction(() => window.G?.you && G.landed);
+  await page.click('#optbtn');
+  assert.equal(
+    await page.locator('#opt-assistMissiles').isChecked(),
+    false,
+    'missile preference survives reload',
+  );
+  await page.locator('#opt-assistMissiles').check();
+  await page.click('#optclose');
+
   for (let index = 0; index < 10 && (await page.locator('#storybox').isVisible()); index++)
     await page.locator('#storyb button').first().click();
   await page.click('#depart');

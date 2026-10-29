@@ -63,6 +63,8 @@ export interface ClientOptions {
   /** Disable story shimmer and flashing transitions without hiding targeting. */
   reducedEffects?: boolean;
   mouseAim: boolean;
+  /** Persisted local policy for automated missile spending; manual fire is unchanged. */
+  assistMissiles?: boolean;
   /** Place the viewscreen JUMP button in the bottom-left corner instead of bottom-right. */
   jumpLeft?: boolean;
   notify: boolean;
@@ -400,6 +402,7 @@ const clientGameState: ClientGameState = (window.G = {
       shake: true,
       reducedEffects: false,
       mouseAim: false,
+      assistMissiles: true,
       jumpLeft: false,
       notify: false,
       cb: false,
@@ -915,6 +918,7 @@ function onMessage(serverMessage: ServerMessage) {
       }
       break;
     case 'welcome':
+      send({ t: 'combat', op: 'missiles', on: clientGameState.opts.assistMissiles !== false });
       compatibilityRefresh.classList.add('hidden');
       if (!clientGameState.solo && !localReferenceTransport && !friendHostTransport) {
         // Welcome establishes this native presence before its first controls, even if join/onopen is pending.
@@ -2700,7 +2704,17 @@ elementById2('tutskip').onclick = () => {
 };
 
 // ------------------------------------------------------------------ options
-const CHECKS = ['dmg', 'shake', 'reducedEffects', 'mouseAim', 'jumpLeft', 'notify', 'cb', 'mute'];
+const CHECKS = [
+  'dmg',
+  'shake',
+  'reducedEffects',
+  'mouseAim',
+  'assistMissiles',
+  'jumpLeft',
+  'notify',
+  'cb',
+  'mute',
+];
 let rebinding: string | null = null;
 /**
  * Formats a KeyboardEvent.code string into a readable label.
@@ -2889,6 +2903,8 @@ for (const cHECKS of CHECKS)
       Notification.permission === 'default'
     )
       void Notification.requestPermission();
+    if (cHECKS === 'assistMissiles')
+      send({ t: 'combat', op: 'missiles', on: clientGameState.opts.assistMissiles !== false });
     applyOpts();
     saveOpts();
   };
@@ -3430,6 +3446,7 @@ setInterval(() => {
 elementById2('combatassist').onclick = () => {
   clientGameState.autoRoute = false;
   setAuto(null);
+  send({ t: 'combat', op: 'missiles', on: clientGameState.opts.assistMissiles !== false });
   send({ t: 'combat', op: 'assist', on: !(clientGameState.combat && clientGameState.combat.on) });
 };
 elementById2('combatstop').onclick = () => send({ t: 'combat', op: 'off' });
