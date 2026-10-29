@@ -221,7 +221,8 @@
     "bank-panel-browser.ts",
     "landed-responsive-browser.ts",
     "colony-exchange-layout-browser.ts",
-    "landed-colony-responsive-browser.ts"
+    "landed-colony-responsive-browser.ts",
+    "landed-zoom-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -871,7 +872,8 @@
     "helpers/landed-responsive.ts": [
       "helpers/browser-fixture.ts",
       "helpers/temp-data.ts",
-      "helpers/chromium.ts"
+      "helpers/chromium.ts",
+      "helpers/landed-zoom.ts"
     ],
     "landed-responsive-browser.ts": ["helpers/landed-responsive.ts"],
     "landed-colony-responsive-browser.ts": ["helpers/landed-responsive.ts"],
@@ -879,7 +881,9 @@
     "recovery-safety.ts": ["helpers/refinery-fixture.ts"],
     "story-order-safety.ts": ["helpers/refinery-fixture.ts"],
     "syndicate-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"],
-    "quest-directions.ts": ["helpers/refinery-fixture.ts"]
+    "quest-directions.ts": ["helpers/refinery-fixture.ts"],
+    "landed-zoom-browser.ts": ["helpers/landed-responsive.ts"],
+    "helpers/landed-zoom.ts": ["helpers/browser-fixture.ts"]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -2116,8 +2120,12 @@
         "client/index.html"
       ],
       "services": [],
-      "tests": ["landed-responsive-browser.ts", "landed-colony-responsive-browser.ts"],
-      "asserts": "Landed services retain their navigation and footer while a bounded content row scrolls at five landscape viewport sizes, a portrait fallback and two UI scales. Real friend-host fixtures cover hub, owned Tier 5 station departments, colony owner and visitor; narrow Crew, Outfitter and Community avoid body-level horizontal overflow. Crew final actions remain keyboard-focusable and hit-testable after native wheel scrolling. Fresh BODY Tab and Shift+Tab enter native navigation instead of flight targeting; dock scrolling and chat/news have named semantic regions."
+      "tests": [
+        "landed-responsive-browser.ts",
+        "landed-colony-responsive-browser.ts",
+        "landed-zoom-browser.ts"
+      ],
+      "asserts": "Landed services retain their navigation and footer while a bounded content row scrolls at original desktop sizes, short landscape, large viewports, a portrait fallback and two UI scales. Real friend-host fixtures cover hub, owned Tier 5 station departments, colony owner and visitor; narrow Crew, Trade, Outfitter and Community avoid body-level horizontal overflow. Crew and Trade final actions remain keyboard-focusable and hit-testable after native wheel scrolling. Fresh BODY Tab and Shift+Tab enter native navigation instead of flight targeting; dock scrolling and chat/news have named semantic regions. Headed Chromium page zoom at 125%/150% records changed CSS viewport/DPR and retains useful content, clickable navigation and departure at both UI scales."
     },
     {
       "id": "colony-exchange-layout",

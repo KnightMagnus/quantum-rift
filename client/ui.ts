@@ -1736,7 +1736,7 @@ export function renderLanded(): void {
     case 'trade': {
       height += receiptHtml(clientGameState);
       if (length2.market)
-        height += `<table class="tbl"><tr><th>COMMODITY</th><th>PRICE</th><th>HOLD</th><th></th></tr>${length2.market
+        height += `<table class="tbl trade-table"><tr><th>COMMODITY</th><th>PRICE</th><th>HOLD</th><th></th></tr>${length2.market
           .map((marketItem) => {
             const base = COMMODITIES.find(
               (commodityDef) => commodityDef.id === marketItem.id,
@@ -1757,7 +1757,7 @@ export function renderLanded(): void {
             '',
           )}</table><div class="tradefoot"><span class="dim small">Estimates include cargo grade, your perks and the size of the order. There is no separate trading fee. Prices can change before you click; a price here does not promise the same price elsewhere. Green is cheap here, red is high. Hold: ${playerPayload.cargoUsed + (playerPayload.jobCargo || 0)} / ${computedShipStats!.cargo} t${playerPayload.jobCargo ? ` (${playerPayload.jobCargo} t is job cargo)` : ''}.</span>${holdFree(playerPayload) <= 0 ? '<span class="jwarn">Hold full. Sell cargo or finish a delivery to make room.</span>' : ''}${length2.market.some((marketItem) => playerPayload.cargo[marketItem.id]) ? `<button class="btn sm" data-act="sellall">SELL ALL CARGO</button>` : ''}</div>`;
       if (length2.mats.length)
-        height += `<div class="sect">STATION MATERIALS</div><table class="tbl"><tr><th>CRATE</th><th>PRICE</th><th>HELD</th><th></th></tr>${length2.mats.map((message) => `<tr><td>${message.mat} ${GRADES[message.grade]}</td><td>${credits(message.price)}</td><td>${playerPayload.mats[message.mat][message.grade]}</td><td style="text-align:right"><button class="btn sm" data-act="mat" data-m="${message.mat}" data-g="${message.grade}" data-q="1">BUY</button> <button class="btn sm" data-act="mat" data-m="${message.mat}" data-g="${message.grade}" data-q="-1">SELL</button></td></tr>`).join('')}</table>`;
+        height += `<div class="sect">STATION MATERIALS</div><table class="tbl trade-table"><tr><th>CRATE</th><th>PRICE</th><th>HELD</th><th></th></tr>${length2.mats.map((message) => `<tr><td>${message.mat} ${GRADES[message.grade]}</td><td>${credits(message.price)}</td><td>${playerPayload.mats[message.mat][message.grade]}</td><td style="text-align:right"><button class="btn sm" data-act="mat" data-m="${message.mat}" data-g="${message.grade}" data-q="1">BUY</button> <button class="btn sm" data-act="mat" data-m="${message.mat}" data-g="${message.grade}" data-q="-1">SELL</button></td></tr>`).join('')}</table>`;
       break;
     }
     case 'yard': {

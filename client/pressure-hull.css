@@ -1454,3 +1454,86 @@ body.pressure-hull:has(#land:not(.hidden)) #traytrim {
     white-space: nowrap;
   }
 }
+
+/* Short windows reserve the dock for services; instruments remain scrollable below. */
+@media (max-height: 600px) {
+  body.pressure-hull:has(#land:not(.hidden)) {
+    --cbar: 48px;
+  }
+  body.pressure-hull:has(#land:not(.hidden)) #cockpit {
+    padding: 2px 12px;
+    overflow-y: auto;
+  }
+  body.pressure-hull #land > .landbox.metal {
+    border-width: 8px;
+    border-image-width: 8px;
+    padding: 4px;
+    gap: 4px;
+  }
+  body.pressure-hull #land .landhead p {
+    display: none;
+  }
+  body.pressure-hull #land .landfoot {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 3px 6px;
+  }
+  body.pressure-hull #land #landcargo {
+    grid-column: 1 / 3;
+    grid-row: 2;
+    font-size: 11px;
+  }
+  body.pressure-hull #land #storebuttonslot {
+    grid-column: 3;
+    grid-row: 2;
+  }
+  body.pressure-hull #land .land-wallet {
+    grid-column: 1;
+  }
+  body.pressure-hull #land #dockchips {
+    grid-column: 2;
+    grid-row: 1;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-width: 0;
+  }
+}
+@media (max-height: 450px) {
+  body.pressure-hull #land .landhead {
+    display: none;
+  }
+}
+
+/* Narrow trade actions stay in the same focusable reading column. */
+@container (max-width: 480px) {
+  .trade-table,
+  .trade-table tbody {
+    display: block;
+    width: 100%;
+  }
+  .trade-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(48px, auto) minmax(24px, auto);
+    gap: 3px;
+    border-bottom: 1px solid #315365;
+    padding-block: 5px;
+  }
+  .trade-table :is(td, th) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+  .trade-table th:last-child {
+    display: none;
+  }
+  .trade-table td:last-child,
+  .trade-table td[colspan] {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .trade-table :is(.trade-custom, .trade-estimate) {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+}

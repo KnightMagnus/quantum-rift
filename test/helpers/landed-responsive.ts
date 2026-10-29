@@ -62,19 +62,19 @@ async function checkDockedLayout(page: Page, label: string, tab: string) {
     metrics.footerHorizontal <= 2,
     `${label}: footer horizontal overflow ${metrics.footerHorizontal}`,
   );
-  if (['crew', 'outfit', 'community'].includes(tab))
+  if (['crew', 'outfit', 'community', 'trade'].includes(tab))
     assert.ok(metrics.horizontal <= 2, `${label}: avoidable form overflow ${metrics.horizontal}`);
   assert.ok(
     metrics.footer.bottom <= metrics.frame.bottom + 1 && metrics.head.top >= metrics.frame.top,
     `${label}: retained header/footer`,
   );
-  if (tab === 'crew') {
+  if (tab === 'crew' || tab === 'trade') {
     await page.locator('#landbody').hover();
     await page.mouse.wheel(0, 10000);
     // Finish the wheel scroll before keyboard focus scrolls back to the last action.
     await page.waitForFunction(() => {
       const body = document.querySelector<HTMLElement>('#landbody')!;
-      return body.scrollHeight - body.clientHeight - body.scrollTop <= 1;
+      return body.scrollHeight - body.clientHeight - body.scrollTop <= 2;
     });
     const last = page.locator('#landbody button:not([disabled])').last();
     const controls = page.locator(
@@ -107,7 +107,7 @@ async function checkDockedLayout(page: Page, label: string, tab: string) {
   );
 }
 
-export async function runLandedResponsive(group: 'ports' | 'colonies'): Promise<void> {
+export async function runLandedResponsive(group: 'ports' | 'colonies' | 'zoom'): Promise<void> {
   const startedAt = performance.now();
   const directory = tempDataDir('rift-landed-responsive-');
   const data = path.join(directory, 'data');
@@ -179,6 +179,11 @@ export async function runLandedResponsive(group: 'ports' | 'colonies'): Promise<
   let browser;
   try {
     await ready(server, origin);
+    if (group === 'zoom') {
+      const { runLandedZoom } = await import('./landed-zoom.ts');
+      await runLandedZoom(origin, output, directory, checkDockedLayout);
+      return;
+    }
     browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
     for (const account of accounts.filter((account) =>
       group === 'colonies'
@@ -215,6 +220,9 @@ export async function runLandedResponsive(group: 'ports' | 'colonies'): Promise<
         .evaluateAll((elements) => elements.map((element) => (element as HTMLElement).dataset.lt!));
       for (const [width, height] of [
         [800, 650],
+        [1024, 768],
+        [1093, 614],
+        [844, 390],
         [1280, 720],
         [1920, 1080],
         [2560, 1440],
@@ -410,7 +418,7 @@ export async function runLandedResponsive(group: 'ports' | 'colonies'): Promise<
       await page.close();
     }
     console.log(
-      `Landed responsive matrix passed in ${((performance.now() - startedAt) / 1000).toFixed(1)}s: ${group} group, two destinations, six viewports, two UI scales, all available tabs/station departments${group === 'ports' ? ' and expanded-Tray companion controls' : ''}.`,
+      `Landed responsive matrix passed in ${((performance.now() - startedAt) / 1000).toFixed(1)}s: ${group} group, two destinations, nine viewports, two UI scales, all available tabs/station departments${group === 'ports' ? ' and expanded-Tray companion controls' : ''}.`,
     );
   } catch (error) {
     await failureEvidence(browser, output, error);
