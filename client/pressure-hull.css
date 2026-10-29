@@ -66,7 +66,7 @@ body.pressure-hull :is(#functiondock, #consolechat, #consoleutilities) {
   background: #091921;
   background-clip: padding-box;
   border-radius: 10px;
-  box-shadow: 0 4px 8px #000a;
+  box-shadow: none;
   transform: none;
 }
 body.pressure-hull #functiondock {
@@ -318,7 +318,8 @@ body.pressure-hull #shipfunctions .function-panel {
   border-radius: 0;
   background: #091820;
   background-clip: padding-box;
-  box-shadow: 0 8px 24px #000a;
+  /* Rectangular shadows fill the transparent space outside the sculpted corners. */
+  box-shadow: none;
   color: var(--text);
 }
 body.pressure-hull .overlay:not(#login) > .metal::after,
@@ -1177,9 +1178,7 @@ body.pressure-hull #login .loginbox {
   background-clip: padding-box;
   color: var(--text);
   text-shadow: 0 0 8px #55bbff20;
-  box-shadow:
-    0 12px 40px #000c,
-    0 0 60px #1c8fff26;
+  box-shadow: none;
 }
 body.pressure-hull #login .loginbox::before {
   font: inherit;

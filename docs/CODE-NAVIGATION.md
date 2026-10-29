@@ -451,6 +451,14 @@ closes an unresponsive peer through the ordinary disconnect/reconnect owner;
 it never queues gameplay commands. The timer does not depend on simulation
 snapshots, so pausing Solo does not imply disconnection.
 
+## HUD frame transparency
+
+`client/pressure-hull.css` applies the native SVG window frame from
+`client/assets/hud/pressure-hull/sculpted-frame.svg`. Its diagonal exterior corners
+are transparent; framed surfaces omit rectangular outer box shadows so the scene
+remains visible there. `test/hud-frame-alpha-browser.ts` checks decoded image alpha
+and rendered corners against transparent and contrasting backgrounds.
+
 ## First-entry orientation
 
 `client/onboarding.ts` owns the local per-captain menu tour and story/control briefing. It uses the shared overlay controller, current key bindings and existing sidebar owners; it never dispatches gameplay actions. Landing and career-guide presentation wait while the introduction is active. HELP offers replay. `test/onboarding-browser.ts` exercises startup ordering, the clockwise menu tour through targeting and every visible cockpit button, left-to-right cockpit rows from Captain then Mining, followed by JUMP, input denial, annotated combat/mining examples, image-frame consistency, navigation, completion, replay and resizing.

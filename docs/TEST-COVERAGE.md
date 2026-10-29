@@ -1438,6 +1438,13 @@ This is not coverage of arbitrary old client binaries or every mixed deployment.
 
 ## Pressure Hull console finish
 
+`hud-frame-alpha-browser.ts` decodes the authored window frame and checks exterior
+corner triangles for zero alpha, while keeping the metal and inner backing opaque.
+It renders the computed login, landed, map, Settings, chat and console frame styles
+over transparent, magenta and light backgrounds at four viewport sizes from
+800×650 to 2560×1440. The corner pixels must retain the background without a
+rectangular shadow. These isolated frame checks do not test window contents.
+
 The `pressure-hull-ui` system's `pressure-hull-browser.ts` checks the standard
 blue physical-console interface at 1920×1080 and 3440×1440. It exercises flight with the
 Tray expanded, landed overview with one compact world illustration, every available

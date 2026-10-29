@@ -202,6 +202,7 @@
     "ui-polish-browser.ts",
     "planet-cache-budget-browser.ts",
     "pressure-hull-browser.ts",
+    "hud-frame-alpha-browser.ts",
     "protocol-compatibility-browser.ts",
     "hud-controls-browser.ts",
     "asset-recovery-browser.ts",
@@ -753,6 +754,11 @@
       "helpers/dredge-fixture.ts"
     ],
     "cockpit-layout-browser.ts": [
+      "helpers/browser-fixture.ts",
+      "helpers/mining-fixture.ts",
+      "helpers/chromium.ts"
+    ],
+    "hud-frame-alpha-browser.ts": [
       "helpers/browser-fixture.ts",
       "helpers/mining-fixture.ts",
       "helpers/chromium.ts"
@@ -1895,8 +1901,12 @@
         "client/render.ts"
       ],
       "services": [],
-      "tests": ["pressure-hull-browser.ts", "hud-controls-browser.ts"],
-      "asserts": "Standard blue physical console at the ordinary game address preserves actual flight/landing/menus at 1920x1080 and 3440x1440, a single integrated landed shell and existing illustration, open-top side/bottom viewport trim, readable populated chat, contained utilities, Hail inbox access while landed/flying and with the Tray closed, original artwork and separated console/sidebar regions. The login console wears the blue hull frame; the landed service strip runs from the panel's left edge at 1.5x size; the gold viewscreen JUMP button sits bottom-right (bottom-left by setting), fades until a system is plotted and shares the J key's action; guest docks show limited services and no dock switcher."
+      "tests": [
+        "pressure-hull-browser.ts",
+        "hud-controls-browser.ts",
+        "hud-frame-alpha-browser.ts"
+      ],
+      "asserts": "Standard blue physical console at the ordinary game address preserves actual flight/landing/menus at 1920x1080 and 3440x1440, a single integrated landed shell and existing illustration, open-top side/bottom viewport trim, readable populated chat, contained utilities, Hail inbox access while landed/flying and with the Tray closed, original artwork and separated console/sidebar regions. Sculpted frame images preserve fully transparent exterior corners and opaque metal/inner backing; login, service, map, settings, chat and console frames preserve transparent or contrasting backgrounds at their exterior corners at 800x650, 1280x720, 1920x1080 and 2560x1440. The login console wears the blue hull frame; the landed service strip runs from the panel's left edge at 1.5x size; the gold viewscreen JUMP button sits bottom-right (bottom-left by setting), fades until a system is plotted and shares the J key's action; guest docks show limited services and no dock switcher."
     },
     {
       "id": "playtest-clarity",
