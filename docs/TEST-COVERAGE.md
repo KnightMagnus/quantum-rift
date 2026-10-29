@@ -1801,3 +1801,5 @@ Friend lifecycle coverage includes clean occupied-port failure/retry and SIGHUP 
 `gameplay-safety.ts` checks pirate tolls against the 800-credit minimum, cargo value and hundred-credit rounding through the production hail calculation.
 
 `gameplay-safety.ts` also exercises repeated borrow/partial-pay/full-pay cycles without rating gains, unchanged early repayment costs, and rating gains from scheduled payments.
+
+Delivery warning cases in `gameplay-safety.ts` cover ordinary goods without grade ledgers, zero and positive reservations, and common-first raw-grade sales.

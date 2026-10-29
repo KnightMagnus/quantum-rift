@@ -1575,7 +1575,8 @@
         "trade-amount-browser.ts",
         "refinery-network.ts",
         "refinery-persistence.ts",
-        "trade-safety.ts"
+        "trade-safety.ts",
+        "gameplay-safety.ts"
       ],
       "asserts": "Automatic single-action refinery cost/output with retained authoritative settlement, stale/expired/duplicate denial, trip recap attribution and persistence, exact current-port order-size/grade estimates, reserved cargo warnings, malformed/full/poor requests and measurement report completeness without fabricated baseline data. The ordinary port boundary reads a replaced market provider through a receiver-preserving live core call and denies removed markets without changing credits or grade lots. Positive integrated market spreads, bonus caps, conservative rounding, all-commodity shared impact/saturation/split-order safety, production Fixer/multi-captain cycles, quote parity, proportional persisted purchase basis and forward-only sale-loss carryover prevent recycled volume from advancing trade income/goals."
     },

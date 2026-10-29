@@ -1,3 +1,5 @@
+import { tradePreview } from '../shared/economy-preview.ts';
+import { addLots } from '../shared/cargo-lots.ts';
 import assert from 'node:assert/strict';
 import { refineryGame, refineryPilot } from './helpers/refinery-fixture.ts';
 import { mockPlayerData } from './helpers/mocks.ts';
@@ -58,4 +60,60 @@ syndicate.bankOp(captain, { op: 'pay', amt: captain.data.loan?.bal || 0 });
 assert.equal(captain.data.loan, null);
 console.log(
   'Bank history: instant cycles denied rating, partial/early repayment and scheduled history passed.',
+);
+
+const ordinaryCargo = { equipment: 4 };
+const ordinaryLedger = { version: 1 as const, byCommodity: {} };
+const previewInput = {
+  market: { id: 'equipment', price: 100 },
+  amount: 2,
+  cargo: ordinaryCargo,
+  cargoLots: ordinaryLedger,
+  credits: 1000,
+  freeHold: 10,
+};
+assert.deepEqual(
+  tradePreview(previewInput).warnings,
+  [],
+  'ordinary goods with no orders have no delivery warning',
+);
+assert.deepEqual(
+  tradePreview({ ...previewInput, orders: [{ cid: 'equipment', grade: 'common', qty: 2 }] })
+    .warnings,
+  [],
+  'unreserved stock can be sold',
+);
+assert.equal(
+  tradePreview({ ...previewInput, orders: [{ cid: 'equipment', grade: 'common', qty: 3 }] })
+    .warnings.length,
+  1,
+  'selling reserved ordinary goods warns',
+);
+assert.deepEqual(
+  tradePreview({ ...previewInput, orders: [{ cid: 'equipment', grade: 'common', qty: 0 }] })
+    .warnings,
+  [],
+);
+const rawCargo: Record<string, number> = {};
+const rawLedger = { version: 1 as const, byCommodity: {} };
+addLots(rawCargo, rawLedger, { cid: 'ore', qty: 5, grades: { common: 2, rich: 3, pure: 0 } });
+const rawPreview = {
+  ...previewInput,
+  market: { id: 'ore', price: 100 },
+  cargo: rawCargo,
+  cargoLots: rawLedger,
+};
+assert.deepEqual(
+  tradePreview({ ...rawPreview, orders: [{ cid: 'ore', grade: 'rich', qty: 3 }] }).warnings,
+  [],
+  'common-first sale leaves reserved rich ore intact',
+);
+assert.equal(
+  tradePreview({ ...rawPreview, amount: 3, orders: [{ cid: 'ore', grade: 'rich', qty: 3 }] })
+    .warnings.length,
+  2,
+  'selling into reserved rich ore warns alongside grade notice',
+);
+console.log(
+  'Delivery previews: ordinary goods, positive reservations and raw-grade ownership passed.',
 );
