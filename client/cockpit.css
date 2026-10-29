@@ -1626,28 +1626,6 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   }
 }
 
-/* The lower menu keeps its own height control beneath the square minimap. */
-.heightgrip {
-  flex: 0 0 10px;
-  min-height: 10px;
-  cursor: row-resize;
-  touch-action: none;
-  border: 1px solid #51616b;
-  border-radius: 3px;
-  background: repeating-linear-gradient(0deg, #17232b 0 2px, #677680 2px 3px, #17232b 3px 5px);
-}
-.heightgrip:is(:hover, :focus-visible, .drag) {
-  border-color: #e8bd76;
-  outline: 1px solid #e8bd76;
-}
-#cpanel {
-  min-height: 200px;
-}
-#cpanel.custom-height {
-  flex: 0 0 auto;
-  min-height: 180px;
-}
-
 /* A shared center track absorbs wide-screen space without stretching controls. */
 #cockpit {
   grid-template-columns: 360px minmax(0, 1fr) 360px;
@@ -1895,18 +1873,18 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   letter-spacing: 0;
 }
 
-/* The lower menu stays attached to the sidebar floor; its top divider allocates
-   space against the minimap while status and navigation remain in normal flow. */
+/* Keep the map square without stretching it when the sidebar widens. */
 #radarwrap {
   flex: 0 0 auto;
   width: 100%;
+  max-width: 350px;
+  margin-inline: auto;
   min-height: 0;
   aspect-ratio: 1;
 }
-#cpanel,
-#cpanel.custom-height {
-  flex: 0 0 auto;
-  min-height: 180px;
+#cpanel {
+  flex: 1 0 200px;
+  min-height: 200px;
 }
 
 body.tray-open #flightstatus {

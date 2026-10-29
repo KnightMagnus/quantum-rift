@@ -250,8 +250,11 @@ try {
   assert.equal(await firstCaptain.evaluate(() => G.you!.missions.length), 0);
   assert.equal(await secondCaptain.evaluate(() => G.you!.missions.length), 0);
   await tray(firstCaptain);
-  await firstCaptain.locator('#menuheightgrip').focus();
-  await firstCaptain.keyboard.press('End');
+  assert.equal(
+    await firstCaptain.locator('#menuheightgrip').count(),
+    0,
+    'Mission menu uses automatic height',
+  );
   await tray(secondCaptain);
   await secondCaptain.click('#ctabs [data-tab="missions"]');
   await firstCaptain.locator('.contract-plan').scrollIntoViewIfNeeded();
