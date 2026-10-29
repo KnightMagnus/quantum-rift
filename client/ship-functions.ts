@@ -140,7 +140,7 @@ export function initShipFunctions(
     label.className = 'function-label';
     label.textContent =
       (
-        { 'Fleet / Formation': 'Fleet', Processing: 'Process', Towing: 'Tow' } as Record<
+        { 'Fleet / Formation': 'Fleet', Processing: 'Refine', Towing: 'Tow' } as Record<
           string,
           string
         >
@@ -242,14 +242,18 @@ export function initShipFunctions(
     dock.append(button);
   }
   for (const identifier of [
-    'combatindicator',
-    'miningindicator',
-    'towingindicator',
-    'fleetindicator',
-    'dronesindicator',
-    'industrialindicator',
+    'captainshortcut',
     'hailindicator',
+    'fleetindicator',
+    'combatindicator',
+    'dronesindicator',
+    'attentionindicator',
+    'miningindicator',
+    'industrialindicator',
+    'towingindicator',
     'cbmap',
+    'ejectshortcut',
+    'shipshortcut',
   ])
     dock.append(document.getElementById(identifier)!);
   dock.addEventListener('keydown', (keyboardEvent) => {

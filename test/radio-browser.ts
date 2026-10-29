@@ -246,9 +246,11 @@ try {
   );
   assert.doesNotMatch(await page.locator('#rnow').innerText(), /in order|album loop|shuffle/i);
   assert.equal(await page.locator('#commsheader .comms-live').count(), 0);
-  // Keep the lower menu's keyboard sizing independent of the square minimap.
-  await page.locator('#menuheightgrip').focus();
-  for (let index = 0; index < 19; index++) await page.keyboard.press('ArrowDown');
+  assert.equal(
+    await page.locator('#menuheightgrip').count(),
+    0,
+    'Radio uses automatic menu height',
+  );
   await page.locator('#rnow').scrollIntoViewIfNeeded();
   await page.screenshot({ path: path.join(output, 'five-stations-playing.png') });
   await page.locator('#rstop').click();

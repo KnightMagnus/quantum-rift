@@ -12,14 +12,22 @@ import { tempDataDir } from './helpers/temp-data.ts';
 const version = JSON.parse(
   fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8'),
 ).publicVersion;
-assert.match(version, /^0\.\d+\.\d+\.\d+$/, 'beta hotfixes use four-part public labels');
+assert.match(
+  version,
+  /^0\.\d+(?:\.\d+){0,2}$/,
+  'beta labels include minor, patch or hotfix releases',
+);
 const packageVersion = JSON.parse(
   fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8'),
 ).version;
 assert.equal(
   packageVersion,
-  version.replace(/\.(\d+)$/, '-$1'),
-  'npm metadata retains a valid three-part prerelease version',
+  version.split('.').length === 4
+    ? version.replace(/\.(\d+)$/, '-$1')
+    : version.split('.').length === 2
+      ? version + '.0'
+      : version,
+  'npm metadata maps the public beta label to a valid semantic version',
 );
 for (const solo of [false, true]) {
   const directory = tempDataDir('rift-http-'),

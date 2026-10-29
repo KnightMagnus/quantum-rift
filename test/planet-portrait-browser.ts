@@ -296,7 +296,7 @@ try {
       await page.keyboard.press('Tab');
       assert.equal(
         await page
-          .locator('[data-it="ship"]')
+          .locator('[data-it="profile"]')
           .evaluate((element) => element === document.activeElement),
         true,
         'Pending-save radio group wraps Tab to Captain navigation',

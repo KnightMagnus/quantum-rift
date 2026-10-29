@@ -75,7 +75,7 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 - [Beta Solo save generator](test/Save%20Generator/README.md)
 - [Support diagnostics](docs/DIAGNOSTICS.md)
 - [Development tools](docs/DEVELOPMENT-TOOLS.md) and [code navigation](docs/CODE-NAVIGATION.md)
-- [Release notes](docs/RELEASE-0.3.6.2.md)
+- [Release notes](docs/RELEASE-0.4.md)
 
 ## Screenshots
 
@@ -91,7 +91,7 @@ The blue Pressure Hull cockpit is the standard interface for flight, station ser
 
 **Flight controls**
 
-Ship-function controls open above the console. JUMP can sit in either bottom corner.
+Ship-function controls open above the console. INFO shows ship details; EJECT opens the quit menu. JUMP can sit in either bottom corner.
 
 ![Combat assist controls above the console beside the system radar](docs/screenshots/flight-functions.png)
 

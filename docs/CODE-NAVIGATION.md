@@ -308,10 +308,7 @@ a rendering cost, not evidence of a general performance improvement.
 
 ### Sidebar sizing and landing notices
 
-`client/sidebar-size.ts` owns device-local desired heights under
-`rift.hudHeights`. A fresh layout keeps the minimap square as sidebar width changes,
-shrinking it on short screens while reserving usable lower-menu space. It allocates the lower menu and minimap against measured sidebar
-chrome, preserving desired values when the viewport temporarily clamps them.
+`client/sidebar-size.ts` discards retired `rift.hudHeights` preferences. CSS keeps the system map square, centered and no wider than 350 CSS pixels, shrinking only when the sidebar content is narrower. The tabbed menu fills the remaining height with a 200-pixel minimum; short sidebars scroll. Sidebar width remains draggable, but neither the map nor the menu has a height slider.
 Landing destinations without a remembered service tab open Overview.
 Closing a ship-function panel returns focus to the flight canvas so Space resumes
 manual fire instead of activating the panel opener. Hail options wrap inside
@@ -448,3 +445,9 @@ PostgreSQL backup/restore procedure.
 closes an unresponsive peer through the ordinary disconnect/reconnect owner;
 it never queues gameplay commands. The timer does not depend on simulation
 snapshots, so pausing Solo does not imply disconnection.
+
+## First-entry orientation
+
+`client/onboarding.ts` owns the local per-captain menu tour and story/control briefing. It uses the shared overlay controller, current key bindings and existing sidebar owners; it never dispatches gameplay actions. Landing and career-guide presentation wait while the introduction is active. HELP offers replay. `test/onboarding-browser.ts` exercises startup ordering, the clockwise menu tour through targeting and every visible cockpit button, left-to-right cockpit rows from Captain then Mining, followed by JUMP, input denial, annotated combat/mining examples, image-frame consistency, navigation, completion, replay and resizing.
+
+The cockpit shortcut registry keeps Captain/Hail/Fleet/Combat/Drones across the first row, Mining/Process/Tow/Map across the second, and Alert above Ship Details in the far-right column. Ship Details opens the existing ship information renderer directly; Captain retains profile, career, wingmate and captain tabs. JUMP remains a separate viewport overlay.

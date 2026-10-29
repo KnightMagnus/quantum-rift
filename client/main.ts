@@ -1,3 +1,4 @@
+import { createOnboarding } from './onboarding.ts';
 import { projectPlayer } from './player-projection.ts';
 import { ConnectionLifecycle } from './connection-lifecycle.ts';
 import { FlightPrediction } from './flight-prediction.ts';
@@ -643,6 +644,23 @@ const playerProjectionEffects = {
   tab: (name: ClientGameState['ctab'], persist: boolean) => ctab(name, persist),
   tutorial: () => renderTut(),
 };
+const onboarding = createOnboarding({
+  captain: () =>
+    clientGameState.you
+      ? (clientGameState.solo ? 'solo.' : 'online.') + clientGameState.you.name.toLowerCase()
+      : null,
+  key: (action) => keyName(bound(action)),
+  revealSidebar: () => {
+    if (!document.body.classList.contains('tray-open')) elementById2('traytoggle').click();
+  },
+  selectTab: (name) => ctab(name, false),
+  currentTab: () => clientGameState.ctab || 'missions',
+  finished: () => {
+    if (clientGameState.landed) showLanded();
+    renderTut();
+    if (storyQ.length) showStory(storyQ.shift());
+  },
+});
 let _lastSnapT = 0;
 function send(networkMessage: NetworkMessage) {
   connectionLifecycle.send(networkMessage);
@@ -935,6 +953,7 @@ function onMessage(serverMessage: ServerMessage) {
       break;
     case 'you':
       projectPlayer(clientGameState, serverMessage.d, playerProjectionEffects);
+      onboarding.start();
       break;
     case 'landed':
       updateAttention();
@@ -1191,6 +1210,10 @@ overlays.register({
 });
 function showStory(storyMessage: StoryMessage | undefined) {
   if (!clientGameState.you || !storyMessage) return;
+  if (onboarding.active()) {
+    storyQ.push(storyMessage);
+    return;
+  }
   if (!elementById2('storybox').classList.contains('hidden')) {
     storyQ.push(storyMessage);
     return;
@@ -1828,20 +1851,35 @@ function showHail(hailConversation: HailConversation) {
 }
 
 // Ship and captain info shares the modal controller.
-function openInfo() {
+function openInfo(shipDetails = false) {
+  if (shipDetails) clientGameState.itab = 'ship';
+  else if (!clientGameState.itab || clientGameState.itab === 'ship')
+    clientGameState.itab = 'profile';
   audio.ui('open', 0.6);
   send({ t: 'rivals' });
   renderInfo();
   overlays.open('infobox');
 }
-elementById2('captainshortcut').onclick = () =>
-  elementById2('infobox').classList.contains('hidden') ? openInfo() : closeInfo();
+elementById2('captainshortcut').onclick = () => {
+  if (!elementById2('infobox').classList.contains('hidden') && clientGameState.itab !== 'ship')
+    closeInfo();
+  else openInfo();
+};
+elementById2('shipshortcut').onclick = () => {
+  if (!elementById2('infobox').classList.contains('hidden') && clientGameState.itab === 'ship')
+    closeInfo();
+  else openInfo(true);
+};
 function closeInfo() {
   profileUI.hide();
   audio.ui('close', 0.6);
   overlays.close('infobox');
 }
 function renderInfo() {
+  const shipDetails = clientGameState.itab === 'ship';
+  elementById2('infotitle').textContent = shipDetails ? 'SHIP DETAILS' : 'CAPTAIN';
+  elementById2('infobox').setAttribute('aria-label', shipDetails ? 'Ship details' : 'Captain');
+  elementById2('itabs').classList.toggle('hidden', shipDetails);
   const profileSelected = clientGameState.itab === 'profile';
   elementById2('infobody').classList.toggle('hidden', profileSelected);
   if (profileSelected) profileUI.show();
@@ -1896,8 +1934,11 @@ overlays.register({
   id: 'infobox',
   priority: 25,
   dismiss: closeInfo,
-  initialFocus: () => elementById2('itabs').querySelector<HTMLElement>('.on'),
-  allowOutsidePointer: (target) => !!target.closest('#captainshortcut,#optbtn'),
+  initialFocus: () =>
+    clientGameState.itab === 'ship'
+      ? elementById2('infobox')
+      : elementById2('itabs').querySelector<HTMLElement>('.on'),
+  allowOutsidePointer: (target) => !!target.closest('#captainshortcut,#shipshortcut,#optbtn'),
   keyDown: (event) => {
     if (event.code !== 'KeyI' || typing()) return false;
     if (!event.repeat) closeInfo();
@@ -2151,6 +2192,15 @@ overlays.register({
     return true;
   },
 });
+const replayIntroduction = document.createElement('button');
+replayIntroduction.className = 'btn';
+replayIntroduction.id = 'introreplay';
+replayIntroduction.textContent = 'REPLAY INTRODUCTION';
+elementById2('ctrlclose').parentElement!.prepend(replayIntroduction);
+replayIntroduction.onclick = () => {
+  closeControls();
+  onboarding.start(true);
+};
 elementById2('cbhelp').onclick = openControls;
 elementById2('ctrlclose').onclick = closeControls;
 elementById2('ctrlkeys').onclick = () => {
@@ -2605,6 +2655,7 @@ function renderTut(): void {
   elementById2('tut').classList.toggle(
     'hidden',
     !tutorialStep ||
+      onboarding.active() ||
       !!clientGameState.arena ||
       !!(clientGameState.you && clientGameState.you!.duel && clientGameState.you!.duel.on),
   ); // out of the way in the Crucible and in duels
@@ -2927,7 +2978,7 @@ function resize(): void {
 window.addEventListener('resize', resize);
 // Sidebar reflow (including UI scale and persisted widths) also changes the radar.
 new ResizeObserver(resize).observe(elementById2('radar'));
-initSidebarSize(resize);
+initSidebarSize();
 // the sidebar can be dragged wider or narrower; the width is remembered
 /**
  * Updates the companion sidebar HUD width CSS variable within bounds.
@@ -3493,6 +3544,7 @@ overlays.register({
   dismiss: cancelQuit,
   initialFocus: () => elementById2('quitcancel'),
 });
+elementById2('ejectshortcut').onclick = openQuit;
 elementById2('quitcancel').onclick = cancelQuit;
 elementById2('quitconfirm').onclick = () => logOut();
 window.addEventListener(

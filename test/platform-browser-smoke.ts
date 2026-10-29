@@ -68,6 +68,9 @@ try {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.addInitScript(() => {
+    // These engine scenarios own flight/save checks, not the first-run introduction.
+    for (const captain of ['platform pilot', 'restored pilot'])
+      localStorage.setItem('rift.onboarding.v1.solo.' + captain, 'complete');
     window.fixtureInputs = [];
     const original = Reflect.get(WebSocket.prototype, 'send') as typeof WebSocket.prototype.send;
     WebSocket.prototype.send = function (data) {

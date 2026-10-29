@@ -1,0 +1,527 @@
+/* The spotlight follows the real control while the overlay owns all input. */
+#onboarding {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  background: transparent;
+  color: #eee8dc;
+  font-family: Inter, Arial, sans-serif;
+  font-size: 16px;
+}
+#onboarding.hidden {
+  display: none;
+}
+body.onboarding-active #land,
+body.onboarding-active #tut {
+  display: none !important;
+}
+#onboarding *,
+#onboarding *::before,
+#onboarding *::after {
+  box-sizing: border-box;
+}
+#onboarding .intro-spot {
+  position: absolute;
+  border: 1px solid #f3cd76;
+  border-radius: 9px;
+  box-shadow:
+    0 0 0 9999px #02070dc2,
+    0 0 24px #e6bc5733;
+  pointer-events: none;
+}
+#onboarding .intro-arrow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px #000);
+  overflow: visible;
+}
+#onboarding .intro-callout {
+  position: absolute;
+  width: min(430px, calc(100vw - 32px));
+  padding: 27px 28px 19px;
+  background: linear-gradient(145deg, #1d2933, #111a23 80%);
+  border: 1px solid #b39456;
+  border-radius: 10px;
+  box-shadow:
+    0 20px 80px #0009,
+    inset 0 1px #ffffff0a;
+}
+#onboarding .intro-eyebrow {
+  color: #e6bd70;
+  letter-spacing: 0.14em;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  line-height: 1.5;
+}
+#onboarding .intro-eyebrow span {
+  color: #a9adb0;
+  font-weight: 400;
+  white-space: nowrap;
+  letter-spacing: 0.05em;
+}
+#onboarding h2 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 30px;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: #fff3de;
+  margin: 18px 0 15px;
+  text-shadow: none;
+}
+#onboarding p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #c6cdd1;
+  margin: 0 0 24px;
+}
+#onboarding .intro-progress {
+  height: 2px;
+  background: #ffffff12;
+  margin: 0 0 21px;
+}
+#onboarding .intro-progress i {
+  display: block;
+  height: 100%;
+  background: #e6bd70;
+}
+#onboarding button {
+  font:
+    500 13px Inter,
+    Arial,
+    sans-serif;
+  letter-spacing: 0.02em;
+  min-height: 40px;
+  border: 1px solid #ffffff21;
+  background: #ffffff03;
+  color: #d2d7da;
+  border-radius: 4px;
+  padding: 10px 15px;
+  cursor: pointer;
+}
+#onboarding button:hover {
+  border-color: #e6bd70;
+  background: #e6bd7012;
+  color: #fff3de;
+}
+#onboarding button:focus-visible {
+  outline: 2px solid #fff3de;
+  outline-offset: 4px;
+}
+#onboarding button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+#onboarding button.intro-next {
+  background: #e6bd70;
+  color: #191a1d;
+  border-color: #e6bd70;
+  font-weight: 700;
+  min-width: 98px;
+}
+#onboarding .intro-next span {
+  margin-left: 14px;
+}
+#onboarding button.intro-skip {
+  border-color: transparent;
+  background: transparent;
+  color: #b4bdc3;
+  padding-left: 0;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: #ffffff35;
+  font-size: 12px;
+}
+#onboarding .intro-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+#onboarding .intro-actions > div,
+#onboarding footer > div:last-child {
+  display: flex;
+  gap: 8px;
+}
+#onboarding .intro-hint {
+  margin-top: 17px;
+  font-size: 10px;
+  color: #8a98a2;
+  letter-spacing: 0.015em;
+}
+#onboarding[data-stage='briefing'] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #02070dd6;
+  backdrop-filter: blur(3px);
+  padding: 32px;
+}
+#onboarding .intro-deck {
+  width: min(1360px, 100%);
+  background: linear-gradient(135deg, #1b2934, #101a23 75%);
+  border: 1px solid #7f704f;
+  border-radius: 12px;
+  box-shadow: 0 25px 120px #000c;
+  overflow: hidden;
+}
+#onboarding header {
+  height: 88px;
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  padding: 0 32px;
+  border-bottom: 1px solid #ffffff13;
+}
+#onboarding .intro-brand {
+  font-family: Georgia, serif;
+  font-size: 31px;
+  color: #e6bd70;
+  border: 1px solid #e6bd7059;
+  padding: 6px 9px;
+  letter-spacing: -0.12em;
+  border-radius: 5px;
+}
+#onboarding .intro-brand span {
+  position: relative;
+  top: 5px;
+  margin-right: 4px;
+}
+#onboarding header > div:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+#onboarding header b {
+  font-size: 12px;
+  letter-spacing: 0.19em;
+  color: #e9d9b8;
+}
+#onboarding header > div > span {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: #8e9ba6;
+}
+#onboarding .intro-deck-count {
+  margin-left: auto;
+  font-size: 17px;
+  letter-spacing: 0.1em;
+  color: #e6bd70;
+}
+#onboarding .intro-deck-count i {
+  font-style: normal;
+  margin: 0 9px;
+  color: #6f7a83;
+}
+#onboarding .intro-deck-main {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  min-height: 490px;
+}
+#onboarding figure {
+  margin: 0;
+  padding: 32px 0 32px 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+#onboarding .intro-image {
+  position: relative;
+  aspect-ratio: 16/10;
+  overflow: hidden;
+  border: 1px solid #74869655;
+  background: #060e18;
+  border-radius: 6px;
+}
+#onboarding .intro-image > img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
+#onboarding figcaption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+  color: #98a8b4;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+#onboarding .intro-live-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #e6bd70;
+}
+#onboarding article {
+  padding: 55px 42px 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+#onboarding article h2 {
+  font-size: 42px;
+  max-width: 350px;
+  margin-top: 20px;
+  margin-bottom: 22px;
+}
+#onboarding article p {
+  font-size: 16px;
+  line-height: 1.8;
+}
+#onboarding .intro-signature {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: #d4b579;
+  margin-top: 15px;
+}
+#onboarding .intro-bindings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px 14px;
+  margin-top: 0;
+}
+#onboarding .intro-bindings > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 11px;
+  color: #b9c5cc;
+}
+#onboarding kbd {
+  font:
+    600 11px Inter,
+    Arial,
+    sans-serif;
+  min-width: 37px;
+  padding: 7px 9px;
+  display: inline-flex;
+  justify-content: center;
+  white-space: nowrap;
+  color: #f1dfb9;
+  border: 1px solid #b49a6555;
+  border-bottom-width: 3px;
+  border-radius: 4px;
+  background: #e6bd7008;
+}
+#onboarding small {
+  font-size: 10px;
+  color: #7f929f;
+  line-height: 1.6;
+  margin-top: 15px;
+}
+#onboarding footer {
+  height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #ffffff13;
+  padding: 0 32px;
+  gap: 15px;
+}
+#onboarding .intro-dots {
+  display: flex;
+  gap: 9px;
+}
+#onboarding .intro-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #46505a;
+}
+#onboarding .intro-dots i.seen {
+  background: #947c4c;
+}
+#onboarding .intro-dots i.current {
+  background: #edc876;
+  width: 23px;
+  border-radius: 3px;
+}
+#onboarding .intro-annotation {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+#onboarding .intro-annotation i {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #edc876;
+  border-radius: 50%;
+  box-shadow: 0 0 0 5px #e6bd7018;
+}
+#onboarding .intro-annotation span {
+  font-size: 10px;
+  background: #0d1726e8;
+  color: #f3d593;
+  border: 1px solid #b39456;
+  padding: 6px 9px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+@media (max-width: 950px) {
+  #onboarding[data-stage='briefing'] {
+    padding: 16px;
+  }
+  #onboarding .intro-deck-main {
+    grid-template-columns: 1fr 1fr;
+    min-height: 380px;
+  }
+  #onboarding article {
+    padding: 25px;
+  }
+  #onboarding article h2 {
+    font-size: 30px;
+  }
+  #onboarding article p {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  #onboarding figure {
+    padding: 20px 0 20px 20px;
+  }
+  #onboarding header {
+    height: 68px;
+  }
+  #onboarding footer {
+    height: 70px;
+  }
+  #onboarding .intro-bindings {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+  #onboarding .intro-bindings > div {
+    font-size: 10px;
+  }
+  #onboarding kbd {
+    padding: 4px 7px;
+  }
+}
+@media (max-width: 620px) {
+  #onboarding .intro-deck {
+    max-height: calc(100dvh - 24px);
+    overflow: auto;
+  }
+  #onboarding .intro-deck-main {
+    grid-template-columns: 1fr;
+  }
+  #onboarding figure {
+    padding: 18px 18px 0;
+  }
+  #onboarding .intro-image {
+    aspect-ratio: 2.2;
+  }
+  #onboarding article {
+    padding: 24px;
+  }
+  #onboarding article h2 {
+    max-width: none;
+    font-size: 30px;
+  }
+  #onboarding .intro-bindings {
+    grid-template-columns: 1fr 1fr;
+  }
+  #onboarding header {
+    padding: 0 18px;
+  }
+  #onboarding footer {
+    padding: 0 18px;
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 80px;
+  }
+  #onboarding .intro-dots {
+    display: none;
+  }
+  #onboarding .intro-hint {
+    display: none;
+  }
+  #onboarding .intro-callout {
+    padding: 20px;
+  }
+  #onboarding .intro-callout h2 {
+    font-size: 25px;
+  }
+  #onboarding .intro-callout p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  #onboarding .intro-deck-count {
+    font-size: 13px;
+  }
+}
+
+#onboarding > div {
+  transform: none;
+  zoom: 1;
+  max-width: none;
+}
+#onboarding .intro-spot {
+  overflow: visible;
+}
+#onboarding .intro-callout {
+  overflow: visible;
+}
+
+/* This introduction owns the whole viewport, independent of the cockpit tray fit. */
+#onboarding.overlay {
+  width: 100vw !important;
+  height: 100dvh !important;
+}
+#onboarding .intro-callout {
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+}
+#onboarding .intro-deck {
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
+}
+#onboarding .intro-brand {
+  letter-spacing: -0.1em;
+}
+
+#onboarding .intro-annotation {
+  transform: translate(-50%, -17px);
+}
+
+/* Show the real, disabled flight control during docked orientation too. */
+body.onboarding-active #jumpholo {
+  display: flex !important;
+}
+/* Spotlight coordinates must not inherit the ordinary dialog pop animation. */
+#onboarding > div {
+  animation: none;
+}
+body.onboarding-active #functiondock > .function-icon {
+  display: flex !important;
+}
+#onboarding .intro-annotation span {
+  position: absolute;
+  top: var(--label-y, 42px);
+}
+#onboarding .intro-annotation span {
+  left: calc(50% + var(--label-x, 0px));
+  transform: translateX(-50%);
+}
+
+#onboarding article p.intro-disclosure {
+  font-size: 13px;
+  line-height: 1.65;
+  margin-bottom: 0;
+}

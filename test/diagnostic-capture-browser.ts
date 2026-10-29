@@ -142,7 +142,10 @@ try {
   assert.equal(exportedText.includes('fixture'), false);
   const parsed = parseDiagnosticCapture(exportedText);
   assert.ok(parsed.ok, parsed.ok ? '' : parsed.detail);
-  assert.match(parsed.capture.build.game, /^\d+\.\d+\.\d+/);
+  const publicVersion = JSON.parse(
+    fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8'),
+  ).publicVersion;
+  assert.equal(parsed.capture.build.game, publicVersion);
   assert.equal(parsed.capture.entries.length, kept);
   const amounts = parsed.capture.entries.map((entry) => entry.input.amount);
   assert.ok(amounts.includes(5) && amounts.includes(2));

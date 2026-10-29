@@ -2,6 +2,13 @@
 
 Every release, newest first. The main story is left out on purpose.
 
+### 0.4 — Delta Quadrant Stable Beta
+
+- Add the cockpit menu tour and ten-slide briefing, with skip, replay and current key bindings.
+- Separate CAPTAIN and INFO, label Dredge processing REFINE, and add the EJECT quit-menu button.
+- Cap the square system map at 350 CSS pixels and remove the menu-height slider.
+- Simplify towing labels without changing gameplay. See the [release notes](docs/RELEASE-0.4.md).
+
 ### 0.3.6.2
 
 - Keep the system radar square at every Tray width and remove its manual height divider.

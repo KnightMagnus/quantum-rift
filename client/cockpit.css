@@ -1626,28 +1626,6 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   }
 }
 
-/* The lower menu keeps its own height control beneath the square minimap. */
-.heightgrip {
-  flex: 0 0 10px;
-  min-height: 10px;
-  cursor: row-resize;
-  touch-action: none;
-  border: 1px solid #51616b;
-  border-radius: 3px;
-  background: repeating-linear-gradient(0deg, #17232b 0 2px, #677680 2px 3px, #17232b 3px 5px);
-}
-.heightgrip:is(:hover, :focus-visible, .drag) {
-  border-color: #e8bd76;
-  outline: 1px solid #e8bd76;
-}
-#cpanel {
-  min-height: 200px;
-}
-#cpanel.custom-height {
-  flex: 0 0 auto;
-  min-height: 180px;
-}
-
 /* A shared center track absorbs wide-screen space without stretching controls. */
 #cockpit {
   grid-template-columns: 360px minmax(0, 1fr) 360px;
@@ -1895,18 +1873,18 @@ body:has(.overlay:not(#land):not(.hidden)) #chatprojection {
   letter-spacing: 0;
 }
 
-/* The lower menu stays attached to the sidebar floor; its top divider allocates
-   space against the minimap while status and navigation remain in normal flow. */
+/* Keep the map square without stretching it when the sidebar widens. */
 #radarwrap {
   flex: 0 0 auto;
   width: 100%;
+  max-width: 350px;
+  margin-inline: auto;
   min-height: 0;
   aspect-ratio: 1;
 }
-#cpanel,
-#cpanel.custom-height {
-  flex: 0 0 auto;
-  min-height: 180px;
+#cpanel {
+  flex: 1 0 200px;
+  min-height: 200px;
 }
 
 body.tray-open #flightstatus {
@@ -2118,5 +2096,60 @@ body.tray-open #flightstatus {
   .ctrlbinding {
     grid-template-columns: minmax(0, 1fr);
     gap: 2px;
+  }
+}
+
+/* Keep the complete shortcut grid inside its cockpit track at every scale. */
+#functiondock {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  width: 100%;
+  box-sizing: border-box;
+  column-gap: 6px;
+}
+#functiondock .function-icon {
+  width: 100%;
+}
+#functiondock #captainshortcut {
+  grid-column: 1;
+  grid-row: 1;
+}
+#functiondock #attentionindicator {
+  grid-column: 6;
+  grid-row: 1;
+}
+#functiondock #ejectshortcut {
+  grid-column: 5;
+  grid-row: 2;
+}
+#functiondock #shipshortcut {
+  grid-column: 6;
+  grid-row: 2;
+}
+#functiondock .function-label {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 10px;
+  letter-spacing: 0;
+  line-height: 11px;
+}
+@media (max-width: 760px) {
+  #cockpit {
+    grid-template-columns: 230px minmax(0, 1fr) 38px;
+  }
+  #functiondock {
+    column-gap: 4px;
+  }
+  #functiondock .function-label {
+    font-size: 7px;
+    line-height: 8px;
+  }
+}
+@media (max-width: 480px) {
+  #cockpit {
+    grid-template-columns: 190px minmax(0, 1fr) 30px;
+  }
+  #functiondock {
+    column-gap: 2px;
   }
 }

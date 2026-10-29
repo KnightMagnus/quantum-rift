@@ -145,7 +145,7 @@ try {
   });
   await page.locator('#depart').click();
   await page.waitForFunction(() => G.view && !G.landed);
-  await page.keyboard.press('KeyI');
+  await page.locator('#shipshortcut').click();
   await page.locator('#infobox').waitFor({ state: 'visible' });
   const dump = page.locator('[data-jet="ore"][data-grade="rich"]').first();
   await dump.waitFor();
@@ -171,6 +171,11 @@ try {
     pure: 2,
   });
   // The relevant tab must still update when the same asynchronous reply arrives.
+  await page.evaluate(() => {
+    G.rivals = [];
+  });
+  await page.locator('#captainshortcut').click();
+  await page.waitForFunction(() => G.rivals && G.rivals.length > 0);
   await page.evaluate(() => {
     G.rivals = [];
   });

@@ -185,16 +185,22 @@ const size = (playerData: string): number =>
   const radio = filesystem.existsSync(assetDirectory + 'radio/')
     ? size(assetDirectory + 'radio/')
     : 0;
-  assertCondition(
+  const onboarding = filesystem.existsSync(assetDirectory + 'onboarding/')
+    ? size(assetDirectory + 'onboarding/')
+    : 0;
+  const miscellaneous =
     size(assetDirectory) -
-      ships -
-      radio -
-      size(assetDirectory + 'land/') -
-      size(assetDirectory + 'portraits/') <
-      26e6 &&
+    ships -
+    radio -
+    onboarding -
+    size(assetDirectory + 'land/') -
+    size(assetDirectory + 'portraits/');
+  assertCondition(
+    miscellaneous < 26e6 &&
+      onboarding < 4e6 &&
       size(assetDirectory + 'land/') < 25e6 &&
       size(assetDirectory + 'portraits/') < 35e6,
-    `client art budgets: miscellaneous under26 MB, landscapes under25 MB, portraits under35 MB; bounded multipart delivery (${((size(assetDirectory) - ships - radio - size(assetDirectory + 'land/') - size(assetDirectory + 'portraits/')) / 1e6).toFixed(1)} MB miscellaneous, ${(size(assetDirectory + 'land/') / 1e6).toFixed(1)} MB landscapes, ${(size(assetDirectory + 'portraits/') / 1e6).toFixed(1)} MB portraits)`,
+    `client art budgets: miscellaneous under26 MB, orientation under4 MB, landscapes under25 MB, portraits under35 MB; bounded multipart delivery (${(miscellaneous / 1e6).toFixed(1)} MB miscellaneous, ${(onboarding / 1e6).toFixed(1)} MB orientation, ${(size(assetDirectory + 'land/') / 1e6).toFixed(1)} MB landscapes, ${(size(assetDirectory + 'portraits/') / 1e6).toFixed(1)} MB portraits)`,
   );
 }
 // polish

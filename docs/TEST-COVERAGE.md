@@ -299,7 +299,7 @@ coverage is not a measured credits-per-hour or all-career balance comparison.
 
 ## 3.2.1 cockpit QoL
 
-`cockpit-qol` covers per-captain view/search/scroll/subtab retention, a single explicitly pinned objective with other tracking retained, native detail/Back keyboard focus, unavailable cargo next-action links and narrow/scaled layouts. `qol-browser.ts` uses an isolated real server and actual accepted mission; existing refinery, logout, input and sidebar checks guard integrated behavior. `sidebar-sizing-browser.ts` additionally checks mouse/touch/keyboard lower-menu height, canvas backing geometry, persistence, viewport/zoom limits and automatic reset. The removed minimap height control has no pointer or keyboard entry; legacy map heights are discarded without changing the saved menu height. Minimaps stay square across desktop, ultrawide, narrow and scaled viewports and sidebar width changes; `sidebar-browser.ts` also checks real sidebar dragging and correct canvas backing aspect. `ui-polish-browser.ts` checks fresh-captain Overview, deliberate Community persistence, and long hail options wrapping within wider desktop and narrow/scaled windows. `cockpit-browser.ts` closes combat controls by pointer and keyboard, then verifies native Space sends primary-fire packets without reopening the panel. Presentation preferences never store passwords, execute actions, auto-accept work or modify authoritative saves.
+`cockpit-qol` covers per-captain view/search/scroll/subtab retention, a single explicitly pinned objective with other tracking retained, native detail/Back keyboard focus, unavailable cargo next-action links and narrow/scaled layouts. `qol-browser.ts` uses an isolated real server and actual accepted mission; existing refinery, logout, input and sidebar checks guard integrated behavior. `sidebar-sizing-browser.ts` additionally checks capped square map geometry, automatic menu allocation, scaling, short-screen reachability and discarded legacy height preferences across reloads and captain changes. `ui-polish-browser.ts` checks fresh-captain Overview, deliberate Community persistence, and long hail options wrapping within wider desktop and narrow/scaled windows. `cockpit-browser.ts` closes combat controls by pointer and keyboard, then verifies native Space sends primary-fire packets without reopening the panel. Presentation preferences never store passwords, execute actions, auto-accept work or modify authoritative saves.
 
 ## 3.2.1 economy verification
 
@@ -959,10 +959,7 @@ The responsive browser test also opens the tray at 1100/1101/1200/1250/1251 px, 
 
 ## Sidebar allocation and landing feedback
 
-`sidebar-sizing-browser.ts` exercises the lower menu's top divider with mouse,
-touch and keyboard input, saved desired heights, UI scaling, viewport limits and
-independent resets. The lower menu fills the space below its divider; the minimap
-always stays square at the full sidebar content width. Short screens scroll the sidebar instead of shrinking the map. Legacy map heights are discarded across reloads and captain changes while the lower-menu height preference is preserved. Temporary viewport limits do not rewrite saved menu sizes.
+`sidebar-sizing-browser.ts` checks the 350-CSS-pixel map cap, square backing geometry, narrower sidebar fit, desktop/ultrawide/narrow/scaled layouts, automatic menu allocation and short-screen reachability. Neither retired height slider has a pointer or keyboard entry. Legacy map and menu sizes are discarded across reloads and captain changes.
 
 `sidebar-gauges-browser.ts` reads actual server snapshots after fixture damage and
 fuel changes, then checks production shield regeneration, meter fill, visibility,
@@ -1730,3 +1727,11 @@ encounters retain real NPC/Assist stepping, fitted weapons, damage, defeat and
 checkpoint reopen coverage. These bounded cases do not establish a performance
 improvement, human win rate or compatibility with every combat interleaving.
 No save schema, wire payload or caller signature changes.
+
+## First-entry orientation
+
+`onboarding-shortcuts`: `onboarding-browser.ts` runs an isolated Solo captain through the clockwise spotlight tour and ten-slide briefing. It checks every visible sidebar menu and cockpit button, targeting and navigation readouts, left-to-right cockpit rows from Captain then Mining, followed by JUMP, annotated combat/mining gameplay images, landing/tutorial suppression, no gameplay commands from the tour, desktop spotlight bounds and separation, uniform image frames, current rebound keys, completion persistence, HELP replay, Escape/skip navigation and viewport resizing. It also checks Title Case tour headings, INFO and REFINE labels, EJECT opening the quit menu without logging out, cancellation restoring Solo play, the unchanged Escape route, the complete twelve-key grid, separate Captain/Ship Details entry points, keyboard focus return, and shortcut/label containment inside the HUD with the Tray open and closed at 1920, 1366, 800 and 480 pixels wide, at normal and 150% UI scale. It also verifies the first three briefing titles, the Jobs screenshot, the absence of the flight annotation, jump/hull/starting-map image selection, jump labels, and the signed closing slide with AI transparency and final-slide Back/Finish navigation. It does not prove live multiplayer timing or every device and UI scale.
+
+Browser fixtures use `launchChromium` to treat unrelated fixture captains as returning players by seeding missing orientation-completion keys when read. `onboarding-browser.ts` explicitly opts into untouched first-run storage and owns startup, completion and replay coverage.
+
+The orientation embeds nine lossless WebP game captures under a separate 4 MB art budget checked by `v25.ts`. Existing miscellaneous, landscape and portrait budgets remain unchanged.

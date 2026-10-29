@@ -187,7 +187,7 @@ try {
   assert.match((await other.locator('#towstatus').textContent())!, /Reserved for/);
   await other.locator('#towtoggle').click();
   await other.waitForFunction(() => !!G.towing!.attached);
-  await other.keyboard.press('i');
+  await other.locator('#shipshortcut').click();
   await other.locator('[data-jet="food"][data-n="0"]').click();
   await other.keyboard.press('i');
   await other.waitForFunction(() => !G.you!.cargo.food);

@@ -31,8 +31,12 @@ try {
   assert.ok(icon!.x >= dock!.x && icon!.x + icon!.width <= dock!.x + dock!.width);
   assert.ok(icon!.y >= dock!.y && icon!.y + icon!.height <= dock!.y + dock!.height);
   const combatIcon = await page.locator('#combatindicator').boundingBox();
-  assert.equal(icon!.y, combatIcon!.y, 'Mining shares the compact grid row with Combat');
-  assert.ok(icon!.x >= combatIcon!.x + combatIcon!.width, 'Mining follows Combat without overlap');
+  const captainIcon = await page.locator('#captainshortcut').boundingBox();
+  assert.ok(
+    icon!.y >= combatIcon!.y + combatIcon!.height,
+    'Mining starts the second cockpit row below Combat',
+  );
+  assert.equal(icon!.x, captainIcon!.x, 'Mining aligns with Captain at the start of its row');
   await page.screenshot({ path: path.join(feature.out, 'after-collapsed.png') });
   await page.click('#miningindicator');
   assert.equal((await page.locator('#miningindicator').getAttribute('aria-expanded'))!, 'true');

@@ -117,8 +117,8 @@ try {
     await page.click('#captainshortcut');
     await page.locator('#infobox').waitFor({ state: 'visible' });
     assert.ok(
-      (await page.locator('#infobody').innerText()).length > 20,
-      'Existing captain details render',
+      (await page.locator('#captainprofile').innerText()).length > 20,
+      'Captain profile renders',
     );
     await page.screenshot({ path: path.join(output, 'captain-' + width + 'x' + height + '.png') });
     await page.keyboard.press('Escape');
