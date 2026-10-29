@@ -903,10 +903,15 @@
     },
     {
       "id": "protocol-http",
-      "owners": ["server/main.ts"],
+      "owners": [
+        "server/main.ts",
+        "server/local-main.ts",
+        "server/nakama-host.ts",
+        "server/static-path.ts"
+      ],
       "services": [],
       "tests": ["http-api.ts"],
-      "asserts": "Real HTTP public beta version/static/MIME/cache/404/traversal checks and online-vs-solo API permissions."
+      "asserts": "Real HTTP public beta version/static/MIME/cache/404 checks, independently contained client/shared/emitted roots including symlink denial and bounded malformed URL replies on local and native HTTP hosts, and online-vs-solo API permissions."
     },
     {
       "id": "protocol-websocket",

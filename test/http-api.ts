@@ -58,6 +58,12 @@ for (const solo of [false, true]) {
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
+  const canaryDirectory = fileSystem.mkdtempSync(path.join(root, '.http-boundary-'));
+  const canaryFile = path.join(canaryDirectory, 'canary.json');
+  fileSystem.writeFileSync(canaryFile, JSON.stringify({ fixture: 'private canary' }));
+  const symlinkName = path.basename(canaryDirectory) + '-link';
+  const symlink = path.join(root, 'shared', symlinkName);
+  fileSystem.symlinkSync(canaryDirectory, symlink, 'junction');
   const serverLog = fileSystem.createWriteStream(path.join(output, 'server.log'));
   server.stdout.pipe(serverLog);
   server.stderr.pipe(serverLog);
@@ -86,6 +92,31 @@ for (const solo of [false, true]) {
       403,
       'encoded traversal cannot escape client root',
     );
+    for (const address of [
+      '/shared/..%2f' + path.basename(canaryDirectory) + '/canary.json',
+      '/shared/..%2fserver%2fmain.js',
+      '/shared/..%2fshared-sibling%2fcanary.json',
+      '/shared/' + symlinkName + '/canary.json',
+      '/shared/%00.json',
+      '/shared/..%5c' + path.basename(canaryDirectory) + '%5ccanary.json',
+    ])
+      assert.equal((await request(address)).status, 403, 'Independent public-root boundary');
+    for (const address of ['/%', '/%E0%A4%A', '/shared/%GG'])
+      assert.equal((await request(address)).status, 400, 'Malformed URL has a bounded response');
+    assert.equal(
+      (await request('/api/status')).status,
+      200,
+      'Malformed requests do not stall host',
+    );
+    const sharedCatalog = await request('/shared/assets.json');
+    assert.equal(sharedCatalog.status, 200, 'Public shared source assets remain available');
+    await sharedCatalog.arrayBuffer();
+    assert.equal(
+      (await request('/shared/galaxy.js')).status,
+      200,
+      'Emitted shared imports remain available',
+    );
+    assert.equal((await request('/shared/galaxy.ts')).status, 404, 'Raw TypeScript stays private');
     for (const route of ['/api/radio?q=calm', '/api/radio/station?id=17', '/api/radio/meta?id=17'])
       assert.equal((await request(route)).status, 404, 'Retired provider route');
     assert.equal(fileSystem.existsSync(trace), false, 'No upstream provider fetches');
@@ -131,6 +162,8 @@ for (const solo of [false, true]) {
       assert.equal((await request('/api/import', { method: 'POST', body: '{}' })).status, 404);
     }
   } finally {
+    fileSystem.unlinkSync(symlink);
+    fileSystem.rmSync(canaryDirectory, { recursive: true, force: true });
     await cleanup(server, null, serverLog, directory);
   }
 }

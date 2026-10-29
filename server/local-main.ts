@@ -1,4 +1,6 @@
 import { LocalLoginQueue, localLoginConnection } from './local-login.ts';
+import { parseStaticRequest, staticFileLocation, insideStaticDirectory } from './static-path.ts';
+import type { StaticFileLocation } from './static-path.ts';
 import { GAME_PROTOCOL } from '../shared/protocol.ts';
 import type { GameAssets } from '../shared/rules.ts';
 import type { Server, ServerResponse } from 'node:http';
@@ -28,7 +30,6 @@ const moduleRoot: string = path.resolve(path.dirname(fileURLToPath(import.meta.u
 const ROOT = fileSystem.existsSync(path.join(moduleRoot, 'package.json'))
   ? moduleRoot
   : path.dirname(moduleRoot);
-const compiledRoot = path.join(ROOT, 'dist');
 
 /**
  * HTTP and WebSocket listener port number.
@@ -97,7 +98,33 @@ const TYPES: Record<string, string> = {
  * @param file Absolute filesystem path to the target static file.
  * @param cache Whether to enable client-side 1-day public caching.
  */
-function serve(response: ServerResponse, file: string, cache: boolean, range?: string): void {
+function serve(
+  response: ServerResponse,
+  location: StaticFileLocation,
+  cache: boolean,
+  range?: string,
+): void {
+  const { file, directory } = location;
+  // Resolve both ends before opening: a symlink must not escape a public root either.
+  fileSystem.realpath(file, (fileError, resolvedFile) => {
+    if (fileError) {
+      response.writeHead(404);
+      response.end('not found');
+      return;
+    }
+    fileSystem.realpath(directory, (directoryError, resolvedDirectory) => {
+      if (directoryError || !insideStaticDirectory(resolvedDirectory, resolvedFile)) {
+        response.writeHead(403);
+        response.end();
+        return;
+      }
+      serveFile(response, resolvedFile, cache, range);
+    });
+  });
+}
+
+/** Stream only a file whose canonical path has passed the public-root boundary. */
+function serveFile(response: ServerResponse, file: string, cache: boolean, range?: string): void {
   fileSystem.stat(file, (errnoException, stats) => {
     if (errnoException || !stats.isFile()) {
       response.writeHead(404);
@@ -154,8 +181,14 @@ const server: Server = http.createServer(async (incomingMessage, response) => {
     response.end('Forbidden host');
     return;
   }
-  const targetUrl = new URL(incomingMessage.url!, 'http://x');
-  let decodeURIComponent2 = decodeURIComponent(targetUrl.pathname);
+  const requestTarget = parseStaticRequest(incomingMessage.url!, 'http://x');
+  if (!requestTarget) {
+    response.writeHead(400);
+    response.end('Invalid request URL');
+    return;
+  }
+  const targetUrl = requestTarget.url;
+  let decodeURIComponent2 = requestTarget.pathname;
   if (decodeURIComponent2 === '/api/status') {
     response.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     response.end(
@@ -216,17 +249,11 @@ const server: Server = http.createServer(async (incomingMessage, response) => {
     response.end('not found');
     return;
   }
-  const base = decodeURIComponent2.startsWith('/shared/') ? ROOT : path.join(ROOT, 'client');
-  let file = path.normalize(path.join(base, decodeURIComponent2));
-  if (!file.startsWith(base)) {
+  const location = staticFileLocation(ROOT, decodeURIComponent2);
+  if (!location) {
     response.writeHead(403);
     response.end();
     return;
-  }
-  // Browser imports need emitted JavaScript, never raw TypeScript. Images, HTML,
-  // CSS and JSON remain in their original directories and are not duplicated.
-  if (path.extname(file) === '.js') {
-    file = path.join(compiledRoot, path.relative(ROOT, file));
   }
   const catalog =
     (decodeURIComponent2.startsWith('/assets/ships/') &&
@@ -235,7 +262,7 @@ const server: Server = http.createServer(async (incomingMessage, response) => {
     decodeURIComponent2.startsWith('/assets/portraits/');
   serve(
     response,
-    file,
+    location,
     decodeURIComponent2.startsWith('/assets/') &&
       (!catalog || targetUrl.searchParams.get('v') === VERSION),
     incomingMessage.headers.range,

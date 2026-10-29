@@ -1,5 +1,9 @@
 # Game regression coverage inventory
 
+## HTTP public file boundaries
+
+`http-api.ts` uses real local/Solo and native HTTP hosts with disposable canary files to check independent client/shared/emitted-JavaScript roots, encoded traversal and symlink denial, malformed percent/UTF-8 replies, subsequent host availability, valid shared imports and existing static MIME/cache/range behavior. A shared browser import grants no HTTP access to repository configuration or save directories.
+
 ## Equipped outfits and mining filter (`equipped-outfits`)
 
 `equipped-outfits-browser.ts` checks the MINING filter against combat weapons, real equipped-item previews, outfitter sales of modular and built-in weapons, refunds, live panel refresh, reconnect persistence, flight denial, narrow cards, and default/reassigned Ship and Captain shortcuts. `ship-economy.ts` checks every player hull with built-in banks for once-only refunds and conservation of sale proceeds plus trade-in, along with flight/no-outfitter/unknown-weapon and purchase denial. `wire-contracts.ts` validates the optional built-in sale selector. Equipment sales still require an outfitter; previews are available in flight.
