@@ -383,7 +383,9 @@
       ],
       "uses": [
         "A",
+        "beginTableDeparture",
         "broadcast",
+        "canBeginTableDeparture",
         "db",
         "depart",
         "dockSlots",

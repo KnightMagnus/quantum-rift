@@ -242,6 +242,10 @@ export interface FormationTarget {
   gap: number;
 }
 export type Session = {
+  /** Bounded private cinematic freeze; never pauses the shared world. */
+  endingUntil?: number;
+  /** Wall-clock start validates the completion acknowledgment. */
+  endingStartedAt?: number;
   /** One departure after an insurance rebuild receives non-aggressive NPC exit grace. */
   recoveryGrace?: boolean;
   /** Last real patrol scan, transient and private to this connection. */
@@ -1816,6 +1820,13 @@ export class Game<Storage extends Database = Database> {
       if (message.t === 'hello') this.hello(session, message);
       return;
     }
+    if (
+      session.endingUntil &&
+      session.endingUntil > currentTime &&
+      !['ping', 'chat'].includes(message.t!) &&
+      !(message.t === 'storyacc' && message.id === 'table-departure-complete')
+    )
+      return;
     if (this.db.economicFrozen && !['ping', 'input', 'chat'].includes(message.t!))
       return this.toast(session, 'Checkpoint recovery required; economic actions frozen.');
     if (message.t !== 'ping') session.actT = currentTime; // for Online / Away
@@ -2095,6 +2106,37 @@ export class Game<Storage extends Database = Database> {
         this.features.coop.armadaPush(armadaState);
       }
     } // members see where you are
+  }
+  /** Final choice cannot commit while the active hull cannot leave its berth. */
+  canBeginTableDeparture(session: Session): boolean {
+    return (
+      !!session.ent ||
+      (!session.data.shipless && !this.features.specialists.inDrydock(session.data))
+    );
+  }
+  /** Move the accepted Table captain and their saved wing to a safe Rift standoff. */
+  beginTableDeparture(session: Session): void {
+    if (session.data.story.flags?.main_ending !== 'table') return;
+    this.depart(session);
+    const entity = session.ent;
+    if (!entity) return;
+    const space = this.spaces[session.data.sys];
+    this.dropEscorts(space, entity);
+    session.data.fuel = entity.fuel;
+    session.data.shieldNow = entity.shield;
+    session.data.armorNow = entity.armor;
+    space.remove(entity);
+    space.players--;
+    session.ent = null;
+    session.data.sys = 'quantum-rift';
+    session.data.stellar = null;
+    session.endingStartedAt = Date.now();
+    session.endingUntil = Date.now() + 10 * 60 * 1000;
+    this.spawnPlayer(session, -1250, 700, Math.PI / 2, 0);
+    session.lastInput = {};
+    if (!session.data.explored.includes('quantum-rift')) session.data.explored.push('quantum-rift');
+    this.db.touch();
+    this.you(session);
   }
   /**
    * Launches player ship from docked stellar body into active space flight.

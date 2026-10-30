@@ -113,7 +113,7 @@ export function endingText(flags: StoryFlags): string {
         (flags.lamps_relit
           ? ' The Lamplighters relight all ten lamps. The oldest doors in the Rift open again.'
           : ' The old lamps remain dark; the Spacers find another way.') +
-        ' In Farside the vast hulk wakes: Gargantua Prime. It carries the Core through the Second Door. The guests no longer need a referee. The Index record one final word: present.'
+        ' In Farside the vast hulk wakes: Gargantua Prime. It carries the Core through the Second Door. The guests no longer need a referee. The Index record one final word: Present.'
       );
     case 'captains_watch':
       return 'You take the empty place at the heart of the Rift. Part of you sleeps; the rest comes back to your ship. You have faced the lives you never lived. The Deep stops growing. Gargantua Prime wakes and carries its makers away. When Quantum Station speaks, it uses your voice.';

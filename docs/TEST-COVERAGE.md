@@ -1111,15 +1111,24 @@ checks ownership chains, cyclic owners, NPC faction lenses and private scenery
 visibility. The browser also denies selection of hidden story systems and captures
 a saved captain flying in Beyond the Rift with the supplied arrival backdrop and
 animated atlas. An eligible saved captain chooses the Table through the real story
-UI, launches into their own ship view, and watches the supplied awake ark render
-without adding a targetable combat entity. These presentation fixtures do not grant progress or prove online
+UI with the cockpit hidden. Its fullscreen cinematic covers the authored crawl,
+branch-correct lamp/Table reveal immediately after the crawl, awakening, Core transfer, Gateway, segmented Rift entry and captain standoff. Render-output assertions cover sentence-per-line crawl text with a separated closing pair, an opaque frozen departure fade in Canvas and an engine-captured WebGL departure, the final lamp preceding the text-free Table burst, an angled station-facing ark, subtle movement arcs, purple lightning through the hull pieces, and the welcome caption clearing when the briefing opens. A short offline decoded cue tests natural one-shot
+completion without a soundtrack-length CI wait. Browser-clock advances exercise
+scene ordering, radio-retune denial, the mandatory five-component briefing,
+unavailable-audio fallback and account teardown. Supplied hulls render without
+adding a targetable Ark combat entity. These presentation fixtures do not grant progress or prove online
 combat authority; authoritative choices and access gates have separate story tests.
 
 ## Story continuation and faction encounters
 
 `story-continuation` checks the authoritative Acts II and III lifecycle, landed
 choice denials and replay protection, per-captain flags, exhaustive ending gates,
-actual journal persistence and hidden-place travel gates. Portal tests require a
+actual journal persistence and hidden-place travel gates. Table departure tests
+cover shipless denial before commitment, a resumable safe Rift standoff, private
+bounded movement/damage protection, rejected early completion, idempotent release
+through the message router and unchanged rewards. The automatically accepted
+preparation objective reads actual component, Harness and crossing progress;
+it does not use the three ordinary quest slots. Portal tests require a
 fitted unique Harness, verify turn-away without it, cross and return through the
 real server operation, and deny extra rewards or outfit resale. Authored quest
 prerequisites and all destination references are checked separately from combat.

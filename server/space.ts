@@ -1155,6 +1155,11 @@ export class Space {
 
   /** Checks whether attacks can connect and damage target. */
   canHit(attacker: Entity, rightEntity: Entity): boolean {
+    if (
+      (this.root(attacker).player?.s?.endingUntil || 0) > Date.now() ||
+      (this.root(rightEntity).player?.s?.endingUntil || 0) > Date.now()
+    )
+      return false;
     const sourceCaptain = this.root(attacker).player?.id;
     const targetCaptain = this.root(rightEntity).player?.id;
     if (
@@ -2872,6 +2877,11 @@ export class Space {
     this.game.combatAssist?.resolve(this);
     const formations = formationTargets(this);
     for (const entity of this.ships.values()) {
+      if ((this.root(entity).player?.s?.endingUntil || 0) > Date.now()) {
+        entity.vx = entity.vy = 0;
+        entity.inp = {};
+        continue;
+      }
       if (entity.towCap && entity.player) {
         formations.delete(entity.id);
         entity.catchup = null;

@@ -1850,11 +1850,15 @@
         "client/world-actors.ts",
         "client/render.ts",
         "client/ui.ts",
-        "client/info_ui.ts"
+        "client/info_ui.ts",
+        "client/ending-cinematic.ts",
+        "client/ending-cinematic.css",
+        "client/audio.ts",
+        "client/radio.ts"
       ],
       "tests": ["story-realities-browser.ts"],
       "services": [],
-      "asserts": "Viewer-only Act III and permanent Unsettling faction ghosts, owner chains, friend/group precedence, native hull/glow/name opacity with opaque targets, reduced effects, hidden chart picking and supplied endgame atlas/backdrop artwork."
+      "asserts": "Viewer-only Act III and permanent Unsettling faction ghosts, owner chains, friend/group precedence, native hull/glow/name opacity with opaque targets, reduced effects, hidden chart picking and supplied endgame atlas/backdrop artwork. Fullscreen Table-choice and scene ordering, real hull rendering, one-shot soundtrack completion, denied radio retuning, mandatory five-component briefing, unavailable-audio fallback and account-teardown restoration."
     },
     {
       "id": "story-continuation",
@@ -1878,7 +1882,7 @@
         "index-presentation.ts",
         "ui-polish-browser.ts"
       ],
-      "asserts": "Captain-scoped decisions, finale availability branches, denial and persistence; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups. Mixed large Index hull envelopes retain separated saved-roster berths under actual neutral movement without reissuing health or replacement budgets."
+      "asserts": "Captain-scoped decisions, finale availability branches, denial and persistence; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups. Mixed large Index hull envelopes retain separated saved-roster berths under actual neutral movement without reissuing health or replacement budgets. Table departure preserves the player ship at a resumable safe Rift standoff, denies unavailable hulls, freezes only the viewing captain and wing with bounded protection, rejects early completion and releases once after a validated acknowledgment. The automatically accepted preparation objective projects actual completed components, fitting and crossing without occupying quest slots or granting items."
     },
     {
       "id": "release-platform-gates",

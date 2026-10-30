@@ -7,8 +7,14 @@ export interface StoryPayload {
   active: (NonNullable<SavedStory['active']> & { title: string; brief: string }) | null;
   next: { title: string; at: string } | null;
   pass: boolean;
+  /** Accepted with the Table ending; progress comes only from completed server quests. */
+  preparation: {
+    harnessBuilt: boolean;
+    components: { id: string; name: string; at: string; complete: boolean }[];
+  } | null;
 }
 import type { SavedStory, StoryFlags } from './save-contracts.ts';
+import { STORY_QUESTS } from '../shared/story-quests.ts';
 import { endingText, mainEndings, storySystemVisible } from '../shared/story-world.ts';
 export interface StoryOperations {
   storyInit(this: StoryCapabilities, playerData: PlayerData): SavedStory;
@@ -90,6 +96,22 @@ export const StoryOperations = {
           ? { title: storyMission.title, at: STELLARS[storyMission.at].name }
           : null,
       pass: !!savedStory.pass,
+      preparation:
+        savedStory.flags?.main_ending === 'table' && !savedStory.flags.crossed_quantum_rift
+          ? {
+              harnessBuilt: !!savedStory.flags.harness_built,
+              components: STORY_QUESTS.filter((quest) =>
+                ['rift-alloy', 'rift-lattice', 'rift-tuning', 'rift-song', 'rift-route'].includes(
+                  quest.id,
+                ),
+              ).map((quest) => ({
+                id: quest.id,
+                name: quest.name,
+                at: quest.at,
+                complete: !!playerData.quests?.sides?.[quest.id],
+              })),
+            }
+          : null,
     };
   },
   // the story step on offer at this landing (if any)
@@ -170,6 +192,20 @@ export const StoryOperations = {
    * @param message - Accept message.
    */
   storyAccept(this: StoryCapabilities, session: Session, message: { id: string; choice?: string }) {
+    if (message.id === 'table-departure-complete') {
+      if (
+        session.data.story.flags?.main_ending !== 'table' ||
+        !session.endingUntil ||
+        !session.endingStartedAt ||
+        Date.now() - session.endingStartedAt < 122000
+      )
+        return;
+      session.endingUntil = 0;
+      session.inputs = [];
+      session.lastInput = {};
+      this.you(session);
+      return;
+    }
     if (session.ent) return;
     const playerData = session.data,
       savedStory = this.storyInit(playerData),
@@ -240,6 +276,14 @@ export const StoryOperations = {
         !legalChoices(playerData, current).some((choice) => choice.value === message.choice)
       )
         return;
+      if (
+        current.id === 'choice' &&
+        message.choice === 'table' &&
+        !this.canBeginTableDeparture(session)
+      ) {
+        this.toast(session, 'Ready a ship for departure before choosing the Table.');
+        return;
+      }
       const flags = (savedStory.flags ||= {});
       Object.assign(flags, { [current.decision]: message.choice });
       this.questReconcile(session);
@@ -350,13 +394,18 @@ export const StoryOperations = {
     if (
       storyStep.id === 'choice' &&
       ['table', 'captains_watch'].includes(savedStory.flags?.main_ending || '')
-    )
-      this.depart(session);
+    ) {
+      if (savedStory.flags?.main_ending === 'table') this.beginTableDeparture(session);
+      else this.depart(session);
+    }
     this.send(session, {
       t: 'story',
       ...(storyStep.id === 'choice' &&
       ['table', 'captains_watch'].includes(savedStory.flags?.main_ending || '')
         ? { sequence: 'ark-departure' }
+        : {}),
+      ...(storyStep.id === 'choice' && savedStory.flags?.main_ending === 'table'
+        ? { tableEnding: { lampsRelit: !!savedStory.flags.lamps_relit } }
         : {}),
       id: storyStep.id,
       title: storyStep.title,

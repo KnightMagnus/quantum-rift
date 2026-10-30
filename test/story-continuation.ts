@@ -276,6 +276,105 @@ try {
   player.stellar = 'qstation';
   game.completeOnLanding(session, STELLARS.qstation);
   assert.ok(player.quests.sides['index-report'], 'real delivery finishes Index report');
+  // The forced departure is private, bounded, persistent and never grants a Harness.
+  const finaleCaptain = captain('Table departure', 28003);
+  const finalePlayer = finaleCaptain.data;
+  finalePlayer.sys = 'qgate';
+  finalePlayer.stellar = 'qstation';
+  finalePlayer.story.step = STORY.findIndex((step) => step.id === 'choice');
+  finalePlayer.story.done = STORY.slice(0, finalePlayer.story.step).map((step) => step.id);
+  finalePlayer.story.flags = { index_ending: 'survey_complete', nhal_ending: 'witness' };
+  finalePlayer.shipless = true;
+  game.features.story.storyAccept(finaleCaptain, { id: 'choice', choice: 'table' });
+  assert.equal(
+    finalePlayer.story.flags.main_ending,
+    undefined,
+    'shipless Table cannot half-complete',
+  );
+  assert.equal(finalePlayer.story.done.includes('choice'), false);
+  finalePlayer.shipless = false;
+  const finaleBalance = finalePlayer.credits;
+  game.features.story.storyAccept(finaleCaptain, { id: 'choice', choice: 'table' });
+  assert.equal(finalePlayer.sys, 'quantum-rift');
+  assert.equal(finalePlayer.stellar, null);
+  assert.equal(finalePlayer.story.flight?.sys, 'quantum-rift');
+  assert.equal(finaleCaptain.ent!.vx, 0);
+  assert.equal(finaleCaptain.ent!.vy, 0);
+  assert.equal(finalePlayer.ship.outfits[9021], undefined);
+  const preparation = game.features.story.storyPayload(finalePlayer).preparation!;
+  assert.equal(preparation.components.length, 5);
+  assert.equal(preparation.components.filter((component) => component.complete).length, 0);
+  assert.equal(
+    Object.keys(finalePlayer.quests.active).length,
+    0,
+    'umbrella does not consume quest slots',
+  );
+  const protectedSpace = game.spaces['quantum-rift'];
+  innocent.data.sys = 'quantum-rift';
+  innocent.data.stellar = null;
+  game.spawnPlayer(innocent, 2000, 2000, 0, 0);
+  assert.equal(protectedSpace.canHit(innocent.ent!, finaleCaptain.ent!), false);
+  assert.equal(protectedSpace.canHit(finaleCaptain.ent!, innocent.ent!), false);
+  const unrelated = { x: innocent.ent!.x, y: innocent.ent!.y };
+  innocent.ent!.vx = 50;
+  const fixed = { x: finaleCaptain.ent!.x, y: finaleCaptain.ent!.y };
+  finaleCaptain.ent!.vx = 100;
+  game.onMessage(finaleCaptain, { t: 'input', seq: 1, th: 1, tu: 0, ab: 0, rv: 0, f1: 1, f2: 0 });
+  protectedSpace.tick();
+  assert.deepEqual({ x: finaleCaptain.ent!.x, y: finaleCaptain.ent!.y }, fixed);
+  assert.equal(finaleCaptain.inputs.length, 0, 'movement packets cannot queue behind a cinematic');
+  assert.notDeepEqual(
+    { x: innocent.ent!.x, y: innocent.ent!.y },
+    unrelated,
+    'other captains in the same world keep simulating',
+  );
+  const outsider = protectedSpace.makeShip({
+    loadout: structuredClone(finalePlayer.ship),
+    faction: 'pirate',
+    x: -1600,
+    y: 700,
+    a: 0,
+  });
+  assert.equal(
+    protectedSpace.canHit(finaleCaptain.ent!, outsider),
+    false,
+    'protected captain cannot attack an NPC',
+  );
+  assert.equal(
+    protectedSpace.canHit(outsider, finaleCaptain.ent!),
+    false,
+    'NPC damage is blocked too',
+  );
+  const protection = finaleCaptain.endingUntil;
+  game.onMessage(finaleCaptain, { t: 'storyacc', id: 'table-departure-complete' });
+  assert.equal(finaleCaptain.endingUntil, protection, 'early acknowledgment rejected');
+  finaleCaptain.endingStartedAt = Date.now() - 122001;
+  game.onMessage(finaleCaptain, { t: 'storyacc', id: 'table-departure-complete' });
+  assert.equal(finaleCaptain.endingUntil, 0);
+  assert.equal(
+    protectedSpace.canHit(finaleCaptain.ent!, outsider),
+    true,
+    'ordinary combat policy resumes after acknowledgment',
+  );
+  game.onMessage(finaleCaptain, { t: 'storyacc', id: 'table-departure-complete' });
+  assert.equal(finalePlayer.credits, finaleBalance, 'acknowledgment and replay grant no reward');
+  finalePlayer.quests.sides['rift-alloy'] = 1;
+  assert.equal(
+    game.features.story.storyPayload(finalePlayer).preparation!.components[0].complete,
+    true,
+  );
+  finalePlayer.story.flags.harness_built = true;
+  assert.equal(game.features.story.storyPayload(finalePlayer).preparation!.harnessBuilt, true);
+  db.create(finalePlayer.name, 'fixture', finalePlayer);
+  db.flush();
+  const storedFinale = new DB(directory).get(finalePlayer.name)!;
+  assert.equal(storedFinale.story.flight?.sys, 'quantum-rift');
+  assert.equal(
+    game.features.story.storyPayload(storedFinale).preparation!.components[0].complete,
+    true,
+  );
+  finalePlayer.story.flags.crossed_quantum_rift = true;
+  assert.equal(game.features.story.storyPayload(finalePlayer).preparation, null);
   verifyStoryIntegrationEdges(game);
   verifyStorySeededMotion(game.A);
   console.log(
