@@ -66,6 +66,24 @@ const request: PortPurchaseAction = {t:'buymat',mat:'alloy',grade:'2',n:'3.9'}; 
 const request: PortPurchaseAction = ${request}; void request;`);
     assert.notEqual(purchaseResult.status, 0, 'purchase shape and authority fields are checked');
   }
+  const frontsType = modulePath('features.ts');
+  const frontsFixture = `declare const capabilities: import('${frontsType}').FrontsCapabilities;\n`;
+  let infrastructureResult = check(
+    frontsFixture +
+      'capabilities.db.touch(); capabilities.sessions.values(); void capabilities.spaces.meridian;',
+  );
+  assert.equal(
+    infrastructureResult.status,
+    0,
+    infrastructureResult.stdout + infrastructureResult.stderr,
+  );
+  for (const reference of ['db', 'sessions', 'spaces']) {
+    infrastructureResult = check(
+      frontsFixture + `capabilities.${reference} = capabilities.${reference};`,
+    );
+    assert.notEqual(infrastructureResult.status, 0, 'features cannot replace ' + reference);
+    assert.match(infrastructureResult.stdout + infrastructureResult.stderr, /read-only/);
+  }
   const bindingPath = modulePath('feature-service.js');
   const bindingFixture = `import {bindOperations} from '${bindingPath}';
 function run(this: {required: number}): number{return this.required;}

@@ -1844,3 +1844,7 @@ The landed service fixtures also start native Tab and Shift+Tab from BODY, witho
 Urgent native checkpoint batches follow actual economic action mutations, not packet names or unrelated tick dirtiness. Denied/no-op requests cannot force writes; successful `buyship`/`station` and other economic changes coalesce within 250 ms. Cancelled queued local handshakes are skipped before starting another password worker.
 
 Mission route controls explain uncharted routes without revealing paths or hiding distant work. The registered mission browser checks disabled plotting, retained accepted work and unchanged discovery/chart state.
+
+Feature boundary regressions deny database/session/space reference replacement,
+retain late-bound composition-root reads and lazy wake, and type-check readonly
+core-picked capabilities. Nested live state remains mutable.
