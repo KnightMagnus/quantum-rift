@@ -205,6 +205,9 @@ const savedGoal =
   goalsFor2.weekly.find((game3) => game3.type === 'jumps') ||
   goalsFor2.daily.find((game2) => game2.type === 'jumps');
 if (savedGoal) {
+  // Date rotation can select the daily goal claimed above; isolate jump progress.
+  savedGoal.claimed = false;
+  savedGoal.got = 0;
   const count0 = savedGoal.got;
   game.features.fronts.goal(firstEntry.s, 'jumps');
   assertCondition(savedGoal.got === count0 + 1, 'jumps count toward goals');
