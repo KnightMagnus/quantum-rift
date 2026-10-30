@@ -1844,3 +1844,9 @@ The landed service fixtures also start native Tab and Shift+Tab from BODY, witho
 Urgent native checkpoint batches follow actual economic action mutations, not packet names or unrelated tick dirtiness. Denied/no-op requests cannot force writes; successful `buyship`/`station` and other economic changes coalesce within 250 ms. Cancelled queued local handshakes are skipped before starting another password worker.
 
 Mission route controls explain uncharted routes without revealing paths or hiding distant work. The registered mission browser checks disabled plotting, retained accepted work and unchanged discovery/chart state.
+
+### Fuzz packet seeds
+
+`fuzz-seeds.ts` checks packet-generator replay, sequence diversity, override precedence and invalid seed rejection. `fuzz.ts` retains its admission probes and state invariants. Packet seed precedence is positional argument, `RIFT_FUZZ_PACKET_SEED`, `RIFT_TEST_SEED`, then 123456789. Simulation randomness uses `RIFT_TEST_SEED` through the existing preload. Canonical PR checks retain the fixed default; the weekly fuzz workflow runs packet seeds 42 and 987654321 with the default scenario seed. Each run prints its effective seeds and replay command. These bounded streams do not exhaust malformed packet sequences.
+
+Pinned Node 27 checks at 4,000 packets produced SHA-256 packet RNG trace `aa202e625d63126d347ae92e8454d089202c900e413611e05dd8d5a5f1fa5cbb` for seed 42 on two runs, and `25a7af8db0180113639d04c03ed7014c83f9dd0509f915f2f3e0ec5daa5cf55d` for seed 987654321. Both visited all 57 registered routes without logged errors. The digest describes random draws, not a guarantee of whole-world deterministic replay.
