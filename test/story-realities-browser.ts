@@ -336,7 +336,14 @@ try {
         image.src.includes('/ships/926.webp')
       ) {
         const transform = this.getTransform();
-        if (transform.a < -0.9 && transform.b < -0.1)
+        if (
+          args[1] === 4 * 480 &&
+          args[2] === 2 * 480 &&
+          transform.a === 1 &&
+          transform.b === 0 &&
+          transform.c === 0 &&
+          transform.d === 1
+        )
           Reflect.set(window, 'fixtureCoreFacing', true);
       }
       if (image instanceof HTMLImageElement && image.src.includes('/ships/926.webp'))
@@ -580,6 +587,8 @@ try {
       await choice.screenshot({ path: path.join(evidence, 'ark-lightning.png') });
       await choice.clock.fastForward(advance - 5500);
     } else await choice.clock.fastForward(advance);
+    if (scene === 'core')
+      await choice.screenshot({ path: path.join(evidence, 'core-station-facing.png') });
     if (scene === 'gateway') await choice.clock.runFor(1300);
     await choice.clock.runFor(40);
     assert.equal(await choice.locator('#endingcinematic canvas').getAttribute('data-scene'), scene);
@@ -598,7 +607,7 @@ try {
   assert.equal(
     await choice.evaluate(() => Reflect.get(window, 'fixtureCoreFacing')),
     true,
-    'ark faces back toward the station at an angle',
+    'ark uses its upright station-facing yaw frame without rolling the sprite',
   );
   assert.ok(
     await choice.evaluate(() => Number(Reflect.get(window, 'fixtureMovingLightning')) > 0),

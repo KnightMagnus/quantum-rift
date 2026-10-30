@@ -266,7 +266,7 @@ function hull(
   y: number,
   size: number,
   opacity = 1,
-  rotation = 0,
+  headingFrame = 9,
 ) {
   const image = assetImage('ships/' + id + '.webp');
   const frame = SPRITES[id];
@@ -274,8 +274,17 @@ function hull(
   context.save();
   context.globalAlpha *= opacity;
   context.translate(x, y);
-  context.rotate(rotation);
-  context.drawImage(image, 9 * frame.fs, 0, frame.fs, frame.fs, -size / 2, -size / 2, size, size);
+  context.drawImage(
+    image,
+    (headingFrame % frame.cols) * frame.fs,
+    Math.floor(headingFrame / frame.cols) * frame.fs,
+    frame.fs,
+    frame.fs,
+    -size / 2,
+    -size / 2,
+    size,
+    size,
+  );
   context.restore();
 }
 function glow(
@@ -482,11 +491,12 @@ function paintEndingShot(
     const arkX = width * 0.75;
     const arkY = centerY + extent * 0.08;
     const arkSize = extent * 0.55;
-    const facing = Math.PI + 0.22;
-    hull(context, 926, arkX, arkY, arkSize, 1, facing);
+    // Authored yaw keeps the dorsal side upright; rotating the right-facing
+    // isometric frame would roll the whole ship upside down.
+    hull(context, 926, arkX, arkY, arkSize, 1, 28);
     const crystal = assetImage('decor/crystal_0.webp');
-    const crystalX = arkX + Math.sin(facing) * arkSize * 0.15;
-    const crystalY = arkY - Math.cos(facing) * arkSize * 0.15;
+    const crystalX = arkX + arkSize * 0.04;
+    const crystalY = arkY - arkSize * 0.15;
     const x = width * 0.27 + released * (crystalX - width * 0.27);
     const y =
       centerY + (crystalY - centerY) * released - Math.sin(released * Math.PI) * height * 0.19;
