@@ -3341,6 +3341,7 @@ export class Game<Storage extends Database = Database> {
     if (this.tickN % 60 === 0)
       for (const session of this.sessions.values()) {
         if (!session.data) continue;
+        this.tickFaults.operation = 'refinery';
         const owner = this.db.key(session.data.name),
           savedRefinery = this.db.world.refinery;
         if (
@@ -3362,8 +3363,18 @@ export class Game<Storage extends Database = Database> {
             data.orders,
           ]);
         if (signature !== session.refinerySignature) {
-          session.refinerySignature = signature;
-          this.send(session, { t: 'refinery', data });
+          // Payload construction can advance authority; only transport is isolated.
+          const notification = JSON.stringify({ t: 'refinery', data });
+          if (!session.sock?.open || session.sock.backlog >= 4e6) continue;
+          this.tickFaults.operation = 'refinery-notify';
+          try {
+            this.send(session, notification);
+            session.refinerySignature = signature;
+          } catch (error) {
+            this.tickFaults.record(error);
+            if (this.tickFaults.shouldLog())
+              console.error('refinery notification error', this.tickFaults.lastKind);
+          }
         }
       }
 

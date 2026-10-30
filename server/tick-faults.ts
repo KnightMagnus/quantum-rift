@@ -8,6 +8,7 @@ export type TickOperation =
   | 'space'
   | 'snapshot'
   | 'refinery'
+  | 'refinery-notify'
   | 'idle'
   | 'mission-idle'
   | 'deadlines'

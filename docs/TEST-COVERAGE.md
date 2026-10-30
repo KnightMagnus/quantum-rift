@@ -1869,7 +1869,7 @@ not a wall-clock speedup claim.
 
 `tick-faults.ts` belongs to `performance-health`. Offline native callback fixtures inject deferred, per-captain maintenance, simulation and storage failures. They check sanitized classifications, bounded logging, skipped downstream work and frozen-authority retirement. `health.ts` retains space-failure counter and log-suppression coverage.
 
-Per-captain hooks remain fail-closed: idle completion, mission progress/deadlines, quest sweep/salvage, banking, raids, specialist progress and holdout updates can mutate saved progress or world entities. Refinery payload construction also advances the economy. None has a rollback boundary that makes catch-and-continue safe. Deferred callbacks and uncertain checkpoint writes remain fail-closed too. Existing per-space isolation is unchanged; it is not a rollback guarantee. No new maintenance quarantine is claimed.
+Per-captain hooks remain fail-closed: idle completion, mission progress/deadlines, quest sweep/salvage, banking, raids, specialist progress and holdout updates can mutate saved progress or world entities. Refinery payload construction also advances the economy. None has a rollback boundary that makes catch-and-continue safe. Deferred callbacks and uncertain checkpoint writes remain fail-closed too. Existing per-space isolation is unchanged; it is not a rollback guarantee. Only the prebuilt refinery notification transport is isolated; authority-changing hooks are not quarantined.
 
 The maintenance fault matrix injects an exception after a fixture credit mutation
 at each of the nine captain hooks below. Each case checks the exact completed
@@ -1894,7 +1894,7 @@ that a later tick cannot checkpoint it.
 | [`holdoutTick`](../server/hostile.ts)        | Saved encounter state and spawned platforms/waves                              | No rollback boundary                |
 | [`refinery.payload`](../server/refinery.ts)  | Calls economy advancement and rush synchronization before payload construction | Not a read-only notification        |
 
-None of these hooks is currently safe to catch and continue solely because it
+None of these authority-changing hooks is safe to catch and continue solely because it
 belongs to one captain. A future isolation change needs an explicit commit/rollback
 boundary covering saved state, shared entities and outgoing effects, or a genuinely
 read-only notification stage after authority commits. It must test successful
@@ -1903,6 +1903,21 @@ preserve checkpoint freeze/recovery. The fault matrix above deliberately tests
 abort behavior, not such an isolation implementation. Feature ownership work is
 separate from transaction ownership; moving a hook to a service does not make its
 writes atomic.
+
+Refinery notification payload construction and JSON serialization remain fail-closed.
+After those succeed, a socket-send exception is classified as `refinery-notify`
+and logged with the same bounded fault counter. Unrelated captains, maintenance,
+world hooks, spaces and native checkpoint work continue in their existing order.
+The session signature advances only after a successful transport call; a closed
+or backlogged socket also leaves it unchanged so the next maintenance pass can
+retry. A successful call is not a client-delivery acknowledgement. No economy
+operation is replayed by the transport retry, and no wire fields change.
+
+The notification fixture checks throwing, closed and backlogged transports,
+retry and duplicate suppression, unchanged order count, sanitized diagnostics and
+exact downstream ordering. Payload and serialization exceptions still abort before
+the next captain or checkpoint. This is offline callback evidence, not a network
+reliability guarantee; checkpoint freeze/recovery remains covered separately.
 
 Fault operations and kinds are fixed literals. Logs and counters never include thrown messages, stacks, captain identifiers or payloads. Fault sampling uses the existing bounded health window; native host logs emit the first 19 faults and every 500th thereafter while counters continue.
 
