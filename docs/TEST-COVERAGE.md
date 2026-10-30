@@ -1845,6 +1845,10 @@ Urgent native checkpoint batches follow actual economic action mutations, not pa
 
 Mission route controls explain uncharted routes without revealing paths or hiding distant work. The registered mission browser checks disabled plotting, retained accepted work and unchanged discovery/chart state.
 
+Feature boundary regressions deny database/session/space reference replacement,
+retain late-bound composition-root reads and lazy wake, and type-check readonly
+core-picked capabilities. Nested live state remains mutable.
+
 Snapshot routing in `test/health.ts` compares public, owner-only and sight-gated
 ship/projectile/beam rows for flying and docked recipients against the legacy
 visibility expression. Public routes perform zero recipient array filters;

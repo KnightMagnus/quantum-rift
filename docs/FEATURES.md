@@ -23,6 +23,11 @@ untyped feature state as `unknown` rather than pretending it has a checked schem
 Further state extraction can happen feature by feature after its internals have
 specific contracts. Avoid using these legacy seams for new unrelated state.
 
+Infrastructure references in the feature facades (`db`, `sessions`, `spaces`) are
+getter-only. The composition root can replace them; features see the current
+reference on each read. Core-picked capability types mark those references readonly.
+This prevents replacing infrastructure, not mutations to objects inside it.
+
 ## Shared calculations have explicit owners
 
 - `features.bonuses.bonus`: Specialists adds specialty effects to Frontier's
