@@ -476,7 +476,10 @@ isolation, deny cache-reader replacement and retain live named-provider replacem
 Invasion tick checks cover initial/duplicate-window suppression, rollover, rollback,
 live provider replacement, independent service tick/reset isolation, active-encounter
 suppression and missing-boss cleanup.
-Type checks reject access to the removed cache fields and Game scheduling marker.
+Living checks cover trade-port selection, stable cache identity, independent service
+caches, initial versus subsequent population budgets, cooldown suppression and live
+market-provider replacement. Type checks reject private Living fields on Game and
+cache-reader replacement as well as the removed Fronts fields.
 
 ## Exposed action mapping
 

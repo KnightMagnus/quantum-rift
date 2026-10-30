@@ -731,14 +731,6 @@ export class Game<Storage extends Database = Database> {
   /**
    * Legacy feature state; see docs/FEATURES.md.
    */
-  _livingStarted: boolean | undefined;
-  /**
-   * Legacy feature state; see docs/FEATURES.md.
-   */
-  _mkt: string[] | undefined;
-  /**
-   * Legacy feature state; see docs/FEATURES.md.
-   */
   duels!: Record<string, DuelState>;
   /**
    * Legacy feature state; see docs/FEATURES.md.

@@ -78,6 +78,19 @@ const START_NEWS: Record<
     `Refugees are pouring into ${state.name}. Food, medicine and passage are scarce.`,
 };
 
+/** Cache the trade-port system IDs for one Living service; callers retain a mutable list. */
+export function createMarketSystemReader(): () => string[] {
+  let marketSystems: string[] | undefined;
+  return () =>
+    (marketSystems ??= SYSTEMS.filter(
+      (starSystem) =>
+        !starSystem.arena &&
+        starSystem.stellars.some(
+          (stellarBody) => stellarBody.svc && stellarBody.svc.includes('T') && !stellarBody.site,
+        ),
+    ).map((starSystem) => starSystem.id));
+}
+
 export const LivingOperations = {
   /**
    * Initialize living world state containers in the database.
@@ -93,16 +106,7 @@ export const LivingOperations = {
    * @returns List of system IDs.
    */
   marketSystems(this: LivingCapabilities) {
-    return (
-      this._mkt ||
-      (this._mkt = SYSTEMS.filter(
-        (starSystem) =>
-          !starSystem.arena &&
-          starSystem.stellars.some(
-            (stellarBody) => stellarBody.svc && stellarBody.svc.includes('T') && !stellarBody.site,
-          ),
-      ).map((starSystem) => starSystem.id))
-    );
+    return this.readMarketSystems();
   },
   /**
    * Look up the currently active event state for a system.

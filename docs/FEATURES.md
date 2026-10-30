@@ -37,6 +37,13 @@ on Game. Fronts alone reads and advances it through its facade; initialization,
 duplicate-window suppression and clock rollback retain the existing policy. The
 active invasion encounter and other legacy feature state remain on Game.
 
+Living owns its initial-population marker and trade-port system cache per service.
+Its facade reads the market list through `readMarketSystems`; the returned array
+remains mutable and keeps its identity across reads. A new composition gets a fresh
+cache and initial population budget without changing an existing service's warmup
+state. Persistent system events, cooldowns and trade impact remain in DB; the shared
+world-broadcast invalidation key remains on Game.
+
 ## Shared calculations have explicit owners
 
 - `features.bonuses.bonus`: Specialists adds specialty effects to Frontier's
