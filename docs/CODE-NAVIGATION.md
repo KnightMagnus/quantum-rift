@@ -464,3 +464,22 @@ and rendered corners against transparent and contrasting backgrounds.
 `client/onboarding.ts` owns the local per-captain menu tour and story/control briefing. It uses the shared overlay controller, current key bindings and existing sidebar owners; it never dispatches gameplay actions. Landing and career-guide presentation wait while the introduction is active. HELP offers replay. `test/onboarding-browser.ts` exercises startup ordering, the clockwise menu tour through targeting and every visible cockpit button, left-to-right cockpit rows from Captain then Mining, followed by JUMP, input denial, annotated combat/mining examples, image-frame consistency, navigation, completion, replay and resizing.
 
 The cockpit shortcut registry keeps Captain/Hail/Fleet/Combat/Drones across the first row, Mining/Process/Tow/Map across the second, and Alert above Ship Details in the far-right column. Ship Details opens the existing ship information renderer directly; Captain retains profile, career, wingmate and captain tabs. JUMP remains a separate viewport overlay.
+
+## Ending presentation and preparation
+
+`client/ending-cinematic.ts` owns the Table camera timeline and mandatory briefing.
+The story owner opens it only after server confirmation. Its overlay owns input,
+radio stays off, and the existing login score plays once from the start. The
+briefing remains visible until the score finishes; audio failure does not block
+continuation. Account teardown cancels the overlay and its audio ownership.
+
+`Game.beginTableDeparture` uses the ordinary ship/wing spawn and removal owners to
+place the captain at a safe Quantum Rift standoff. Its bounded session protection
+blocks movement, damage and gameplay actions for that captain and wing, not the
+shared world. The existing story-accept route validates the completion acknowledgment.
+The persisted story flight restores the real location after reconnecting.
+
+The story payload projects the automatically accepted preparation objective from
+the saved Table choice and real component completions. The mission journal points
+to the next component contact, Harness fitting or the crossing. Existing quest,
+slot-limit and reward authorities are unchanged.

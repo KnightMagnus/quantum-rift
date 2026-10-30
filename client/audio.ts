@@ -486,28 +486,56 @@ let musicStartedAt = 0,
 /**
  * Starts login screen theme music with fade-in.
  */
-export function startMusic() {
+export function startMusic(options?: {
+  /** Login loops; a cinematic can instead play the full cue once. */
+  loop?: boolean;
+  /** Notify the presentation clock when decoding and source startup finish. */
+  onStarted?: () => void;
+  /** Natural completion callback for the one-shot cue. */
+  onEnded?: () => void;
+}) {
   pendingMusicAllowed = true;
   const request = ++musicRequest;
   if (!audioContext) {
-    pendingMusic = true;
+    if (options?.loop === false) {
+      options.onStarted?.();
+      options.onEnded?.();
+    } else pendingMusic = true;
     return;
   }
   if (musicSrc) return;
   void load('music_login33')!.then((audioBuffer) => {
-    if (!audioBuffer || musicSrc || !pendingMusicAllowed || request !== musicRequest) return;
+    if (musicSrc || !pendingMusicAllowed || request !== musicRequest) return;
+    if (!audioBuffer) {
+      options?.onStarted?.();
+      options?.onEnded?.();
+      return;
+    }
     musicGain = audioContext!.createGain();
     musicGain.gain.value = 0;
     musicGain.connect(audioBus.music!);
     musicGain.gain.linearRampToValueAtTime(0.9, audioContext!.currentTime + 3);
     musicSrc = audioContext!.createBufferSource();
     musicSrc.buffer = audioBuffer;
-    musicSrc.loop = true;
+    musicSrc.loop = options?.loop ?? true;
+    const source = musicSrc;
+    source.addEventListener(
+      'ended',
+      () => {
+        if (musicSrc !== source) return;
+        musicSrc = null;
+        musicGain?.disconnect();
+        musicGain = null;
+        options?.onEnded?.();
+      },
+      { once: true },
+    );
     musicSrc.connect(musicGain);
     musicStartedAt = audioContext!.currentTime;
     musicEpoch++;
     trackSource(musicSrc);
     musicSrc.start();
+    options?.onStarted?.();
   });
 }
 let pendingMusicAllowed = true,
@@ -653,4 +681,37 @@ export function towing(enabled: boolean, tension = 0) {
     towGain!.disconnect();
     towVoice = towGain = null;
   }
+}
+
+/** A short descending, stuttering thunder tear routed through the effects mixer. */
+export function riftThunder() {
+  if (!audioContext || !audioBus.sfx) return;
+  const context = audioContext;
+  const duration = 2.4;
+  const buffer = context.createBuffer(
+    1,
+    Math.ceil(context.sampleRate * duration),
+    context.sampleRate,
+  );
+  const samples = buffer.getChannelData(0);
+  let rumble = 0;
+  for (let index = 0; index < samples.length; index++) {
+    const seconds = index / context.sampleRate;
+    const noise = Math.random() * 2 - 1;
+    rumble = rumble * 0.96 + noise * 0.04;
+    const crack = seconds < 0.65 ? Math.pow(Math.max(0, Math.sin(seconds * 75)), 8) : 0;
+    const envelope = Math.exp(-seconds * 1.8) * Math.min(1, seconds * 150);
+    samples[index] = (noise * (0.15 + crack * 0.55) + rumble * 2.5) * envelope;
+  }
+  const source = context.createBufferSource();
+  source.buffer = buffer;
+  const filter = context.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(12000, context.currentTime);
+  filter.frequency.exponentialRampToValueAtTime(160, context.currentTime + duration);
+  source.connect(filter);
+  filter.connect(audioBus.sfx);
+  source.addEventListener('ended', () => filter.disconnect(), { once: true });
+  trackSource(source);
+  source.start();
 }

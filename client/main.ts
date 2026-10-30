@@ -16,6 +16,11 @@ import type {
 } from './protocol.ts';
 import type { AutopilotState } from './landing_autopilot.ts';
 import { startStorySequence } from './render.ts';
+import {
+  playEndingCinematic,
+  preloadEndingCinematic,
+  prepareEndingDeparture,
+} from './ending-cinematic.ts';
 import type { NetworkMessage } from '../server/message-registry.ts';
 import { elementById } from './dom.ts';
 import { createGameConnection } from './connection.ts';
@@ -1223,12 +1228,20 @@ overlays.register({
   initialFocus: () => elementById2('storyb').querySelector<HTMLElement>('button'),
   reset: () => {
     dismissStory = null;
+    document.body.classList.remove('ending-choice');
     storyQ.length = 0;
     elementById2('storyb').replaceChildren();
   },
 });
 function showStory(storyMessage: StoryMessage | undefined) {
   if (!clientGameState.you || !storyMessage) return;
+  if (
+    document.body.dataset.endingCinematic === 'active' ||
+    document.body.dataset.endingCinematic === 'briefing'
+  ) {
+    storyQ.push(storyMessage);
+    return;
+  }
   if (onboarding.active()) {
     storyQ.push(storyMessage);
     return;
@@ -1237,8 +1250,29 @@ function showStory(storyMessage: StoryMessage | undefined) {
     storyQ.push(storyMessage);
     return;
   } // one pop-up at a time: the rest wait their turn
+  if (storyMessage.sequence === 'ark-departure' && storyMessage.tableEnding) {
+    setAuto(null);
+    clientGameState.autoRoute = false;
+    clientGameState.route = [];
+    playEndingCinematic({
+      text: storyMessage.text,
+      lampsRelit: storyMessage.tableEnding.lampsRelit,
+      hull: Number(clientGameState.you.ship.hull),
+      complete: () => {
+        send({ t: 'storyacc', id: 'table-departure-complete' });
+        if (storyQ.length) showStory(storyQ.shift());
+      },
+    });
+    return;
+  }
   if (storyMessage.sequence)
     startStorySequence(clientGameState, storyMessage.sequence, performance.now());
+  document.body.classList.toggle(
+    'ending-choice',
+    storyMessage.id === 'choice' && !!storyMessage.choices?.length,
+  );
+  if (storyMessage.id === 'choice' && storyMessage.choices?.length)
+    preloadEndingCinematic(Number(clientGameState.you.ship.hull));
   elementById2('storyt').textContent = storyMessage.title;
   elementById2('storyx').textContent = storyMessage.text;
   renderStoryPortrait(storyMessage);
@@ -1258,6 +1292,8 @@ function showStory(storyMessage: StoryMessage | undefined) {
   const close = () => {
     dismissStory = null;
     overlays.close('storybox');
+    if (!document.body.classList.contains('ending-departure'))
+      document.body.classList.remove('ending-choice');
     if (storyQ.length) {
       const epoch = sessionEpoch;
       setTimeout(() => {
@@ -1278,6 +1314,7 @@ function showStory(storyMessage: StoryMessage | undefined) {
       button.className = 'btn';
       button.textContent = choice.label;
       button.onclick = () => {
+        if (storyMessage.id === 'choice' && choice.value === 'table') prepareEndingDeparture();
         send({ t: 'storyacc', id: storyMessage.id, choice: choice.value });
         close();
       };

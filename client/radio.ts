@@ -144,7 +144,14 @@ async function nextTrack() {
     radioStation = null;
   }
 }
+let radioBlocked = false;
+/** Cinematic ownership stops current playback and rejects new tuning until released. */
+export function setRadioBlocked(blocked: boolean) {
+  radioBlocked = blocked;
+  if (blocked) stopRadio();
+}
 export async function playStation(state: { id: string }, target: HTMLElement) {
+  if (radioBlocked) return;
   const station = RADIO_STATIONS.find((positionX) => positionX.id === state.id);
   if (!station || !unlocked.has(station.id)) return;
   htmlElement = target;
