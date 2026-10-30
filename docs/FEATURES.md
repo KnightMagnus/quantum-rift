@@ -32,7 +32,10 @@ Fronts owns its six-hour anomaly cache in a per-service closure. Its facade offe
 `readAnomalies`, not writable cache fields on Game. Repeated reads keep the same
 mutable map within a window; clock changes across windows rebuild it from the
 shared deterministic calculation. This does not make returned maps immutable.
-Invasion scheduling and other legacy feature state remain on Game.
+The last invasion scheduling window is also held in the per-service closure, not
+on Game. Fronts alone reads and advances it through its facade; initialization,
+duplicate-window suppression and clock rollback retain the existing policy. The
+active invasion encounter and other legacy feature state remain on Game.
 
 ## Shared calculations have explicit owners
 
