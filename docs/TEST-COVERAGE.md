@@ -1845,6 +1845,10 @@ Urgent native checkpoint batches follow actual economic action mutations, not pa
 
 Mission route controls explain uncharted routes without revealing paths or hiding distant work. The registered mission browser checks disabled plotting, retained accepted work and unchanged discovery/chart state.
 
+### Retained-account performance fixtures
+
+`performance-growth.ts` verifies that disconnected account growth increases checkpoint bytes without increasing live sessions, and that bounded synthetic synchronous storage delay appears in checkpoint duration. It checks argument bounds without asserting machine-specific performance targets. The in-process harness does not measure native match stalls, PostgreSQL or browser frames.
+
 ### Fuzz packet seeds
 
 `fuzz-seeds.ts` checks packet-generator replay, sequence diversity, override precedence and invalid seed rejection. `fuzz.ts` retains its admission probes and state invariants. Packet seed precedence is positional argument, `RIFT_FUZZ_PACKET_SEED`, `RIFT_TEST_SEED`, then 123456789. Simulation randomness uses `RIFT_TEST_SEED` through the existing preload. Canonical PR checks retain the fixed default; the weekly fuzz workflow runs packet seeds 42 and 987654321 with the default scenario seed. Each run prints its effective seeds and replay command. These bounded streams do not exhaust malformed packet sequences.
