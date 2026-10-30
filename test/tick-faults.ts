@@ -171,6 +171,141 @@ for (const failingOperation of [
     assert.equal(JSON.stringify([logs, health.report(), game.tickFaults]).includes(secret), false);
   }
 }
+// Only a prebuilt refinery notification is safe to retry; authority stays outside the catch.
+for (const failure of ['transport', 'closed', 'backlog', 'payload', 'serialize']) {
+  const { game, health, database, run } = fixture();
+  const captains: Session[] = [];
+  const sockets: Connection[] = [];
+  for (const name of ['Notification first', 'Notification second']) {
+    const socket = new Connection();
+    sockets.push(socket);
+    game.connect(socket);
+    const session = [...game.sessions.values()].at(-1)!;
+    database.withAuthenticatedCaptain(name, () =>
+      game.onMessage(session, { t: 'hello', name, pass: 'fixture-only' }),
+    );
+    captains.push(session);
+  }
+  const order: string[] = [];
+  const refinery = database.world.refinery!;
+  assert.ok(refinery);
+  for (const captain of captains)
+    refinery.orders.push({
+      id: String(captain.id),
+      owner: database.key(captain.data.name),
+      port: '',
+      cid: 'ore',
+      grade: 'common',
+      qty: 1,
+      reward: 1,
+      deadline: Date.now() + 1e9,
+      status: 'accepted',
+      demand: '',
+      event: null,
+    });
+  const payload = game.features.refinery.payload;
+  game.features.refinery.payload = (session) => {
+    order.push(`${captains.indexOf(session)}:payload`);
+    if (session === captains[0] && failure === 'payload') {
+      session.data.credits -= 7;
+      database.touch();
+      throw new RangeError(secret);
+    }
+    const result = payload(session);
+    if (session === captains[0] && failure === 'serialize')
+      Object.defineProperty(result, 'toJSON', {
+        value: () => {
+          throw new TypeError(secret);
+        },
+      });
+    return result;
+  };
+  for (const captain of captains) {
+    captain.sock.send = (message) => {
+      if (typeof message !== 'string' || JSON.parse(message).t !== 'refinery') return;
+      order.push(`${captains.indexOf(captain)}:send`);
+      if (captain === captains[0] && failure === 'transport') throw new TypeError(secret);
+    };
+  }
+  if (failure === 'closed') captains[0].sock.open = false;
+  if (failure === 'backlog') sockets[0].backlog = 4e6;
+  game.idleCheck = (session) => {
+    order.push(`${captains.indexOf(session)}:idle`);
+  };
+  game.features.fronts.missionIdle = () => {};
+  game.features.syndicate.missionDeadlines = () => {};
+  game.features.quests.questSweep = () => {};
+  game.features.quests.questSalvageIdle = () => {};
+  game.features.syndicate.bankTick = () => {};
+  game.features.frontier.raidCheck = () => {};
+  game.features.specialists.specIdle = () => {};
+  game.features.hostile.holdoutTick = () => {};
+  game.features.fronts.invasionTick = () => {
+    order.push('world');
+  };
+  game.features.frontier.waveTick = () => {};
+  game.features.frontier.arenaTick = () => {};
+  game.features.coop.coopTick = () => {};
+  game.hails.tick = () => {};
+  game.spaces.meridian.tick = () => {
+    order.push('space');
+  };
+  database.flush = () => {
+    order.push('checkpoint');
+  };
+  const originalError = console.error;
+  const logs: unknown[][] = [];
+  console.error = (...args) => {
+    logs.push(args);
+  };
+  try {
+    game.tickN = 59;
+    run();
+  } finally {
+    console.error = originalError;
+  }
+  assert.equal(captains[0].refinerySignature, undefined);
+  if (failure === 'payload' || failure === 'serialize') {
+    assert.deepEqual(order, ['0:payload']);
+    assert.equal(game.tickFaults.lastOperation, 'refinery');
+    assert.equal(health.report().tickFailures?.count, 1);
+  } else {
+    assert.deepEqual(order, [
+      '0:payload',
+      ...(failure === 'transport' ? ['0:send'] : []),
+      '1:payload',
+      '1:send',
+      '0:idle',
+      '1:idle',
+      'world',
+      'space',
+      'checkpoint',
+    ]);
+    assert.ok(captains[1].refinerySignature);
+    assert.equal(health.report().tickFailures, undefined);
+    if (failure === 'transport') {
+      assert.equal(game.tickFaults.lastOperation, 'refinery-notify');
+      assert.equal(health.report().faultMaintenance?.count, 1);
+      assert.equal(health.report().faultType?.count, 1);
+      assert.equal(logs.length, 1);
+    } else assert.equal(game.tickFaults.count, 0);
+    // Retry the unchanged payload, then suppress it only after a successful send.
+    captains[0].sock.open = true;
+    sockets[0].backlog = 0;
+    let delivered = 0;
+    captains[0].sock.send = (message) => {
+      if (typeof message === 'string' && JSON.parse(message).t === 'refinery') delivered++;
+    };
+    for (let attempt = 0; attempt < 2; attempt++) {
+      game.tickN = 59;
+      run();
+    }
+    assert.equal(delivered, 1);
+    assert.ok(captains[0].refinerySignature);
+    assert.equal(refinery.orders.length, 2, 'notification retry cannot duplicate economic orders');
+  }
+  assert.equal(JSON.stringify([logs, health.report(), game.tickFaults]).includes(secret), false);
+}
 // Real banking mutates balance and schedule before notifying the captain.
 // A notification failure cannot safely turn this into a read-only isolated hook.
 {
