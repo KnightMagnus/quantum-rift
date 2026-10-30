@@ -90,6 +90,8 @@ export type HangarCapabilities = Pick<
 export type FrontsCapabilities = {
   /** Read the Fronts-owned six-hour anomaly cache without exposing cache state. */
   readonly readAnomalies: () => Record<string, string>;
+  /** Last invasion window considered by this Fronts service. */
+  lastInvWin: number;
 } & Pick<
   FeatureCore,
   | 'ownSite'
@@ -99,7 +101,6 @@ export type FrontsCapabilities = {
   | 'broadcast'
   | 'db'
   | 'invasion'
-  | 'lastInvWin'
   | 'log'
   | 'sessions'
   | 'spaces'
@@ -585,6 +586,7 @@ export function createFeatures(core: Game): FeatureServices {
   features.hangar = bindOperations(HangarOperations, hangarCapabilities);
 
   const readAnomalies = createAnomalyReader();
+  let lastInvWin: number;
   const frontsCapabilities: FrontsCapabilities = {
     ownSite: core.ownSite.bind(core),
     outfitInstallProblem: core.outfitInstallProblem.bind(core),
@@ -629,10 +631,10 @@ export function createFeatures(core: Game): FeatureServices {
       core.invasion = value;
     },
     get lastInvWin() {
-      return core.lastInvWin;
+      return lastInvWin;
     },
     set lastInvWin(value) {
-      core.lastInvWin = value;
+      lastInvWin = value;
     },
     log: core.log.bind(core),
     get officerXp() {

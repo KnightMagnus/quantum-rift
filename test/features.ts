@@ -11,8 +11,9 @@ import { bindOperations } from '../server/feature-service.ts';
 import { createMessageRegistry } from '../server/message-registry.ts';
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
+import { createFeatures } from '../server/features.ts';
 import { SYSTEMS } from '../shared/galaxy.ts';
-import { anomaliesAt } from '../shared/fronts.ts';
+import { INVASION, anomaliesAt } from '../shared/fronts.ts';
 
 // Characterization checks ordering, stacking, schema, payloads and session normalization.
 // capture-features runs in a separate process with fixed time and RNG. The baseline
@@ -330,6 +331,72 @@ try {
       assert.equal(Object.hasOwn(game, key), false, 'cache state is not stored on Game');
   } finally {
     Date.now = originalNow;
+  }
+  const originalClock = Date.now;
+  const originalStartInvasion = game.features.fronts.startInvasion;
+  const originalInvasion = frontsCapabilities.invasion;
+  const originalWindow = frontsCapabilities.lastInvWin;
+  const scheduleCalls: number[] = [];
+  const period = INVASION.everyMin * 60000;
+  try {
+    Date.now = () => 1000 * period;
+    game.features.fronts.frontsInit();
+    assert.equal(Object.hasOwn(game, 'lastInvWin'), false, 'schedule is not Game state');
+    game.features.fronts.startInvasion = (window) => {
+      scheduleCalls.push(window);
+      return {} as ReturnType<typeof originalStartInvasion>;
+    };
+    game.features.fronts.invasionTick();
+    assert.deepEqual(scheduleCalls, [], 'initial window does not spawn again');
+    Date.now = () => 1001 * period;
+    game.features.fronts.invasionTick();
+    game.features.fronts.invasionTick();
+    assert.deepEqual(scheduleCalls, [1001], 'rollover spawns once with live provider');
+    const independent = createFeatures(game);
+    independent.fronts.frontsInit();
+    independent.fronts.startInvasion = () => ({}) as ReturnType<typeof originalStartInvasion>;
+    assert.equal(frontsCapabilities.lastInvWin, 1001);
+    Date.now = () => 1002 * period;
+    independent.fronts.invasionTick();
+    assert.equal(
+      frontsCapabilities.lastInvWin,
+      1001,
+      'other service ticks cannot advance this schedule',
+    );
+    independent.fronts.frontsInit();
+    assert.equal(
+      frontsCapabilities.lastInvWin,
+      1001,
+      'other service resets cannot reset this schedule',
+    );
+    Date.now = () => 1000 * period;
+    game.features.fronts.invasionTick();
+    game.features.fronts.invasionTick();
+    assert.deepEqual(scheduleCalls, [1001, 1000], 'rollback retains distinct-window behavior');
+    const boss = game.features.fronts.startInvasion;
+    game.features.fronts.startInvasion = originalStartInvasion;
+    const entity = game.features.fronts.startInvasion(1000, 'meridian');
+    const active = frontsCapabilities.invasion;
+    assert.ok(active && active.ent === entity);
+    game.features.fronts.startInvasion = boss;
+    Date.now = () => 1001 * period;
+    // Hold an active encounter through a different schedule window without expiry.
+    active.until = Date.now() + period;
+    game.features.fronts.invasionTick();
+    assert.equal(frontsCapabilities.invasion, active);
+    assert.deepEqual(scheduleCalls, [1001, 1000], 'active invasion suppresses scheduling');
+    active.sp.ships.delete(entity.id);
+    game.features.fronts.invasionTick();
+    assert.equal(frontsCapabilities.invasion, null);
+    assert.equal(active.sp.keep, false, 'missing boss releases the space');
+    assert.deepEqual(scheduleCalls, [1001, 1000, 1001], 'ended invasion permits pending window');
+    for (const ship of active.sp.ships.values())
+      if (ship.owner === entity.id) active.sp.remove(ship, 'jump');
+  } finally {
+    Date.now = originalClock;
+    game.features.fronts.startInvasion = originalStartInvasion;
+    frontsCapabilities.invasion = originalInvasion;
+    frontsCapabilities.lastInvWin = originalWindow;
   }
   const originalSessions = game.sessions;
   game.sessions = new Map();

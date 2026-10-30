@@ -711,10 +711,6 @@ export class Game<Storage extends Database = Database> {
   /**
    * Legacy feature state; see docs/FEATURES.md.
    */
-  lastInvWin!: number;
-  /**
-   * Legacy feature state; see docs/FEATURES.md.
-   */
   arenaQ!: Record<string, number[]>;
   /**
    * Legacy feature state; see docs/FEATURES.md.

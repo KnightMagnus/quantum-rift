@@ -473,7 +473,10 @@ layer ordering and representative payloads are additionally characterized by
 anomaly maps with the shared deterministic calculation before and after six-hour
 rollover and clock rollback, verify same-window identity and per-service cache
 isolation, deny cache-reader replacement and retain live named-provider replacement.
-Type checks reject access to the removed cache fields.
+Invasion tick checks cover initial/duplicate-window suppression, rollover, rollback,
+live provider replacement, independent service tick/reset isolation, active-encounter
+suppression and missing-boss cleanup.
+Type checks reject access to the removed cache fields and Game scheduling marker.
 
 ## Exposed action mapping
 

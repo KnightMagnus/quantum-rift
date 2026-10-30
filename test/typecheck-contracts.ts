@@ -89,6 +89,11 @@ const request: PortPurchaseAction = ${request}; void request;`);
     assert.notEqual(cacheResult.status, 0, 'cache internals are not capabilities');
     assert.match(cacheResult.stdout + cacheResult.stderr, /does not exist/);
   }
+  const scheduleResult = check(
+    `declare const game: import('${modulePath('game.ts')}').Game; void game.lastInvWin;`,
+  );
+  assert.notEqual(scheduleResult.status, 0, 'invasion scheduling is not Game state');
+  assert.match(scheduleResult.stdout + scheduleResult.stderr, /does not exist/);
   const bindingPath = modulePath('feature-service.js');
   const bindingFixture = `import {bindOperations} from '${bindingPath}';
 function run(this: {required: number}): number{return this.required;}
