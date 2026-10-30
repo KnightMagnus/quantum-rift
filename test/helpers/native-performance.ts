@@ -62,6 +62,14 @@ export function parseNativePerformanceArguments(argumentsList: string[]) {
   return { options, output };
 }
 const serverMetrics: readonly HealthMetric[] = [
+  'faultDeferred',
+  'faultCheckpoint',
+  'faultSimulation',
+  'faultSnapshot',
+  'faultMaintenance',
+  'faultType',
+  'faultRange',
+  'faultOther',
   'tickMs',
   'featuresMs',
   'spacesMs',
