@@ -509,3 +509,9 @@ forceable by this fixture. A driver that does not restore still requires reload;
 physical GPUs, mobile devices and audible playback remain separate validation.
 Losses lasting over a second show a short recovery notice with a Reload button;
 it disappears automatically when drawing resumes.
+
+## Retained-account and slow-storage comparisons
+
+The in-process baseline accepts `RIFT_PERF_RETAINED_ACCOUNTS=0..10000` and `RIFT_PERF_STORAGE_DELAY_MS=0..50`. Retained accounts copy a synthetic fixture account but have no connection. The delay blocks the harness storage write synchronously; it models a stall, not PostgreSQL behavior. Both default to zero. Reports include live captains, total accounts and configured delay alongside checkpoint bytes, serialization and duration metrics.
+
+Run matched captures on the same idle machine, with the pinned runtime and identical tick/captain settings. For example, run `RIFT_PERF_OUTPUT=baseline.json node tools/performance-baseline.ts`, then `RIFT_PERF_RETAINED_ACCOUNTS=1000 RIFT_PERF_STORAGE_DELAY_MS=10 RIFT_PERF_OUTPUT=growth.json node tools/performance-baseline.ts`. Inspect checkpoint metrics together with tick metrics; explicit harness flushes outside `Game.tick` do not count as native match-loop tick latency. These fixtures cannot establish deployment or player-experience budgets.

@@ -156,7 +156,8 @@
     "recovery-safety.ts",
     "story-order-safety.ts",
     "syndicate-safety.ts",
-    "quest-directions.ts"
+    "quest-directions.ts",
+    "performance-growth.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",

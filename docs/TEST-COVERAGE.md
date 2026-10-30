@@ -1844,3 +1844,7 @@ The landed service fixtures also start native Tab and Shift+Tab from BODY, witho
 Urgent native checkpoint batches follow actual economic action mutations, not packet names or unrelated tick dirtiness. Denied/no-op requests cannot force writes; successful `buyship`/`station` and other economic changes coalesce within 250 ms. Cancelled queued local handshakes are skipped before starting another password worker.
 
 Mission route controls explain uncharted routes without revealing paths or hiding distant work. The registered mission browser checks disabled plotting, retained accepted work and unchanged discovery/chart state.
+
+### Retained-account performance fixtures
+
+`performance-growth.ts` verifies that disconnected account growth increases checkpoint bytes without increasing live sessions, and that bounded synthetic synchronous storage delay appears in checkpoint duration. It checks argument bounds without asserting machine-specific performance targets. The in-process harness does not measure native match stalls, PostgreSQL or browser frames.
