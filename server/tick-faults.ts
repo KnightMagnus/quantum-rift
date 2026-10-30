@@ -18,6 +18,14 @@ export type TickOperation =
   | 'raid'
   | 'specialist'
   | 'holdout'
+  | 'invasion'
+  | 'wave'
+  | 'arena'
+  | 'coop'
+  | 'hails'
+  | 'rivals'
+  | 'living'
+  | 'rival-sync'
   | 'world';
 /** Sanitized diagnostics do not retain the thrown value or its stack/message. */
 export class TickFaults {

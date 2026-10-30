@@ -3392,22 +3392,32 @@ export class Game<Storage extends Database = Database> {
           this.tickFaults.operation = 'holdout';
           this.features.hostile.holdoutTick(session);
         }
-      this.tickFaults.operation = 'world';
+      this.tickFaults.operation = 'invasion';
       this.features.fronts.invasionTick();
+      this.tickFaults.operation = 'wave';
       this.features.frontier.waveTick();
+      this.tickFaults.operation = 'arena';
       this.features.frontier.arenaTick();
+      this.tickFaults.operation = 'coop';
       this.features.coop.coopTick();
+      this.tickFaults.operation = 'hails';
       this.hails.tick();
     }
     this.tickFaults.operation = 'world';
     if (this.tickN % (TICK * 20) === 0) {
+      this.tickFaults.operation = 'rivals';
       this.features.rivals.rivalsTick();
+      this.tickFaults.operation = 'living';
       this.features.living.livingTick();
     } // system states come and go   // 1.1: rival careers, news, market flashes, hired guns
     if (this.tickN % (TICK * 2) === 1)
       for (const space of Object.values(this.live))
-        if (space.players > 0) this.features.rivals.rivalSync(space);
+        if (space.players > 0) {
+          this.tickFaults.operation = 'rival-sync';
+          this.features.rivals.rivalSync(space);
+        }
     if (this.tickN % (TICK * 30) === 0) {
+      this.tickFaults.operation = 'world';
       const worldPayload2 = this.features.world.worldPayload(),
         stringify2 = JSON.stringify([
           worldPayload2.anomalies,
