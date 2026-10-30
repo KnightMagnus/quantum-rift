@@ -1851,6 +1851,39 @@ Mission route controls explain uncharted routes without revealing paths or hidin
 
 Per-captain hooks remain fail-closed: idle completion, mission progress/deadlines, quest sweep/salvage, banking, raids, specialist progress and holdout updates can mutate saved progress or world entities. Refinery payload construction also advances the economy. None has a rollback boundary that makes catch-and-continue safe. Deferred callbacks and uncertain checkpoint writes remain fail-closed too. Existing per-space isolation is unchanged; it is not a rollback guarantee. No new maintenance quarantine is claimed.
 
+The maintenance fault matrix injects an exception after a fixture credit mutation
+at each of the nine captain hooks below. Each case checks the exact completed
+prefix, unchanged second-captain credits, skipped world/space/checkpoint work,
+operation classification and diagnostic privacy. The no-fault control checks both
+captains run in order before world, space and checkpoint work. A separate fixture
+runs the real bank hook with a failing socket send: loan schedule, balance and
+credits have already changed when notification throws. Aborting the tick is not
+rollback; the tests do not claim that an in-memory partial mutation is repaired or
+that a later tick cannot checkpoint it.
+
+| Hook                                         | Mutable authority reached by the hook                                          | Isolation status                    |
+| -------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------- |
+| [`idleCheck`](../server/game.ts)             | Station/research completion, tutorial and specialist progress, shuttle results | No rollback boundary                |
+| [`missionIdle`](../server/fronts.ts)         | Survey progress and mission scan state                                         | No rollback boundary                |
+| [`missionDeadlines`](../server/syndicate.ts) | Warning/failure flags, reputation and mission removal                          | No rollback boundary                |
+| [`questSweep`](../server/quests.ts)          | Quest reconciliation, completion and passenger boarding                        | No rollback boundary                |
+| [`questSalvageIdle`](../server/quests.ts)    | Space loot creation                                                            | No rollback boundary                |
+| [`bankTick`](../server/syndicate.ts)         | Loan schedule/balance, credits and credit rating before notification           | Partial mutation reproduced offline |
+| [`raidCheck`](../server/frontier.ts)         | Station raid schedule, spawned waves or raid resolution                        | No rollback boundary                |
+| [`specIdle`](../server/specialists.ts)       | Sampling timer and specialist progress                                         | No rollback boundary                |
+| [`holdoutTick`](../server/hostile.ts)        | Saved encounter state and spawned platforms/waves                              | No rollback boundary                |
+| [`refinery.payload`](../server/refinery.ts)  | Calls economy advancement and rush synchronization before payload construction | Not a read-only notification        |
+
+None of these hooks is currently safe to catch and continue solely because it
+belongs to one captain. A future isolation change needs an explicit commit/rollback
+boundary covering saved state, shared entities and outgoing effects, or a genuinely
+read-only notification stage after authority commits. It must test successful
+unrelated-captain/world/space continuation, prevent duplicate rewards on retry and
+preserve checkpoint freeze/recovery. The fault matrix above deliberately tests
+abort behavior, not such an isolation implementation. Feature ownership work is
+separate from transaction ownership; moving a hook to a service does not make its
+writes atomic.
+
 Fault operations and kinds are fixed literals. Logs and counters never include thrown messages, stacks, captain identifiers or payloads. Fault sampling uses the existing bounded health window; native host logs emit the first 19 faults and every 500th thereafter while counters continue.
 
 ### Retained-account performance fixtures
