@@ -53,7 +53,7 @@ station map after importing, even though the captain can use the station. The
 accompanying game change repairs import ownership and rejects another captain's
 claimed location. Use a fresh Solo data folder for isolated tests on older builds.
 
-The catalog matches public beta version 0.4; future game versions may need a
+The catalog matches public beta version 0.4.2.1; future game versions may need a
 refreshed catalog. Online servers do not accept Solo save imports.
 
 ## Command line
