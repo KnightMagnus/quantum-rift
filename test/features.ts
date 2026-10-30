@@ -450,6 +450,15 @@ try {
     const entity = game.features.fronts.startInvasion(1000, 'meridian');
     const active = frontsCapabilities.invasion;
     assert.ok(active && active.ent === entity);
+    independent.fronts.frontsInit();
+    assert.equal(
+      frontsCapabilities.invasion,
+      active,
+      'initializing another composition must not discard this active encounter',
+    );
+    assert.equal(game.features.fronts.worldPayload().invasion?.sys, 'meridian');
+    assert.equal(independent.fronts.worldPayload().invasion, null);
+
     game.features.fronts.startInvasion = boss;
     Date.now = () => 1001 * period;
     // Hold an active encounter through a different schedule window without expiry.

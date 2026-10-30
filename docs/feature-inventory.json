@@ -158,7 +158,10 @@
       "baselineExport": "FrontsMixin",
       "exportName": "FrontsOperations",
       "stateWrites": ["invasion", "lastInvWin"],
-      "stateOwners": { "invasion": "Game", "lastInvWin": "Fronts composition closure" },
+      "stateOwners": {
+        "invasion": "Fronts composition closure",
+        "lastInvWin": "Fronts composition closure"
+      },
       "hooks": {
         "worldInit": ["frontsInit"],
         "tick2s": ["invasionTick"],

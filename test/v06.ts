@@ -141,8 +141,10 @@ const invSys = SYSTEMS.find(
 );
 const boss = game.features.fronts.startInvasion(1, requiredFixtureValue(invSys).id);
 assertCondition(
-  boss && game.invasion && game.live[requiredFixtureValue(invSys).id].keep,
-  `the ${requiredFixtureValue(game.invasion).boss.name} invades ${requiredFixtureValue(invSys).name}`,
+  boss &&
+    game.features.fronts.worldPayload().invasion &&
+    game.live[requiredFixtureValue(invSys).id].keep,
+  `the ${requiredFixtureValue(game.features.fronts.worldPayload().invasion).name} invades ${requiredFixtureValue(invSys).name}`,
 );
 assertCondition(
   firstEntry.all('chat').some((message3: { msg: string }) => /INVASION/.test(message3.msg)) &&
@@ -164,7 +166,7 @@ boss.shield = 0;
 boss.armor = 1;
 message3.damage(boss, 10, 10, shipEntity7);
 assertCondition(
-  !game.invasion &&
+  !game.features.fronts.worldPayload().invasion &&
     playerData.credits - credits9 > playerData4.credits - credits10 &&
     playerData4.credits > credits10,
   'killing the boss pays everyone by damage share',

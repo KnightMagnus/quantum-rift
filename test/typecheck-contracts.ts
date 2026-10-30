@@ -89,6 +89,11 @@ const request: PortPurchaseAction = ${request}; void request;`);
     assert.notEqual(cacheResult.status, 0, 'cache internals are not capabilities');
     assert.match(cacheResult.stdout + cacheResult.stderr, /does not exist/);
   }
+  const encounterResult = check(
+    `declare const game: import('${modulePath('game.ts')}').Game; void game.invasion;`,
+  );
+  assert.notEqual(encounterResult.status, 0, 'active invasion is not Game state');
+  assert.match(encounterResult.stdout + encounterResult.stderr, /does not exist/);
   const scheduleResult = check(
     `declare const game: import('${modulePath('game.ts')}').Game; void game.lastInvWin;`,
   );

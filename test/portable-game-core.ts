@@ -89,7 +89,7 @@ try {
   assert.equal(database.get('Injected Captain')?.credits, 12345);
   assert.equal(pending.at(-1)?.delayMs, 500);
   pending.pop()!.callback();
-  assert.equal(seeded.invasion?.sys, START.system);
+  assert.equal(seeded.features.fronts.worldPayload().invasion?.sys, START.system);
   new Game(assets(), database, { ...platform, automaticClock: true });
   assert.equal(clocks, 1, 'automatic hosts still start exactly one game clock');
   const local = database.gamePlatform();

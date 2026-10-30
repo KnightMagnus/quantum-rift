@@ -80,7 +80,6 @@ export type FreshPlayerData = Pick<
   | 'explored'
 >;
 import type { ArenaMatch, RaidWave } from './world-contracts.ts';
-import type { InvasionBoss } from '../shared/fronts.ts';
 import type { TradeState, DuelState, DuelInvite } from './coop-contracts.ts';
 export type StellarBody = import('../shared/galaxy.ts').StellarBody;
 import type {
@@ -701,13 +700,6 @@ export class Game<Storage extends Database = Database> {
   /** Timestamp when solo mode was paused. */
   declare pausedAt: number;
 
-  /**
-   * Legacy feature state; see docs/FEATURES.md.
-   */
-  invasion:
-    | { sys: string; boss: InvasionBoss; until: number; ent: Entity; sp: SpaceSpace }
-    | null
-    | undefined;
   /**
    * Legacy feature state; see docs/FEATURES.md.
    */
