@@ -4,6 +4,8 @@ import type { IndexFleetCapabilities } from './index-fleet.ts';
 import type { NhalCapabilities } from './nhal.ts';
 import { NhalOperations } from './nhal.ts';
 import { IndexOperations } from './index-worksite.ts';
+import type { InvasionBoss } from '../shared/fronts.ts';
+import type { Entity, Space } from './space.ts';
 import type { CoopOperations } from './coop-contracts.ts';
 
 import type { CombatSession } from './combat-assist.ts';
@@ -92,6 +94,22 @@ export type FrontsCapabilities = {
   readonly readAnomalies: () => Record<string, string>;
   /** Last invasion window considered by this Fronts service. */
   lastInvWin: number;
+  /** Current live encounter owned by this Fronts service; never persisted. */
+  invasion:
+    | {
+        /** System containing the encounter. */
+        sys: string;
+        /** Catalog definition used for presentation and rewards. */
+        boss: InvasionBoss;
+        /** Wall-clock expiry in milliseconds. */
+        until: number;
+        /** Boss identity tracked by damage and removal handlers. */
+        ent: Entity;
+        /** Live space pinned until the encounter ends. */
+        sp: Space;
+      }
+    | null
+    | undefined;
 } & Pick<
   FeatureCore,
   | 'ownSite'
@@ -100,7 +118,6 @@ export type FrontsCapabilities = {
   | 'platform'
   | 'broadcast'
   | 'db'
-  | 'invasion'
   | 'log'
   | 'sessions'
   | 'spaces'
@@ -589,6 +606,7 @@ export function createFeatures(core: Game): FeatureServices {
 
   const readAnomalies = createAnomalyReader();
   let lastInvWin: number;
+  let invasion: FrontsCapabilities['invasion'];
   const frontsCapabilities: FrontsCapabilities = {
     ownSite: core.ownSite.bind(core),
     outfitInstallProblem: core.outfitInstallProblem.bind(core),
@@ -627,10 +645,10 @@ export function createFeatures(core: Game): FeatureServices {
       return features.fronts.goalsFor;
     },
     get invasion() {
-      return core.invasion;
+      return invasion;
     },
     set invasion(value) {
-      core.invasion = value;
+      invasion = value;
     },
     get lastInvWin() {
       return lastInvWin;

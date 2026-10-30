@@ -35,7 +35,10 @@ shared deterministic calculation. This does not make returned maps immutable.
 The last invasion scheduling window is also held in the per-service closure, not
 on Game. Fronts alone reads and advances it through its facade; initialization,
 duplicate-window suppression and clock rollback retain the existing policy. The
-active invasion encounter and other legacy feature state remain on Game.
+active invasion encounter is held in the same per-service closure. Reinitializing
+another composition cannot discard it. Fronts retains boss identity, expiry,
+space pinning, rewards and world-payload projection; other legacy feature state
+remains on Game.
 
 Living owns its initial-population marker and trade-port system cache per service.
 Its facade reads the market list through `readMarketSystems`; the returned array

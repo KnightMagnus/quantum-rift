@@ -475,7 +475,8 @@ rollover and clock rollback, verify same-window identity and per-service cache
 isolation, deny cache-reader replacement and retain live named-provider replacement.
 Invasion tick checks cover initial/duplicate-window suppression, rollover, rollback,
 live provider replacement, independent service tick/reset isolation, active-encounter
-suppression and missing-boss cleanup.
+suppression, active-encounter identity and world-payload isolation after another
+composition initializes, and missing-boss cleanup.
 Living checks cover trade-port selection, stable cache identity, independent service
 caches, initial versus subsequent population budgets, cooldown suppression and live
 market-provider replacement. Type checks reject private Living fields on Game and
