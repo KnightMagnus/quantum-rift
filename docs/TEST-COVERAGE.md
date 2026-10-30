@@ -1941,3 +1941,11 @@ Fault operations and kinds are fixed literals. Logs and counters never include t
 `fuzz-seeds.ts` checks packet-generator replay, sequence diversity, override precedence and invalid seed rejection. `fuzz.ts` retains its admission probes and state invariants. Packet seed precedence is positional argument, `RIFT_FUZZ_PACKET_SEED`, `RIFT_TEST_SEED`, then 123456789. Simulation randomness uses `RIFT_TEST_SEED` through the existing preload. Canonical PR checks retain the fixed default; the weekly fuzz workflow runs packet seeds 42 and 987654321 with the default scenario seed. Each run prints its effective seeds and replay command. These bounded streams do not exhaust malformed packet sequences.
 
 Pinned Node 27 checks at 4,000 packets produced SHA-256 packet RNG trace `aa202e625d63126d347ae92e8454d089202c900e413611e05dd8d5a5f1fa5cbb` for seed 42 on two runs, and `25a7af8db0180113639d04c03ed7014c83f9dd0509f915f2f3e0ec5daa5cf55d` for seed 987654321. Both visited all 57 registered routes without logged errors. The digest describes random draws, not a guarantee of whole-world deterministic replay.
+
+The 30-second world update distinguishes payload construction (`world-payload`),
+change-signature encoding (`world-signature`) and broadcasting (`world-broadcast`).
+All three remain fail-closed. The registered tick-fault fixture checks each abort
+prefix, private diagnostics and a successful two-recipient/space/checkpoint control.
+A second-recipient send failure leaves the first recipient already notified and
+the world invalidation key already advanced, preserving the existing behavior.
+These diagnostics do not add delivery acknowledgement, rollback or retry.

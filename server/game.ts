@@ -3417,15 +3417,17 @@ export class Game<Storage extends Database = Database> {
           this.features.rivals.rivalSync(space);
         }
     if (this.tickN % (TICK * 30) === 0) {
-      this.tickFaults.operation = 'world';
-      const worldPayload2 = this.features.world.worldPayload(),
-        stringify2 = JSON.stringify([
-          worldPayload2.anomalies,
-          worldPayload2.event!.id,
-          worldPayload2.states,
-        ]);
+      this.tickFaults.operation = 'world-payload';
+      const worldPayload2 = this.features.world.worldPayload();
+      this.tickFaults.operation = 'world-signature';
+      const stringify2 = JSON.stringify([
+        worldPayload2.anomalies,
+        worldPayload2.event!.id,
+        worldPayload2.states,
+      ]);
       if (stringify2 !== this.worldKey) {
         this.worldKey = stringify2;
+        this.tickFaults.operation = 'world-broadcast';
         this.broadcast(worldPayload2);
       }
     }
