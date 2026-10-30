@@ -1852,3 +1852,13 @@ Mission route controls explain uncharted routes without revealing paths or hidin
 Per-captain hooks remain fail-closed: idle completion, mission progress/deadlines, quest sweep/salvage, banking, raids, specialist progress and holdout updates can mutate saved progress or world entities. Refinery payload construction also advances the economy. None has a rollback boundary that makes catch-and-continue safe. Deferred callbacks and uncertain checkpoint writes remain fail-closed too. Existing per-space isolation is unchanged; it is not a rollback guarantee. No new maintenance quarantine is claimed.
 
 Fault operations and kinds are fixed literals. Logs and counters never include thrown messages, stacks, captain identifiers or payloads. Fault sampling uses the existing bounded health window; native host logs emit the first 19 faults and every 500th thereafter while counters continue.
+
+### Retained-account performance fixtures
+
+`performance-growth.ts` verifies that disconnected account growth increases checkpoint bytes without increasing live sessions, and that bounded synthetic synchronous storage delay appears in checkpoint duration. It checks argument bounds without asserting machine-specific performance targets. The in-process harness does not measure native match stalls, PostgreSQL or browser frames.
+
+### Fuzz packet seeds
+
+`fuzz-seeds.ts` checks packet-generator replay, sequence diversity, override precedence and invalid seed rejection. `fuzz.ts` retains its admission probes and state invariants. Packet seed precedence is positional argument, `RIFT_FUZZ_PACKET_SEED`, `RIFT_TEST_SEED`, then 123456789. Simulation randomness uses `RIFT_TEST_SEED` through the existing preload. Canonical PR checks retain the fixed default; the weekly fuzz workflow runs packet seeds 42 and 987654321 with the default scenario seed. Each run prints its effective seeds and replay command. These bounded streams do not exhaust malformed packet sequences.
+
+Pinned Node 27 checks at 4,000 packets produced SHA-256 packet RNG trace `aa202e625d63126d347ae92e8454d089202c900e413611e05dd8d5a5f1fa5cbb` for seed 42 on two runs, and `25a7af8db0180113639d04c03ed7014c83f9dd0509f915f2f3e0ec5daa5cf55d` for seed 987654321. Both visited all 57 registered routes without logged errors. The digest describes random draws, not a guarantee of whole-world deterministic replay.
