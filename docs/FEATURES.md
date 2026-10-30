@@ -28,6 +28,12 @@ getter-only. The composition root can replace them; features see the current
 reference on each read. Core-picked capability types mark those references readonly.
 This prevents replacing infrastructure, not mutations to objects inside it.
 
+Fronts owns its six-hour anomaly cache in a per-service closure. Its facade offers
+`readAnomalies`, not writable cache fields on Game. Repeated reads keep the same
+mutable map within a window; clock changes across windows rebuild it from the
+shared deterministic calculation. This does not make returned maps immutable.
+Invasion scheduling and other legacy feature state remain on Game.
+
 ## Shared calculations have explicit owners
 
 - `features.bonuses.bonus`: Specialists adds specialty effects to Frontier's

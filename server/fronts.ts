@@ -110,6 +110,20 @@ import { factionStoreListings } from '../shared/faction-store-catalog.ts';
 import { chartSystems } from '../shared/map-knowledge.ts';
 import { captainBonus, shipStats, credits } from '../shared/rules.ts';
 
+/** Own one service's anomaly cache; callers receive the existing mutable map view. */
+export function createAnomalyReader(): () => Record<string, string> {
+  let cachedWindow: number | undefined;
+  let cachedAnomalies: Record<string, string>;
+  return () => {
+    const window = Math.floor(Date.now() / (6 * 3600000));
+    if (cachedWindow !== window) {
+      cachedAnomalies = anomaliesAt(SYSTEMS);
+      cachedWindow = window;
+    }
+    return cachedAnomalies;
+  };
+}
+
 /**
  * Clamp a numeric value between a lower and an upper bound.
  * @param value - Value to clamp.
@@ -152,12 +166,7 @@ export const FrontsOperations = {
    * @returns Map of system IDs to anomaly keys.
    */
   anomalies(this: FrontsCapabilities) {
-    const width = Math.floor(Date.now() / (6 * 3600000));
-    if (this._anW !== width) {
-      this._anW = width;
-      this._an = anomaliesAt(SYSTEMS);
-    }
-    return this._an!;
+    return this.readAnomalies();
   },
   /**
    * Retrieve current active global server event.

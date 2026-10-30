@@ -11,6 +11,8 @@ import { bindOperations } from '../server/feature-service.ts';
 import { createMessageRegistry } from '../server/message-registry.ts';
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
+import { SYSTEMS } from '../shared/galaxy.ts';
+import { anomaliesAt } from '../shared/fronts.ts';
 
 // Characterization checks ordering, stacking, schema, payloads and session normalization.
 // capture-features runs in a separate process with fixed time and RNG. The baseline
@@ -269,7 +271,7 @@ const directory = fileSystem.mkdtempSync(
 const interval = globalThis.setInterval;
 process.env.SEEDS_FILE = '/nonexistent';
 let game;
-const { FrontsOperations } = await import('../server/fronts.ts');
+const { FrontsOperations, createAnomalyReader } = await import('../server/fronts.ts');
 // oxlint-disable-next-line typescript/unbound-method -- Call with the captured facade and restore the original operation.
 const originalFrontsInit = FrontsOperations.frontsInit;
 const capturedFronts: { current?: import('../server/features.ts').FrontsCapabilities } = {};
@@ -294,6 +296,40 @@ try {
     const original: unknown = frontsCapabilities[key];
     assert.equal(Reflect.set(frontsCapabilities, key, {}), false, key + ' replacement denied');
     assert.equal(frontsCapabilities[key], original);
+  }
+  assert.equal(
+    Reflect.set(frontsCapabilities, 'readAnomalies', () => ({})),
+    false,
+  );
+  const originalNow = Date.now;
+  try {
+    const windowStart = 1000 * 6 * 3600000;
+    Date.now = () => windowStart;
+    const initial = game.features.fronts.anomalies();
+    assert.deepEqual(initial, anomaliesAt(SYSTEMS, windowStart));
+    Date.now = () => windowStart + 6 * 3600000 - 1;
+    assert.equal(game.features.fronts.anomalies(), initial, 'reuse the map within a window');
+    const otherService = createAnomalyReader();
+    const independent = otherService();
+    assert.deepEqual(independent, initial);
+    assert.notEqual(independent, initial, 'cache ownership is per service, not global');
+    Date.now = () => windowStart + 6 * 3600000;
+    const refreshed = game.features.fronts.anomalies();
+    assert.notEqual(refreshed, initial, 'rollover replaces the cached map');
+    assert.deepEqual(refreshed, anomaliesAt(SYSTEMS, Date.now()));
+    Date.now = () => windowStart;
+    assert.deepEqual(game.features.fronts.anomalies(), initial, 'clock rollback refreshes too');
+    const originalAnomalies = game.features.fronts.anomalies;
+    try {
+      game.features.fronts.anomalies = () => ({ meridian: 'fixture' });
+      assert.deepEqual(frontsCapabilities.anomalies(), { meridian: 'fixture' });
+    } finally {
+      game.features.fronts.anomalies = originalAnomalies;
+    }
+    for (const key of ['_an', '_anW'])
+      assert.equal(Object.hasOwn(game, key), false, 'cache state is not stored on Game');
+  } finally {
+    Date.now = originalNow;
   }
   const originalSessions = game.sessions;
   game.sessions = new Map();
