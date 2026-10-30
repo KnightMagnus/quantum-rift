@@ -171,6 +171,63 @@ for (const failingOperation of [
     assert.equal(JSON.stringify([logs, health.report(), game.tickFaults]).includes(secret), false);
   }
 }
+// World maintenance faults keep their exact origin without enabling unsafe continuation.
+for (const failingOperation of [
+  null,
+  'invasion',
+  'wave',
+  'arena',
+  'coop',
+  'hails',
+  'rivals',
+  'living',
+  'rival-sync',
+  'rival-sync-control',
+]) {
+  const { game, health, database, run, logs } = fixture();
+  const order: string[] = [];
+  const hook = (operation: string) => () => {
+    order.push(operation);
+    if (operation === failingOperation) {
+      database.world.news.push({ text: secret, t: 1 });
+      database.touch();
+      throw new TypeError(secret);
+    }
+  };
+  game.features.fronts.invasionTick = hook('invasion');
+  game.features.frontier.waveTick = hook('wave');
+  game.features.frontier.arenaTick = hook('arena');
+  game.features.coop.coopTick = hook('coop');
+  game.hails.tick = hook('hails');
+  game.features.rivals.rivalsTick = hook('rivals');
+  game.features.living.livingTick = hook('living');
+  game.features.rivals.rivalSync = hook('rival-sync');
+  const space = game.spaces.meridian;
+  space.players = 1;
+  space.tick = hook('space');
+  database.flush = hook('checkpoint');
+  const operations = failingOperation?.startsWith('rival-sync')
+    ? ['rival-sync']
+    : ['invasion', 'wave', 'arena', 'coop', 'hails', 'rivals', 'living'];
+  const newsCount = database.world.news.length;
+  game.tickN = failingOperation?.startsWith('rival-sync') ? 60 : 599;
+  run();
+  if (failingOperation === null || failingOperation === 'rival-sync-control') {
+    assert.deepEqual(order, [...operations, 'space', 'checkpoint']);
+    assert.equal(game.tickFaults.count, 0);
+    assert.equal(database.world.news.length, newsCount);
+  } else {
+    assert.deepEqual(order, operations.slice(0, operations.indexOf(failingOperation) + 1));
+    assert.equal(database.world.news.length, newsCount + 1);
+    assert.equal(game.tickFaults.lastOperation, failingOperation);
+    assert.equal(game.tickFaults.count, 1);
+    assert.equal(health.report().faultMaintenance?.count, 1);
+    assert.equal(health.report().faultType?.count, 1);
+    assert.equal(health.report().tickFailures?.count, 1);
+    assert.equal(logs.length, 1);
+    assert.equal(JSON.stringify([logs, health.report(), game.tickFaults]).includes(secret), false);
+  }
+}
 // Only a prebuilt refinery notification is safe to retry; authority stays outside the catch.
 for (const failure of ['transport', 'closed', 'backlog', 'payload', 'serialize']) {
   const { game, health, database, run } = fixture();

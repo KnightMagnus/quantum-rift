@@ -1919,6 +1919,16 @@ exact downstream ordering. Payload and serialization exceptions still abort befo
 the next captain or checkpoint. This is offline callback evidence, not a network
 reliability guarantee; checkpoint freeze/recovery remains covered separately.
 
+World maintenance has distinct operation identifiers for invasion, wave, arena,
+co-op, hails, rival careers, living-state updates and rival synchronization.
+The world-hook fault matrix checks each identifier, exact execution prefixes,
+maintenance/type counters, sanitized logs and skipped space/checkpoint work after
+an injected shared-state mutation. Its successful control checks all seven
+scheduled hooks before space advancement and checkpointing; rival synchronization
+uses its separate scheduling tick. These are injected callback faults, not claims
+that every real hook or mutation path is covered. No new catch or rollback boundary
+is introduced; world maintenance still aborts on failure.
+
 Fault operations and kinds are fixed literals. Logs and counters never include thrown messages, stacks, captain identifiers or payloads. Fault sampling uses the existing bounded health window; native host logs emit the first 19 faults and every 500th thereafter while counters continue.
 
 ### Retained-account performance fixtures
