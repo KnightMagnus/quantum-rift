@@ -94,6 +94,19 @@ const request: PortPurchaseAction = ${request}; void request;`);
   );
   assert.notEqual(scheduleResult.status, 0, 'invasion scheduling is not Game state');
   assert.match(scheduleResult.stdout + scheduleResult.stderr, /does not exist/);
+  for (const reference of ['_livingStarted', '_mkt']) {
+    const livingResult = check(
+      `declare const game: import('${modulePath('game.ts')}').Game; void game.${reference};`,
+    );
+    assert.notEqual(livingResult.status, 0, 'Living private state is not Game state');
+    assert.match(livingResult.stdout + livingResult.stderr, /does not exist/);
+  }
+  const livingReaderResult = check(
+    `declare const capabilities: import('${frontsType}').LivingCapabilities;
+capabilities.readMarketSystems = () => [];`,
+  );
+  assert.notEqual(livingReaderResult.status, 0, 'Living cache reader cannot be replaced');
+  assert.match(livingReaderResult.stdout + livingReaderResult.stderr, /read-only/);
   const bindingPath = modulePath('feature-service.js');
   const bindingFixture = `import {bindOperations} from '${bindingPath}';
 function run(this: {required: number}): number{return this.required;}

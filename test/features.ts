@@ -14,6 +14,7 @@ import { Game } from '../server/game.ts';
 import { createFeatures } from '../server/features.ts';
 import { SYSTEMS } from '../shared/galaxy.ts';
 import { INVASION, anomaliesAt } from '../shared/fronts.ts';
+import { STATE_SHARE } from '../shared/living.ts';
 
 // Characterization checks ordering, stacking, schema, payloads and session normalization.
 // capture-features runs in a separate process with fixed time and RNG. The baseline
@@ -280,6 +281,14 @@ FrontsOperations.frontsInit = function () {
   capturedFronts.current = this;
   return originalFrontsInit.call(this);
 };
+const { LivingOperations } = await import('../server/living.ts');
+// oxlint-disable-next-line typescript/unbound-method -- Capture the real facade during initialization.
+const originalLivingInit = LivingOperations.livingInit;
+const capturedLiving: { current?: import('../server/features.ts').LivingCapabilities } = {};
+LivingOperations.livingInit = function () {
+  capturedLiving.current = this;
+  return originalLivingInit.call(this);
+};
 try {
   globalThis.setInterval = (() => ({ unref() {} })) as unknown as typeof setInterval;
   game = new Game(
@@ -289,8 +298,71 @@ try {
 } finally {
   globalThis.setInterval = interval;
   FrontsOperations.frontsInit = originalFrontsInit;
+  LivingOperations.livingInit = originalLivingInit;
 }
 try {
+  const livingCapabilities = capturedLiving.current;
+  assert.ok(livingCapabilities);
+  const marketSystems = game.features.living.marketSystems();
+  assert.deepEqual(
+    marketSystems,
+    SYSTEMS.filter(
+      (system) =>
+        !system.arena &&
+        system.stellars.some(
+          (stellar) => stellar.svc && stellar.svc.includes('T') && !stellar.site,
+        ),
+    ).map((system) => system.id),
+    'market selection retains trade-port/site/arena filtering and order',
+  );
+  assert.equal(game.features.living.marketSystems(), marketSystems, 'cache identity is stable');
+  assert.equal(
+    Reflect.set(livingCapabilities, 'readMarketSystems', () => []),
+    false,
+  );
+  const otherLiving = createFeatures(game).living;
+  assert.deepEqual(otherLiving.marketSystems(), marketSystems);
+  assert.notEqual(
+    otherLiving.marketSystems(),
+    marketSystems,
+    'market caches belong to each service',
+  );
+  assert.equal(livingCapabilities._livingStarted, true, 'Game initialization completes warmup');
+  const originalStates = game.db.world.states;
+  const originalCooldowns = game.db.world.stateCool;
+  const originalMarketSystems = game.features.living.marketSystems;
+  try {
+    game.db.world.states = {};
+    game.db.world.stateCool = Object.fromEntries(
+      marketSystems.map((id) => [id, Date.now() + 600000]),
+    );
+    let reads = 0;
+    const countMarkets = () => {
+      reads++;
+      return marketSystems;
+    };
+    otherLiving.marketSystems = countMarkets;
+    otherLiving.livingTick();
+    assert.equal(
+      reads,
+      1 + Math.round(marketSystems.length * STATE_SHARE) * 3,
+      'a new composition uses the initial population budget even when the original is warm',
+    );
+    reads = 0;
+    otherLiving.livingTick();
+    assert.equal(reads, 7, 'subsequent ticks use the six-attempt budget');
+    game.features.living.marketSystems = countMarkets;
+    reads = 0;
+    game.features.living.livingTick();
+    assert.equal(reads, 7, 'the original service remains warm and resolves live market providers');
+    assert.deepEqual(game.db.world.states, {}, 'cooldown suppression is unchanged');
+    for (const key of ['_livingStarted', '_mkt'])
+      assert.equal(key in game, false, key + ' is no longer exposed on Game');
+  } finally {
+    game.db.world.states = originalStates;
+    game.db.world.stateCool = originalCooldowns;
+    game.features.living.marketSystems = originalMarketSystems;
+  }
   const frontsCapabilities = capturedFronts.current;
   assert.ok(frontsCapabilities);
   for (const key of ['db', 'sessions', 'spaces'] as const) {

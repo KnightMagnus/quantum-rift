@@ -657,13 +657,13 @@
       ],
       "uses": [
         "_livingStarted",
-        "_mkt",
         "db",
         "impact",
         "livingInit",
         "log",
         "marketSystems",
         "news",
+        "readMarketSystems",
         "resolveState",
         "stateOf",
         "stateProgress",
@@ -674,7 +674,12 @@
       ],
       "baselineExport": "LivingMixin",
       "exportName": "LivingOperations",
-      "stateWrites": ["_livingStarted", "_mkt", "worldKey"],
+      "stateWrites": ["_livingStarted", "worldKey"],
+      "stateOwners": {
+        "_livingStarted": "Living composition closure",
+        "marketSystems": "Living cache reader closure",
+        "worldKey": "Game"
+      },
       "hooks": {
         "worldInit": ["livingInit", "livingTick"],
         "tick20s": ["livingTick"]

@@ -298,10 +298,12 @@ export type DocksCapabilities = Pick<
     | 'wingRepair'
   > &
   Pick<BoundOperations<HangarOperations>, 'dockSlots' | 'hangarInit' | 'uid'>;
-export type LivingCapabilities = Pick<
-  FeatureCore,
-  '_livingStarted' | '_mkt' | 'db' | 'log' | 'toast' | 'worldKey' | 'you'
-> &
+export type LivingCapabilities = {
+  /** Whether this service has completed its initial population tick. */
+  _livingStarted: boolean | undefined;
+  /** Read the service-owned trade-port cache without exposing its storage. */
+  readonly readMarketSystems: () => string[];
+} & Pick<FeatureCore, 'db' | 'log' | 'toast' | 'worldKey' | 'you'> &
   Pick<
     BoundOperations<LivingOperations>,
     | 'impact'
@@ -416,7 +418,7 @@ import { FleetCmdOperations } from './fleetcmd.ts';
 import { SyndicateOperations } from './syndicate.ts';
 import { ArcsOperations } from './arcs.ts';
 import { DocksOperations } from './docks.ts';
-import { LivingOperations } from './living.ts';
+import { LivingOperations, createMarketSystemReader } from './living.ts';
 import { QuestOperations } from './quests.ts';
 import { CoopOperations as CoopImplementation } from './coop.ts';
 
@@ -1230,18 +1232,17 @@ export function createFeatures(core: Game): FeatureServices {
   };
   features.docks = bindOperations(DocksOperations, docksCapabilities);
 
+  let livingStarted: boolean | undefined;
+  const readMarketSystems = createMarketSystemReader();
   const livingCapabilities: LivingCapabilities = {
+    get readMarketSystems() {
+      return readMarketSystems;
+    },
     get _livingStarted() {
-      return core._livingStarted;
+      return livingStarted;
     },
     set _livingStarted(value) {
-      core._livingStarted = value;
-    },
-    get _mkt() {
-      return core._mkt;
-    },
-    set _mkt(value) {
-      core._mkt = value;
+      livingStarted = value;
     },
     get db() {
       return core.db;
