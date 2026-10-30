@@ -126,8 +126,6 @@
       ],
       "uses": [
         "A",
-        "_an",
-        "_anW",
         "anomalies",
         "armadaBonus",
         "bonus",
@@ -144,6 +142,7 @@
         "ownSite",
         "platform",
         "pushWorld",
+        "readAnomalies",
         "refreshPlayer",
         "sessions",
         "spaces",
@@ -158,7 +157,7 @@
       ],
       "baselineExport": "FrontsMixin",
       "exportName": "FrontsOperations",
-      "stateWrites": ["_an", "_anW", "invasion", "lastInvWin"],
+      "stateWrites": ["invasion", "lastInvWin"],
       "hooks": {
         "worldInit": ["frontsInit"],
         "tick2s": ["invasionTick"],

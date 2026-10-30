@@ -704,14 +704,6 @@ export class Game<Storage extends Database = Database> {
   /**
    * Legacy feature state; see docs/FEATURES.md.
    */
-  _an: Record<string, string> | undefined;
-  /**
-   * Legacy feature state; see docs/FEATURES.md.
-   */
-  _anW: number | undefined;
-  /**
-   * Legacy feature state; see docs/FEATURES.md.
-   */
   invasion:
     | { sys: string; boss: InvasionBoss; until: number; ent: Entity; sp: SpaceSpace }
     | null

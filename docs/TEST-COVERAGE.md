@@ -469,7 +469,11 @@ All 15 provider namespaces from `docs/feature-inventory.json` and
 `shipStats`, `world` and `sessions` facades delegate to those providers; their
 layer ordering and representative payloads are additionally characterized by
 `test/features.ts`. That fixed baseline and `test/typecheck-contracts.ts` are
-**not** substitutes for gameplay behavior tests.
+**not** substitutes for gameplay behavior tests. The feature checks also compare
+anomaly maps with the shared deterministic calculation before and after six-hour
+rollover and clock rollback, verify same-window identity and per-service cache
+isolation, deny cache-reader replacement and retain live named-provider replacement.
+Type checks reject access to the removed cache fields.
 
 ## Exposed action mapping
 

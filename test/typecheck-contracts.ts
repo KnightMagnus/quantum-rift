@@ -77,12 +77,17 @@ const request: PortPurchaseAction = ${request}; void request;`);
     0,
     infrastructureResult.stdout + infrastructureResult.stderr,
   );
-  for (const reference of ['db', 'sessions', 'spaces']) {
+  for (const reference of ['db', 'sessions', 'spaces', 'readAnomalies']) {
     infrastructureResult = check(
       frontsFixture + `capabilities.${reference} = capabilities.${reference};`,
     );
     assert.notEqual(infrastructureResult.status, 0, 'features cannot replace ' + reference);
     assert.match(infrastructureResult.stdout + infrastructureResult.stderr, /read-only/);
+  }
+  for (const reference of ['_an', '_anW']) {
+    const cacheResult = check(frontsFixture + `void capabilities.${reference};`);
+    assert.notEqual(cacheResult.status, 0, 'cache internals are not capabilities');
+    assert.match(cacheResult.stdout + cacheResult.stderr, /does not exist/);
   }
   const bindingPath = modulePath('feature-service.js');
   const bindingFixture = `import {bindOperations} from '${bindingPath}';

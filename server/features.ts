@@ -87,14 +87,15 @@ export type HangarCapabilities = Pick<
   Pick<BoundOperations<CoopOperations>, 'rescueBoard'> &
   Pick<BoundOperations<StoryOperations>, 'storyProgress'> &
   Pick<BoundOperations<SyndicateOperations>, 'synGain'>;
-export type FrontsCapabilities = Pick<
+export type FrontsCapabilities = {
+  /** Read the Fronts-owned six-hour anomaly cache without exposing cache state. */
+  readonly readAnomalies: () => Record<string, string>;
+} & Pick<
   FeatureCore,
   | 'ownSite'
   | 'outfitInstallProblem'
   | 'A'
   | 'platform'
-  | '_an'
-  | '_anW'
   | 'broadcast'
   | 'db'
   | 'invasion'
@@ -403,7 +404,7 @@ import { landingRefused } from '../shared/reputation.ts';
 import { purchaseUnit, saleValue } from './trade-pricing.ts';
 import { bindOperations } from './feature-service.ts';
 import { HangarOperations } from './hangar.ts';
-import { FrontsOperations } from './fronts.ts';
+import { createAnomalyReader, FrontsOperations } from './fronts.ts';
 import { FrontierOperations } from './frontier.ts';
 import { SpecialistOperations } from './specialists.ts';
 import { HostileOperations } from './hostile.ts';
@@ -583,6 +584,7 @@ export function createFeatures(core: Game): FeatureServices {
   };
   features.hangar = bindOperations(HangarOperations, hangarCapabilities);
 
+  const readAnomalies = createAnomalyReader();
   const frontsCapabilities: FrontsCapabilities = {
     ownSite: core.ownSite.bind(core),
     outfitInstallProblem: core.outfitInstallProblem.bind(core),
@@ -595,17 +597,8 @@ export function createFeatures(core: Game): FeatureServices {
     set A(value) {
       core.A = value;
     },
-    get _an() {
-      return core._an;
-    },
-    set _an(value) {
-      core._an = value;
-    },
-    get _anW() {
-      return core._anW;
-    },
-    set _anW(value) {
-      core._anW = value;
+    get readAnomalies() {
+      return readAnomalies;
     },
     get anomalies() {
       return features.fronts.anomalies;
