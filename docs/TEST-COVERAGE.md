@@ -1852,3 +1852,60 @@ Mission route controls explain uncharted routes without revealing paths or hidin
 Feature boundary regressions deny database/session/space reference replacement,
 retain late-bound composition-root reads and lazy wake, and type-check readonly
 core-picked capabilities. Nested live state remains mutable.
+
+Snapshot routing in `test/health.ts` compares public, owner-only and sight-gated
+ship/projectile/beam rows for flying and docked recipients against the legacy
+visibility expression. Public routes perform zero recipient array filters;
+restricted routes retain three filters per recipient. This is allocation evidence,
+not a wall-clock speedup claim.
+
+### Tick fault origins
+
+`tick-faults.ts` belongs to `performance-health`. Offline native callback fixtures inject deferred, per-captain maintenance, simulation and storage failures. They check sanitized classifications, bounded logging, skipped downstream work and frozen-authority retirement. `health.ts` retains space-failure counter and log-suppression coverage.
+
+Per-captain hooks remain fail-closed: idle completion, mission progress/deadlines, quest sweep/salvage, banking, raids, specialist progress and holdout updates can mutate saved progress or world entities. Refinery payload construction also advances the economy. None has a rollback boundary that makes catch-and-continue safe. Deferred callbacks and uncertain checkpoint writes remain fail-closed too. Existing per-space isolation is unchanged; it is not a rollback guarantee. No new maintenance quarantine is claimed.
+
+The maintenance fault matrix injects an exception after a fixture credit mutation
+at each of the nine captain hooks below. Each case checks the exact completed
+prefix, unchanged second-captain credits, skipped world/space/checkpoint work,
+operation classification and diagnostic privacy. The no-fault control checks both
+captains run in order before world, space and checkpoint work. A separate fixture
+runs the real bank hook with a failing socket send: loan schedule, balance and
+credits have already changed when notification throws. Aborting the tick is not
+rollback; the tests do not claim that an in-memory partial mutation is repaired or
+that a later tick cannot checkpoint it.
+
+| Hook                                         | Mutable authority reached by the hook                                          | Isolation status                    |
+| -------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------- |
+| [`idleCheck`](../server/game.ts)             | Station/research completion, tutorial and specialist progress, shuttle results | No rollback boundary                |
+| [`missionIdle`](../server/fronts.ts)         | Survey progress and mission scan state                                         | No rollback boundary                |
+| [`missionDeadlines`](../server/syndicate.ts) | Warning/failure flags, reputation and mission removal                          | No rollback boundary                |
+| [`questSweep`](../server/quests.ts)          | Quest reconciliation, completion and passenger boarding                        | No rollback boundary                |
+| [`questSalvageIdle`](../server/quests.ts)    | Space loot creation                                                            | No rollback boundary                |
+| [`bankTick`](../server/syndicate.ts)         | Loan schedule/balance, credits and credit rating before notification           | Partial mutation reproduced offline |
+| [`raidCheck`](../server/frontier.ts)         | Station raid schedule, spawned waves or raid resolution                        | No rollback boundary                |
+| [`specIdle`](../server/specialists.ts)       | Sampling timer and specialist progress                                         | No rollback boundary                |
+| [`holdoutTick`](../server/hostile.ts)        | Saved encounter state and spawned platforms/waves                              | No rollback boundary                |
+| [`refinery.payload`](../server/refinery.ts)  | Calls economy advancement and rush synchronization before payload construction | Not a read-only notification        |
+
+None of these hooks is currently safe to catch and continue solely because it
+belongs to one captain. A future isolation change needs an explicit commit/rollback
+boundary covering saved state, shared entities and outgoing effects, or a genuinely
+read-only notification stage after authority commits. It must test successful
+unrelated-captain/world/space continuation, prevent duplicate rewards on retry and
+preserve checkpoint freeze/recovery. The fault matrix above deliberately tests
+abort behavior, not such an isolation implementation. Feature ownership work is
+separate from transaction ownership; moving a hook to a service does not make its
+writes atomic.
+
+Fault operations and kinds are fixed literals. Logs and counters never include thrown messages, stacks, captain identifiers or payloads. Fault sampling uses the existing bounded health window; native host logs emit the first 19 faults and every 500th thereafter while counters continue.
+
+### Retained-account performance fixtures
+
+`performance-growth.ts` verifies that disconnected account growth increases checkpoint bytes without increasing live sessions, and that bounded synthetic synchronous storage delay appears in checkpoint duration. It checks argument bounds without asserting machine-specific performance targets. The in-process harness does not measure native match stalls, PostgreSQL or browser frames.
+
+### Fuzz packet seeds
+
+`fuzz-seeds.ts` checks packet-generator replay, sequence diversity, override precedence and invalid seed rejection. `fuzz.ts` retains its admission probes and state invariants. Packet seed precedence is positional argument, `RIFT_FUZZ_PACKET_SEED`, `RIFT_TEST_SEED`, then 123456789. Simulation randomness uses `RIFT_TEST_SEED` through the existing preload. Canonical PR checks retain the fixed default; the weekly fuzz workflow runs packet seeds 42 and 987654321 with the default scenario seed. Each run prints its effective seeds and replay command. These bounded streams do not exhaust malformed packet sequences.
+
+Pinned Node 27 checks at 4,000 packets produced SHA-256 packet RNG trace `aa202e625d63126d347ae92e8454d089202c900e413611e05dd8d5a5f1fa5cbb` for seed 42 on two runs, and `25a7af8db0180113639d04c03ed7014c83f9dd0509f915f2f3e0ec5daa5cf55d` for seed 987654321. Both visited all 57 registered routes without logged errors. The digest describes random draws, not a guarantee of whole-world deterministic replay.

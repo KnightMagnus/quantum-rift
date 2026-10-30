@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import { sharedSnapshotEncoder } from '../server/snapshot-encoding.ts';
 import type { SpaceSnapshot } from '../server/space.ts';
 import assert from 'node:assert/strict';
@@ -167,4 +168,119 @@ for (const ships of [[], [[1, 703, 0, 'Unicode é🚀 and "quote"']]]) {
     };
     assert.equal(encode(fields), JSON.stringify({ t: 'snap', ...shared, ...fields }));
   }
+}
+
+// Exercise the real tick route for public/private, flying/docked recipients.
+const snapshotDatabase = new NakamaDatabase({ read: () => null, write: () => '1' });
+const snapshotGame = new Game(
+  JSON.parse(filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8')),
+  snapshotDatabase,
+  {
+    automaticClock: false,
+    seedDefinitions: [],
+    defer: () => {},
+    randomUUID: () => '00000000-0000-4000-8000-000000000149',
+  },
+);
+const recipients = Array.from({ length: 4 }, (_, index) => {
+  const connection = Object.assign(new EventEmitter(), {
+    open: true,
+    backlog: 0,
+    send() {},
+    close() {},
+  });
+  snapshotGame.connect(connection);
+  const session = [...snapshotGame.sessions.values()].at(-1)!;
+  const name = 'Snapshot Pilot ' + index;
+  snapshotDatabase.withAuthenticatedCaptain(name, () =>
+    snapshotGame.onMessage(session, { t: 'hello', name, pass: 'fixture' }),
+  );
+  session.data.tut = 999;
+  session.data.sys = 'meridian';
+  if (index < 2) {
+    session.data.stellar = null;
+    snapshotGame.spawnPlayer(session, 10000 + index * 100, 10000, 0, 0);
+  }
+  return session;
+});
+const snapshotSpace = snapshotGame.spaces.meridian;
+snapshotSpace.tick = () => {};
+const marker = snapshotSpace.makeShip({
+  hull: 704,
+  faction: 'quantum',
+  x: 10000,
+  y: 10000,
+  a: 0,
+  ai: 'patrol',
+});
+const payloads = new Map<unknown, Record<string, unknown>>();
+snapshotGame.send = (session, message) => {
+  const payload = typeof message === 'string' ? JSON.parse(message) : message;
+  if (payload.t === 'snap' || payload.t === 'scene') payloads.set(session.sock, payload);
+};
+let filterCalls = 0;
+const originalSnapshot = snapshotSpace.snapshot.bind(snapshotSpace);
+snapshotSpace.snapshot = () => {
+  const snapshot = originalSnapshot();
+  snapshot.shots.push([1, 0, 0, 0, 0, marker.id]);
+  snapshot.beams.push([marker.id, 0, 0, 0, 0]);
+  for (const rows of [snapshot.ships, snapshot.shots, snapshot.beams]) {
+    const originalFilter = rows.filter.bind(rows);
+    Object.defineProperty(rows, 'filter', {
+      value: (...parameters: Parameters<typeof rows.filter>) => {
+        filterCalls++;
+        return originalFilter(...parameters);
+      },
+    });
+  }
+  return snapshot;
+};
+for (const restriction of ['public', 'owner', 'docked-owner', 'sight'] as const) {
+  const restricted = restriction !== 'public';
+  marker.story =
+    restriction === 'owner'
+      ? recipients[0].id
+      : restriction === 'docked-owner'
+        ? recipients[2].id
+        : undefined;
+  marker.storySight = restriction === 'sight' ? 'thalassi' : undefined;
+  (recipients[0].data.story.flags ??= {}).convoy_visible = true;
+  payloads.clear();
+  filterCalls = 0;
+  snapshotGame.tickN = 1;
+  snapshotGame.tick();
+  assert.equal(payloads.size, 4);
+  const source = originalSnapshot();
+  source.shots.push([1, 0, 0, 0, 0, marker.id]);
+  source.beams.push([marker.id, 0, 0, 0, 0]);
+  for (const session of recipients) {
+    const payload = payloads.get(session.sock)!;
+    const visible = (identifier: number) => {
+      const actor = snapshotSpace.ships.get(identifier);
+      return (
+        !actor ||
+        ((!actor.story || actor.story === session.id) &&
+          (!actor.storySight || !!session.data.story.flags?.convoy_visible))
+      );
+    };
+    for (const [key, ownerIndex] of [
+      ['ships', 0],
+      ['shots', 5],
+      ['beams', 0],
+    ] as const)
+      assert.deepEqual(
+        payload[key],
+        source[key].filter((row) => visible(Number(row[ownerIndex]))),
+      );
+    assert.equal(payload.t, session.ent ? 'snap' : 'scene');
+    assert.equal(
+      (payload.ships as unknown[][]).some((row) => row[0] === marker.id),
+      visible(marker.id),
+    );
+  }
+  assert.equal(
+    filterCalls,
+    restricted ? 12 : 0,
+    'public recipients allocate no discarded filtered arrays',
+  );
 }
