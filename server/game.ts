@@ -3496,12 +3496,14 @@ export class Game<Storage extends Database = Database> {
               (!actor.storySight || !!session.data.story.flags?.convoy_visible))
           );
         };
-        const personalSnapshot = {
-          ...spaceSnapshot,
-          ships: spaceSnapshot.ships.filter((row) => visible(Number(row[0]))),
-          shots: spaceSnapshot.shots.filter((row) => visible(Number(row[5]))),
-          beams: spaceSnapshot.beams.filter((row) => visible(Number(row[0]))),
-        };
+        const personalSnapshot = !privateEntities
+          ? spaceSnapshot
+          : {
+              ...spaceSnapshot,
+              ships: spaceSnapshot.ships.filter((row) => visible(Number(row[0]))),
+              shots: spaceSnapshot.shots.filter((row) => visible(Number(row[5]))),
+              beams: spaceSnapshot.beams.filter((row) => visible(Number(row[0]))),
+            };
         const entity = session.ent;
         if (!entity) {
           this.send(session, {

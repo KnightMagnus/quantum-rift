@@ -14,6 +14,10 @@ import type { MiningCapabilities } from './mining-contracts.ts';
 import type { PressureCapabilities } from './mining-pressure-contracts.ts';
 import type { RefineryCapabilities, RefineryPlayer } from './refinery-contracts.ts';
 import type { TowCapabilities } from './towing-contracts.ts';
+/** Infrastructure references are late-bound reads, not feature replacement hooks. */
+type FeatureCore = Omit<Game, 'db' | 'sessions' | 'spaces'> &
+  Readonly<Pick<Game, 'db' | 'sessions' | 'spaces'>>;
+
 export type FeatureServices = {
   index: BoundOperations<typeof IndexOperations>;
   nhal: BoundOperations<typeof NhalOperations>;
@@ -44,7 +48,7 @@ export type FeatureServices = {
   sessions: Pick<BoundOperations<typeof CoopImplementation>, 'sessionOf'>;
 };
 export type HangarCapabilities = Pick<
-  Game,
+  FeatureCore,
   | 'A'
   | 'holdUsed'
   | 'db'
@@ -84,7 +88,7 @@ export type HangarCapabilities = Pick<
   Pick<BoundOperations<StoryOperations>, 'storyProgress'> &
   Pick<BoundOperations<SyndicateOperations>, 'synGain'>;
 export type FrontsCapabilities = Pick<
-  Game,
+  FeatureCore,
   | 'ownSite'
   | 'outfitInstallProblem'
   | 'A'
@@ -118,7 +122,7 @@ export type FrontsCapabilities = Pick<
   Pick<BoundOperations<LivingOperations>, 'statesPayload'> &
   Pick<BoundOperations<FrontierOperations>, 'worldPayload'>;
 export type FrontierCapabilities = Pick<
-  Game,
+  FeatureCore,
   | 'A'
   | 'holdUsed'
   | 'arenaQ'
@@ -169,7 +173,7 @@ export type FrontierCapabilities = Pick<
     frontsWorldPayload: () => import('./fronts.ts').WorldPayload;
   };
 export type SpecialistsCapabilities = Pick<
-  Game,
+  FeatureCore,
   | 'A'
   | 'fitsJobs'
   | 'holdUsed'
@@ -193,7 +197,7 @@ export type SpecialistsCapabilities = Pick<
     frontierBonus: OmitThisParameter<typeof FrontierOperations.bonus>;
   };
 export type HostileCapabilities = Pick<
-  Game,
+  FeatureCore,
   'A' | 'db' | 'depart' | 'live' | 'log' | 'ownSite' | 'spaces' | 'toast' | 'tut' | 'you'
 > &
   Pick<BoundOperations<SpecialistOperations>, 'bonus' | 'specInit'> &
@@ -203,7 +207,7 @@ export type HostileCapabilities = Pick<
   Pick<BoundOperations<FrontierOperations>, 'notify'> &
   Pick<BoundOperations<DocksOperations>, 'activeWings' | 'wingBonus'>;
 export type StoryCapabilities = Pick<
-  Game,
+  FeatureCore,
   | 'A'
   | 'broadcast'
   | 'db'
@@ -227,7 +231,7 @@ export type StoryCapabilities = Pick<
     nhal: FeatureServices['nhal'];
   } & Pick<BoundOperations<FrontsOperations>, 'stats'>;
 export type RivalsCapabilities = Pick<
-  Game,
+  FeatureCore,
   'A' | 'db' | 'live' | 'log' | 'rivalEnts' | 'sessions' | 'spaces' | 'toast'
 > &
   Pick<
@@ -235,7 +239,7 @@ export type RivalsCapabilities = Pick<
     'news' | 'relOf' | 'rivalRel' | 'rivalState' | 'spawnHunters'
   >;
 export type HailCapabilities = Pick<
-  Game,
+  FeatureCore,
   'A' | 'db' | 'hails' | 'log' | 'send' | 'spaces' | 'toast' | 'you'
 > &
   Pick<
@@ -247,11 +251,14 @@ export type HailCapabilities = Pick<
   > &
   Pick<BoundOperations<RivalsOperations>, 'relOf' | 'rivalRel'>;
 export type FleetCommandsCapabilities = import('./contracts.ts').FleetCommandsCapabilities;
-export type SyndicateCapabilities = Pick<Game, 'A' | 'db' | 'landed' | 'log' | 'toast' | 'you'> &
+export type SyndicateCapabilities = Pick<
+  FeatureCore,
+  'A' | 'db' | 'landed' | 'log' | 'toast' | 'you'
+> &
   Pick<BoundOperations<SyndicateOperations>, 'bankAt' | 'bankInfo' | 'blackMarketAt' | 'synInit'> &
   Pick<BoundOperations<FrontierOperations>, 'notify'>;
 export type ArcsCapabilities = Pick<
-  Game,
+  FeatureCore,
   'A' | 'db' | 'landed' | 'log' | 'send' | 'toast' | 'you'
 > &
   Pick<
@@ -259,7 +266,7 @@ export type ArcsCapabilities = Pick<
     'arcComplete' | 'arcOffer' | 'arcOffersAt' | 'arcState' | 'arcsInit' | 'expeditionNext'
   >;
 export type DocksCapabilities = Pick<
-  Game,
+  FeatureCore,
   | 'A'
   | 'db'
   | 'fitsJobs'
@@ -290,7 +297,7 @@ export type DocksCapabilities = Pick<
   > &
   Pick<BoundOperations<HangarOperations>, 'dockSlots' | 'hangarInit' | 'uid'>;
 export type LivingCapabilities = Pick<
-  Game,
+  FeatureCore,
   '_livingStarted' | '_mkt' | 'db' | 'log' | 'toast' | 'worldKey' | 'you'
 > &
   Pick<
@@ -305,7 +312,7 @@ export type LivingCapabilities = Pick<
   > &
   Pick<BoundOperations<RivalsOperations>, 'news'>;
 export type QuestsCapabilities = Pick<
-  Game,
+  FeatureCore,
   'A' | 'db' | 'holdUsed' | 'landed' | 'log' | 'market' | 'send' | 'spaces' | 'toast' | 'you'
 > &
   Pick<
@@ -327,7 +334,7 @@ export type QuestsCapabilities = Pick<
   Pick<BoundOperations<FrontsOperations>, 'stats'> &
   Pick<BoundOperations<HangarOperations>, 'uid'>;
 export type CoopCapabilities = Pick<
-  Game,
+  FeatureCore,
   | 'A'
   | 'platform'
   | 'broadcast'
@@ -481,9 +488,6 @@ export function createFeatures(core: Game): FeatureServices {
     get db() {
       return core.db;
     },
-    set db(value) {
-      core.db = value;
-    },
     get dockSlots() {
       return features.hangar.dockSlots;
     },
@@ -544,9 +548,6 @@ export function createFeatures(core: Game): FeatureServices {
     },
     get spaces() {
       return core.spaces;
-    },
-    set spaces(value) {
-      core.spaces = value;
     },
     get specOnBoard() {
       return features.specialists.specOnBoard;
@@ -619,9 +620,6 @@ export function createFeatures(core: Game): FeatureServices {
     get db() {
       return core.db;
     },
-    set db(value) {
-      core.db = value;
-    },
     get event() {
       return features.fronts.event;
     },
@@ -656,14 +654,8 @@ export function createFeatures(core: Game): FeatureServices {
     get sessions() {
       return core.sessions;
     },
-    set sessions(value) {
-      core.sessions = value;
-    },
     get spaces() {
       return core.spaces;
-    },
-    set spaces(value) {
-      core.spaces = value;
     },
     get startInvasion() {
       return features.fronts.startInvasion;
@@ -726,9 +718,6 @@ export function createFeatures(core: Game): FeatureServices {
     },
     get db() {
       return core.db;
-    },
-    set db(value) {
-      core.db = value;
     },
     get defenseRating() {
       return features.frontier.defenseRating;
@@ -803,14 +792,8 @@ export function createFeatures(core: Game): FeatureServices {
     get sessions() {
       return core.sessions;
     },
-    set sessions(value) {
-      core.sessions = value;
-    },
     get spaces() {
       return core.spaces;
-    },
-    set spaces(value) {
-      core.spaces = value;
     },
     spawnPlayer: core.spawnPlayer.bind(core),
     get specOnRaid() {
@@ -852,9 +835,6 @@ export function createFeatures(core: Game): FeatureServices {
     broadcast: core.broadcast.bind(core),
     get db() {
       return core.db;
-    },
-    set db(value) {
-      core.db = value;
     },
     get flying() {
       return features.specialists.flying;
@@ -901,9 +881,6 @@ export function createFeatures(core: Game): FeatureServices {
     get db() {
       return core.db;
     },
-    set db(value) {
-      core.db = value;
-    },
     depart: core.depart.bind(core),
     get holdoutAnnounce() {
       return features.coop.holdoutAnnounce;
@@ -939,9 +916,6 @@ export function createFeatures(core: Game): FeatureServices {
     ownSite: core.ownSite.bind(core),
     get spaces() {
       return core.spaces;
-    },
-    set spaces(value) {
-      core.spaces = value;
     },
     get specInit() {
       return features.specialists.specInit;
@@ -980,9 +954,6 @@ export function createFeatures(core: Game): FeatureServices {
     broadcast: core.broadcast.bind(core),
     get db() {
       return core.db;
-    },
-    set db(value) {
-      core.db = value;
     },
     get dockSlots() {
       return features.hangar.dockSlots;
@@ -1024,9 +995,6 @@ export function createFeatures(core: Game): FeatureServices {
     get db() {
       return core.db;
     },
-    set db(value) {
-      core.db = value;
-    },
     get live() {
       return core.live;
     },
@@ -1055,14 +1023,8 @@ export function createFeatures(core: Game): FeatureServices {
     get sessions() {
       return core.sessions;
     },
-    set sessions(value) {
-      core.sessions = value;
-    },
     get spaces() {
       return core.spaces;
-    },
-    set spaces(value) {
-      core.spaces = value;
     },
     get spawnHunters() {
       return features.rivals.spawnHunters;
@@ -1093,9 +1055,6 @@ export function createFeatures(core: Game): FeatureServices {
     get db() {
       return core.db;
     },
-    set db(value) {
-      core.db = value;
-    },
     get hailPlanet() {
       return features.hail.hailPlanet;
     },
@@ -1119,9 +1078,6 @@ export function createFeatures(core: Game): FeatureServices {
     get spaces() {
       return core.spaces;
     },
-    set spaces(value) {
-      core.spaces = value;
-    },
     toast: core.toast.bind(core),
     you: core.you.bind(core),
   };
@@ -1132,9 +1088,6 @@ export function createFeatures(core: Game): FeatureServices {
     send: core.send.bind(core),
     get spaces() {
       return core.spaces;
-    },
-    set spaces(value) {
-      core.spaces = value;
     },
     get stats() {
       return features.shipStats.stats;
@@ -1162,9 +1115,6 @@ export function createFeatures(core: Game): FeatureServices {
     },
     get db() {
       return core.db;
-    },
-    set db(value) {
-      core.db = value;
     },
     landed: core.landed.bind(core),
     log: core.log.bind(core),
@@ -1204,9 +1154,6 @@ export function createFeatures(core: Game): FeatureServices {
     get db() {
       return core.db;
     },
-    set db(value) {
-      core.db = value;
-    },
     get expeditionNext() {
       return features.arcs.expeditionNext;
     },
@@ -1234,9 +1181,6 @@ export function createFeatures(core: Game): FeatureServices {
     get db() {
       return core.db;
     },
-    set db(value) {
-      core.db = value;
-    },
     get dockCount() {
       return features.docks.dockCount;
     },
@@ -1257,9 +1201,6 @@ export function createFeatures(core: Game): FeatureServices {
     outfitter: core.outfitter.bind(core),
     get sessions() {
       return core.sessions;
-    },
-    set sessions(value) {
-      core.sessions = value;
     },
     get shipUid() {
       return features.docks.shipUid;
@@ -1309,9 +1250,6 @@ export function createFeatures(core: Game): FeatureServices {
     },
     get db() {
       return core.db;
-    },
-    set db(value) {
-      core.db = value;
     },
     get impact() {
       return features.living.impact;
@@ -1371,9 +1309,6 @@ export function createFeatures(core: Game): FeatureServices {
     get db() {
       return core.db;
     },
-    set db(value) {
-      core.db = value;
-    },
     get fill() {
       return features.quests.fill;
     },
@@ -1405,9 +1340,6 @@ export function createFeatures(core: Game): FeatureServices {
     send: core.send.bind(core),
     get spaces() {
       return core.spaces;
-    },
-    set spaces(value) {
-      core.spaces = value;
     },
     get stateOf() {
       return features.living.stateOf;
@@ -1463,9 +1395,6 @@ export function createFeatures(core: Game): FeatureServices {
     broadcast: core.broadcast.bind(core),
     get db() {
       return core.db;
-    },
-    set db(value) {
-      core.db = value;
     },
     get dm() {
       return features.coop.dm;
@@ -1547,9 +1476,6 @@ export function createFeatures(core: Game): FeatureServices {
     get sessions() {
       return core.sessions;
     },
-    set sessions(value) {
-      core.sessions = value;
-    },
     get socialInit() {
       return features.coop.socialInit;
     },
@@ -1567,9 +1493,6 @@ export function createFeatures(core: Game): FeatureServices {
     },
     get spaces() {
       return core.spaces;
-    },
-    set spaces(value) {
-      core.spaces = value;
     },
     get stats() {
       return features.shipStats.stats;

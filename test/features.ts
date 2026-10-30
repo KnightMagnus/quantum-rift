@@ -269,6 +269,14 @@ const directory = fileSystem.mkdtempSync(
 const interval = globalThis.setInterval;
 process.env.SEEDS_FILE = '/nonexistent';
 let game;
+const { FrontsOperations } = await import('../server/fronts.ts');
+// oxlint-disable-next-line typescript/unbound-method -- Call with the captured facade and restore the original operation.
+const originalFrontsInit = FrontsOperations.frontsInit;
+const capturedFronts: { current?: import('../server/features.ts').FrontsCapabilities } = {};
+FrontsOperations.frontsInit = function () {
+  capturedFronts.current = this;
+  return originalFrontsInit.call(this);
+};
 try {
   globalThis.setInterval = (() => ({ unref() {} })) as unknown as typeof setInterval;
   game = new Game(
@@ -277,8 +285,33 @@ try {
   );
 } finally {
   globalThis.setInterval = interval;
+  FrontsOperations.frontsInit = originalFrontsInit;
 }
 try {
+  const frontsCapabilities = capturedFronts.current;
+  assert.ok(frontsCapabilities);
+  for (const key of ['db', 'sessions', 'spaces'] as const) {
+    const original: unknown = frontsCapabilities[key];
+    assert.equal(Reflect.set(frontsCapabilities, key, {}), false, key + ' replacement denied');
+    assert.equal(frontsCapabilities[key], original);
+  }
+  const originalSessions = game.sessions;
+  game.sessions = new Map();
+  assert.equal(
+    frontsCapabilities.sessions,
+    game.sessions,
+    'composition-root reads remain late-bound',
+  );
+  game.sessions = originalSessions;
+  const originalSpaces = game.spaces;
+  game.spaces = {};
+  assert.equal(frontsCapabilities.spaces, game.spaces);
+  game.spaces = originalSpaces;
+  assert.equal(
+    frontsCapabilities.spaces.meridian,
+    game.spaces.meridian,
+    'lazy wake keeps one live space',
+  );
   const routes = game.messageHandlers;
   const dispatched = [];
   game.messageHandlers = { types: routes.types, dispatch: (...args) => dispatched.push(args) };
