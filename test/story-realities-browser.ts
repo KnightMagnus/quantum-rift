@@ -73,6 +73,13 @@ choiceCaptain.story = {
     lamps_relit: true,
   },
 };
+const webglCaptain = database.create('Reality WebGL Choice', '', game.fresh());
+Object.assign(webglCaptain, {
+  sys: 'qgate',
+  stellar: 'qstation',
+  tut: 999,
+  story: structuredClone(choiceCaptain.story),
+});
 database.touch();
 database.flush();
 const port = await availablePort(),
@@ -765,6 +772,33 @@ try {
     path.join(evidence, 'results.json'),
     JSON.stringify({ visual, finale, images }, null, 2),
   );
+  const webglChoice = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await webglChoice.goto(origin + '/?renderer=webgl');
+  await webglChoice.locator('[data-slot="Reality WebGL Choice"]').click();
+  await webglChoice.waitForFunction(
+    () => G.landed && document.querySelector('#storyt')?.textContent === 'The Choice',
+  );
+  await webglChoice.getByRole('button', { name: /^The Table —/ }).click();
+  await webglChoice.waitForFunction(
+    () =>
+      document.querySelector<HTMLCanvasElement>('#endingcinematic canvas')?.dataset.scene ===
+      'fade',
+  );
+  const frozenWebgl = await webglChoice.evaluate(() => {
+    const canvas = document.querySelector<HTMLCanvasElement>('#endingcinematic canvas')!;
+    const pixels = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
+    let visible = 0;
+    for (let index = 0; index < pixels.length; index += 4)
+      if (pixels[index] + pixels[index + 1] + pixels[index + 2] > 60) visible++;
+    return { visible, renderer: document.querySelector<HTMLElement>('#view')!.dataset.renderer };
+  });
+  assert.equal(frozenWebgl.renderer, 'webgl');
+  assert.ok(
+    frozenWebgl.visible > 1000,
+    'WebGL fade preserves the scene instead of a cleared drawing buffer',
+  );
+  await webglChoice.screenshot({ path: path.join(evidence, 'webgl-departure-fade.png') });
+  await webglChoice.close();
   console.log(
     'PASS native reality ghost/glow/group/reduced-effects, hidden chart picking and authored Beyond the Rift arrival',
   );

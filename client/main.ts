@@ -1313,8 +1313,28 @@ function showStory(storyMessage: StoryMessage | undefined) {
       const button = document.createElement('button');
       button.className = 'btn';
       button.textContent = choice.label;
-      button.onclick = () => {
-        if (storyMessage.id === 'choice' && choice.value === 'table') prepareEndingDeparture();
+      button.onclick = async () => {
+        if (storyMessage.id === 'choice' && choice.value === 'table') {
+          const epoch = sessionEpoch;
+          const buttons = elementById2('storyb').querySelectorAll('button');
+          buttons.forEach((entry) => (entry.disabled = true));
+          let source: HTMLImageElement | undefined;
+          if (elementById2('view').dataset.renderer === 'webgl') {
+            try {
+              // WebGL clears its drawing buffer between frames. Capture through
+              // the engine before submitting the authoritative system transfer.
+              source = await flightEngine.engine.screenshot(true);
+            } catch {
+              if (epoch === sessionEpoch) {
+                buttons.forEach((entry) => (entry.disabled = false));
+                toast('The scene could not be captured. Please try again.');
+              }
+              return;
+            }
+          }
+          if (epoch !== sessionEpoch || !overlays.isTop('storybox')) return;
+          prepareEndingDeparture(source);
+        }
         send({ t: 'storyacc', id: storyMessage.id, choice: choice.value });
         close();
       };

@@ -29,7 +29,7 @@ export function endingShot(seconds: number) {
 
 let departureFrame: HTMLCanvasElement | null = null;
 /** Freeze the departure view before the authoritative transfer changes the live camera. */
-export function prepareEndingDeparture() {
+export function prepareEndingDeparture(source?: CanvasImageSource) {
   const view = document.getElementById('view') as HTMLCanvasElement | null;
   if (!view?.width || !view.height) return;
   const frame = document.createElement('canvas');
@@ -40,7 +40,7 @@ export function prepareEndingDeparture() {
   // world through the frozen departure when the server changes systems.
   context.fillStyle = '#000';
   context.fillRect(0, 0, frame.width, frame.height);
-  context.drawImage(view, 0, 0);
+  context.drawImage(source || view, 0, 0, frame.width, frame.height);
   // Closing the decision must not undim the backdrop and reveal scenery that
   // was barely visible behind the dialog. Preserve its exact tint in the fade.
   const choice = document.getElementById('storybox');
