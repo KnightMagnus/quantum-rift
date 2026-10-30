@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { packetSeed, packetRandom } from './helpers/fuzz-random.ts';
 import { requiredFixtureValue } from './helpers/required.ts';
 import { tempDataDir } from './helpers/temp-data.ts';
 import { parseClientAction } from '../shared/wire-commands.ts';
@@ -30,12 +32,20 @@ const game = new Game(assets, new Database(tempDataDir('rift-fuzz-')));
 const TYPES = [...game.messageHandlers.types];
 assert.ok(TYPES.length, 'the authenticated message registry must not be empty');
 assert.equal(new Set(TYPES).size, TYPES.length, 'registered message types must be unique');
-const seed = Number(process.argv[3] || 123456789) >>> 0;
-let randomState = seed;
+const seed = packetSeed(process.argv[3]);
+const nextPacketRandom = packetRandom(seed);
+const packetTrace = createHash('sha256');
 const randomFraction = () => {
-  randomState = (Math.imul(1664525, randomState) + 1013904223) >>> 0;
-  return randomState / 4294967296;
+  const value = nextPacketRandom();
+  packetTrace.update(`${value};`);
+  return value;
 };
+console.log(
+  `Packet seed: ${seed}; scenario seed: ${process.env.RIFT_TEST_SEED ?? '123456789'} (with seed-random preload)`,
+);
+console.log(
+  `Replay: RIFT_TEST_SEED=${process.env.RIFT_TEST_SEED ?? '123456789'} node --import ./test/seed-random.ts test/fuzz.ts ${process.argv[2] ?? '4000'} ${seed}`,
+);
 const dispatch = game.messageHandlers.dispatch,
   covered = new Set();
 game.messageHandlers = {
@@ -327,6 +337,7 @@ for (const captain of clients) {
       console.error('bad cargo', playerData.name, propertyKey2, value);
 }
 console.error = origErr;
+console.log(`Packet RNG trace SHA-256: ${packetTrace.digest('hex')}`);
 const uniq = [...new Set(errors.map((entity) => entity.split('\n').slice(0, 3).join(' | ')))];
 console.log(
   `${rounds} random messages + ${TYPES.length} coverage probes, seed ${seed}, ${covered.size}/${TYPES.length} registered message types: ${errors.length} errors, ${uniq.length} distinct`,

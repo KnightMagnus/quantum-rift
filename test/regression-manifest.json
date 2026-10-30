@@ -157,7 +157,8 @@
     "story-order-safety.ts",
     "syndicate-safety.ts",
     "quest-directions.ts",
-    "performance-growth.ts"
+    "performance-growth.ts",
+    "fuzz-seeds.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
