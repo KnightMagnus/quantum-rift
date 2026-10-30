@@ -403,8 +403,10 @@ export const advanceWorld: nkruntime.MatchLoopFunction<WorldHandle> = function a
     if (retireFrozenWorld(state, logger)) return null;
   }
   try {
+    state.game.tickFaults.operation = 'deferred';
     state.deferred.advance();
     state.game.tick();
+    state.game.tickFaults.operation = 'checkpoint';
     const checkpointTime = Date.now();
     state.lastCheckpointAt ??= checkpointTime;
     if (
@@ -416,8 +418,12 @@ export const advanceWorld: nkruntime.MatchLoopFunction<WorldHandle> = function a
       state.lastCheckpointAt = checkpointTime;
       state.pendingEconomicCheckpoint = false;
     }
-  } catch {
-    logger.error('World tick failed; health counters contain no payloads.');
+  } catch (error) {
+    const faults = state.game.tickFaults;
+    // Game.tick already records its own faults; host-only phases need recording here.
+    if (faults.operation === 'deferred' || faults.operation === 'checkpoint') faults.record(error);
+    if (faults.shouldLog())
+      logger.error('World tick failed: %s (%s).', faults.lastOperation, faults.lastKind);
   }
   if (retireFrozenWorld(state, logger)) return null;
   if (state.game.health && tick % 900 === 0)

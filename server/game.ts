@@ -10,6 +10,7 @@ import { COMPATIBILITY_MESSAGE, supportedProtocol } from '../shared/protocol.ts'
 import { storySystemVisible } from '../shared/story-world.ts';
 import { utf8Bytes } from '../shared/health.ts';
 import type { HealthMonitor } from '../shared/health.ts';
+import { TickFaults } from './tick-faults.ts';
 import { wireRecord } from '../shared/wire-actions.ts';
 import { parseClientAction, economicActionTypes } from '../shared/wire-commands.ts';
 import { playerPortrait } from '../shared/portraits.ts';
@@ -765,6 +766,8 @@ export class Game<Storage extends Database = Database> {
   solo: boolean | undefined;
   /** Optional numeric diagnostics; never part of saved or network state. */
   health?: HealthMonitor;
+  /** Bounded fault origin diagnostics, excluded from saves and wire state. */
+  tickFaults: TickFaults;
   /**
    * Initializes the game server, assets, storage, features, and tick loop.
    * @param assets Game assets object containing ships, weapons, outfits, and commodities.
@@ -778,6 +781,7 @@ export class Game<Storage extends Database = Database> {
       throw new Error('Automatic game clock requires platform.startClock');
     this.platform = host;
     this.health = host.health;
+    this.tickFaults = new TickFaults(this.health);
     augmentAssets(assets);
     this.A = assets;
     this.db = database;
@@ -828,7 +832,12 @@ export class Game<Storage extends Database = Database> {
         } catch {
           this.tickErr = (this.tickErr || 0) + 1;
           if (this.tickErr < 20 || this.tickErr % 500 === 0)
-            console.error('tick error', this.tickErr);
+            console.error(
+              'tick error',
+              this.tickErr,
+              this.tickFaults.lastOperation,
+              this.tickFaults.lastKind,
+            );
         }
       }, 1000 / TICK); // one bad ship never takes the server down
   }
@@ -3313,26 +3322,29 @@ export class Game<Storage extends Database = Database> {
    */
   tick(): void {
     const health = this.health;
-    if (!health) return this.advanceTick();
-    const started = health.now();
-    if (this.db.economicFrozen) health.observe('frozenTicks', 1);
+    this.tickFaults.operation = 'simulation';
+    const started = health?.now() ?? 0;
+    if (this.db.economicFrozen) health?.observe('frozenTicks', 1);
     try {
       this.advanceTick();
     } catch (error) {
-      health.observe('tickFailures', 1);
+      this.tickFaults.record(error);
+      health?.observe('tickFailures', 1);
       throw error;
     } finally {
-      health.observe('tickMs', health.now() - started);
-      const spaces = Object.values(this.live);
-      health.observe('systems', spaces.length);
-      health.observe(
-        'entities',
-        spaces.reduce((sum, space) => sum + space.ships.size, 0),
-      );
-      health.observe(
-        'shots',
-        spaces.reduce((sum, space) => sum + space.shots.length, 0),
-      );
+      if (health) {
+        health.observe('tickMs', health.now() - started);
+        const spaces = Object.values(this.live);
+        health.observe('systems', spaces.length);
+        health.observe(
+          'entities',
+          spaces.reduce((sum, space) => sum + space.ships.size, 0),
+        );
+        health.observe(
+          'shots',
+          spaces.reduce((sum, space) => sum + space.shots.length, 0),
+        );
+      }
     }
   }
   private advanceTick(): void {
@@ -3345,6 +3357,7 @@ export class Game<Storage extends Database = Database> {
     } // solo pause
     this.features.mining.advanceClock(1 / TICK);
     this.tickN++;
+    this.tickFaults.operation = 'refinery';
     if (this.tickN % 60 === 0)
       for (const session of this.sessions.values()) {
         if (!session.data) continue;
@@ -3377,22 +3390,33 @@ export class Game<Storage extends Database = Database> {
     if (this.tickN % (TICK * 2) === 0) {
       for (const session of this.sessions.values())
         if (session.data) {
+          this.tickFaults.operation = 'idle';
           this.idleCheck(session);
+          this.tickFaults.operation = 'mission-idle';
           this.features.fronts.missionIdle(session);
+          this.tickFaults.operation = 'deadlines';
           this.features.syndicate.missionDeadlines(session);
+          this.tickFaults.operation = 'quest-sweep';
           this.features.quests.questSweep(session);
+          this.tickFaults.operation = 'quest-salvage';
           this.features.quests.questSalvageIdle(session);
+          this.tickFaults.operation = 'bank';
           this.features.syndicate.bankTick(session);
+          this.tickFaults.operation = 'raid';
           this.features.frontier.raidCheck(session);
+          this.tickFaults.operation = 'specialist';
           this.features.specialists.specIdle(session);
+          this.tickFaults.operation = 'holdout';
           this.features.hostile.holdoutTick(session);
         }
+      this.tickFaults.operation = 'world';
       this.features.fronts.invasionTick();
       this.features.frontier.waveTick();
       this.features.frontier.arenaTick();
       this.features.coop.coopTick();
       this.hails.tick();
     }
+    this.tickFaults.operation = 'world';
     if (this.tickN % (TICK * 20) === 0) {
       this.features.rivals.rivalsTick();
       this.features.living.livingTick();
@@ -3414,6 +3438,7 @@ export class Game<Storage extends Database = Database> {
     }
     if (health) health.observe('featuresMs', health.now() - stageStarted);
     stageStarted = health?.now() ?? 0;
+    this.tickFaults.operation = 'simulation';
     // Docked observers keep the real system awake without a player entity.
     const observed = new Set();
     for (const session of this.sessions.values())
@@ -3424,11 +3449,14 @@ export class Game<Storage extends Database = Database> {
     for (const space of Object.values(this.live)) {
       const safeTick = () => {
         try {
+          this.tickFaults.operation = 'space';
           space.tick();
-        } catch {
+        } catch (error) {
+          this.tickFaults.record(error);
           health?.observe('spaceFailures', 1);
           space.errs = (space.errs || 0) + 1;
-          if (space.errs < 5) console.error('space tick error', space.id, space.errs);
+          if (space.errs < 5)
+            console.error('space tick error', space.errs, this.tickFaults.lastKind);
         }
       };
       if (space.players > 0 || observed.has(space.id)) {
@@ -3441,6 +3469,7 @@ export class Game<Storage extends Database = Database> {
       }
     }
     if (health) health.observe('spacesMs', health.now() - stageStarted);
+    this.tickFaults.operation = 'snapshot';
     if (this.tickN % 2) return;
     stageStarted = health?.now() ?? 0;
     const bySystem: Record<string, Session[]> = {};
@@ -3467,12 +3496,14 @@ export class Game<Storage extends Database = Database> {
               (!actor.storySight || !!session.data.story.flags?.convoy_visible))
           );
         };
-        const personalSnapshot = {
-          ...spaceSnapshot,
-          ships: spaceSnapshot.ships.filter((row) => visible(Number(row[0]))),
-          shots: spaceSnapshot.shots.filter((row) => visible(Number(row[5]))),
-          beams: spaceSnapshot.beams.filter((row) => visible(Number(row[0]))),
-        };
+        const personalSnapshot = !privateEntities
+          ? spaceSnapshot
+          : {
+              ...spaceSnapshot,
+              ships: spaceSnapshot.ships.filter((row) => visible(Number(row[0]))),
+              shots: spaceSnapshot.shots.filter((row) => visible(Number(row[5]))),
+              beams: spaceSnapshot.beams.filter((row) => visible(Number(row[0]))),
+            };
         const entity = session.ent;
         if (!entity) {
           this.send(session, {

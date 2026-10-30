@@ -41,6 +41,8 @@ export function runPerformanceScenario(
   ticks: number,
   enabled = true,
   requestedCaptains?: number,
+  retainedAccounts = 0,
+  storageDelayMs = 0,
 ) {
   if (
     requestedCaptains !== undefined &&
@@ -49,6 +51,10 @@ export function runPerformanceScenario(
     throw new Error('captains must be 2..30');
   if (!Number.isInteger(ticks) || ticks < 1 || ticks > 108000)
     throw new Error('ticks must be 1..108000');
+  if (!Number.isInteger(retainedAccounts) || retainedAccounts < 0 || retainedAccounts > 10000)
+    throw new Error('retainedAccounts must be 0..10000');
+  if (!Number.isFinite(storageDelayMs) || storageDelayMs < 0 || storageDelayMs > 50)
+    throw new Error('storageDelayMs must be 0..50');
   const originalRandom = Math.random;
   const originalNow = Date.now;
   let seed = 820024 + performanceScenarios.indexOf(name);
@@ -67,6 +73,10 @@ export function runPerformanceScenario(
       read: (key) => rows.get(key) ?? null,
       write: (key, value, version) => {
         assert.equal(version, rows.get(key)?.version ?? '*');
+        const stallUntil = performance.now() + storageDelayMs;
+        while (performance.now() < stallUntil) {
+          /* synchronous storage fault fixture */
+        }
         const next = String(++writes);
         rows.set(key, { value: structuredClone(value), version: next });
         return next;
@@ -107,6 +117,12 @@ export function runPerformanceScenario(
     const captainCount =
       requestedCaptains ?? (name === 'concentrated' || name === 'distributed' ? 12 : 2);
     const captains = Array.from({ length: captainCount }, (_, index) => login(index));
+    // Retained accounts have no connection and do not count toward the live captain cap.
+    const template = requiredFixtureValue(database.get('Load Pilot 0'));
+    for (let index = 0; index < retainedAccounts; index++) {
+      const name = `Retained Fixture ${index}`;
+      database.players[database.key(name)] = { ...structuredClone(template), name };
+    }
     const space = game.spaces.meridian;
     let miningFrames = 0;
     let towingAttached = false;
@@ -214,11 +230,15 @@ export function runPerformanceScenario(
       simulatedSeconds: ticks / 30,
       elapsedMs,
       captains: captainCount,
+      retainedAccounts,
+      storageDelayMs,
+      totalAccounts: Object.keys(database.players).length,
       reconnects,
       miningFrames,
       towingAttached,
       transport: 'in-process counting connection; no network latency',
-      checkpoint: 'memory CAS + structuredClone; no PostgreSQL latency',
+      checkpoint:
+        'memory CAS + structuredClone + configured synthetic synchronous delay; no PostgreSQL latency',
       metrics: report,
       outcome: {
         ticks: game.tickN,
