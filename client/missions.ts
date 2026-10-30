@@ -141,6 +141,23 @@ export function missionTargets(clientGameState: ClientGameState): MissionTarget[
       });
     }
   }
+  if (story2?.preparation) {
+    const preparation = story2.preparation;
+    const completed = preparation.components.filter((component) => component.complete).length;
+    const next = preparation.components.find((component) => !component.complete);
+    const destination = preparation.harnessBuilt ? null : next?.at || 'vigil-lamp';
+    missionTargets.push({
+      key: 'second-door',
+      kind: 'story',
+      title: 'Through the Second Door',
+      text: 'Recover the five promised components, fit the Rift Harness with the keepers, then cross the Quantum Rift.',
+      status: preparation.harnessBuilt
+        ? 'Fit your Rift Harness and approach the Second Door.'
+        : `${completed} / 5 components secured. ${next ? `${next.name}: meet the contact at ${placeName(next.at)}.` : 'Return to the keepers at Vigil Lamp to assemble the Harness.'}`,
+      sys: preparation.harnessBuilt ? 'quantum-rift' : systemOf(destination),
+      stellar: destination,
+    });
+  }
   for (const positionX of playerPayload.arcs || [])
     if (positionX.active) {
       // 1.2 faction arcs

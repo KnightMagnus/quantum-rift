@@ -18,6 +18,8 @@ export interface StoryMessage {
   arc?: string;
   choices?: Array<{ value: string; label: string }>;
   sequence?: 'ark-departure';
+  /** Server-confirmed Table branch; does not depend on a later player projection. */
+  tableEnding?: { lampsRelit: boolean };
 }
 export interface HailConversation {
   /** Known NPC-only machine hull, shown instead of a captain portrait. */

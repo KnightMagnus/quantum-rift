@@ -204,7 +204,18 @@ export type HostileCapabilities = Pick<
   Pick<BoundOperations<DocksOperations>, 'activeWings' | 'wingBonus'>;
 export type StoryCapabilities = Pick<
   Game,
-  'A' | 'broadcast' | 'db' | 'landed' | 'depart' | 'log' | 'send' | 'toast' | 'tradeIn' | 'you'
+  | 'A'
+  | 'broadcast'
+  | 'db'
+  | 'landed'
+  | 'depart'
+  | 'beginTableDeparture'
+  | 'canBeginTableDeparture'
+  | 'log'
+  | 'send'
+  | 'toast'
+  | 'tradeIn'
+  | 'you'
 > &
   Pick<BoundOperations<HangarOperations>, 'dockSlots'> &
   Pick<BoundOperations<DocksOperations>, 'leadChanged'> &
@@ -955,6 +966,8 @@ export function createFeatures(core: Game): FeatureServices {
       return features.fronts.stats;
     },
     depart: core.depart.bind(core),
+    beginTableDeparture: core.beginTableDeparture.bind(core),
+    canBeginTableDeparture: core.canBeginTableDeparture.bind(core),
     get nhal() {
       return features.nhal;
     },
