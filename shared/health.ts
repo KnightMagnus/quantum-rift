@@ -1,5 +1,13 @@
 /** Fixed names prevent user input from creating unbounded metric cardinality. */
 export type HealthMetric =
+  | 'faultDeferred'
+  | 'faultCheckpoint'
+  | 'faultSimulation'
+  | 'faultSnapshot'
+  | 'faultMaintenance'
+  | 'faultType'
+  | 'faultRange'
+  | 'faultOther'
   | 'tickMs'
   | 'featuresMs'
   | 'spacesMs'

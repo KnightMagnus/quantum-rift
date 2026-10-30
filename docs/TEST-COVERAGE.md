@@ -1845,6 +1845,14 @@ Urgent native checkpoint batches follow actual economic action mutations, not pa
 
 Mission route controls explain uncharted routes without revealing paths or hiding distant work. The registered mission browser checks disabled plotting, retained accepted work and unchanged discovery/chart state.
 
+### Tick fault origins
+
+`tick-faults.ts` belongs to `performance-health`. Offline native callback fixtures inject deferred, per-captain maintenance, simulation and storage failures. They check sanitized classifications, bounded logging, skipped downstream work and frozen-authority retirement. `health.ts` retains space-failure counter and log-suppression coverage.
+
+Per-captain hooks remain fail-closed: idle completion, mission progress/deadlines, quest sweep/salvage, banking, raids, specialist progress and holdout updates can mutate saved progress or world entities. Refinery payload construction also advances the economy. None has a rollback boundary that makes catch-and-continue safe. Deferred callbacks and uncertain checkpoint writes remain fail-closed too. Existing per-space isolation is unchanged; it is not a rollback guarantee. No new maintenance quarantine is claimed.
+
+Fault operations and kinds are fixed literals. Logs and counters never include thrown messages, stacks, captain identifiers or payloads. Fault sampling uses the existing bounded health window; native host logs emit the first 19 faults and every 500th thereafter while counters continue.
+
 ### Retained-account performance fixtures
 
 `performance-growth.ts` verifies that disconnected account growth increases checkpoint bytes without increasing live sessions, and that bounded synthetic synchronous storage delay appears in checkpoint duration. It checks argument bounds without asserting machine-specific performance targets. The in-process harness does not measure native match stalls, PostgreSQL or browser frames.

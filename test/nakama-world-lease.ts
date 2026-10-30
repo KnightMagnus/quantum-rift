@@ -1,3 +1,4 @@
+import { TickFaults } from '../server/tick-faults.ts';
 import { GAME_PROTOCOL } from '../shared/protocol.ts';
 import {
   advanceWorld,
@@ -142,6 +143,7 @@ const callbackState = {
   connections: new Map(),
   database: { economicFrozen: false, flush: () => {} },
   game: {
+    tickFaults: new TickFaults(),
     tick: () => {
       gameTicks++;
     },
@@ -512,6 +514,7 @@ assert.equal(capacitySessions.size, 30);
       },
     },
     game: {
+      tickFaults: new TickFaults(),
       tick: () => {
         advances++;
       },
