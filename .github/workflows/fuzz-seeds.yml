@@ -1,0 +1,29 @@
+name: Scheduled packet seed diversity
+on:
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        packet-seed: [42, 987654321]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node tools/runtime/install-node.ts
+      - run: npm ci
+      - run: node --import ./test/seed-random.ts test/fuzz.ts 20000
+        env:
+          RIFT_TEST_SEED: '123456789'
+          RIFT_FUZZ_PACKET_SEED: ${{ matrix.packet-seed }}
