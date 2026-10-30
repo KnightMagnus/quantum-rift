@@ -1844,3 +1844,9 @@ The landed service fixtures also start native Tab and Shift+Tab from BODY, witho
 Urgent native checkpoint batches follow actual economic action mutations, not packet names or unrelated tick dirtiness. Denied/no-op requests cannot force writes; successful `buyship`/`station` and other economic changes coalesce within 250 ms. Cancelled queued local handshakes are skipped before starting another password worker.
 
 Mission route controls explain uncharted routes without revealing paths or hiding distant work. The registered mission browser checks disabled plotting, retained accepted work and unchanged discovery/chart state.
+
+Snapshot routing in `test/health.ts` compares public, owner-only and sight-gated
+ship/projectile/beam rows for flying and docked recipients against the legacy
+visibility expression. Public routes perform zero recipient array filters;
+restricted routes retain three filters per recipient. This is allocation evidence,
+not a wall-clock speedup claim.
