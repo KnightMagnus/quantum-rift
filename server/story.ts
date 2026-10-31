@@ -14,6 +14,7 @@ export interface StoryPayload {
   } | null;
 }
 import type { SavedStory, StoryFlags } from './save-contracts.ts';
+import { SIDE_STORIES } from '../shared/quests.ts';
 import { STORY_QUESTS } from '../shared/story-quests.ts';
 import { endingText, mainEndings, storySystemVisible } from '../shared/story-world.ts';
 export interface StoryOperations {
@@ -88,7 +89,9 @@ export const StoryOperations = {
         ? {
             ...savedStory.active,
             title: STORY.find((storyMission) => storyMission.id === savedStory.active!.id)!.title,
-            brief: STORY.find((storyMission) => storyMission.id === savedStory.active!.id)!.brief,
+            brief:
+              STORY.find((storyMission) => storyMission.id === savedStory.active!.id)!.brief +
+              storyGuidance(playerData, savedStory.active.id),
           }
         : null,
       next:
@@ -131,7 +134,14 @@ export const StoryOperations = {
         ...storyMission,
         locked: `The elders will ask more of you when your standing with the Que'vari reaches ${storyMission.minRep} (it is ${playerData.rep.quevari || 0}).`,
       };
-    return storyMission;
+    const guidance = storyGuidance(playerData, storyMission.id);
+    return guidance
+      ? {
+          ...storyMission,
+          brief: storyMission.brief + guidance,
+          text: storyMission.text + guidance,
+        }
+      : storyMission;
   },
   /**
    * Check active story mission completion or send landing mission offer.
@@ -385,7 +395,7 @@ export const StoryOperations = {
     playerData.rep.quevari = clampStanding((playerData.rep.quevari || 0) + storyStep.rep);
     const received = [
       storyStep.pay ? `${credits(storyStep.pay)} credits` : '',
-      `+${storyStep.rep} Que'vari standing`,
+      storyStep.rep ? `${storyStep.rep > 0 ? '+' : ''}${storyStep.rep} Que'vari standing` : '',
     ];
     if (storyStep.crate) {
       playerData.mats[storyStep.crate[0]][storyStep.crate[1]]++;
@@ -411,9 +421,14 @@ export const StoryOperations = {
       id: storyStep.id,
       title: storyStep.title,
       text:
-        (storyStep.id === 'choice' ? endingText(savedStory.flags || {}) : storyStep.done) +
+        (storyStep.id === 'choice'
+          ? endingText(
+              savedStory.flags || {},
+              !!playerData.officers?.some((officer) => officer.name === 'Seren Of-The-Veil'),
+            )
+          : storyStep.done) +
         crewBeat(playerData, storyStep.id) +
-        `\n\nRewards: ${received.filter(Boolean).join(', ')}.`,
+        (received.some(Boolean) ? `\n\nRewards: ${received.filter(Boolean).join(', ')}.` : ''),
       done: true,
     });
     this.db.touch();
@@ -593,13 +608,38 @@ export const StoryOperations = {
       this.nhal.storyCreature(space, 904, session.id, 1300, -900, 11);
     if (!active2 || active2.ready) return;
     const storyMission = STORY.find((storyMission) => storyMission.id === active2.id)!;
-    if (
-      storyMission.sys !== playerData.sys ||
-      [...space.ships.values()].some(
-        (entity) => entity.story === session.id && (entity.storyKill || entity.storyBoard),
-      )
-    )
+    if (storyMission.sys !== playerData.sys) return;
+    const existing = [...space.ships.values()].filter(
+      (entity) =>
+        entity.story === session.id &&
+        entity.storyMission === active2.id &&
+        (entity.storyKill || entity.storyBoard),
+    );
+    if (existing.length) {
+      // Recover abandoned targets without healing them or interrupting another captain's fight.
+      for (const [index, target] of existing.entries()) {
+        if (
+          !session.ent ||
+          Math.hypot(target.x - session.ent.x, target.y - session.ent.y) <= 12000 ||
+          (target.target && !target.target.dead && space.ships.has(target.target.id)) ||
+          [...space.ships.values()].some(
+            (attacker) =>
+              !attacker.dead &&
+              (attacker.target === target ||
+                attacker.combatTarget === target ||
+                attacker.fireAt === target),
+          )
+        )
+          continue;
+        const angle = (index / existing.length) * Math.PI * 2;
+        target.x = session.ent.x + Math.cos(angle) * 1400;
+        target.y = session.ent.y + Math.sin(angle) * 1400;
+        target.vx = 0;
+        target.vy = 0;
+        if (target.storyKill) target.target = session.ent;
+      }
       return;
+    }
     const entity = session.ent,
       left = (storyMission.count || 1) - active2.got;
     if (storyMission.type === 'board')
@@ -616,6 +656,7 @@ export const StoryOperations = {
         entity.armor = entity.st.armor * 0.1;
         entity.story = session.id;
         entity.storyBoard = true;
+        entity.storyMission = storyMission.id;
         entity.life = 1e9;
         entity.wreckT = 1e9;
         entity.rescueOf = { id: 'story', owner: session.id };
@@ -643,6 +684,7 @@ export const StoryOperations = {
                 });
         entity3.story = session.id;
         entity3.storyKill = true;
+        entity3.storyMission = storyMission.id;
         entity3.life = 1e9;
         entity3.target = entity;
       }
@@ -662,6 +704,7 @@ export const StoryOperations = {
       rightEntity.home = { x: 0, y: 0 };
       rightEntity.story = session.id;
       rightEntity.storyKill = true;
+      rightEntity.storyMission = storyMission.id;
       rightEntity.life = 1e9;
       rightEntity.noDisable = true;
       for (let index = 0; index < (storyMission.id === 'dreamer' ? 0 : 2); index++) {
@@ -708,7 +751,10 @@ export const StoryOperations = {
         `${left} becalmed sloop${left > 1 ? 's' : ''} drift in this system. Board each one and choose Rescue.`,
       );
     if (storyMission.type === 'kill')
-      this.toast(session, `${left} Umbral hunter${left > 1 ? 's' : ''} are closing in.`);
+      this.toast(
+        session,
+        `${left} ${storyMission.faction === 'nhal' ? 'Nhal' : `Umbral hunter${left === 1 ? '' : 's'}`} ${left === 1 ? 'is' : 'are'} closing in.`,
+      );
   },
   /**
    * Advance active story mission progress after a relevant kill or rescue.
@@ -719,8 +765,17 @@ export const StoryOperations = {
     const playerData = session.data,
       savedStory = this.storyInit(playerData),
       active2 = savedStory.active;
-    if (!active2 || entity.story !== session.id) return;
+    if (
+      !active2 ||
+      active2.ready ||
+      entity.story !== session.id ||
+      entity.storyMission !== active2.id ||
+      entity.storyCredited
+    )
+      return;
     const storyMission = STORY.find((storyMission) => storyMission.id === active2.id)!;
+    if (storyMission.sys !== playerData.sys || !(entity.storyKill || entity.storyBoard)) return;
+    entity.storyCredited = true;
     if (storyMission.id === 'dreamer') (savedStory.flags ||= {}).dreamer_defeated = true;
     active2.got++;
     this.toast(
@@ -846,4 +901,33 @@ function crewBeat(player: PlayerData, chapter: string): string {
       ' The wall closes around the Deep again.'
     );
   return '';
+}
+
+/** Point to unfinished investigations without naming their possible outcomes. */
+function storyGuidance(player: PlayerData, chapter: string): string {
+  const flags = player.story.flags || {};
+  if (flags.main_ending || !['breach', 'riftweavers', 'dreamer', 'choice'].includes(chapter))
+    return '';
+  const hints: string[] = [];
+  if (!flags.index_ending) {
+    const next = ['index-last-survey', 'index-report', 'index-records'].find(
+      (id) => !player.quests?.sides?.[id],
+    );
+    const quest = SIDE_STORIES.find((quest) => quest.id === next);
+    hints.push(
+      quest
+        ? `Before deciding the Core's future, finish ${quest.name} at ${STELLARS[quest.at].name}.`
+        : "Before deciding the Core's future, return to Shardwright Foundry to answer the Kernel.",
+    );
+  }
+  if (!flags.nhal_ending && !flags.dreamer_defeated && !player.quests?.sides?.['nhal-eye']) {
+    const next = ['nhal-stirs', 'nhal-soundings', 'nhal-ossuary', 'nhal-eye'].find(
+      (id) => !player.quests?.sides?.[id],
+    );
+    const quest = STORY_QUESTS.find((quest) => quest.id === next)!;
+    hints.push(
+      `To learn the song before facing the Dreamer, finish ${quest.name} at ${STELLARS[quest.at].name}.`,
+    );
+  }
+  return hints.length ? `\n\n${hints.join(' ')}` : '';
 }

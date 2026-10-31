@@ -157,10 +157,12 @@
     "gameplay-safety.ts",
     "recovery-safety.ts",
     "story-order-safety.ts",
+    "story-encounters.ts",
     "syndicate-safety.ts",
     "quest-directions.ts",
     "performance-growth.ts",
-    "fuzz-seeds.ts"
+    "fuzz-seeds.ts",
+    "qcs-fleet.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -889,6 +891,7 @@
     "gameplay-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"],
     "recovery-safety.ts": ["helpers/refinery-fixture.ts"],
     "story-order-safety.ts": ["helpers/refinery-fixture.ts"],
+    "story-encounters.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
     "syndicate-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"],
     "quest-directions.ts": ["helpers/refinery-fixture.ts"],
     "landed-zoom-browser.ts": ["helpers/landed-responsive.ts"],
@@ -900,6 +903,13 @@
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
   "systems": [
+    {
+      "id": "qcs-security-fleet",
+      "owners": ["server/qcs-fleet.ts", "shared/qcs-fleet.ts", "tools/ships26/hulls_qcs.py"],
+      "services": [],
+      "tests": ["qcs-fleet.ts"],
+      "asserts": "One finite territorial patrol; connected Concord-only travel, attrition and runtime restore, slow friendly armed hulls, eight carried drones and heading-relative runway departure."
+    },
     {
       "id": "accounts-persistence",
       "owners": [
@@ -1869,9 +1879,10 @@
     {
       "id": "story-continuation",
       "owners": [
+        "server/space.ts",
+        "server/game.ts",
         "server/story.ts",
         "server/jobs.ts",
-        "server/game.ts",
         "shared/story.ts",
         "shared/story-continuation.ts",
         "shared/story-world.ts",
@@ -1885,12 +1896,13 @@
       "services": ["story", "quests", "nhal", "indexFleet"],
       "tests": [
         "story-continuation.ts",
+        "story-encounters.ts",
         "eventide.ts",
         "story-realities-browser.ts",
         "index-presentation.ts",
         "ui-polish-browser.ts"
       ],
-      "asserts": "Docked chapter choices and landing completions refresh port offers without autoaccepting; bounded same-port quest deliveries settle once; explicitly authored surveys and salvage advance in flight while physical deliveries and final scenes remain docked. Captain-scoped decisions, finale availability branches, denial and persistence; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups. Mixed large Index hull envelopes retain separated saved-roster berths under actual neutral movement without reissuing health or replacement budgets. Table departure preserves the player ship at a resumable safe Rift standoff, denies unavailable hulls, freezes only the viewing captain and wing with bounded protection, rejects early completion and releases once after a validated acknowledgment. The automatically accepted preparation objective projects actual completed components, fitting and crossing without occupying quest slots or granting items."
+      "asserts": "Docked chapter choices and landing completions refresh port offers without autoaccepting; bounded same-port quest deliveries settle once; explicitly authored surveys and salvage advance in flight while physical deliveries and final scenes remain docked. Owner-scoped encounter destruction credit independent of bounty and final hitter, exact-step and once-only guards, absent-owner denial, surviving-target death/reentry and bounded disengaged-target recovery; captain-scoped decisions, finale availability branches, denial and persistence; declared child helpers/story-clarity.ts covers faction/count arrival grammar, zero/nonzero rewards, unfinished investigation hints and optional officer finale text; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups. Mixed large Index hull envelopes retain separated saved-roster berths under actual neutral movement without reissuing health or replacement budgets. Table departure preserves the player ship at a resumable safe Rift standoff, denies unavailable hulls, freezes only the viewing captain and wing with bounded protection, rejects early completion and releases once after a validated acknowledgment. The automatically accepted preparation objective projects actual completed components, fitting and crossing without occupying quest slots or granting items."
     },
     {
       "id": "release-platform-gates",

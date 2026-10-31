@@ -27,7 +27,7 @@
   "729": { "fs": 200, "cols": 12, "banks": true, "glow": true, "packed": true },
   "735": { "fs": 168, "cols": 12, "banks": true, "glow": true, "packed": true },
   "737": { "fs": 48, "cols": 12, "banks": true, "glow": true, "packed": true },
-  "736": { "fs": 360, "cols": 12, "banks": false, "glow": true, "packed": true },
+  "736": { "fs": 360, "cols": 12, "banks": true, "glow": true, "packed": true },
   "731": { "fs": 200, "cols": 12, "banks": true, "glow": true, "packed": true },
   "730": { "fs": 200, "cols": 12, "banks": true, "glow": true, "packed": true },
   "732": { "fs": 200, "cols": 12, "banks": true, "glow": true, "packed": true },
@@ -119,5 +119,9 @@
   "746": { "fs": 200, "cols": 12, "banks": true, "glow": true, "packed": true },
   "748": { "fs": 200, "cols": 12, "banks": true, "glow": true, "packed": true },
   "763": { "fs": 200, "cols": 12, "banks": true, "glow": true, "packed": true },
-  "749": { "fs": 200, "cols": 12, "banks": true, "glow": true, "packed": true }
+  "749": { "fs": 200, "cols": 12, "banks": true, "glow": true, "packed": true },
+  "850": { "fs": 310, "cols": 12, "banks": true, "glow": true, "packed": true },
+  "851": { "fs": 380, "cols": 12, "banks": true, "glow": true, "packed": true },
+  "852": { "fs": 180, "cols": 12, "banks": true, "glow": true, "packed": true },
+  "853": { "fs": 88, "cols": 12, "banks": true, "glow": true, "packed": true }
 }

@@ -48,6 +48,10 @@ export interface EntityFeatureState {
   hailEscort?: { owner: number; expires: number; dest: string };
   rescueOf?: { id: string; owner: number };
   story?: number;
+  /** Story step that spawned this objective; unrelated chapters cannot consume it. */
+  storyMission?: string;
+  /** Set after this entity has advanced its owner’s story once. */
+  storyCredited?: boolean;
   storyBoard?: boolean;
   storyAlly?: boolean;
   /** A personal convoy cannot be found until a Thalassi contact gives its bearing. */
@@ -2048,7 +2052,11 @@ export class Space {
         }
         const [lateralOffset, back] = SLOTS[entity.slot % SLOTS.length],
           ring = Math.floor(entity.slot / SLOTS.length),
-          size2 = Math.max(60, owner.st.size * 0.5);
+          size2 = Math.max(
+            60,
+            owner.st.size * 0.5,
+            [850, 851].includes(Number(entity.hull)) ? (owner.st.size + entity.st.size) * 1.2 : 0,
+          );
         const length2 = lateralOffset * (55 + size2 * 0.4),
           secondValue = back * (60 + size2 * 0.45) + ring * 70;
         const offsetX = owner.x + Math.cos(owner.a) * length2 - Math.sin(owner.a) * secondValue,
@@ -2078,6 +2086,7 @@ export class Space {
         }
         if (
           entity.fighterOf &&
+          entity.hull !== 853 &&
           owner &&
           !owner.player &&
           !owner.target &&
@@ -2770,6 +2779,16 @@ export class Space {
     if (entity.player) {
       this.game.onPlayerDeath(entity.player, this, entity2);
       return;
+    }
+    if (entity.storyKill) {
+      const owner = this.game.sessions.get(entity.story!);
+      if (
+        owner?.ent &&
+        !owner.ent.dead &&
+        owner.data?.sys === this.id &&
+        this.ships.get(owner.ent.id) === owner.ent
+      )
+        this.game.features.story.storyProgress(owner, entity);
     }
     if (this.game?.features?.nhal?.killed(this, entity, entity2)) {
       if (entity2?.player)

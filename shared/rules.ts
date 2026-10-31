@@ -1,3 +1,4 @@
+import { QCS_HULLS } from './qcs-fleet.ts';
 import { INDEX_FLEET_HULLS } from './index-fleet.ts';
 import { NHAL_HULLS, NHAL_WEAPONS } from './nhal.ts';
 import { INDEX_HULLS } from './index.ts';
@@ -699,7 +700,13 @@ export function augmentAssets(assets: GameAssets): GameAssets {
         ...specialistShip,
         img: `ships/${specialistShip.id}_yard.png`,
       }; // specialty ships
-  for (const ship23Hull of [...SHIPS23, ...INDEX_HULLS, ...INDEX_FLEET_HULLS, ...NHAL_HULLS])
+  for (const ship23Hull of [
+    ...SHIPS23,
+    ...QCS_HULLS,
+    ...INDEX_HULLS,
+    ...INDEX_FLEET_HULLS,
+    ...NHAL_HULLS,
+  ])
     if (!assets.ships[ship23Hull.id]) assets.ships[ship23Hull.id] = { ...ship23Hull }; // new common Quantum hulls
   for (const shipHullAsset of Object.values(assets.ships))
     shipHullAsset.role = roleOf(shipHullAsset, assets.weapons) as RoleId; // class triangle roles

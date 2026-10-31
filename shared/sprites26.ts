@@ -176,4 +176,8 @@ export const SPRITES: Record<number, SpriteSheetConfig> = {
   829: { fs: 200, cols: 12, banks: true, glow: true, packed: true },
   925: { fs: 480, cols: 12, banks: false, glow: false, packed: true },
   926: { fs: 480, cols: 12, banks: false, glow: true, packed: true },
+  850: { fs: 310, cols: 12, banks: true, glow: true, packed: true },
+  851: { fs: 380, cols: 12, banks: true, glow: true, packed: true },
+  852: { fs: 180, cols: 12, banks: true, glow: true, packed: true },
+  853: { fs: 88, cols: 12, banks: true, glow: true, packed: true },
 };

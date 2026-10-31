@@ -74,6 +74,11 @@ flowchart TD
    [the local DB](../server/db.ts) retains separate Solo/friend persistence. Sending a refresh is
    not itself a save commit.
 
+Story target destruction credits the present owner in `Space.kill`, independently of
+`Game.onKill` bounty accounting. `storyProgress` checks the spawning chapter and
+consumes each target once; `storyArrive` recovers distant, disengaged survivors.
+`test/story-encounters.ts` covers this path.
+
 For other actions, find the outgoing packet's `t`, look it up in the fixed
 switchboard, then follow the named method/service. Native joins establish the
 server-owned identity before the internal Game hello; client hello packets cannot
@@ -483,3 +488,10 @@ The story payload projects the automatically accepted preparation objective from
 the saved Table choice and real component completions. The mission journal points
 to the next component contact, Harness fitting or the crossing. Existing quest,
 slot-limit and reward authorities are unchanged.
+
+## Concord security patrol
+
+`server/qcs-fleet.ts` owns one saved territorial patrol, advanced by the game clock.
+`shared/qcs-fleet.ts` defines its finite roster and NPC hulls. The carrier launches
+eight Watch drones from its runway centre, using ordinary fighter ownership and
+escort AI. `test/qcs-fleet.ts` covers routing, attrition, restore and runway geometry.

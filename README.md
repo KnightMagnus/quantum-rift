@@ -89,6 +89,12 @@ The blue Pressure Hull cockpit is the standard interface for flight, station ser
 
 ![Blue flight controls with the Tray and system radar expanded](docs/screenshots/pressure-hull-flight.png)
 
+**Concord security patrol**
+
+One slow patrol moves through Concord territory: a Concordance flagship, a carrier, battleships and fighter escorts. The carrier launches eight Watch drones from its central runway.
+
+![Concord security patrol in Concordia, with the redesigned Concordance, carrier and escorts](docs/screenshots/qcs-patrol.png)
+
 **Flight controls**
 
 Ship-function controls open above the console. INFO (I) shows ship details and equipped outfits; CAPTAIN (O) opens your profile and career. EJECT opens the quit menu. JUMP can sit in either bottom corner.
