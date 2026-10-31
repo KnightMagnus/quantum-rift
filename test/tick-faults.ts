@@ -7,6 +7,7 @@ import { NakamaDatabase } from '../server/nakama-storage.ts';
 import { AuthorityCallbacks } from '../server/authority-callbacks.ts';
 import { advanceWorld } from '../server/nakama-world.ts';
 import { HealthMonitor } from '../shared/health.ts';
+import { loanPayment, loanRate } from '../shared/syndicate.ts';
 
 class Connection extends EventEmitter {
   open = true;
@@ -228,20 +229,33 @@ for (const failingOperation of [
     assert.equal(JSON.stringify([logs, health.report(), game.tickFaults]).includes(secret), false);
   }
 }
-// World projection, signature encoding and broadcast are separate fail-closed stages.
-for (const failure of [null, 'world-payload', 'world-signature', 'world-broadcast'] as const) {
-  const { game, health, database, run, logs } = fixture();
+// World authority/serialization stays fail-closed; prebuilt recipient transport is isolated.
+for (const failure of [
+  null,
+  'world-payload',
+  'world-signature',
+  'serialize',
+  'world-broadcast',
+  'closed',
+  'backlog',
+] as const) {
+  const { game, health, database, state, run, logs } = fixture();
   const order: string[] = [];
+  const recipients: Session[] = [];
   for (const name of ['World first', 'World second']) {
     game.connect(new Connection());
     const session = [...game.sessions.values()].at(-1)!;
     database.withAuthenticatedCaptain(name, () =>
       game.onMessage(session, { t: 'hello', name, pass: 'fixture-only' }),
     );
+    session.data.credits = 100000;
+    session.data.credit = 600;
+    session.data.loan = { bal: 30000, next: 0 };
+    recipients.push(session);
     session.sock.send = (message) => {
       if (typeof message !== 'string' || JSON.parse(message).t !== 'world') return;
       order.push(name);
-      if (name === 'World second' && failure === 'world-broadcast') throw new TypeError(secret);
+      if (name === 'World first' && failure === 'world-broadcast') throw new TypeError(secret);
     };
   }
   game.idleCheck = () => {};
@@ -249,7 +263,11 @@ for (const failure of [null, 'world-payload', 'world-signature', 'world-broadcas
   game.features.syndicate.missionDeadlines = () => {};
   game.features.quests.questSweep = () => {};
   game.features.quests.questSalvageIdle = () => {};
-  game.features.syndicate.bankTick = () => {};
+  const bankTick = game.features.syndicate.bankTick;
+  game.features.syndicate.bankTick = (session) => {
+    order.push(`bank:${recipients.indexOf(session)}`);
+    bankTick(session);
+  };
   game.features.frontier.raidCheck = () => {};
   game.features.specialists.specIdle = () => {};
   game.features.hostile.holdoutTick = () => {};
@@ -265,7 +283,14 @@ for (const failure of [null, 'world-payload', 'world-signature', 'world-broadcas
       t: 'world',
       anomalies: {},
       states: {},
-      colonies: {},
+      colonies:
+        failure === 'serialize'
+          ? {
+              toJSON() {
+                throw new TypeError(secret);
+              },
+            }
+          : {},
       invasion: null,
       event: { id: 'fixture' },
       ...(failure === 'world-signature'
@@ -286,21 +311,128 @@ for (const failure of [null, 'world-payload', 'world-signature', 'world-broadcas
   database.flush = () => {
     order.push('checkpoint');
   };
+  if (failure === 'closed') recipients[0].sock.open = false;
+  if (failure === 'backlog') (recipients[0].sock as Connection).backlog = 4e6;
   game.tickN = 899;
-  run();
-  if (failure === null) {
-    assert.deepEqual(order, ['payload', 'World first', 'World second', 'space', 'checkpoint']);
-    assert.equal(game.tickFaults.count, 0);
-  } else {
+  const localLogs: unknown[][] = [];
+  const originalConsoleError = console.error;
+  try {
+    console.error = (...argumentsList: unknown[]) => localLogs.push(argumentsList);
+    run();
+  } finally {
+    console.error = originalConsoleError;
+  }
+  assert.equal(localLogs.length, failure === 'world-broadcast' ? 1 : 0);
+  const balances = recipients.map((session) => ({
+    credits: session.data.credits,
+    credit: session.data.credit,
+    loan: { ...session.data.loan! },
+  }));
+  for (const balance of balances) {
+    assert.equal(balance.credits, 100000 - loanPayment(30000, 600));
+    assert.equal(balance.credit, 603);
+    assert.equal(
+      balance.loan.bal,
+      30000 + Math.ceil(30000 * loanRate(600)) - loanPayment(30000, 600),
+    );
+    assert.ok(balance.loan.next > 0);
+  }
+  const isolated = failure === 'world-broadcast' || failure === 'closed' || failure === 'backlog';
+  if (failure === null || isolated) {
     assert.deepEqual(
       order,
-      failure === 'world-broadcast' ? ['payload', 'World first', 'World second'] : ['payload'],
+      failure === 'closed' || failure === 'backlog'
+        ? ['bank:0', 'bank:1', 'payload', 'World second', 'space', 'checkpoint']
+        : ['bank:0', 'bank:1', 'payload', 'World first', 'World second', 'space', 'checkpoint'],
     );
-    assert.equal(game.tickFaults.lastOperation, failure);
+    assert.equal(health.report().tickFailures, undefined);
+    assert.equal(game.tickFaults.count, failure === 'world-broadcast' ? 1 : 0);
+    if (failure === 'world-broadcast') {
+      assert.equal(game.tickFaults.lastOperation, 'world-broadcast');
+      assert.equal(health.report().faultType?.count, 1);
+    }
+    assert.equal(recipients[1].worldNotificationSignature, game.worldKey);
+    order.length = 0;
+    recipients[0].sock.open = true;
+    (recipients[0].sock as Connection).backlog = 0;
+    recipients[0].sock.send = (message) => {
+      if (typeof message === 'string' && JSON.parse(message).t === 'world') order.push('retry');
+    };
+    state.lastCheckpointAt = -100000;
+    state.pendingEconomicCheckpoint = true;
+    game.tickN = 899;
+    run();
+    assert.deepEqual(
+      order,
+      isolated
+        ? ['bank:0', 'bank:1', 'payload', 'retry', 'space', 'checkpoint']
+        : ['bank:0', 'bank:1', 'payload', 'space', 'checkpoint'],
+    );
+    assert.deepEqual(
+      recipients.map((session) => ({
+        credits: session.data.credits,
+        credit: session.data.credit,
+        loan: { ...session.data.loan! },
+      })),
+      balances,
+    );
+    assert.equal(recipients[0].worldNotificationSignature, game.worldKey);
+    order.length = 0;
+    state.lastCheckpointAt = -100000;
+    state.pendingEconomicCheckpoint = true;
+    game.tickN = 899;
+    run();
+    assert.deepEqual(order, ['bank:0', 'bank:1', 'payload', 'space', 'checkpoint']);
+    order.length = 0;
+    recipients[0].sock.send = (message) => {
+      if (typeof message === 'string' && JSON.parse(message).t === 'world') {
+        order.push('forced-failure');
+        throw new TypeError(secret);
+      }
+    };
+    game.worldKey = null;
+    state.lastCheckpointAt = -100000;
+    state.pendingEconomicCheckpoint = true;
+    game.tickN = 899;
+    try {
+      console.error = (...argumentsList: unknown[]) => localLogs.push(argumentsList);
+      run();
+    } finally {
+      console.error = originalConsoleError;
+    }
+    assert.deepEqual(order, [
+      'bank:0',
+      'bank:1',
+      'payload',
+      'forced-failure',
+      'World second',
+      'space',
+      'checkpoint',
+    ]);
+    assert.equal(recipients[0].worldNotificationSignature, undefined);
+    order.length = 0;
+    recipients[0].sock.send = (message) => {
+      if (typeof message === 'string' && JSON.parse(message).t === 'world') order.push('retry');
+    };
+    state.lastCheckpointAt = -100000;
+    state.pendingEconomicCheckpoint = true;
+    game.tickN = 899;
+    run();
+    assert.deepEqual(order, ['bank:0', 'bank:1', 'payload', 'retry', 'space', 'checkpoint']);
+  } else {
+    assert.deepEqual(order, ['bank:0', 'bank:1', 'payload']);
+    assert.equal(
+      game.tickFaults.lastOperation,
+      failure === 'serialize' ? 'world-broadcast' : failure,
+    );
     assert.equal(health.report().faultMaintenance?.count, 1);
     assert.equal(health.report().tickFailures?.count, 1);
-    assert.equal(JSON.stringify([logs, health.report(), game.tickFaults]).includes(secret), false);
+    assert.equal(recipients[0].worldNotificationSignature, undefined);
   }
+  assert.equal(
+    JSON.stringify([localLogs, logs, health.report(), game.tickFaults]).includes(secret),
+    false,
+  );
   assert.equal(
     game.worldKey === 'previous',
     failure === 'world-payload' || failure === 'world-signature',

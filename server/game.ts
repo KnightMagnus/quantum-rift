@@ -251,6 +251,8 @@ export type Session = {
   attentionScan?: RecentPatrolScan;
   rep?: Record<string, number>;
   refinerySignature?: string;
+  /** Last prebuilt world update accepted by this connection, not a delivery acknowledgement. */
+  worldNotificationSignature?: string;
   huntT?: number;
   praiseT?: Record<string, number>;
   retaliationVisit?: { sys: string; factions: Set<string> };
@@ -3397,10 +3399,29 @@ export class Game<Storage extends Database = Database> {
         worldPayload2.event!.id,
         worldPayload2.states,
       ]);
-      if (stringify2 !== this.worldKey) {
-        this.worldKey = stringify2;
+      const recipients = [...this.sessions.values()].filter(
+        (session) =>
+          session.data &&
+          (stringify2 !== this.worldKey || session.worldNotificationSignature !== stringify2),
+      );
+      if (stringify2 !== this.worldKey)
+        for (const session of recipients) session.worldNotificationSignature = undefined;
+      this.worldKey = stringify2;
+      if (recipients.length) {
         this.tickFaults.operation = 'world-broadcast';
-        this.broadcast(worldPayload2);
+        // Projection and serialization may run authority-adjacent code; only transport is isolated.
+        const notification = JSON.stringify(worldPayload2);
+        for (const session of recipients) {
+          if (!session.sock?.open || session.sock.backlog >= 4e6) continue;
+          try {
+            this.send(session, notification);
+            session.worldNotificationSignature = stringify2;
+          } catch (error) {
+            this.tickFaults.record(error);
+            if (this.tickFaults.shouldLog())
+              console.error('world notification error', this.tickFaults.lastKind);
+          }
+        }
       }
     }
     if (health) health.observe('featuresMs', health.now() - stageStarted);

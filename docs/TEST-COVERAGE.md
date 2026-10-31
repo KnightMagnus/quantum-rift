@@ -1870,7 +1870,7 @@ not a wall-clock speedup claim.
 
 `tick-faults.ts` belongs to `performance-health`. Offline native callback fixtures inject deferred, per-captain maintenance, simulation and storage failures. They check sanitized classifications, bounded logging, skipped downstream work and frozen-authority retirement. `health.ts` retains space-failure counter and log-suppression coverage.
 
-Per-captain hooks remain fail-closed: idle completion, mission progress/deadlines, quest sweep/salvage, banking, raids, specialist progress and holdout updates can mutate saved progress or world entities. Refinery payload construction also advances the economy. None has a rollback boundary that makes catch-and-continue safe. Deferred callbacks and uncertain checkpoint writes remain fail-closed too. Existing per-space isolation is unchanged; it is not a rollback guarantee. Only the prebuilt refinery notification transport is isolated; authority-changing hooks are not quarantined.
+Per-captain hooks remain fail-closed: idle completion, mission progress/deadlines, quest sweep/salvage, banking, raids, specialist progress and holdout updates can mutate saved progress or world entities. Refinery payload construction also advances the economy. None has a rollback boundary that makes catch-and-continue safe. Deferred callbacks and uncertain checkpoint writes remain fail-closed too. Existing per-space isolation is unchanged; it is not a rollback guarantee. Prebuilt refinery and world-update notification transports are isolated; authority-changing hooks are not quarantined.
 
 The maintenance fault matrix injects an exception after a fixture credit mutation
 at each of the nine captain hooks below. Each case checks the exact completed
@@ -1943,9 +1943,19 @@ Fault operations and kinds are fixed literals. Logs and counters never include t
 Pinned Node 27 checks at 4,000 packets produced SHA-256 packet RNG trace `aa202e625d63126d347ae92e8454d089202c900e413611e05dd8d5a5f1fa5cbb` for seed 42 on two runs, and `25a7af8db0180113639d04c03ed7014c83f9dd0509f915f2f3e0ec5daa5cf55d` for seed 987654321. Both visited all 57 registered routes without logged errors. The digest describes random draws, not a guarantee of whole-world deterministic replay.
 
 The 30-second world update distinguishes payload construction (`world-payload`),
-change-signature encoding (`world-signature`) and broadcasting (`world-broadcast`).
-All three remain fail-closed. The registered tick-fault fixture checks each abort
-prefix, private diagnostics and a successful two-recipient/space/checkpoint control.
-A second-recipient send failure leaves the first recipient already notified and
-the world invalidation key already advanced, preserving the existing behavior.
-These diagnostics do not add delivery acknowledgement, rollback or retry.
+change-signature encoding (`world-signature`) and notification encoding/transport
+(`world-broadcast`). Projection, both serialization steps and banking mutations
+remain fail-closed. Only prebuilt recipient sends are isolated. A transient
+per-session signature advances after an accepted send; throwing, closed or
+backlogged sockets retry the current update on the next 30-second sweep without
+resending to successful recipients. Intermediate updates can be superseded.
+Successful socket calls are not client-delivery acknowledgements.
+
+The registered tick-fault fixture checks first-recipient transport failure,
+later-recipient delivery, space/checkpoint continuation, retry and duplicate
+suppression, closed/backlogged sockets, fail-closed projection/serialization and
+sanitized diagnostics. Both captains execute real scheduled loan payments before
+the world update; exact balances, credit changes and loan schedules remain
+unchanged across notification retries. Existing partial-mutation abort and native
+checkpoint-freeze fixtures remain separate. These offline fixtures establish no
+rollback guarantee or live-network delivery guarantee.
