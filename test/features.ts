@@ -41,6 +41,19 @@ assert.equal(actual.saved.rep.nhal, 0);
 delete actual.saved.rep.nhal;
 assert.equal(actual.saved.rep.index, 0);
 delete actual.saved.rep.index;
+// Docked story/arc settlement now precedes the port projection on login.
+// Keep the original fixture and all other initialization evidence unchanged.
+assert.deepEqual(expected.login.slice(30, 32), ['storyInit', 'storyInit']);
+assert.deepEqual(expected.login.slice(21, 30), [
+  ...Array(7).fill('arcsInit'),
+  'synInit',
+  'storyInit',
+]);
+expected.login = [
+  ...expected.login.slice(0, 21),
+  ...expected.login.slice(30),
+  ...expected.login.slice(21, 30),
+];
 assert.deepEqual(actual, expected);
 console.log('Baseline initialization, login, save, bonus/stats, world and name lookup parity.');
 
