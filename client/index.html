@@ -631,6 +631,28 @@
               <button class="btn sm" id="diagclear">CLEAR</button>
             </div>
           </section>
+          <section class="options-section" aria-label="Performance report">
+            <div class="osect">PERFORMANCE REPORT</div>
+            <label
+              >Activity
+              <select id="perfscenario"></select
+            ></label>
+            <p class="dim small">
+              Choose what you plan to test, start recording, then close Settings and play. Return
+              here to stop and export.
+            </p>
+            <p class="dim small">
+              Keeps up to 5 minutes or 18,000 frame intervals in this tab. Reports include browser,
+              OS, display, renderer and page loading times, but no chat, captain names, locations or
+              sign-in details. Nothing is uploaded. Export saves a file you can choose to share.
+            </p>
+            <p class="dim small" id="perfstatus" aria-live="polite">
+              Off. No frame intervals recorded.
+            </p>
+            <button class="btn sm" id="perfstart">START RECORDING</button>
+            <button class="btn sm" id="perfexport" disabled>EXPORT REPORT</button>
+            <button class="btn sm" id="perfclear" disabled>CLEAR</button>
+          </section>
           <section class="options-section options-keys" aria-label="Key bindings">
             <div class="osect">
               KEYS <button class="btn sm" id="optreset">RESET</button>

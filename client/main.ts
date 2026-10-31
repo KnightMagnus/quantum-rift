@@ -317,6 +317,12 @@ import { initLoginScene } from './login_scene.ts';
 import { gatewayGuidance } from './gateway_autopilot.ts';
 import { setArtworkVersion } from './artwork.ts';
 import { diagnostics, initDiagnosticControls, refreshDiagnosticControls } from './diagnostics.ts';
+import {
+  initPerformanceControls,
+  refreshPerformanceControls,
+  clearPerformanceCapture,
+  setPerformanceBuild,
+} from './performance-report.ts';
 import { initHails } from './hails_ui.ts';
 import { receiveShipChat } from './chat_bubbles.ts';
 // Quantum Rift client: connection, input, client-side prediction, render loop.
@@ -776,6 +782,7 @@ const statusRequest = fetch('/api/status', { cache: 'no-store' })
     clientGameState.friendGame = friendHostTransport;
     setArtworkVersion(state.version);
     diagnostics.setBuild(state.version);
+    setPerformanceBuild(state.version);
     elementById2('lstat').textContent = friendHostTransport
       ? 'Friend-hosted universe. Sign in with your own captain and password.'
       : state.players === null
@@ -2873,6 +2880,7 @@ function openOpts(keysFirst?: boolean | PointerEvent): void {
   rebinding = null;
   renderKeys();
   refreshDiagnosticControls();
+  refreshPerformanceControls();
   document.querySelectorAll<HTMLInputElement>('#opts input[type=range]').forEach(paintRange);
   overlays.open('opts');
   if (keysFirst === true)
@@ -2888,6 +2896,7 @@ function closeOpts(): void {
 }
 elementById2('optclose').onclick = closeOpts;
 initDiagnosticControls();
+initPerformanceControls();
 elementById2('optbtn').onclick = openOpts;
 // the quick volume control in the command bar: one master slider and a mute button
 /**
@@ -3575,7 +3584,9 @@ function openQuit() {
 async function logOut(reason = '') {
   elementById2('quitconfirm').disabled = elementById2('quitcancel').disabled = true;
   diagnostics.clear();
+  clearPerformanceCapture();
   refreshDiagnosticControls();
+  refreshPerformanceControls();
   sessionEpoch++;
   const epoch = sessionEpoch;
   const socket = connectionLifecycle.detach();
