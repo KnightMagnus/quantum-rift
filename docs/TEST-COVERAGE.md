@@ -1195,8 +1195,12 @@ captain name, and stop being recorded after the box is cleared. Clear discards
 entries. Logout clears entries and opt-in; a second captain starts with recording
 off and no previous account projections available to export.
 No non-GET or cross-origin request is made while recording and nothing
-is written to browser storage. Only the trade-estimate subsystem is covered;
-whole-world, server settlement and other subsystem replay remain out of scope.
+is written to browser storage. Only trade estimates are replayable; whole-world,
+server settlement and other subsystem replay remain out of scope.
+
+### Browser performance report
+
+`browser-performance.ts` checks deterministic interval percentiles and stutter thresholds, default-off behavior, visibility interruptions, stop/clear/restart and duration/frame limits. The registered `diagnostic-capture-browser.ts` also records actual scene updates through Settings, downloads and parses the report, checks loading/display metadata and identity/URL exclusion, and reaches the controls in a narrow viewport. No report upload or browser-storage persistence is allowed. This is capture behavior coverage, not a physical-device performance threshold or proof of GPU presentation timing.
 
 ## HUD containment and availability
 
