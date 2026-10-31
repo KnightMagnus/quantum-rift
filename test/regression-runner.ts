@@ -16,7 +16,14 @@ if (options.length > 1 || options.some((option) => !option.startsWith('--shard='
   throw Error('Expected optional --shard=INDEX/COUNT');
 const shard = parseShard(options[0]?.slice('--shard='.length));
 const inventory = group === 'all' ? [...manifest.unit, ...manifest.browser] : manifest[group];
-const cases = selectShard(inventory, shard);
+const browserDurations = JSON.parse(
+  filesystem.readFileSync(new URL('./regression-browser-durations.json', import.meta.url), 'utf8'),
+) as { seconds: Record<string, number> };
+const cases = selectShard(
+  inventory,
+  shard,
+  group === 'browser' ? browserDurations.seconds : undefined,
+);
 const runner = evidenceDir(`runner/${group}-${shard.index}-of-${shard.count}`);
 const results = [];
 // The full dock matrix covers two destinations, nine viewports, two scales and

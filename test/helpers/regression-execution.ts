@@ -20,9 +20,34 @@ export function parseShard(value: string | undefined): RegressionShard {
   return { index, count };
 }
 
-export function selectShard(programs: string[], shard: RegressionShard): string[] {
+export function selectShard(
+  programs: string[],
+  shard: RegressionShard,
+  durations?: Record<string, number>,
+): string[] {
   if (new Set(programs).size !== programs.length) throw Error('Duplicate regression program');
-  return programs.filter((_, index) => index % shard.count === shard.index - 1);
+  if (!durations) return programs.filter((_, index) => index % shard.count === shard.index - 1);
+  const samples = Object.values(durations).sort((left, right) => left - right);
+  if (!samples.length || samples.some((seconds) => !Number.isFinite(seconds) || seconds <= 0))
+    throw Error('Regression durations must be finite positive seconds');
+  // New programs receive the median estimate until a measured sample is available.
+  const fallback = samples[Math.floor(samples.length / 2)];
+  const duration = (test: string) => durations[test] ?? fallback;
+  const workers = Array.from({ length: shard.count }, () => ({
+    seconds: 0,
+    tests: new Set<string>(),
+  }));
+  const ordered = programs.map((test, index) => ({ test, index }));
+  ordered.sort(
+    (left, right) => duration(right.test) - duration(left.test) || left.index - right.index,
+  );
+  for (const { test } of ordered) {
+    const worker = workers.reduce((best, next) => (next.seconds < best.seconds ? next : best));
+    worker.tests.add(test);
+    worker.seconds += duration(test);
+  }
+  // Retain manifest execution order within a worker and for unsharded local runs.
+  return programs.filter((test) => workers[shard.index - 1].tests.has(test));
 }
 
 /** Inputs for one isolated, deadline-bound subprocess. */

@@ -360,8 +360,15 @@ are retained in `.artifacts/regression/` and uploaded even on CI failure.
 
 Each worker runs its assigned programs sequentially on its own VM, so tests cannot
 collide on fixed ports, save files, browser resources or generated repository files.
-Shards use the manifest order modulo the worker count: every registered program
-belongs to exactly one shard. Append `-- --shard=1/4` to either group command to
+Server shards use manifest order modulo the worker count. Browser shards assign
+longest estimated programs first to the worker with the lowest estimated total,
+using `test/regression-browser-durations.json`. Ties use manifest order and worker
+index; programs still execute in manifest order within each worker. Every registered
+program belongs to exactly one shard, including programs without a timing sample
+(which receive the median estimate). The timing file records its source and limits;
+these local measurements are scheduling estimates, not hosted-CI speedup claims.
+Refresh its seconds from successful runner JSON results after representative runs;
+never use timings to omit tests or change deadlines. Append `-- --shard=1/4` to either group command to
 reproduce one worker. Omit the option for the complete local lane. The worker count
 and matrix must be changed together in the workflow. More workers require more
 hosted-runner capacity and repeat dependency installation; no fixed speedup is
