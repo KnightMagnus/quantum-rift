@@ -26,6 +26,9 @@ export type TickOperation =
   | 'rivals'
   | 'living'
   | 'rival-sync'
+  | 'world-payload'
+  | 'world-signature'
+  | 'world-broadcast'
   | 'world';
 /** Sanitized diagnostics do not retain the thrown value or its stack/message. */
 export class TickFaults {

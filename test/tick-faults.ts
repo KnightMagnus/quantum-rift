@@ -228,6 +228,84 @@ for (const failingOperation of [
     assert.equal(JSON.stringify([logs, health.report(), game.tickFaults]).includes(secret), false);
   }
 }
+// World projection, signature encoding and broadcast are separate fail-closed stages.
+for (const failure of [null, 'world-payload', 'world-signature', 'world-broadcast'] as const) {
+  const { game, health, database, run, logs } = fixture();
+  const order: string[] = [];
+  for (const name of ['World first', 'World second']) {
+    game.connect(new Connection());
+    const session = [...game.sessions.values()].at(-1)!;
+    database.withAuthenticatedCaptain(name, () =>
+      game.onMessage(session, { t: 'hello', name, pass: 'fixture-only' }),
+    );
+    session.sock.send = (message) => {
+      if (typeof message !== 'string' || JSON.parse(message).t !== 'world') return;
+      order.push(name);
+      if (name === 'World second' && failure === 'world-broadcast') throw new TypeError(secret);
+    };
+  }
+  game.idleCheck = () => {};
+  game.features.fronts.missionIdle = () => {};
+  game.features.syndicate.missionDeadlines = () => {};
+  game.features.quests.questSweep = () => {};
+  game.features.quests.questSalvageIdle = () => {};
+  game.features.syndicate.bankTick = () => {};
+  game.features.frontier.raidCheck = () => {};
+  game.features.specialists.specIdle = () => {};
+  game.features.hostile.holdoutTick = () => {};
+  game.features.fronts.invasionTick = () => {};
+  game.features.frontier.waveTick = () => {};
+  game.features.frontier.arenaTick = () => {};
+  game.features.coop.coopTick = () => {};
+  game.hails.tick = () => {};
+  game.features.world.worldPayload = () => {
+    order.push('payload');
+    if (failure === 'world-payload') throw new RangeError(secret);
+    return {
+      t: 'world',
+      anomalies: {},
+      states: {},
+      colonies: {},
+      invasion: null,
+      event: { id: 'fixture' },
+      ...(failure === 'world-signature'
+        ? {
+            anomalies: Object.defineProperty({}, 'toJSON', {
+              value: () => {
+                throw new TypeError(secret);
+              },
+            }),
+          }
+        : {}),
+    } as ReturnType<typeof game.features.world.worldPayload>;
+  };
+  game.worldKey = 'previous';
+  game.spaces.meridian.tick = () => {
+    order.push('space');
+  };
+  database.flush = () => {
+    order.push('checkpoint');
+  };
+  game.tickN = 899;
+  run();
+  if (failure === null) {
+    assert.deepEqual(order, ['payload', 'World first', 'World second', 'space', 'checkpoint']);
+    assert.equal(game.tickFaults.count, 0);
+  } else {
+    assert.deepEqual(
+      order,
+      failure === 'world-broadcast' ? ['payload', 'World first', 'World second'] : ['payload'],
+    );
+    assert.equal(game.tickFaults.lastOperation, failure);
+    assert.equal(health.report().faultMaintenance?.count, 1);
+    assert.equal(health.report().tickFailures?.count, 1);
+    assert.equal(JSON.stringify([logs, health.report(), game.tickFaults]).includes(secret), false);
+  }
+  assert.equal(
+    game.worldKey === 'previous',
+    failure === 'world-payload' || failure === 'world-signature',
+  );
+}
 // Only a prebuilt refinery notification is safe to retry; authority stays outside the catch.
 for (const failure of ['transport', 'closed', 'backlog', 'payload', 'serialize']) {
   const { game, health, database, run } = fixture();
