@@ -1,3 +1,4 @@
+import { createFrontierState, type FrontierState } from './frontier-state.ts';
 import type { IndexCapabilities } from './index-worksite.ts';
 import { IndexFleetOperations } from './index-fleet.ts';
 import type { IndexFleetCapabilities } from './index-fleet.ts';
@@ -140,26 +141,22 @@ export type FrontsCapabilities = {
   Pick<BoundOperations<HangarOperations>, 'officerXp' | 'uid'> &
   Pick<BoundOperations<LivingOperations>, 'statesPayload'> &
   Pick<BoundOperations<FrontierOperations>, 'worldPayload'>;
-export type FrontierCapabilities = Pick<
+export type FrontierCapabilities = { readonly frontierState: FrontierState } & Pick<
   FeatureCore,
   | 'A'
   | 'holdUsed'
-  | 'arenaQ'
   | 'broadcast'
   | 'db'
   | 'hasMats'
   | 'landed'
   | 'live'
   | 'log'
-  | 'matches'
-  | 'nextMatch'
   | 'send'
   | 'sessions'
   | 'spaces'
   | 'spawnPlayer'
   | 'takeMats'
   | 'toast'
-  | 'waves'
   | 'you'
 > &
   Pick<
@@ -249,10 +246,10 @@ export type StoryCapabilities = Pick<
   Pick<BoundOperations<QuestOperations>, 'questReconcile'> & {
     nhal: FeatureServices['nhal'];
   } & Pick<BoundOperations<FrontsOperations>, 'stats'>;
-export type RivalsCapabilities = Pick<
-  FeatureCore,
-  'A' | 'db' | 'live' | 'log' | 'rivalEnts' | 'sessions' | 'spaces' | 'toast'
-> &
+export type RivalsCapabilities = {
+  /** Live presence index owned by this Rivals service; saved careers stay in DB. */
+  readonly rivalEnts: Map<string, { sys: string; id: number }>;
+} & Pick<FeatureCore, 'A' | 'db' | 'live' | 'log' | 'sessions' | 'spaces' | 'toast'> &
   Pick<
     BoundOperations<RivalsOperations>,
     'news' | 'relOf' | 'rivalRel' | 'rivalState' | 'spawnHunters'
@@ -695,7 +692,11 @@ export function createFeatures(core: Game): FeatureServices {
   };
   features.fronts = bindOperations(FrontsOperations, frontsCapabilities);
 
+  const frontierState = createFrontierState();
   const frontierCapabilities: FrontierCapabilities = {
+    get frontierState() {
+      return frontierState;
+    },
     holdUsed: core.holdUsed.bind(core),
     get A() {
       return core.A;
@@ -711,12 +712,6 @@ export function createFeatures(core: Game): FeatureServices {
     },
     get arenaExit() {
       return features.frontier.arenaExit;
-    },
-    get arenaQ() {
-      return core.arenaQ;
-    },
-    set arenaQ(value) {
-      core.arenaQ = value;
     },
     broadcast: core.broadcast.bind(core),
     get coloniesOf() {
@@ -763,18 +758,6 @@ export function createFeatures(core: Game): FeatureServices {
     log: core.log.bind(core),
     get matchOrder() {
       return features.frontier.matchOrder;
-    },
-    get matches() {
-      return core.matches;
-    },
-    set matches(value) {
-      core.matches = value;
-    },
-    get nextMatch() {
-      return core.nextMatch;
-    },
-    set nextMatch(value) {
-      core.nextMatch = value;
     },
     get notify() {
       return features.frontier.notify;
@@ -824,12 +807,6 @@ export function createFeatures(core: Game): FeatureServices {
     toast: core.toast.bind(core),
     get tryMatch() {
       return features.frontier.tryMatch;
-    },
-    get waves() {
-      return core.waves;
-    },
-    set waves(value) {
-      core.waves = value;
     },
     you: core.you.bind(core),
   };
@@ -1000,6 +977,7 @@ export function createFeatures(core: Game): FeatureServices {
   };
   features.story = bindOperations(StoryOperations, storyCapabilities);
 
+  const rivalEnts: RivalsCapabilities['rivalEnts'] = new Map();
   const rivalsCapabilities: RivalsCapabilities = {
     get A() {
       return core.A;
@@ -1024,10 +1002,7 @@ export function createFeatures(core: Game): FeatureServices {
       return features.rivals.relOf;
     },
     get rivalEnts() {
-      return core.rivalEnts;
-    },
-    set rivalEnts(value) {
-      core.rivalEnts = value;
+      return rivalEnts;
     },
     get rivalRel() {
       return features.rivals.rivalRel;

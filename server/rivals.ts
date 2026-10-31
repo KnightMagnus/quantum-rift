@@ -150,7 +150,6 @@ export const RivalsOperations = {
           ),
         );
       } // a fresh Rift starts with a few headlines
-    this.rivalEnts = new Map(); // rival id -> { sys, id } while they are present in a live system
   },
   /**
    * Look up persistent state for a rival captain.

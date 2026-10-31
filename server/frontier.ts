@@ -9,6 +9,7 @@ import type {
 import type { StellarBody } from '../shared/galaxy.ts';
 export interface FrontierOperations {
   frontierInit(this: FrontierCapabilities): void;
+  arenaDisconnect(this: FrontierCapabilities, session: Session): void;
   bonus(this: FrontierCapabilities, playerData: PlayerData): Record<string, number>;
   notify(this: FrontierCapabilities, session: Session, title: string, body: string): void;
   worldPayload(this: FrontierCapabilities): ReturnType<typeof FrontierOperations.worldPayload>;
@@ -161,17 +162,25 @@ const comName = (identifier: string): string =>
 
 export const FrontierOperations = {
   /**
-   * Initialize world colonies, player market orders, and arena/wave structures.
+   * Initialize persistent colonies and market orders without resetting live encounters.
    */
   frontierInit(this: FrontierCapabilities) {
     const worldData = this.db.world;
     worldData.colonies = worldData.colonies || {};
     worldData.orders = worldData.orders || [];
     worldData.nextOrder = worldData.nextOrder || 1;
-    this.arenaQ = { '1v1': [], '2v2': [], '4v4': [] };
-    this.matches = {};
-    this.nextMatch = 1;
-    this.waves = {};
+  },
+  /** Remove queue/match participation at the coordinator's existing disconnect point. */
+  arenaDisconnect(this: FrontierCapabilities, session: Session) {
+    for (const queue of Object.values(this.frontierState.arenaQ)) {
+      const index = queue.indexOf(session.id);
+      if (index >= 0) queue.splice(index, 1);
+    }
+    const match = session.data && this.frontierState.matches[session.data.sys];
+    if (match) {
+      match.alive.delete(session.data.name);
+      session.data.stellar = session.data.arenaReturn || 'qstation';
+    }
   },
   // ------------------------------------------------------------------ bonuses: + ship mastery tier + colony buildings
   /**
@@ -532,7 +541,11 @@ export const FrontierOperations = {
   raidCheck(this: FrontierCapabilities, session: Session) {
     const playerData = session.data,
       stationState = playerData.station;
-    if (!stationState.site || stationState.ops < DEFENSE.minOps || this.waves[playerData.name])
+    if (
+      !stationState.site ||
+      stationState.ops < DEFENSE.minOps ||
+      this.frontierState.waves[playerData.name]
+    )
       return;
     const window = Math.floor(Date.now() / (DEFENSE.everyH * 3600000));
     if (stationState.raidWin === undefined) {
@@ -575,7 +588,7 @@ export const FrontierOperations = {
       identifiers.add(entity.id);
       space.events.push(['flash', Math.round(entity.x), Math.round(entity.y)]);
     }
-    this.waves[playerData.name] = {
+    this.frontierState.waves[playerData.name] = {
       ids: identifiers,
       until: Date.now() + DEFENSE.waveMin * 60000,
       strength,
@@ -596,11 +609,11 @@ export const FrontierOperations = {
    * @param entity - Killed ship entity.
    */
   onWaveKill(this: FrontierCapabilities, entity: Entity) {
-    const raidWave = this.waves[entity.wave!];
+    const raidWave = this.frontierState.waves[entity.wave!];
     if (!raidWave) return;
     raidWave.ids.delete(entity.id);
     if (!raidWave.ids.size) {
-      delete this.waves[entity.wave!];
+      delete this.frontierState.waves[entity.wave!];
       const session = this.sessionOf(entity.wave!);
       if (session) this.resolveRaid(session, raidWave.strength, true);
     }
@@ -609,9 +622,9 @@ export const FrontierOperations = {
    * Periodic check on active defense waves, cleaning up expired raids.
    */
   waveTick(this: FrontierCapabilities) {
-    for (const [name, raidWave] of Object.entries(this.waves))
+    for (const [name, raidWave] of Object.entries(this.frontierState.waves))
       if (Date.now() > raidWave.until) {
-        delete this.waves[name];
+        delete this.frontierState.waves[name];
         const space = this.live[raidWave.sys];
         if (space)
           for (const identifier of raidWave.ids) {
@@ -695,18 +708,18 @@ export const FrontierOperations = {
       if (session.ent || !playerData.stellar)
         return this.toast(session, 'Queue for the arena while docked.');
       if (!ARENA.modes[message.mode]) return;
-      for (const quantity of Object.values(this.arenaQ)) {
+      for (const quantity of Object.values(this.frontierState.arenaQ)) {
         const indexOf2 = quantity.indexOf(session.id);
         if (indexOf2 >= 0) quantity.splice(indexOf2, 1);
       }
-      this.arenaQ[message.mode].push(session.id);
+      this.frontierState.arenaQ[message.mode].push(session.id);
       this.toast(
         session,
         `Queued for ${message.mode}. You will be pulled into the Crucible when a match is ready.`,
       );
       this.tryMatch(message.mode);
     } else if (message.op === 'leave') {
-      for (const quantity of Object.values(this.arenaQ)) {
+      for (const quantity of Object.values(this.frontierState.arenaQ)) {
         const indexOf3 = quantity.indexOf(session.id);
         if (indexOf3 >= 0) quantity.splice(indexOf3, 1);
       }
@@ -722,14 +735,17 @@ export const FrontierOperations = {
    */
   arenaPayload(this: FrontierCapabilities, playerData: PlayerData, session: Session) {
     playerData.arena = playerData.arena || { rating: ARENA.start, w: 0, l: 0 };
-    const quantity = Object.entries(this.arenaQ).find(([, quantity]) =>
+    const quantity = Object.entries(this.frontierState.arenaQ).find(([, quantity]) =>
       quantity.includes(session.id),
     );
     return {
       ...playerData.arena,
       queued: quantity ? quantity[0] : null,
       sizes: Object.fromEntries(
-        Object.entries(this.arenaQ).map(([entryKey, value]) => [entryKey, value.length]),
+        Object.entries(this.frontierState.arenaQ).map(([entryKey, value]) => [
+          entryKey,
+          value.length,
+        ]),
       ),
     };
   },
@@ -740,7 +756,7 @@ export const FrontierOperations = {
    */
   tryMatch(this: FrontierCapabilities, mode: '1v1' | '2v2' | '4v4') {
     const mode2 = ARENA.modes[mode],
-      arenaQ2 = this.arenaQ[mode];
+      arenaQ2 = this.frontierState.arenaQ[mode];
     for (let index = arenaQ2.length - 1; index >= 0; index--) {
       const session = this.sessions.get(arenaQ2[index]);
       if (!session || session.ent || !session.data || !session.data.stellar)
@@ -760,11 +776,11 @@ export const FrontierOperations = {
     sessions4.forEach((session, index) =>
       (index % 4 === 0 || index % 4 === 3 ? sessions2 : sessions3).push(session),
     ); // snake draft by rating
-    const identifier = `arena-${this.nextMatch++}`;
+    const identifier = `arena-${this.frontierState.nextMatch++}`;
     systemsById[identifier] = arenaSystem(identifier);
     const space = this.spaces[identifier];
     space.keep = true;
-    const match = (this.matches[identifier] = {
+    const match = (this.frontierState.matches[identifier] = {
       id: identifier,
       mode,
       sp: space,
@@ -850,7 +866,7 @@ export const FrontierOperations = {
    * @returns True if entity was in an arena match.
    */
   onArenaDeath(this: FrontierCapabilities, session: Session, space: Space) {
-    const match = this.matches[space.id];
+    const match = this.frontierState.matches[space.id];
     if (!match) return false;
     this.toast(
       session,
@@ -926,7 +942,7 @@ export const FrontierOperations = {
       if (session) this.arenaExit(session, match, false);
     }
     match.sp.keep = false;
-    delete this.matches[match.id];
+    delete this.frontierState.matches[match.id];
     delete this.live[match.id];
     this.db.touch();
   },
@@ -934,8 +950,9 @@ export const FrontierOperations = {
    * Periodic tick check across all arena matches and matchmaker queues.
    */
   arenaTick(this: FrontierCapabilities) {
-    for (const arenaMatch of Object.values(this.matches)) this.arenaCheck(arenaMatch);
-    for (const mode of Object.keys(this.arenaQ)) this.tryMatch(mode as '1v1' | '2v2' | '4v4');
+    for (const arenaMatch of Object.values(this.frontierState.matches)) this.arenaCheck(arenaMatch);
+    for (const mode of Object.keys(this.frontierState.arenaQ))
+      this.tryMatch(mode as '1v1' | '2v2' | '4v4');
   },
 
   // ------------------------------------------------------------------ the exchange (player market): escrowed orders, matched by price

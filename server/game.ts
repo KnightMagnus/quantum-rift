@@ -79,7 +79,6 @@ export type FreshPlayerData = Pick<
   | 'tutV'
   | 'explored'
 >;
-import type { ArenaMatch, RaidWave } from './world-contracts.ts';
 import type { TradeState, DuelState, DuelInvite } from './coop-contracts.ts';
 export type StellarBody = import('../shared/galaxy.ts').StellarBody;
 import type {
@@ -703,26 +702,6 @@ export class Game<Storage extends Database = Database> {
   /**
    * Legacy feature state; see docs/FEATURES.md.
    */
-  arenaQ!: Record<string, number[]>;
-  /**
-   * Legacy feature state; see docs/FEATURES.md.
-   */
-  matches!: Record<string, ArenaMatch>;
-  /**
-   * Legacy feature state; see docs/FEATURES.md.
-   */
-  nextMatch!: number;
-  /**
-   * Legacy feature state; see docs/FEATURES.md.
-   */
-  waves!: Record<string, RaidWave>;
-  /**
-   * Legacy feature state; see docs/FEATURES.md.
-   */
-  rivalEnts!: Map<string, { sys: string; id: number }>;
-  /**
-   * Legacy feature state; see docs/FEATURES.md.
-   */
   duels!: Record<string, DuelState>;
   /**
    * Legacy feature state; see docs/FEATURES.md.
@@ -1224,14 +1203,7 @@ export class Game<Storage extends Database = Database> {
     if (session.data) this.features.industrial.stop(session);
     if (session.data && this.sessions.has(session.id)) this.features.coop.coopLogout(session); // duels, trades, presence
     this.sessions.delete(session.id);
-    for (const quantity of Object.values(this.arenaQ || {})) {
-      const indexOf2 = quantity.indexOf(session.id);
-      if (indexOf2 >= 0) quantity.splice(indexOf2, 1);
-    }
-    if (session.data && this.matches && this.matches[session.data.sys]) {
-      this.matches[session.data.sys].alive.delete(session.data.name);
-      session.data.stellar = session.data.arenaReturn || 'qstation';
-    }
+    this.features.frontier.arenaDisconnect(session);
     if (session.ent) {
       const playerData = session.data,
         space = this.spaces[playerData.sys],

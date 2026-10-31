@@ -112,6 +112,27 @@ capabilities.readMarketSystems = () => [];`,
   );
   assert.notEqual(livingReaderResult.status, 0, 'Living cache reader cannot be replaced');
   assert.match(livingReaderResult.stdout + livingReaderResult.stderr, /read-only/);
+  for (const reference of ['arenaQ', 'matches', 'nextMatch', 'waves', 'rivalEnts']) {
+    const result = check(
+      `declare const game: import('${modulePath('game.ts')}').Game; void game.${reference};`,
+    );
+    assert.notEqual(result.status, 0, `${reference} must not be Game state`);
+    assert.match(result.stdout + result.stderr, /does not exist/);
+  }
+  for (const [owner, field] of [
+    ['Frontier', 'frontierState'],
+    ['Rivals', 'rivalEnts'],
+  ]) {
+    const fixture = `declare const capabilities: import('${frontsType}').${owner}Capabilities;\n`;
+    const valid = check(fixture + `void capabilities.${field};`);
+    assert.equal(valid.status, 0, valid.stdout + valid.stderr);
+    const invalid = check(fixture + `capabilities.${field} = capabilities.${field};`);
+    assert.notEqual(invalid.status, 0, 'owner state reference cannot be replaced');
+    assert.match(invalid.stdout + invalid.stderr, /read-only/);
+  }
+  const disconnectResult = check('features.frontier.arenaDisconnect(42);');
+  assert.notEqual(disconnectResult.status, 0, 'disconnect requires a typed session');
+  assert.match(disconnectResult.stdout + disconnectResult.stderr, /not assignable/);
   const bindingPath = modulePath('feature-service.js');
   const bindingFixture = `import {bindOperations} from '${bindingPath}';
 function run(this: {required: number}): number{return this.required;}

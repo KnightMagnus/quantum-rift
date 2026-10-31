@@ -1,3 +1,6 @@
+import { createFeatures } from '../server/features.ts';
+import type { FrontierCapabilities } from '../server/features.ts';
+import { FrontierOperations } from '../server/frontier.ts';
 import type { Entity as FixtureEntity } from '../server/space.ts';
 import type { GameAssets } from '../shared/rules.ts';
 import { requiredFixtureValue } from './helpers/required.ts';
@@ -13,7 +16,16 @@ import { MASTERY } from '../shared/frontier.ts';
 const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
+// Capture the real owner only for assertions about encounter cleanup.
+const capturedFrontier: { current?: FrontierCapabilities } = {};
+// oxlint-disable-next-line typescript/unbound-method -- Restore after capturing the real facade.
+const frontierInit = FrontierOperations.frontierInit;
+FrontierOperations.frontierInit = function () {
+  capturedFrontier.current = this;
+  return frontierInit.call(this);
+};
 const game = new Game(assets, new Database(tempDataDir('rift-v07-')));
+FrontierOperations.frontierInit = frontierInit;
 const assertCondition = (condition: unknown, message: string) => {
   if (!condition) {
     console.error('FAIL:', message);
@@ -137,11 +149,20 @@ playerData.stellar = null;
 game.spawnPlayer(firstEntry.s, 0, 0, 0, 0);
 playerData.station.raidWin = 0;
 game.features.frontier.raidCheck(firstEntry.s);
-const weapon = game.waves[playerData.name],
+const weapon = capturedFrontier.current!.frontierState.waves[playerData.name],
   space = game.spaces.meridian;
 assertCondition(
   weapon && weapon.ids.size >= 2,
   `a live raid wave of ${weapon.ids.size} ships attacks while you are there`,
+);
+const originalState = capturedFrontier.current!.frontierState;
+const rehearsal = createFeatures(game);
+rehearsal.frontier.frontierInit();
+game.features.frontier.frontierInit();
+assertCondition(
+  capturedFrontier.current!.frontierState === originalState &&
+    originalState.waves[playerData.name] === weapon,
+  'another composition and repeated initialization preserve the live raid',
 );
 const credW = playerData.credits;
 // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
@@ -151,7 +172,7 @@ for (const identifier of [...weapon.ids])
     requiredFixtureValue(firstEntry.s).ent,
   );
 assertCondition(
-  !game.waves[playerData.name] && playerData.credits > credW,
+  !capturedFrontier.current!.frontierState.waves[playerData.name] && playerData.credits > credW,
   'destroying the whole wave wins the raid',
 );
 // mastery
@@ -193,9 +214,21 @@ const secondEntry = fake('Duelist'),
 playerData4.stellar = 'meridian-yards';
 playerData4.sys = 'meridian';
 firstEntry.send({ t: 'arena', op: 'queue', mode: '1v1' });
-assertCondition(game.arenaQ['1v1'].length === 1, 'queued for 1v1');
+assertCondition(
+  capturedFrontier.current!.frontierState.arenaQ['1v1'].length === 1,
+  'queued for 1v1',
+);
+rehearsal.frontier.frontierInit();
+assertCondition(
+  game.features.frontier.arenaPayload(playerData, firstEntry.s).queued === '1v1',
+  'another composition cannot erase the original queue',
+);
+assertCondition(
+  rehearsal.frontier.arenaPayload(playerData, firstEntry.s).queued === null,
+  'a new service starts with its own queue',
+);
 secondEntry.send({ t: 'arena', op: 'queue', mode: '1v1' });
-const match = Object.values(game.matches)[0];
+const match = Object.values(capturedFrontier.current!.frontierState.matches)[0];
 assertCondition(
   match &&
     requiredFixtureValue(firstEntry.s).ent &&
@@ -208,6 +241,14 @@ assertCondition(
       ),
   'a match starts when the queue fills: two teams in the Crucible',
 );
+rehearsal.frontier.frontierInit();
+game.features.frontier.frontierInit();
+assertCondition(
+  originalState.matches[match.id] === match && originalState.nextMatch === 2,
+  'initialization preserves the active match and next identifier',
+);
+for (const key of ['arenaQ', 'matches', 'nextMatch', 'waves'])
+  assertCondition(!(key in game), `${key} is not writable Game state`);
 const message2 = match.sp;
 assertCondition(
   message2.isHostile(
@@ -230,7 +271,7 @@ message2.kill(
   requiredFixtureValue(firstEntry.s).ent,
 );
 assertCondition(
-  !game.matches[match.id] &&
+  !capturedFrontier.current!.frontierState.matches[match.id] &&
     requiredFixtureValue(playerData.arena).rating > rating2 &&
     requiredFixtureValue(playerData4.arena).rating < rating3 &&
     requiredFixtureValue(playerData.arena).w === 1 &&
@@ -337,6 +378,32 @@ const profile = requiredFixtureValue(firstEntry.last('profile')).p;
 assertCondition(
   profile && profile.name === 'Duelist' && profile.arena.l === 1,
   'captain profiles show records',
+);
+// Real disconnect uses Frontier cleanup and retains the existing settlement timing.
+firstEntry.send({ t: 'arena', op: 'queue', mode: '1v1' });
+game.disconnect(firstEntry.s);
+assertCondition(originalState.arenaQ['1v1'].length === 0, 'disconnect removes a queued captain');
+const thirdEntry = fake('Disconnect Opponent');
+secondEntry.send({ t: 'arena', op: 'queue', mode: '1v1' });
+thirdEntry.send({ t: 'arena', op: 'queue', mode: '1v1' });
+const disconnectedMatch = Object.values(originalState.matches)[0];
+assertCondition(disconnectedMatch.id === 'arena-2', 'the match counter did not reset');
+game.disconnect(thirdEntry.s);
+assertCondition(
+  !disconnectedMatch.alive.has(thirdEntry.s.data.name),
+  'disconnect removes match participation',
+);
+assertCondition(
+  !!originalState.matches[disconnectedMatch.id],
+  'disconnect does not settle the match early',
+);
+game.features.frontier.arenaTick();
+assertCondition(
+  !originalState.matches[disconnectedMatch.id] &&
+    !disconnectedMatch.sp.keep &&
+    !!secondEntry.s.data.stellar &&
+    !secondEntry.s.ent,
+  'next arena tick settles and releases the encounter',
 );
 console.log('ALL 0.7 TESTS PASSED');
 process.exit(0);

@@ -40,7 +40,11 @@ Game.prototype.spawnPlayer = function (this: Game, session, ...args) {
   active = session;
   space = this.spaces[session.data.sys];
   // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before removing live entities.
-  for (const entity of [...space.ships.values()]) if (!entity.player) space.remove(entity);
+  for (const entity of [...space.ships.values()])
+    if (!entity.player) {
+      if (entity.rival) this.features.rivals.rivalDocked(entity);
+      space.remove(entity);
+    }
   session.ent!.x = 0;
   session.ent!.y = 0;
   session.ent!.vx = preloadConfig.initialVelocityX;
@@ -58,6 +62,13 @@ Game.prototype.spawnPlayer = function (this: Game, session, ...args) {
     const rivalDefinition =
       RIVALS.find((result) => result.fac === 'quantum' && result.kind === 'trader') ||
       RIVALS.find((result) => result.fac === 'spacer' && result.kind === 'trader');
+    // Retire the selected captain through its owner even if it was in another live space.
+    for (const liveSpace of Object.values(this.live))
+      for (const entity of liveSpace.ships.values())
+        if (entity.rival === rivalDefinition!.id) {
+          this.features.rivals.rivalDocked(entity);
+          liveSpace.remove(entity);
+        }
     for (const result of Object.values(this.db.world.rivals))
       result.sys = -999 as unknown as typeof result.sys;
     const result = this.db.world.rivals[rivalDefinition!.id];
@@ -65,9 +76,8 @@ Game.prototype.spawnPlayer = function (this: Game, session, ...args) {
     result.hull = 704;
     result.down = 0;
     result.dockT = 0;
-    this.rivalEnts.clear();
     this.features.rivals.rivalSync(space);
-    targetShip = space.ships.get(this.rivalEnts.get(rivalDefinition!.id)!.id);
+    targetShip = [...space.ships.values()].find((entity) => entity.rival === rivalDefinition!.id);
     targetShip!.x = 0;
     targetShip!.y = -1100;
     targetShip!.a = 0;

@@ -984,10 +984,10 @@
     },
     {
       "id": "frontier",
-      "owners": ["server/frontier.ts"],
+      "owners": ["server/frontier.ts", "server/frontier-state.ts"],
       "services": ["frontier"],
       "tests": ["v07.ts"],
-      "asserts": "Colony ownership/accrual, station raid/defense waves, mastery, arena matchmaking/rating, exchange escrow/matching and profiles/leaderboards."
+      "asserts": "Colony ownership/accrual, station raid/defense waves, mastery, arena matchmaking/rating, exchange escrow/matching and profiles/leaderboards. Service-owned queues/matches/counter/waves survive second-composition and repeated initialization; real queued/in-match disconnects preserve cleanup and next-tick settlement."
     },
     {
       "id": "specialists",
@@ -1015,7 +1015,7 @@
       "owners": ["server/rivals.ts", "shared/rivals.ts"],
       "services": ["rivals"],
       "tests": ["v11.ts", "core-actions.ts", "planet-portrait-art.ts"],
-      "asserts": "Named career population, unique captain/ship names and matching stable portrait IDs; original seeded luck without the former floors; equal fresh-world wealth rules for all thirty rivals and preservation of existing rival careers on reload. Careers pause with no authenticated open connection and resume without offline catch-up; anonymous and closed connections do not advance income, kills, hulls or location. Relationships, hunters, damage/death/bounty, news/market flashes and status route remain covered."
+      "asserts": "Named career population, unique captain/ship names and matching stable portrait IDs; original seeded luck without the former floors; equal fresh-world wealth rules for all thirty rivals and preservation of existing rival careers on reload. Second-composition and repeated initialization retain one original live ship; missing-ship cleanup and dock-timer release/respawn preserve the service-owned index. Careers pause with no authenticated open connection and resume without offline catch-up; anonymous and closed connections do not advance income, kills, hulls or location. Relationships, hunters, damage/death/bounty, news/market flashes and status route remain covered."
     },
     {
       "id": "hailing",
