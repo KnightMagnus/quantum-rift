@@ -1,3 +1,4 @@
+import { performanceFrame } from './performance-report.ts';
 import { browserHealth } from './health.ts';
 import {
   Actor,
@@ -82,6 +83,7 @@ void main() { fragColor = vec4(texture(u_graphic, v_uv).rgb * u_opacity, 0.0); }
     const started = browserHealth?.now() ?? 0;
     this.updates++;
     this.now = performance.now();
+    performanceFrame(this.now, !!this.state.sys);
     updateLoginScene(this.now);
     this.advance(this.now);
     if (this.system !== this.state.sys) {

@@ -169,6 +169,7 @@ try {
 
   // Opt-in and retained previews belong to one captain session, not the next sign-in.
   await openOptions();
+  await page.locator('#perfstart').click();
   await toggle.check();
   await closeOptions();
   await amount.fill('4');
@@ -185,8 +186,85 @@ try {
     await page.locator('#storyb button').first().click();
   await openOptions();
   assert.equal(await toggle.isChecked(), false, 'another captain must opt in separately');
+  assert.equal(await page.locator('#perfexport').isDisabled(), true);
+  assert.equal(await page.locator('#perfstatus').innerText(), 'Off. No frame intervals recorded.');
   assert.equal(await exportButton.isDisabled(), true);
   assert.equal(await status.innerText(), 'Off. Nothing is being recorded.');
+  await closeOptions();
+
+  // The same Settings flow exports real foreground game intervals without gameplay identity.
+  await openOptions();
+  assert.equal(await page.locator('#perfexport').isDisabled(), true);
+  await page.locator('#perfscenario').selectOption('docked');
+  await page.locator('#perfstart').click();
+  assert.equal(await page.locator('#perfscenario').isDisabled(), true);
+  await closeOptions();
+  const updateCount = await page.evaluate(() => window.RiftEngine.scene.updates);
+  await page.waitForFunction(
+    (previous) => window.RiftEngine.scene.updates >= previous + 25,
+    updateCount,
+  );
+  await openOptions();
+  await page.locator('#perfstart').click();
+  const [performanceDownload] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#perfexport').click(),
+  ]);
+  const performancePath = path.join(output, 'browser-performance.json');
+  await performanceDownload.saveAs(performancePath);
+  const performanceText = fileSystem.readFileSync(performancePath, 'utf8');
+  const report = JSON.parse(performanceText);
+  assert.equal(report.format, 'quantum-rift-browser-performance');
+  assert.equal(report.version, 1);
+  assert.equal(report.build, publicVersion);
+  assert.equal(report.frames.scenario, 'docked');
+  assert.equal(report.frames.recording, false);
+  assert.ok(report.frames.frames >= 20);
+  assert.equal(report.frames.frames, report.intervalsMs.length);
+  assert.ok(report.frames.p95Ms > 0);
+  assert.equal(report.environmentStart.viewport.width, 1440);
+  assert.ok(['canvas', 'webgl'].includes(report.environmentStart.renderer));
+  assert.ok(report.loading.resourceCount > 0);
+  assert.ok(report.loading.navigation.loadMs > 0);
+  assert.ok(report.loading.firstWorldFrameMs > 0);
+  assert.equal(
+    /Support Pilot|fixture|127\.0\.0\.1|password|token|stellar|userAgent|https?:/i.test(
+      performanceText,
+    ),
+    false,
+  );
+  const unavailable = await page.evaluate(async () => {
+    const module = await import('/performance-report.js');
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas[data-renderer]')!;
+    const backend = canvas.dataset.renderer;
+    const originalContext = canvas.getContext.bind(canvas);
+    const originalEntries = performance.getEntriesByType.bind(performance);
+    try {
+      canvas.dataset.renderer = 'webgl';
+      canvas.getContext = () => {
+        throw Error('restricted metadata');
+      };
+      performance.getEntriesByType = () => [];
+      return module.performanceReport();
+    } finally {
+      canvas.dataset.renderer = backend;
+      canvas.getContext = originalContext;
+      performance.getEntriesByType = originalEntries;
+    }
+  });
+  assert.equal(unavailable.environmentEnd.graphics, null);
+  assert.equal(unavailable.loading.navigation, null);
+  assert.equal(unavailable.loading.resourceCount, 0);
+  await page.locator('#perfclear').click();
+  assert.equal(await page.locator('#perfexport').isDisabled(), true);
+  // Narrow screens retain reachable controls in the existing scrolling Settings dialog.
+  await page.setViewportSize({ width: 600, height: 750 });
+  await page.locator('#perfstart').scrollIntoViewIfNeeded();
+  await page.locator('#perfstart').click();
+  await page.locator('#perfclear').click();
+  await page
+    .locator('#opts .optbox')
+    .screenshot({ path: path.join(output, 'performance-settings-narrow.png') });
   await closeOptions();
 
   // Nothing persists in browser storage and nothing was uploaded.

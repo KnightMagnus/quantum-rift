@@ -37,10 +37,13 @@ await build({
     {
       name: 'preserve-client-helpers',
       setup(builder) {
-        builder.onResolve({ filter: /(?:render|login_scene)\.ts$|\.\.\/shared\// }, (args) => ({
-          path: args.path.replace(/\.ts$/, '.js'),
-          external: true,
-        }));
+        builder.onResolve(
+          { filter: /(?:render|login_scene|performance-report)\.ts$|\.\.\/shared\// },
+          (args) => ({
+            path: args.path.replace(/\.ts$/, '.js'),
+            external: true,
+          }),
+        );
       },
     },
   ],
