@@ -237,6 +237,7 @@ try {
     const module = await import('/performance-report.js');
     const labels = [
       '0.5 MP Beta 1',
+      '0.5.1 MP Beta 1',
       '0.4.2.1',
       '0.5.0-mp-beta.1',
       'Private Captain',
@@ -253,6 +254,7 @@ try {
   }, publicVersion);
   assert.deepEqual(buildLabels, [
     '0.5 MP Beta 1',
+    '0.5.1 MP Beta 1',
     '0.4.2.1',
     '0.5.0-mp-beta.1',
     null,
