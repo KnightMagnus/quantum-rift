@@ -337,8 +337,15 @@ const JobOperations: JobOperations = {
   completeOnLanding(this: JobCapabilities, session: Session, stellarBody: StellarBody) {
     const playerData = session.data;
     playerData.lastStellar = stellarBody.id;
-    // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
-    for (const mission of [...playerData.missions]) {
+    const pending = [...playerData.missions];
+    const transitionLimit =
+      pending.length +
+      Object.values(playerData.quests?.active || {}).reduce(
+        (remaining, quest) => remaining + Math.max(0, quest.steps.length - quest.step),
+        0,
+      );
+    for (let index = 0; index < pending.length && index < transitionLimit; index++) {
+      const mission = pending[index];
       if (mission.type === 'miningOrder' || mission.paid) continue;
       if (mission.type === 'passenger' && mission.pickup && !mission.boarded) {
         if (mission.pickup === stellarBody.id) {
@@ -348,7 +355,6 @@ const JobOperations: JobOperations = {
         continue;
       }
       if (mission.radioTour && advanceRadioTour(this, session, mission, stellarBody)) continue;
-      // a snapshot: follow-up jobs added on this landing wait for the next one
       if (
         mission.type === 'supply' &&
         mission.dest === stellarBody.id &&
@@ -424,7 +430,20 @@ const JobOperations: JobOperations = {
           `Job complete: ${mission.title}. Paid ${credits(mission.reward)} credits.`,
         );
         this.log(playerData, `Completed: ${mission.title} (+${credits(mission.reward)}).`);
-        if (mission.quest) this.features.quests.questAdvance(session, mission); // the story goes on
+        if (mission.quest) {
+          this.features.quests.questAdvance(session, mission);
+          // Only continue deliveries in this quest at this port; other steps still need play.
+          const followup = playerData.missions.find(
+            (candidate) =>
+              candidate.quest?.qid === mission.quest!.qid &&
+              candidate.quest.step > mission.quest!.step &&
+              !candidate.paid &&
+              candidate.type !== 'passenger' &&
+              destType(candidate) &&
+              candidate.dest === stellarBody.id,
+          );
+          if (followup && !pending.includes(followup)) pending.push(followup);
+        }
       }
     }
     playerData.missions = playerData.missions.filter((mission) => !mission.paid);
