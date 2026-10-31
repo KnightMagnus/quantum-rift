@@ -797,7 +797,8 @@
     "story-continuation.ts": [
       "helpers/mocks.ts",
       "helpers/story-integration-edge.ts",
-      "helpers/story-seeded-motion.ts"
+      "helpers/story-seeded-motion.ts",
+      "helpers/story-docked-progression.ts"
     ],
     "helpers/nhal.ts": ["helpers/mocks.ts"],
     "helpers/index-fleet.ts": ["helpers/mocks.ts"],
@@ -809,6 +810,7 @@
       "helpers/browser-fixture.ts",
       "helpers/chromium.ts"
     ],
+    "helpers/story-docked-progression.ts": ["helpers/mocks.ts"],
     "helpers/story-seeded-motion.ts": ["helpers/mocks.ts"],
     "overlay-input-browser.ts": [
       "helpers/browser-fixture.ts",
@@ -1868,6 +1870,8 @@
       "id": "story-continuation",
       "owners": [
         "server/story.ts",
+        "server/jobs.ts",
+        "server/game.ts",
         "shared/story.ts",
         "shared/story-continuation.ts",
         "shared/story-world.ts",
@@ -1878,7 +1882,7 @@
         "server/index-fleet.ts",
         "shared/index-fleet.ts"
       ],
-      "services": ["story", "nhal", "indexFleet"],
+      "services": ["story", "quests", "nhal", "indexFleet"],
       "tests": [
         "story-continuation.ts",
         "eventide.ts",
@@ -1886,7 +1890,7 @@
         "index-presentation.ts",
         "ui-polish-browser.ts"
       ],
-      "asserts": "Captain-scoped decisions, finale availability branches, denial and persistence; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups. Mixed large Index hull envelopes retain separated saved-roster berths under actual neutral movement without reissuing health or replacement budgets. Table departure preserves the player ship at a resumable safe Rift standoff, denies unavailable hulls, freezes only the viewing captain and wing with bounded protection, rejects early completion and releases once after a validated acknowledgment. The automatically accepted preparation objective projects actual completed components, fitting and crossing without occupying quest slots or granting items."
+      "asserts": "Docked chapter choices and landing completions refresh port offers without autoaccepting; bounded same-port quest deliveries settle once while remote steps still require travel. Captain-scoped decisions, finale availability branches, denial and persistence; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups. Mixed large Index hull envelopes retain separated saved-roster berths under actual neutral movement without reissuing health or replacement budgets. Table departure preserves the player ship at a resumable safe Rift standoff, denies unavailable hulls, freezes only the viewing captain and wing with bounded protection, rejects early completion and releases once after a validated acknowledgment. The automatically accepted preparation objective projects actual completed components, fitting and crossing without occupying quest slots or granting items."
     },
     {
       "id": "release-platform-gates",
