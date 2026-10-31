@@ -1,3 +1,4 @@
+import { QCS_HULLS } from '../shared/qcs-fleet.ts';
 import { ARMADA_HULLS, MK2_OF, MK3_OF } from '../shared/galaxy.ts';
 import { INDEX_FLEET_HULLS } from '../shared/index-fleet.ts';
 import { INDEX_HULLS } from '../shared/index.ts';
@@ -34,6 +35,7 @@ export function hullSources(rawShipIds: Iterable<string>): Map<string, string> {
   const authoredHulls: [string, { id: number | string }[]][] = [
     ['shared/specialty.ts', SPECIALISTS],
     ['shared/ships23.ts', SHIPS23],
+    ['shared/qcs-fleet.ts', QCS_HULLS],
     ['shared/index.ts', INDEX_HULLS],
     ['shared/index-fleet.ts', INDEX_FLEET_HULLS],
     ['shared/nhal.ts', NHAL_HULLS],

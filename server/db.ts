@@ -1,3 +1,4 @@
+import type { QcsFleetState } from './qcs-fleet.ts';
 import { preparedLogin } from './local-login.ts';
 import { validateFeatureSnapshots } from './save-validation.ts';
 import type { IndexFleetWorld } from './index-fleet.ts';
@@ -46,6 +47,8 @@ export interface ArmadaState {
 
 /** Persisted galaxy world state data. */
 export type WorldData = FeatureWorldState & {
+  /** One saved security patrol across Concord territory. */
+  qcsFleet?: QcsFleetState;
   armadas: Record<string, ArmadaState>;
   towing?: TowWorld;
   industrial?: IndustrialWorld;
