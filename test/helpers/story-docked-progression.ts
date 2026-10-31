@@ -124,6 +124,117 @@ export function verifyDockedProgression(game: Game): void {
       assert.equal(data.credits, paid, 'repeated dock settlement cannot pay again');
       assert.ok(packets.filter((packet) => packet.t === 'story').length <= 3);
     }
+    for (const [side, step] of [
+      ['nhal-stirs', 0],
+      ['nhal-soundings', 0],
+      ['nhal-eye', 0],
+      ['nhal-eye', 1],
+      ['index-records', 8],
+      ['rift-harness', 0],
+    ] as const) {
+      const definition = SIDE_STORIES.find((candidate) => candidate.id === side)!;
+      const quest: QuestRecord = {
+        qid: 's:' + side,
+        side,
+        name: definition.name,
+        giver: definition.giver,
+        at: definition.at,
+        plan: { W: definition.at, Wsys: STELLARS[definition.at].system },
+        steps: definition.steps.map((entry) => ({ ...entry })),
+        step,
+        started: 1,
+        tries: 0,
+      };
+      data.quests.active = { [quest.qid]: quest };
+      data.missions = [];
+      game.features.quests.questPush(session, quest, true);
+      const mission = data.missions[0];
+      data.sys = mission.sys!;
+      data.stellar = null;
+      game.spawnPlayer(session, 0, 0, 0, 0);
+      const lastPort = data.lastStellar;
+      const balance = data.credits;
+      assert.equal(
+        game.completeRemoteQuest(session, mission),
+        false,
+        'unfinished observation denied',
+      );
+      mission.done = true;
+      const flying = session.ent!;
+      flying.dead = true;
+      assert.equal(
+        game.completeRemoteQuest(session, mission),
+        false,
+        'dead captains cannot settle',
+      );
+      flying.dead = false;
+      const currentSystem = data.sys;
+      data.sys = 'qgate';
+      if (mission.sys !== data.sys)
+        assert.equal(game.completeRemoteQuest(session, mission), false, 'wrong system denied');
+      data.sys = currentSystem;
+      const activeStep = quest.step;
+      quest.step++;
+      assert.equal(game.completeRemoteQuest(session, mission), false, 'stale objective denied');
+      quest.step = activeStep;
+      const authoredSide = quest.side;
+      delete quest.side;
+      assert.equal(
+        game.completeRemoteQuest(session, mission),
+        false,
+        'ordinary quests remain landing paid',
+      );
+      quest.side = authoredSide;
+      mission.done = false;
+      const unrelated = { ...mission, id: 'ordinary-unrelated', quest: undefined, done: true };
+      data.missions.push(unrelated);
+      const oldCargo = data.cargo;
+      if (side === 'nhal-eye' && step === 1) data.cargo = { food: 100000 };
+
+      if (mission.type === 'survey') {
+        mission.points = [[0, 0]];
+        mission.seen = [];
+        game.features.fronts.missionIdle(session);
+      } else {
+        assert.ok(game.features.quests.questLoot(session, { salvage: mission.id }));
+        assert.equal(game.features.quests.questLoot(session, { salvage: mission.id }), false);
+      }
+      assert.equal(quest.step, step + 1, 'real survey or collection advances exactly one step');
+      assert.equal(data.lastStellar, lastPort, 'remote completion does not invent a landing');
+      assert.equal(data.credits, balance + mission.reward, 'existing step payout paid once');
+      assert.ok(data.missions.includes(unrelated), 'simultaneous unrelated job remains unpaid');
+      assert.equal(unrelated.paid, undefined);
+      const next = data.missions.find((entry) => entry.quest?.qid === quest.qid)!;
+      if (side === 'nhal-eye' && step === 1) {
+        assert.equal(data.cargo.food, 100000, 'full hold loses no existing goods');
+        assert.equal(next.type, 'cargo', 'physical delivery remains reserved with a full hold');
+        data.cargo = oldCargo;
+      }
+      assert.equal(next.quest!.step, step + 1);
+      const paid = data.credits;
+      assert.equal(
+        game.completeRemoteQuest(session, mission),
+        false,
+        'replayed notification denied',
+      );
+      if (next.type === 'cargo' || side === 'nhal-stirs') {
+        next.done = true;
+        assert.equal(
+          game.completeRemoteQuest(session, next),
+          false,
+          'physical delivery or final scene stays docked',
+        );
+      }
+      assert.equal(data.credits, paid);
+      const restored = JSON.parse(JSON.stringify(data));
+      assert.equal(restored.quests.active[quest.qid].step, step + 1);
+      assert.ok(
+        restored.missions.some((entry: { id: string }) => entry.id === next.id),
+        'pending delivery survives save serialization',
+      );
+      game.spaces[data.sys].remove(session.ent!);
+      session.ent = null;
+    }
     const deliveryChain: QuestRecord = {
       qid: 'c:docked:chain',
       name: 'Docked delivery chain',

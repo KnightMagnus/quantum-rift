@@ -836,7 +836,8 @@ export const FrontsOperations = {
         });
         if (mission.seen!.length >= mission.points!.length) {
           mission.done = true;
-          this.toast(session, 'Survey complete. Land anywhere to be paid.');
+          if (!this.completeRemoteQuest(session, mission))
+            this.toast(session, 'Survey complete. Land anywhere to be paid.');
         }
         this.you(session);
       }

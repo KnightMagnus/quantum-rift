@@ -3094,6 +3094,11 @@ export class Game<Storage extends Database = Database> {
    * @param session Player session landing.
    * @param stellarBody Landed stellar port.
    */
+  /** Settle an explicitly eligible authored quest observation without landing. */
+  completeRemoteQuest(session: Session, mission: Mission): boolean {
+    return this.jobService.completeRemoteQuest(session, mission);
+  }
+
   completeOnLanding(session: Session, stellarBody: StellarBody): void {
     return this.jobService.completeOnLanding(session, stellarBody);
   }

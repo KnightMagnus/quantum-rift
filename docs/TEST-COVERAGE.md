@@ -1978,3 +1978,5 @@ the world update; exact balances, credit changes and loan schedules remain
 unchanged across notification retries. Existing partial-mutation abort and native
 checkpoint-freeze fixtures remain separate. These offline fixtures establish no
 rollback guarantee or live-network delivery guarantee.
+
+Authored remote quest observations and collections are covered by the docked-progression helper: real final survey points and salvage collection advance one step, preserve physical deliveries and final scenes, retain last-port state and pending serialized missions, and reject unfinished or repeated settlement. Ordinary jobs remain landing-paid.

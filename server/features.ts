@@ -113,6 +113,7 @@ export type FrontsCapabilities = {
     | undefined;
 } & Pick<
   FeatureCore,
+  | 'completeRemoteQuest'
   | 'ownSite'
   | 'outfitInstallProblem'
   | 'A'
@@ -331,7 +332,17 @@ export type LivingCapabilities = {
   Pick<BoundOperations<RivalsOperations>, 'news'>;
 export type QuestsCapabilities = Pick<
   FeatureCore,
-  'A' | 'db' | 'holdUsed' | 'landed' | 'log' | 'market' | 'send' | 'spaces' | 'toast' | 'you'
+  | 'A'
+  | 'db'
+  | 'holdUsed'
+  | 'landed'
+  | 'log'
+  | 'market'
+  | 'send'
+  | 'spaces'
+  | 'toast'
+  | 'you'
+  | 'completeRemoteQuest'
 > &
   Pick<
     BoundOperations<QuestOperations>,
@@ -605,6 +616,7 @@ export function createFeatures(core: Game): FeatureServices {
   let lastInvWin: number;
   let invasion: FrontsCapabilities['invasion'];
   const frontsCapabilities: FrontsCapabilities = {
+    completeRemoteQuest: (...args) => core.completeRemoteQuest(...args),
     ownSite: core.ownSite.bind(core),
     outfitInstallProblem: core.outfitInstallProblem.bind(core),
     get platform() {
@@ -1277,6 +1289,7 @@ export function createFeatures(core: Game): FeatureServices {
   features.living = bindOperations(LivingOperations, livingCapabilities);
 
   const questsCapabilities: QuestsCapabilities = {
+    completeRemoteQuest: (...args) => core.completeRemoteQuest(...args),
     get questReconcile() {
       return features.quests.questReconcile;
     },
