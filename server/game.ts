@@ -3472,7 +3472,17 @@ export class Game<Storage extends Database = Database> {
       const privateEntities = [...this.spaces[starSystem].ships.values()].some(
         (actor) => actor.story || actor.storySight,
       );
-      const encodeShared = privateEntities ? null : sharedSnapshotEncoder(spaceSnapshot);
+      const miningRocks = this.features.mining.rocksPayload(this.spaces[starSystem]);
+      const sharedFields = {
+        miningRocks,
+        miningHazards: list.some((session) => session.ent)
+          ? this.features.pressure.hazards(starSystem)
+          : [],
+      };
+      const encodeShared = sharedSnapshotEncoder(
+        privateEntities ? null : spaceSnapshot,
+        sharedFields,
+      );
       if (health) health.observe('snapshotBuildMs', health.now() - snapshotStarted);
       for (const session of list) {
         const privateSpace = this.spaces[starSystem];
@@ -3498,7 +3508,7 @@ export class Game<Storage extends Database = Database> {
             t: 'scene',
             sys: starSystem,
             ...personalSnapshot,
-            miningRocks: this.features.mining.rocksPayload(this.spaces[starSystem]),
+            miningRocks,
           });
           continue;
         }
@@ -3506,12 +3516,10 @@ export class Game<Storage extends Database = Database> {
         const recipientFields = {
           attention: attentionPayload(session, this.spaces[starSystem]),
           nhal: this.features.nhal.status(this.spaces[starSystem], entity),
-          miningRocks: this.features.mining.rocksPayload(this.spaces[starSystem]),
           mining: this.features.mining.payload(session, this.spaces[starSystem]),
           industrial: this.features.industrial.payload(session),
           towing: this.features.towing.payload(session),
           miningPressure: this.features.pressure.payload(session),
-          miningHazards: this.features.pressure.hazards(starSystem),
           combat: this.combatAssist.payload(session, this.spaces[starSystem]),
           formation: !!session.armadaFormationTarget,
           me: [
@@ -3531,9 +3539,9 @@ export class Game<Storage extends Database = Database> {
               .map((weaponMount) => [weaponMount.w, weaponMount.ammo]),
           ],
         };
-        const serialized = encodeShared
-          ? encodeShared(recipientFields)
-          : JSON.stringify({ t: 'snap', ...personalSnapshot, ...recipientFields });
+        const serialized = encodeShared(
+          privateEntities ? { ...personalSnapshot, ...recipientFields } : recipientFields,
+        );
         if (health) {
           health.observe('snapshotSerializeMs', health.now() - serializeStarted);
           health.observe('snapshotBytes', utf8Bytes(serialized));

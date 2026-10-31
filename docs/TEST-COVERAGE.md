@@ -1868,7 +1868,10 @@ Snapshot routing in `test/health.ts` compares public, owner-only and sight-gated
 ship/projectile/beam rows for flying and docked recipients against the legacy
 visibility expression. Public routes perform zero recipient array filters;
 restricted routes retain three filters per recipient. This is allocation evidence,
-not a wall-clock speedup claim.
+not a wall-clock speedup claim. Rock and hazard projections are built once per
+system/update. Serialization counters check reuse across flying recipients on both
+public and private routes, while payload comparisons retain recipient identity,
+scene field exclusions and fresh per-system data on subsequent updates.
 
 ### Tick fault origins
 

@@ -235,6 +235,34 @@ snapshotSpace.snapshot = () => {
   }
   return snapshot;
 };
+let rockBuilds = 0;
+let hazardBuilds = 0;
+let rockEncodings = 0;
+let hazardEncodings = 0;
+const buildRocks = snapshotGame.features.mining.rocksPayload.bind(snapshotGame.features.mining);
+const buildHazards = snapshotGame.features.pressure.hazards.bind(snapshotGame.features.pressure);
+snapshotGame.features.mining.rocksPayload = (space) => {
+  rockBuilds++;
+  const value = buildRocks(space);
+  Object.defineProperty(value, 'toJSON', {
+    value: () => {
+      rockEncodings++;
+      return value;
+    },
+  });
+  return value;
+};
+snapshotGame.features.pressure.hazards = (system) => {
+  hazardBuilds++;
+  const value = buildHazards(system);
+  Object.defineProperty(value, 'toJSON', {
+    value: () => {
+      hazardEncodings++;
+      return value;
+    },
+  });
+  return value;
+};
 for (const restriction of ['public', 'owner', 'docked-owner', 'sight'] as const) {
   const restricted = restriction !== 'public';
   marker.story =
@@ -247,9 +275,14 @@ for (const restriction of ['public', 'owner', 'docked-owner', 'sight'] as const)
   (recipients[0].data.story.flags ??= {}).convoy_visible = true;
   payloads.clear();
   filterCalls = 0;
+  rockBuilds = hazardBuilds = rockEncodings = hazardEncodings = 0;
   snapshotGame.tickN = 1;
   snapshotGame.tick();
   assert.equal(payloads.size, 4);
+  assert.equal(rockBuilds, 1, 'one rock projection per system/update, including docked observers');
+  assert.equal(hazardBuilds, 1, 'one hazard projection per system/update');
+  assert.equal(rockEncodings, 1, 'flying recipients reuse encoded rocks, even with private ships');
+  assert.equal(hazardEncodings, 1, 'flying recipients reuse encoded hazards');
   const source = originalSnapshot();
   source.shots.push([1, 0, 0, 0, 0, marker.id]);
   source.beams.push([marker.id, 0, 0, 0, 0]);
@@ -273,6 +306,13 @@ for (const restriction of ['public', 'owner', 'docked-owner', 'sight'] as const)
         source[key].filter((row) => visible(Number(row[ownerIndex]))),
       );
     assert.equal(payload.t, session.ent ? 'snap' : 'scene');
+    assert.deepEqual(payload.miningRocks, buildRocks(snapshotSpace));
+    if (session.ent) {
+      assert.deepEqual(payload.miningHazards, buildHazards(snapshotSpace.id));
+      assert.equal((payload.me as number[])[0], session.ent.id);
+    } else {
+      assert.equal('miningHazards' in payload, false, 'scene contract stays unchanged');
+    }
     assert.equal(
       (payload.ships as unknown[][]).some((row) => row[0] === marker.id),
       visible(marker.id),
@@ -283,4 +323,22 @@ for (const restriction of ['public', 'owner', 'docked-owner', 'sight'] as const)
     restricted ? 12 : 0,
     'public recipients allocate no discarded filtered arrays',
   );
+}
+
+// No update may retain another system's projection or stale rock/hazard data.
+recipients[3].data.sys = 'sol';
+const otherSpace = snapshotGame.spaces.sol;
+otherSpace.tick = () => {};
+for (let update = 0; update < 2; update++) {
+  rockBuilds = hazardBuilds = 0;
+  payloads.clear();
+  snapshotGame.tickN = 1;
+  snapshotGame.tick();
+  assert.equal(rockBuilds, 2, 'each observed system rebuilds once each update');
+  assert.equal(hazardBuilds, 1, 'docked-only system needs no hazard projection');
+  for (const session of recipients)
+    assert.deepEqual(
+      payloads.get(session.sock)!.miningRocks,
+      buildRocks(snapshotGame.spaces[session.data.sys]),
+    );
 }
