@@ -483,3 +483,10 @@ The story payload projects the automatically accepted preparation objective from
 the saved Table choice and real component completions. The mission journal points
 to the next component contact, Harness fitting or the crossing. Existing quest,
 slot-limit and reward authorities are unchanged.
+
+## Concord security patrol
+
+`server/qcs-fleet.ts` owns one saved territorial patrol, advanced by the game clock.
+`shared/qcs-fleet.ts` defines its finite roster and NPC hulls. The carrier launches
+eight Watch drones from its runway centre, using ordinary fighter ownership and
+escort AI. `test/qcs-fleet.ts` covers routing, attrition, restore and runway geometry.

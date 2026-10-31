@@ -160,7 +160,8 @@
     "syndicate-safety.ts",
     "quest-directions.ts",
     "performance-growth.ts",
-    "fuzz-seeds.ts"
+    "fuzz-seeds.ts",
+    "qcs-fleet.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -900,6 +901,13 @@
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
   "systems": [
+    {
+      "id": "qcs-security-fleet",
+      "owners": ["server/qcs-fleet.ts", "shared/qcs-fleet.ts", "tools/ships26/hulls_qcs.py"],
+      "services": [],
+      "tests": ["qcs-fleet.ts"],
+      "asserts": "One finite territorial patrol; connected Concord-only travel, attrition and runtime restore, slow friendly armed hulls, eight carried drones and heading-relative runway departure."
+    },
     {
       "id": "accounts-persistence",
       "owners": [
