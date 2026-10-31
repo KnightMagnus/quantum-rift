@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
-import type { Game } from '../../server/game.ts';
+import filesystem from 'node:fs';
+import path from 'node:path';
+import { Game } from '../../server/game.ts';
+import { DB } from '../../server/db.ts';
 import type { QuestRecord } from '../../shared/quests.ts';
 import { SIDE_STORIES } from '../../shared/quests.ts';
 import { STORY } from '../../shared/story.ts';
@@ -309,8 +312,112 @@ export function verifyDockedProgression(game: Game): void {
       loggedInBalance,
       'repeated login cannot repay docked completion',
     );
+    verifyRemoteSettlementRestart(game);
   } finally {
     if (session.ent) game.spaces[data.sys].remove(session.ent);
     game.sessions.delete(session.id);
+  }
+}
+
+/** Persist a collected objective, reopen storage, and finish its delivery after login. */
+function verifyRemoteSettlementRestart(source: Game): void {
+  const root = path.resolve('.artifacts/story-authority');
+  filesystem.mkdirSync(root, { recursive: true });
+  const directory = filesystem.mkdtempSync(path.join(root, 'remote-restart-'));
+  try {
+    const database = new DB(directory);
+    const game = new Game(structuredClone(source.A), database);
+    const data = database.create('Remote restart', 'restart-fixture', game.fresh());
+    game.features.hangar.hangarInit(data);
+    game.features.story.storyInit(data);
+    game.features.quests.questInit(data);
+    data.tut = 999;
+    const definition = SIDE_STORIES.find((side) => side.id === 'nhal-eye')!;
+    const quest: QuestRecord = {
+      qid: 's:nhal-eye',
+      side: definition.id,
+      name: definition.name,
+      giver: definition.giver,
+      at: definition.at,
+      plan: { W: definition.at, Wsys: STELLARS[definition.at].system },
+      steps: definition.steps.map((step) => ({ ...step })),
+      step: 1,
+      started: 1,
+      tries: 0,
+    };
+    data.quests.active[quest.qid] = quest;
+    const session = mockSession({
+      id: 74202,
+      name: data.name,
+      data,
+      sock: { open: true, backlog: 0, send() {} },
+    });
+    game.sessions.set(session.id, session);
+    game.features.quests.questPush(session, quest, true);
+    const mission = data.missions[0];
+    data.sys = mission.sys!;
+    data.stellar = null;
+    game.spawnPlayer(session, 0, 0, 0, 0);
+    database.touch();
+    database.flush();
+    const initialCredits = data.credits;
+    assert.equal(game.features.quests.questLoot(session, { salvage: mission.id }), true);
+    assert.equal(data.credits, initialCredits + mission.reward);
+    const delivery = data.missions[0];
+    assert.equal(delivery.type, 'cargo');
+    assert.equal(delivery.dest, 'tide');
+    database.flush();
+
+    const restoredDatabase = new DB(directory);
+    const restoredGame = new Game(structuredClone(source.A), restoredDatabase);
+    const restoredSession = mockSession({ id: 74203, sock: { open: true, backlog: 0, send() {} } });
+    restoredGame.sessions.set(restoredSession.id, restoredSession);
+    restoredGame.hello(restoredSession, { name: data.name, pass: 'restart-fixture' });
+    const restored = restoredSession.data;
+    assert.equal(
+      restored.credits,
+      initialCredits + mission.reward,
+      'remote reward survives storage restart',
+    );
+    assert.equal(restored.quests.active[quest.qid].step, 2);
+    assert.equal(restored.missions.length, 1, 'login retains one pending physical delivery');
+    assert.equal(restored.missions[0].id, delivery.id);
+    restoredGame.hello(restoredSession, { name: data.name, pass: 'restart-fixture' });
+    assert.equal(
+      restored.credits,
+      initialCredits + mission.reward,
+      'repeat login cannot repay remote completion',
+    );
+    assert.equal(restored.missions.length, 1);
+    assert.equal(
+      restoredGame.features.quests.questLoot(restoredSession, { salvage: mission.id }),
+      false,
+    );
+
+    function landAtDestination(): void {
+      const destination = STELLARS.tide;
+      restored.sys = destination.system;
+      restored.stellar = null;
+      restoredGame.spawnPlayer(restoredSession, destination.x, destination.y, 0, 0);
+      restoredGame.land(restoredSession, destination.id);
+      assert.equal(restoredSession.ent, null, 'delivery completes through actual landing');
+    }
+    landAtDestination();
+    const finalCredits =
+      initialCredits + mission.reward + delivery.reward + definition.reward.credits;
+    assert.equal(restored.credits, finalCredits, 'delivery and final quest rewards paid once');
+    assert.equal(restored.quests.active[quest.qid], undefined);
+    assert.ok(restored.quests.sides[definition.id]);
+    assert.equal(restored.missions.length, 0);
+    landAtDestination();
+    assert.equal(
+      restored.credits,
+      finalCredits,
+      'repeated landing cannot repay the restored quest',
+    );
+    restoredDatabase.flush();
+    assert.equal(new DB(directory).get(data.name)!.credits, finalCredits, 'final payout persists');
+  } finally {
+    filesystem.rmSync(directory, { recursive: true, force: true });
   }
 }
