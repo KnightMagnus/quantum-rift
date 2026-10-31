@@ -94,12 +94,30 @@ for (const ship of ships()) game.spaces[state.system].remove(ship);
 tickQcsFleet(game, QCS_DWELL);
 assert.equal(ships().length, 0, 'destroyed fleet does not immediately refill');
 // Sleeping a quiet system does not pin it awake or refill the world roster.
-const sleepingSpace = restored.spaces[state.system];
+const restoredSystem = restored.db.world.qcsFleet!.system;
+const sleepingSpace = restored.spaces[restoredSystem];
 restored.sleep(sleepingSpace);
-assert(!restored.live[state.system]);
-void restored.spaces[state.system];
+assert(!restored.live[restoredSystem]);
+void restored.spaces[restoredSystem];
 tickQcsFleet(restored, 0);
+const rewokenShips = () =>
+  [...restored.spaces[restoredSystem].ships.values()].filter((ship) =>
+    QCS_ROSTER.includes(Number(ship.hull)),
+  );
+assert.equal(rewokenShips().length, 10, 'wake restores the ten crewed ships with drones aboard');
+assert.equal(rewokenShips().find((ship) => ship.hull === 736)!.armor, 1500);
 assert.equal(restored.db.world.qcsFleet!.health.filter(Boolean).length, QCS_ROSTER.length - 1);
+for (let launch = 0; launch < 12; launch++) {
+  tickQcsFleet(restored, 3);
+  assert(rewokenShips().filter((ship) => ship.hull === 853).length <= 8);
+}
+assert.equal(rewokenShips().length, QCS_ROSTER.length - 1);
+assert.equal(
+  rewokenShips().filter((ship) => ship.hull === 853).length,
+  7,
+  'the destroyed drone is not replaced after wake',
+);
+assert.equal(rewokenShips().find((ship) => ship.hull === 736)!.armor, 1500);
 const denied = new Game(structuredClone(assets), new DB(tempDataDir('qcs-carrier-loss-')));
 tickQcsFleet(denied, 0);
 const deniedSpace = denied.spaces.qgate;
