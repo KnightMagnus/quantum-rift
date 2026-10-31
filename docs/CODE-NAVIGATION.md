@@ -74,6 +74,11 @@ flowchart TD
    [the local DB](../server/db.ts) retains separate Solo/friend persistence. Sending a refresh is
    not itself a save commit.
 
+Story target destruction credits the present owner in `Space.kill`, independently of
+`Game.onKill` bounty accounting. `storyProgress` checks the spawning chapter and
+consumes each target once; `storyArrive` recovers distant, disengaged survivors.
+`test/story-encounters.ts` covers this path.
+
 For other actions, find the outgoing packet's `t`, look it up in the fixed
 switchboard, then follow the named method/service. Native joins establish the
 server-owned identity before the internal Game hello; client hello packets cannot
