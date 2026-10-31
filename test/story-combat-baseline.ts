@@ -66,8 +66,8 @@ assert.ok(
 if (override === undefined) {
   for (const label of ['prepared-cruiser', 'modest-wing']) {
     assert.ok(
-      results.filter((run) => run.label === label && run.storyOutcome!.postBossSurvived).length >=
-        2,
+      results.filter((run) => run.label === label && run.storyOutcome!.postBossSurvived).length ===
+        3,
       `${label}: reasonable preparation must survive all three fixed seeds and the post-boss window`,
     );
   }
