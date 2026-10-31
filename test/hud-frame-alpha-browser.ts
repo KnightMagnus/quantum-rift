@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import fileSystem from 'node:fs';
+import path from 'node:path';
 import { launchChromium } from './helpers/chromium.ts';
 import { miningFixture } from './helpers/mining-fixture.ts';
 import { failureEvidence } from './helpers/browser-fixture.ts';
@@ -57,7 +59,23 @@ try {
   );
   assert.equal(decoded.interior, 255, 'The authored dark inner backing is preserved');
 
-  const probe = await browser.newPage({ viewport: { width: 640, height: 480 } });
+  const selectors = [
+    '#login .loginbox',
+    '#land .landbox',
+    '#bankbox > .bank-panel',
+    '#gmap .gbox',
+    '#opts .optbox',
+    '#chatprojection',
+    '#functiondock',
+    '#consolechat',
+    '#consoleutilities',
+  ];
+  // Each surface keeps its own 300x180 probe and pixel checks. Capture the nine
+  // independent probes together instead of rebuilding the document for each case.
+  const probe = await browser.newPage({ viewport: { width: 1220, height: 860 } });
+  await probe.setContent('<style>html,body{margin:0;background:transparent}</style>');
+  const measurements = [];
+  let captures = 0;
   for (const [width, height] of [
     [800, 650],
     [1280, 720],
@@ -65,107 +83,119 @@ try {
     [2560, 1440],
   ]) {
     await page.setViewportSize({ width, height });
-    for (const selector of [
-      '#login .loginbox',
-      '#land .landbox',
-      '#bankbox > .bank-panel',
-      '#gmap .gbox',
-      '#opts .optbox',
-      '#chatprojection',
-      '#functiondock',
-      '#consolechat',
-      '#consoleutilities',
-    ]) {
-      const style = await page.locator(selector).evaluate((element) => {
-        const computed = getComputedStyle(element);
-        return Object.fromEntries(
-          [
-            'border-image',
-            'border-width',
-            'border-style',
-            'border-color',
-            'background-image',
-            'background-color',
-            'background-clip',
-            'box-shadow',
-            'border-radius',
-          ].map((property) => [property, computed.getPropertyValue(property)]),
-        );
-      });
+    const surfaces = await page.evaluate(
+      (selectors) =>
+        selectors.map((selector) => {
+          const computed = getComputedStyle(document.querySelector(selector)!);
+          return {
+            selector,
+            style: Object.fromEntries(
+              [
+                'border-image',
+                'border-width',
+                'border-style',
+                'border-color',
+                'background-image',
+                'background-color',
+                'background-clip',
+                'box-shadow',
+                'border-radius',
+              ].map((property) => [property, computed.getPropertyValue(property)]),
+            ),
+          };
+        }),
+      selectors,
+    );
+    for (const { selector, style } of surfaces)
       assert.match(style['border-image']!, /sculpted-frame\.svg/, selector);
-      for (const background of ['transparent', 'rgb(221, 65, 193)', 'rgb(227, 239, 249)']) {
-        await probe.setContent(
-          '<style>html,body{margin:0;background:transparent}</style><div id="frame"></div>',
-        );
-        await probe.evaluate(
-          ({ style, background }) => {
-            document.body.style.background = background;
-            const frame = document.getElementById('frame')!;
+    for (const background of ['transparent', 'rgb(221, 65, 193)', 'rgb(227, 239, 249)']) {
+      await probe.evaluate(
+        async ({ surfaces, background }) => {
+          document.body.replaceChildren();
+          document.body.style.background = background;
+          const images = new Set<string>();
+          for (const [index, { style }] of surfaces.entries()) {
+            const frame = document.createElement('div');
+            frame.className = 'frame';
             for (const [property, value] of Object.entries(style))
               frame.style.setProperty(property, value);
             Object.assign(frame.style, {
               position: 'absolute',
-              left: '80px',
-              top: '80px',
+              left: `${80 + (index % 3) * 380}px`,
+              top: `${80 + Math.floor(index / 3) * 260}px`,
               width: '300px',
               height: '180px',
               boxSizing: 'border-box',
             });
-          },
-          { style, background },
-        );
-        await probe.evaluate(async () => {
-          const source = getComputedStyle(document.getElementById('frame')!).borderImageSource;
-          const url = source.match(/url\(["']?(.*?)["']?\)/)?.[1];
-          if (!url) throw Error('Frame image source is missing');
-          const image = new Image();
-          image.src = url;
-          await image.decode();
+            document.body.append(frame);
+            const source = getComputedStyle(frame).borderImageSource;
+            const url = source.match(/url\(["']?(.*?)["']?\)/)?.[1];
+            if (!url) throw Error('Frame image source is missing');
+            images.add(url);
+          }
+          await Promise.all(
+            [...images].map(async (url) => {
+              const image = new Image();
+              image.src = url;
+              await image.decode();
+            }),
+          );
           await new Promise<void>((resolve) =>
             requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
           );
-        });
-        const screenshot = await probe.screenshot({ omitBackground: true });
-        const rendered = await probe.evaluate(async (encoded) => {
-          const image = new Image();
-          image.src = 'data:image/png;base64,' + encoded;
-          await image.decode();
-          const canvas = document.createElement('canvas');
-          canvas.width = image.width;
-          canvas.height = image.height;
-          const context = canvas.getContext('2d')!;
-          context.drawImage(image, 0, 0);
-          const pixel = (x: number, y: number) => Array.from(context.getImageData(x, y, 1, 1).data);
-          const borderWidth = parseFloat(
-            getComputedStyle(document.getElementById('frame')!).borderTopWidth,
-          );
+        },
+        { surfaces, background },
+      );
+      const screenshot = await probe.screenshot({ omitBackground: true });
+      captures++;
+      const rendered = await probe.evaluate(async (encoded) => {
+        const image = new Image();
+        image.src = 'data:image/png;base64,' + encoded;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext('2d')!;
+        context.drawImage(image, 0, 0);
+        const pixel = (x: number, y: number) => Array.from(context.getImageData(x, y, 1, 1).data);
+        return [...document.querySelectorAll('.frame')].map((frame) => {
+          const { x, y } = frame.getBoundingClientRect();
+          const borderWidth = parseFloat(getComputedStyle(frame).borderTopWidth);
           return {
-            rail: pixel(230, 80 + Math.ceil(borderWidth / 4)),
+            rail: pixel(x + 150, y + Math.ceil(borderWidth / 4)),
             corners: [
-              [80, 80],
-              [379, 80],
-              [80, 259],
-              [379, 259],
+              [x, y],
+              [x + 299, y],
+              [x, y + 179],
+              [x + 299, y + 179],
             ].map(([x, y]) => pixel(x!, y!)),
           };
-        }, screenshot.toString('base64'));
-        const expected =
-          background === 'transparent'
-            ? [0, 0, 0, 0]
-            : background === 'rgb(221, 65, 193)'
-              ? [221, 65, 193, 255]
-              : [227, 239, 249, 255];
-        assert.equal(rendered.rail[3], 255, `${selector}: rendered metal stays opaque`);
-        assert.notDeepEqual(rendered.rail, expected, `${selector}: the frame is actually painted`);
-        for (const pixel of rendered.corners)
-          assert.deepEqual(
-            pixel,
-            expected,
-            `${selector} ${width} ${background}: no rectangular corner backing`,
-          );
+        });
+      }, screenshot.toString('base64'));
+      assert.equal(rendered.length, selectors.length);
+      const expected =
+        background === 'transparent'
+          ? [0, 0, 0, 0]
+          : background === 'rgb(221, 65, 193)'
+            ? [221, 65, 193, 255]
+            : [227, 239, 249, 255];
+      for (const [index, sample] of rendered.entries()) {
+        const selector = selectors[index]!;
+        const label = `${selector} ${width} ${background}`;
+        assert.equal(sample.rail[3], 255, `${label}: rendered metal stays opaque`);
+        assert.notDeepEqual(sample.rail, expected, `${label}: the frame is actually painted`);
+        for (const pixel of sample.corners)
+          assert.deepEqual(pixel, expected, `${label}: no rectangular corner backing`);
+        measurements.push({ selector, width, height, background, ...sample });
       }
     }
   }
+  assert.equal(measurements.length, 108);
+  assert.equal(captures, 12);
+  fileSystem.writeFileSync(
+    path.join(fixture.out, 'frame-pixels.json'),
+    JSON.stringify({ captures, measurements }, null, 2),
+  );
   await probe.close();
   console.log(
     'PASS HUD frame: decoded exterior alpha, opaque metal/interior, and rendered transparent/light/magenta corners at four viewport sizes',

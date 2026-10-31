@@ -77,42 +77,48 @@ try {
           !validRows.includes(image.height / session.fs)
         )
           throw Error(`${hull.id}${suffix}: incomplete${frameCount}-frame sheet`);
+        // Read each decoded sheet once. Frame checks use the same unscaled pixels,
+        // without redrawing the frame canvas and allocating a readback for every heading.
         const canvas = document.createElement('canvas');
-        canvas.width = session.fs;
-        canvas.height = session.fs;
-        const drawingContext = canvas.getContext('2d', { willReadFrequently: true });
-        const frames: ImageDataArray[] = [];
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const drawingContext = canvas.getContext('2d', { willReadFrequently: true })!;
+        drawingContext.drawImage(image, 0, 0);
+        const pixels = drawingContext.getImageData(0, 0, image.width, image.height).data;
+        const rowBytes = session.fs * 4;
+        const sheetRowBytes = image.width * 4;
+        const frameStart = (index: number) =>
+          Math.floor(index / session.cols) * session.fs * sheetRowBytes +
+          (index % session.cols) * rowBytes;
         for (let index = 0; index < frameCount; index++) {
-          drawingContext!.clearRect(0, 0, session.fs, session.fs);
-          drawingContext!.drawImage(
-            image,
-            (index % session.cols) * session.fs,
-            Math.floor(index / session.cols) * session.fs,
-            session.fs,
-            session.fs,
-            0,
-            0,
-            session.fs,
-            session.fs,
-          );
-          const pixels = drawingContext!.getImageData(0, 0, session.fs, session.fs).data;
-          if (
-            !suffix &&
-            !pixels.some((value, secondaryIndex) => secondaryIndex % 4 === 3 && value > 0)
-          )
-            throw Error(`${hull.id}: empty frame${index}`);
-          frames.push(pixels);
+          let visible = false;
+          const start = frameStart(index);
+          for (let row = 0; row < session.fs && !visible; row++) {
+            const offset = start + row * sheetRowBytes;
+            for (let alpha = 3; alpha < rowBytes; alpha += 4)
+              if (pixels[offset + alpha]! > 0) {
+                visible = true;
+                break;
+              }
+          }
+          if (!suffix && !visible) throw Error(`${hull.id}: empty frame${index}`);
         }
         if (!suffix && session.banks)
           for (let bank = 1; bank <= 2; bank++)
             for (let heading = 0; heading < 36; heading++) {
-              if (
-                frames[heading].every(
-                  (value, secondaryIndex2) =>
-                    value === frames[bank * 36 + heading][secondaryIndex2],
-                )
-              )
-                throw Error(`${hull.id}: duplicated bank${bank} heading${heading}`);
+              const neutralStart = frameStart(heading);
+              const bankStart = frameStart(bank * 36 + heading);
+              let identical = true;
+              for (let row = 0; row < session.fs && identical; row++) {
+                const neutralOffset = neutralStart + row * sheetRowBytes;
+                const bankOffset = bankStart + row * sheetRowBytes;
+                for (let byte = 0; byte < rowBytes; byte++)
+                  if (pixels[neutralOffset + byte] !== pixels[bankOffset + byte]) {
+                    identical = false;
+                    break;
+                  }
+              }
+              if (identical) throw Error(`${hull.id}: duplicated bank${bank} heading${heading}`);
             }
         layers.push({ suffix, frames: frameCount, width: image.width, height: image.height });
         if (!suffix && repaired.has(hull.id)) {
