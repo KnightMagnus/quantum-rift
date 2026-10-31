@@ -3089,16 +3089,16 @@ export class Game<Storage extends Database = Database> {
   accept(session: Session, identifier: string): void {
     return this.jobService.accept(session, identifier);
   }
-  /**
-   * Evaluates active missions upon landing, paying rewards and logging completions.
-   * @param session Player session landing.
-   * @param stellarBody Landed stellar port.
-   */
   /** Settle an explicitly eligible authored quest observation without landing. */
   completeRemoteQuest(session: Session, mission: Mission): boolean {
     return this.jobService.completeRemoteQuest(session, mission);
   }
 
+  /**
+   * Evaluates active missions upon landing, paying rewards and logging completions.
+   * @param session Player session landing.
+   * @param stellarBody Landed stellar port.
+   */
   completeOnLanding(session: Session, stellarBody: StellarBody): void {
     return this.jobService.completeOnLanding(session, stellarBody);
   }
