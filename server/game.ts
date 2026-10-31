@@ -1,3 +1,4 @@
+import { tickQcsFleet } from './qcs-fleet.ts';
 import { sharedSnapshotEncoder } from './snapshot-encoding.ts';
 import {
   createStationService,
@@ -2574,7 +2575,6 @@ export class Game<Storage extends Database = Database> {
       this.you(session);
       return;
     } // 1.1
-    if (entity.storyKill) this.features.story.storyProgress(session, entity);
     if (entity.kingpin) this.features.coop.warbandDown(entity); // an Armada contract's kingpin
     this.features.living.stateOnKill(session, entity, space); // 2.4
     if (entity.arcOf) this.features.arcs.arcProgress(session, entity); // 1.2 faction arcs
@@ -3303,6 +3303,7 @@ export class Game<Storage extends Database = Database> {
     } // solo pause
     this.features.mining.advanceClock(1 / TICK);
     this.tickN++;
+    tickQcsFleet(this, 1 / TICK);
     this.tickFaults.operation = 'refinery';
     if (this.tickN % 60 === 0)
       for (const session of this.sessions.values()) {

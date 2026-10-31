@@ -127,6 +127,10 @@ const SEATS_BY_HULL: Record<string, number> = {
   827: 48,
   828: 19,
   829: 35,
+  850: 40,
+  851: 40,
+  852: 2,
+  853: 2,
 };
 
 export function passengerSeats(
