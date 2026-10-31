@@ -1,7 +1,13 @@
 export interface JobOperations {
   offers(this: JobCapabilities, stellarBody: StellarBody, playerData: PlayerData): Mission[];
   accept(this: JobCapabilities, session: Session, missionId: string): void;
-  completeOnLanding(this: JobCapabilities, session: Session, stellarBody: StellarBody): void;
+  completeOnLanding(
+    this: JobCapabilities,
+    session: Session,
+    stellarBody: StellarBody,
+    remote?: Mission,
+  ): void;
+  completeRemoteQuest(this: JobCapabilities, session: Session, mission: Mission): boolean;
 }
 import type { Game } from './game.ts';
 export type Session = import('./game.ts').Session;
@@ -22,7 +28,10 @@ export type JobCapabilities = Pick<
   | 'tut'
   | 'you'
 >;
-export type JobService = Pick<Game, 'offers' | 'accept' | 'completeOnLanding'>;
+export type JobService = Pick<
+  Game,
+  'offers' | 'accept' | 'completeOnLanding' | 'completeRemoteQuest'
+>;
 
 import {
   signedXorshift32 as randomGenerator,
@@ -328,16 +337,42 @@ const JobOperations: JobOperations = {
     this.you(session);
     this.landed(session);
   },
+  completeRemoteQuest(this: JobCapabilities, session: Session, mission: Mission) {
+    const data = session.data;
+    const quest = mission.quest && data.quests?.active[mission.quest.qid];
+    if (
+      !quest ||
+      !session.ent ||
+      session.ent.dead ||
+      !mission.done ||
+      mission.paid ||
+      !data.missions.includes(mission) ||
+      quest.step !== mission.quest!.step ||
+      mission.sys !== data.sys ||
+      !remoteQuestStep(quest.side, quest.step, mission.type)
+    )
+      return false;
+    const origin = STELLARS[quest.at];
+    if (!origin) return false;
+    JobOperations.completeOnLanding.call(this, session, origin, mission);
+    this.db.touch();
+    return !!mission.paid;
+  },
   /**
    * Evaluates active missions upon landing, paying rewards and logging completions.
    * @param session Player session landing.
    * @param stellarBody Landed stellar port.
    * *
    */
-  completeOnLanding(this: JobCapabilities, session: Session, stellarBody: StellarBody) {
+  completeOnLanding(
+    this: JobCapabilities,
+    session: Session,
+    stellarBody: StellarBody,
+    remote?: Mission,
+  ) {
     const playerData = session.data;
-    playerData.lastStellar = stellarBody.id;
-    const pending = [...playerData.missions];
+    if (!remote) playerData.lastStellar = stellarBody.id;
+    const pending = remote ? [remote] : [...playerData.missions];
     const transitionLimit =
       pending.length +
       Object.values(playerData.quests?.active || {}).reduce(
@@ -442,12 +477,25 @@ const JobOperations: JobOperations = {
               destType(candidate) &&
               candidate.dest === stellarBody.id,
           );
-          if (followup && !pending.includes(followup)) pending.push(followup);
+          if (!remote && followup && !pending.includes(followup)) pending.push(followup);
         }
       }
     }
     playerData.missions = playerData.missions.filter((mission) => !mission.paid);
     for (const mission of playerData.missions)
-      if (mission.type === 'bounty' && !mission.done) mission.spawned = false; // the target returns if you left
+      if (!remote && mission.type === 'bounty' && !mission.done) mission.spawned = false; // the target returns if you left
   },
 };
+
+/** Only authored observations and collections followed by a physical delivery settle in flight. */
+export function remoteQuestStep(side: string | undefined, step: number, type: string): boolean {
+  if (type === 'survey')
+    return (
+      (side === 'index-records' && step < 9) ||
+      (['nhal-stirs', 'nhal-eye', 'rift-harness'].includes(side || '') && step === 0)
+    );
+  return (
+    type === 'salvage' &&
+    ((side === 'nhal-soundings' && step === 0) || (side === 'nhal-eye' && step === 1))
+  );
+}

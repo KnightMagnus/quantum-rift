@@ -150,11 +150,6 @@ try {
       /Plot a course/.test(node.textContent || ''),
     ),
   );
-  await page.evaluate(() => {
-    const ship = G.view!;
-    ship.x += 6000;
-    ship.y += 6000;
-  });
   await page.evaluate(async () => {
     const { SYS } = await import('/shared/galaxy.js');
     G.route = [SYS[G.sys!].links[0]];
@@ -213,14 +208,13 @@ try {
     { timeout: 10000 },
   );
 
-  // With a course plotted, J on the open map closes it and starts the jump.
+  // Let autopilot clear the departure port using server-authoritative movement.
+  // Moving G.view alone is overwritten by snapshots and can trigger a denied jump.
   await page.waitForFunction((start) => G.sys !== start && G.view && !G.landed, startSystem, {
-    timeout: 15000,
+    timeout: 45000,
   });
+  // With a course plotted, J on the open map closes it and starts the jump.
   await page.evaluate(async () => {
-    const ship = G.view!;
-    ship.x += 6000;
-    ship.y += 6000;
     const { SYS } = await import('/shared/galaxy.js');
     G.route = [SYS[G.sys!].links[0]];
   });
@@ -234,6 +228,10 @@ try {
     mapSystem,
     { timeout: 10000 },
   );
+
+  await page.waitForFunction((start) => G.sys !== start && G.view && !G.landed, mapSystem, {
+    timeout: 45000,
+  });
 
   // The owner sees their station; a visitor gets the guest dock only.
   const ownerPage = await browser.newPage({ viewport: { width: 1920, height: 1080 } });

@@ -1,3 +1,4 @@
+import { remoteQuestStep } from './jobs.ts';
 import type { QuestChain, QuestReward } from '../shared/quests.ts';
 import type { StellarBody } from '../shared/galaxy.ts';
 import type { SavedQuests } from './save-contracts.ts';
@@ -643,6 +644,8 @@ export const QuestOperations = {
       taken: Date.now(),
       owner: null,
     } as Mission;
+    if (remoteQuestStep(quest.side, index, questStep.type))
+      mission.text = mission.text.replace(', then land to secure it.', '.');
     switch (questStep.type) {
       case 'cargo':
         Object.assign(mission, {
@@ -1243,7 +1246,8 @@ export const QuestOperations = {
       mission = playerData.missions.find((mission) => mission.id === item.salvage && !mission.done);
     if (!mission) return false;
     mission.done = true;
-    this.toast(session, `Recovered: ${mission.title}. Land anywhere to continue.`);
+    if (!this.completeRemoteQuest(session, mission))
+      this.toast(session, `Recovered: ${mission.title}. Land anywhere to continue.`);
     this.db.touch();
     this.you(session);
     return true;

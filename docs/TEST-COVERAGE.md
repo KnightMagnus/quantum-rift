@@ -1994,6 +1994,8 @@ unchanged across notification retries. Existing partial-mutation abort and nativ
 checkpoint-freeze fixtures remain separate. These offline fixtures establish no
 rollback guarantee or live-network delivery guarantee.
 
+Authored remote quest observations and collections are covered by the docked-progression helper: real final survey points and salvage collection advance one step, preserve physical deliveries and final scenes, retain last-port state and pending serialized missions, and reject unfinished or repeated settlement. A salvage-to-delivery case flushes and reopens the database, logs in twice, lands at the destination, and repeats the landing to check persisted rewards and prevent duplicate payment. Ordinary jobs remain landing-paid.
+
 `story-encounters.ts` checks patrol and wing final hits, independent captain objectives,
 unchanged generic kill accounting, absent-owner denial, stale chapters and repeated credit.
 It reproduces abandoned hunter drift with seeded AI and movement, then checks bounded
