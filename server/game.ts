@@ -3089,6 +3089,11 @@ export class Game<Storage extends Database = Database> {
   accept(session: Session, identifier: string): void {
     return this.jobService.accept(session, identifier);
   }
+  /** Settle an explicitly eligible authored quest observation without landing. */
+  completeRemoteQuest(session: Session, mission: Mission): boolean {
+    return this.jobService.completeRemoteQuest(session, mission);
+  }
+
   /**
    * Evaluates active missions upon landing, paying rewards and logging completions.
    * @param session Player session landing.

@@ -130,6 +130,7 @@
         "armadaBonus",
         "bonus",
         "broadcast",
+        "completeRemoteQuest",
         "db",
         "event",
         "goal",
@@ -714,6 +715,7 @@
       "uses": [
         "A",
         "chainReward",
+        "completeRemoteQuest",
         "contactAt",
         "contactStory",
         "db",
