@@ -100,13 +100,14 @@ export function storyDescription(
 }
 
 /** Finale text varies with decisions without revealing the far side before crossing. */
-export function endingText(flags: StoryFlags): string {
+export function endingText(flags: StoryFlags, serenAboard = false): string {
   switch (flags.main_ending) {
     case 'long_dream':
       return 'You sing the Core back to sleep. The Deep sinks below, for now. At Quantum Station the old rhythm returns. Life goes on. Down below, the ledger keeps filling. One day someone will have to face it again.';
     case 'table':
       return (
-        'A star lights at the centre of the ten dark lamps. The Spacers carry everyone to it. The Sarn draw the terms; the Korrund hold the Table steady. The Vashari teach the guests to look at one thing together. The Hollow leave their seat empty until the very end, then take it. The Thalassi sing. Seren points to the last empty chair.' +
+        'A star lights at the centre of the ten dark lamps. The Spacers carry everyone to it. The Sarn draw the terms; the Korrund hold the Table steady. The Vashari teach the guests to look at one thing together. The Hollow leave their seat empty until the very end, then take it. The Thalassi sing.' +
+        (serenAboard ? ' Seren points to the last empty chair.' : ' One last chair stands empty.') +
         (flags.nhal_ending === 'witness'
           ? ' The Dreamer takes it.'
           : ' The Deep is quiet behind its rebuilt wall.') +
