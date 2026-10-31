@@ -306,3 +306,9 @@ explicit feature callbacks. Database/Solo accessors and callback forwarding read
 current providers, including replacements after construction. Timer advancement,
 trade cancellation, spending, dirty marking and player/landed refresh order are
 unchanged. The service does not own a clock, account copy or checkpoint.
+
+## Frontier encounter ownership
+
+Frontier owns arena queues, active matches, the match identifier counter and station raid waves through a per-service `FrontierState` created by `server/frontier-state.ts`. These fields are no longer exposed on `Game`. `frontierInit` initializes only persistent world defaults; repeated initialization does not discard live encounters. `Game.disconnect` calls `arenaDisconnect` after session removal, at the former inline cleanup point. Match settlement remains on the next arena tick, and flight removal/docking stays with Game.
+
+`test/v07.ts` uses the real queue, raid, match and disconnect paths to verify second-composition non-interference, repeated initialization, counter continuity and encounter cleanup. Saved colonies/orders, sessions, live spaces and cross-feature providers remain shared and late-bound. A second composition is an ownership rehearsal, not support for running two independent authorities against the same live spaces; no ordinary-startup incident is claimed.

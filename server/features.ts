@@ -1,3 +1,4 @@
+import { createFrontierState, type FrontierState } from './frontier-state.ts';
 import type { IndexCapabilities } from './index-worksite.ts';
 import { IndexFleetOperations } from './index-fleet.ts';
 import type { IndexFleetCapabilities } from './index-fleet.ts';
@@ -140,26 +141,22 @@ export type FrontsCapabilities = {
   Pick<BoundOperations<HangarOperations>, 'officerXp' | 'uid'> &
   Pick<BoundOperations<LivingOperations>, 'statesPayload'> &
   Pick<BoundOperations<FrontierOperations>, 'worldPayload'>;
-export type FrontierCapabilities = Pick<
+export type FrontierCapabilities = { readonly frontierState: FrontierState } & Pick<
   FeatureCore,
   | 'A'
   | 'holdUsed'
-  | 'arenaQ'
   | 'broadcast'
   | 'db'
   | 'hasMats'
   | 'landed'
   | 'live'
   | 'log'
-  | 'matches'
-  | 'nextMatch'
   | 'send'
   | 'sessions'
   | 'spaces'
   | 'spawnPlayer'
   | 'takeMats'
   | 'toast'
-  | 'waves'
   | 'you'
 > &
   Pick<
@@ -695,7 +692,11 @@ export function createFeatures(core: Game): FeatureServices {
   };
   features.fronts = bindOperations(FrontsOperations, frontsCapabilities);
 
+  const frontierState = createFrontierState();
   const frontierCapabilities: FrontierCapabilities = {
+    get frontierState() {
+      return frontierState;
+    },
     holdUsed: core.holdUsed.bind(core),
     get A() {
       return core.A;
@@ -712,12 +713,7 @@ export function createFeatures(core: Game): FeatureServices {
     get arenaExit() {
       return features.frontier.arenaExit;
     },
-    get arenaQ() {
-      return core.arenaQ;
-    },
-    set arenaQ(value) {
-      core.arenaQ = value;
-    },
+
     broadcast: core.broadcast.bind(core),
     get coloniesOf() {
       return features.frontier.coloniesOf;
@@ -764,18 +760,7 @@ export function createFeatures(core: Game): FeatureServices {
     get matchOrder() {
       return features.frontier.matchOrder;
     },
-    get matches() {
-      return core.matches;
-    },
-    set matches(value) {
-      core.matches = value;
-    },
-    get nextMatch() {
-      return core.nextMatch;
-    },
-    set nextMatch(value) {
-      core.nextMatch = value;
-    },
+
     get notify() {
       return features.frontier.notify;
     },
@@ -825,12 +810,7 @@ export function createFeatures(core: Game): FeatureServices {
     get tryMatch() {
       return features.frontier.tryMatch;
     },
-    get waves() {
-      return core.waves;
-    },
-    set waves(value) {
-      core.waves = value;
-    },
+
     you: core.you.bind(core),
   };
   features.frontier = bindOperations(FrontierOperations, frontierCapabilities);
