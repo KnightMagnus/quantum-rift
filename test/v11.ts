@@ -1,3 +1,4 @@
+import { createFeatures } from '../server/features.ts';
 import { mockSavedDockWing } from './helpers/mocks.ts';
 import { mockPlayerReference } from './helpers/mocks.ts';
 import type { Entity as FixtureEntity } from '../server/space.ts';
@@ -79,7 +80,6 @@ const worldData = game.db.world;
 // Fixed RNG isolates the production initializer from unrelated world-generation draws.
 {
   const previousWorld = game.db.world;
-  const previousEntities = game.rivalEnts;
   game.db.world = { ...worldData, rivals: {}, news: [{ text: 'fixture headline', t: 0 }] };
   const previousRandom = Math.random;
   try {
@@ -102,7 +102,6 @@ const worldData = game.db.world;
   } finally {
     Math.random = previousRandom;
     game.db.world = previousWorld;
-    game.rivalEnts = previousEntities;
   }
 }
 // rivals exist with careers
@@ -188,6 +187,16 @@ assertCondition(
   !message.isHostile(requiredFixtureValue(entity), requiredFixtureValue(shipEntity)),
   'a neutral rival is not hostile',
 );
+const independentRivals = createFeatures(game).rivals;
+independentRivals.rivalsInit();
+game.features.rivals.rivalsInit();
+game.features.rivals.rivalSync(message);
+assertCondition(
+  [...message.ships.values()].filter((ship) => ship.rival === rivalDefinition!.id).length === 1 &&
+    message.ships.get(entity!.id) === entity,
+  'second composition and repeated initialization preserve one original live rival',
+);
+assertCondition(!('rivalEnts' in game), 'rival presence is not writable Game state');
 // hailing a rival and building a relationship
 firstEntry.send({ t: 'hail', id: requiredFixtureValue(entity).id });
 const legacyPacket = firstEntry.last('hail');
@@ -464,6 +473,41 @@ game.features.rivals.news('Test headline');
 assertCondition(
   game.features.rivals.newsFeed(3)[0] === 'Test headline',
   'the spaceport news feed shows the latest headlines',
+);
+// The earlier kill test called the hook directly; finish its normal physical removal.
+message.remove(requiredFixtureValue(entity));
+// Dock cleanup must release presence without a public index-reset hook.
+result.sys = 'meridian';
+result.down = 0;
+result.dockT = 0;
+game.features.rivals.rivalSync(message);
+const missingRival = requiredFixtureValue(
+  [...message.ships.values()].find((ship) => ship.rival === rivalDefinition!.id),
+);
+message.remove(missingRival);
+game.features.rivals.rivalSync(message);
+assertCondition(
+  ![...message.ships.values()].some((ship) => ship.rival === rivalDefinition!.id),
+  'missing live ship clears its stale index entry before respawn',
+);
+game.features.rivals.rivalSync(message);
+const dockedRival = requiredFixtureValue(
+  [...message.ships.values()].find((ship) => ship.rival === rivalDefinition!.id),
+);
+game.features.rivals.rivalDocked(dockedRival);
+message.remove(dockedRival);
+game.features.rivals.rivalsInit();
+game.features.rivals.rivalSync(message);
+assertCondition(
+  ![...message.ships.values()].some((ship) => ship.rival === rivalDefinition!.id),
+  'docked rival remains absent during its timer after initialization',
+);
+result.dockT = 0;
+game.features.rivals.rivalSync(message);
+game.features.rivals.rivalSync(message);
+assertCondition(
+  [...message.ships.values()].filter((ship) => ship.rival === rivalDefinition!.id).length === 1,
+  'dock timer completion respawns one rival and retains its presence',
 );
 console.log('ALL 1.1 TESTS PASSED');
 process.exit(0);

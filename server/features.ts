@@ -246,10 +246,10 @@ export type StoryCapabilities = Pick<
   Pick<BoundOperations<QuestOperations>, 'questReconcile'> & {
     nhal: FeatureServices['nhal'];
   } & Pick<BoundOperations<FrontsOperations>, 'stats'>;
-export type RivalsCapabilities = Pick<
-  FeatureCore,
-  'A' | 'db' | 'live' | 'log' | 'rivalEnts' | 'sessions' | 'spaces' | 'toast'
-> &
+export type RivalsCapabilities = {
+  /** Live presence index owned by this Rivals service; saved careers stay in DB. */
+  readonly rivalEnts: Map<string, { sys: string; id: number }>;
+} & Pick<FeatureCore, 'A' | 'db' | 'live' | 'log' | 'sessions' | 'spaces' | 'toast'> &
   Pick<
     BoundOperations<RivalsOperations>,
     'news' | 'relOf' | 'rivalRel' | 'rivalState' | 'spawnHunters'
@@ -713,7 +713,6 @@ export function createFeatures(core: Game): FeatureServices {
     get arenaExit() {
       return features.frontier.arenaExit;
     },
-
     broadcast: core.broadcast.bind(core),
     get coloniesOf() {
       return features.frontier.coloniesOf;
@@ -760,7 +759,6 @@ export function createFeatures(core: Game): FeatureServices {
     get matchOrder() {
       return features.frontier.matchOrder;
     },
-
     get notify() {
       return features.frontier.notify;
     },
@@ -810,7 +808,6 @@ export function createFeatures(core: Game): FeatureServices {
     get tryMatch() {
       return features.frontier.tryMatch;
     },
-
     you: core.you.bind(core),
   };
   features.frontier = bindOperations(FrontierOperations, frontierCapabilities);
@@ -980,6 +977,7 @@ export function createFeatures(core: Game): FeatureServices {
   };
   features.story = bindOperations(StoryOperations, storyCapabilities);
 
+  const rivalEnts: RivalsCapabilities['rivalEnts'] = new Map();
   const rivalsCapabilities: RivalsCapabilities = {
     get A() {
       return core.A;
@@ -1004,10 +1002,7 @@ export function createFeatures(core: Game): FeatureServices {
       return features.rivals.relOf;
     },
     get rivalEnts() {
-      return core.rivalEnts;
-    },
-    set rivalEnts(value) {
-      core.rivalEnts = value;
+      return rivalEnts;
     },
     get rivalRel() {
       return features.rivals.rivalRel;

@@ -702,10 +702,6 @@ export class Game<Storage extends Database = Database> {
   /**
    * Legacy feature state; see docs/FEATURES.md.
    */
-  rivalEnts!: Map<string, { sys: string; id: number }>;
-  /**
-   * Legacy feature state; see docs/FEATURES.md.
-   */
   duels!: Record<string, DuelState>;
   /**
    * Legacy feature state; see docs/FEATURES.md.
