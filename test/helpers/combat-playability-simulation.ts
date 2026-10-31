@@ -50,7 +50,7 @@ export interface CombatPlayabilityScenario {
 }
 /** Observable outcomes; survival alone is not proof of clearing a system. */
 export interface CombatPlayabilityResult extends CombatPlayabilityScenario {
-  /** Whether the captain remained alive until the duration cap or story boss defeat. */
+  /** Whether the captain remained alive through the duration cap or post-boss window. */
   survived: boolean;
   /** Seconds alive, capped at the requested duration. */
   aliveSeconds: number;
@@ -88,6 +88,10 @@ export interface CombatPlayabilityResult extends CombatPlayabilityScenario {
   storyOutcome?: {
     /** Whether the actual story boss was destroyed before the captain died or time expired. */
     bossDefeated: boolean;
+    /** Simulated seconds after boss defeat, bounded at ten and the scenario duration cap. */
+    postBossSeconds: number;
+    /** Captain remains alive after the full ten-second post-boss window. */
+    postBossSurvived: boolean;
     /** Boss health fraction remaining, capped at zero. */
     bossHealthFraction: number;
     /** Boss initial shield plus armor. */
@@ -435,10 +439,13 @@ export function simulateCombatPlayability(
     let damageTaken = 0;
     let previousHealth = lead.shield + lead.armor;
     const originalHealth = previousHealth;
+    let bossDefeatedTick: number | null = null;
     // Explicit nearest-hostile acquisition is the keyboard R equivalent. Assist flies and fires.
     for (; ticks < options.seconds * TICK; ticks++) {
-      if (lead.dead || session.ent !== lead || boss?.dead) break;
-      if (boss) {
+      if (boss?.dead && bossDefeatedTick === null) bossDefeatedTick = ticks;
+      if (lead.dead || session.ent !== lead) break;
+      if (bossDefeatedTick !== null && ticks - bossDefeatedTick >= 10 * TICK) break;
+      if (boss && !boss.dead) {
         const distance = Math.hypot(boss.x - lead.x, boss.y - lead.y);
         distanceTotal += distance;
         distanceCount++;
@@ -449,7 +456,7 @@ export function simulateCombatPlayability(
         session.actT = now;
         const enemies = hostiles();
         peakHostiles = Math.max(peakHostiles, enemies.length);
-        if (boss && options.storyEncounter?.standOff) {
+        if (boss && !boss.dead && options.storyEncounter?.standOff) {
           const desired = options.storyEncounter.standOff;
           const distance = Math.hypot(boss.x - lead.x, boss.y - lead.y);
           const bearing = Math.atan2(boss.x - lead.x, -(boss.y - lead.y));
@@ -535,7 +542,13 @@ export function simulateCombatPlayability(
       ...(boss
         ? {
             storyOutcome: {
-              bossDefeated: !!boss.dead && !lead.dead && session.ent === lead,
+              bossDefeated: !!boss.dead,
+              postBossSeconds: bossDefeatedTick === null ? 0 : (ticks - bossDefeatedTick) / TICK,
+              postBossSurvived:
+                bossDefeatedTick !== null &&
+                ticks - bossDefeatedTick >= 10 * TICK &&
+                !lead.dead &&
+                session.ent === lead,
               bossHealthFraction: Math.max(0, (boss.shield + boss.armor) / bossInitialHealth),
               bossInitialHealth,
               bossDamage,

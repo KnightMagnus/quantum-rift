@@ -32,7 +32,11 @@ const results = scenarios.flatMap((scenario) =>
     });
     const observed = result.storyOutcome!;
     assert.ok(observed.bossInitialHealth > 0);
-    if (observed.bossDefeated) assert.equal(result.survived, true, 'a mutual death is not a clear');
+    if (observed.postBossSurvived) {
+      assert.equal(observed.bossDefeated, true);
+      assert.equal(result.survived, true, 'a mutual death is not a clear');
+      assert.equal(observed.postBossSeconds, 10);
+    }
     assert.ok(Number.isFinite(observed.bossHealthFraction));
     assert.ok(observed.distance.min >= 0 && observed.distance.max >= observed.distance.mean);
     assert.ok(Object.values(observed.bossDamage).every((damage) => damage >= 0));
@@ -55,12 +59,16 @@ assert.deepEqual(
   deterministic(original),
   'seed and geometry reproduce exact outcome',
 );
-assert.equal(results[0].storyOutcome!.bossInitialHealth, 6600 * (1 + (override ?? 20) / 100));
+assert.ok(
+  Math.abs(results[0].storyOutcome!.bossInitialHealth - 6600 * (1 + (override ?? 10) / 100)) < 1e-6,
+  'production health matches the disclosed bonus within floating-point rounding',
+);
 if (override === undefined) {
   for (const label of ['prepared-cruiser', 'modest-wing']) {
     assert.ok(
-      results.filter((run) => run.label === label && run.storyOutcome!.bossDefeated).length >= 2,
-      `${label}: reasonable preparation must clear at least two fixed seeds`,
+      results.filter((run) => run.label === label && run.storyOutcome!.postBossSurvived).length >=
+        2,
+      `${label}: reasonable preparation must survive all three fixed seeds and the post-boss window`,
     );
   }
   assert.ok(

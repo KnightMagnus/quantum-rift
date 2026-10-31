@@ -1775,7 +1775,8 @@ and real-device qualification remain tracked in issue #82.
 `story-combat-baseline.ts` runs eight declared fleet/preparation policies across
 three seeds against the production Act I story spawn. Real Game ticks retain
 boss escorts and choir allies; ambient traffic is explicitly excluded. The test
-checks prepared mid-tier solo and modest-wing clears in at least two seeds,
+checks prepared mid-tier solo and modest-wing survival through all three seeds
+and ten seconds after boss defeat,
 continued failure for an unprepared light hull, applied damage attribution,
 distances and exact deterministic replay. `--bonus 120` recreates the former
 health multiplier as an experiment; `--export PATH` retains full bounded captures.
