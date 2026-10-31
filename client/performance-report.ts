@@ -13,7 +13,9 @@ let firstWorldFrameMs: number | null = null;
 let timer: ReturnType<typeof setTimeout> | undefined;
 
 export function setPerformanceBuild(version: string): void {
-  build = /^\d+(\.\d+){1,3}([+-][\w.-]+)?$/.test(version) ? version.slice(0, 80) : null;
+  const supportedLabel =
+    /^\d+(\.\d+){1,3}([+-][\w.-]+)?$/.test(version) || /^0\.\d+ MP Beta [1-9]\d*$/.test(version);
+  build = supportedLabel && version.trim() === version ? version.slice(0, 80) : null;
 }
 
 /** Allowlisted browser/version and OS family; never export the raw user agent. */

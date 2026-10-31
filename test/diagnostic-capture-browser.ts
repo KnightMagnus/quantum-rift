@@ -233,6 +233,33 @@ try {
     ),
     false,
   );
+  const buildLabels = await page.evaluate(async (currentVersion) => {
+    const module = await import('/performance-report.js');
+    const labels = [
+      '0.5 MP Beta 1',
+      '0.4.2.1',
+      '0.5.0-mp-beta.1',
+      'Private Captain',
+      '0.5 MP Beta 0',
+      '0.5 MP Beta 1 Private Captain',
+      '0.5 MP Beta 1\n',
+    ];
+    const observed = labels.map((label) => {
+      module.setPerformanceBuild(label);
+      return module.performanceReport().build;
+    });
+    module.setPerformanceBuild(currentVersion);
+    return observed;
+  }, publicVersion);
+  assert.deepEqual(buildLabels, [
+    '0.5 MP Beta 1',
+    '0.4.2.1',
+    '0.5.0-mp-beta.1',
+    null,
+    null,
+    null,
+    null,
+  ]);
   const unavailable = await page.evaluate(async () => {
     const module = await import('/performance-report.js');
     const canvas = document.querySelector<HTMLCanvasElement>('canvas[data-renderer]')!;

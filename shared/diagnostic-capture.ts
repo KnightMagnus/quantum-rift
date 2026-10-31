@@ -106,6 +106,7 @@ export type DiagnosticCaptureParse =
 
 const COMMODITY_PATTERN = /^[a-z][a-z0-9_]{0,47}$/;
 const BUILD_PATTERN = /^[0-9A-Za-z][0-9A-Za-z.+-]{0,31}$/;
+const MULTIPLAYER_BETA_BUILD_PATTERN = /^0\.\d+ MP Beta [1-9]\d*$/;
 const MAX_MAGNITUDE = 1e15;
 
 class CaptureShapeError extends Error {}
@@ -294,7 +295,12 @@ function captureEntry(source: unknown, index: number): TradePreviewCaptureEntry 
 
 /** Retains a bounded version label; other build values become unknown. */
 export function captureBuild(version: unknown): string {
-  return typeof version === 'string' && BUILD_PATTERN.test(version) ? version : 'unknown';
+  return typeof version === 'string' &&
+    version.length <= 32 &&
+    version.trim() === version &&
+    (BUILD_PATTERN.test(version) || MULTIPLAYER_BETA_BUILD_PATTERN.test(version))
+    ? version
+    : 'unknown';
 }
 
 /** Opt-in, in-memory recorder. Nothing is recorded until start() and nothing is sent anywhere. */
