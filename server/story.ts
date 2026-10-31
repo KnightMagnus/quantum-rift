@@ -655,7 +655,6 @@ export const StoryOperations = {
               y: 0,
               ai: 'guard',
               name: storyMission.id === 'dreamer' ? 'The Dreamer' : 'The Night Anchor',
-              bonus: { shieldPct: 120, armorPct: 120 },
             });
       rightEntity.home = { x: 0, y: 0 };
       rightEntity.story = session.id;
