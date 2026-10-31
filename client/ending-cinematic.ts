@@ -11,7 +11,7 @@ export const ENDING_SHOTS = [
   { id: 'crawl', duration: 40 },
   { id: 'lamps', duration: 12 },
   { id: 'awakening', duration: 12 },
-  { id: 'core', duration: 18 },
+  { id: 'core', duration: 12 },
   { id: 'gateway', duration: 10 },
   { id: 'rift', duration: 18 },
   { id: 'captain', duration: 8 },
@@ -301,6 +301,47 @@ function glow(
   context.fillStyle = gradient;
   context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
 }
+/** Tapered light trails orbit the travelling core and gather into its destination. */
+function coreWisps(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  extent: number,
+  released: number,
+  seconds: number,
+) {
+  const opacity = Math.min(1, released * 8, (1 - released) * 8);
+  if (opacity <= 0) return;
+  const radius = extent * 0.13 * (1 - released * 0.4);
+  context.save();
+  context.globalCompositeOperation = 'lighter';
+  context.shadowBlur = extent * 0.012;
+  for (let wisp = 0; wisp < 7; wisp++) {
+    const color = wisp % 2 ? '#a4eaff' : '#d1b3ff';
+    context.shadowColor = color;
+    const phase = seconds * 1.8 + (wisp / 7) * Math.PI * 2;
+    const spread = radius * (0.65 + (wisp % 3) * 0.18);
+    context.fillStyle = color;
+    context.globalAlpha = opacity * 0.65;
+    context.beginPath();
+    // A single tapered ribbon keeps the halo to one blur per wisp, even on ultrawide displays.
+    for (const side of [-1, 1]) {
+      for (let step = 0; step <= 14; step++) {
+        const segment = side === -1 ? step : 14 - step;
+        const tail = segment / 14;
+        const angle = phase - tail * 1.5;
+        const thickness = extent * 0.003 * (1 - tail);
+        const px = x + Math.cos(angle) * spread - tail * radius * 1.2;
+        const py = y + Math.sin(angle) * spread * 0.65 + side * thickness;
+        if (side === -1 && step === 0) context.moveTo(px, py);
+        else context.lineTo(px, py);
+      }
+    }
+    context.closePath();
+    context.fill();
+  }
+  context.restore();
+}
 /** Use the same authored engine mask and normal-thrust trail as flight. */
 function thrusters(
   context: CanvasRenderingContext2D,
@@ -501,6 +542,7 @@ function paintEndingShot(
     const y =
       centerY + (crystalY - centerY) * released - Math.sin(released * Math.PI) * height * 0.19;
     glow(context, x, y, extent * 0.09 * (1 - released * 0.35), '#c1a8ff');
+    coreWisps(context, x, y, extent, released, seconds);
     if (crystal.complete && crystal.naturalWidth && released < 0.98)
       context.drawImage(
         crystal,
@@ -519,7 +561,7 @@ function paintEndingShot(
       );
   } else if (scene === 'gateway') {
     label = 'THE GATEWAY';
-    caption = 'It carries the Core through the Second Door.';
+    caption = 'The Ark carries it forth.. to where?';
     portal(context, width * 0.8, centerY, extent * 0.7, seconds, false);
     const x = width * (0.2 + progress * 0.53);
     thrusters(context, x, centerY, extent * 0.48, seconds);
