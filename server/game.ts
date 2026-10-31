@@ -1907,9 +1907,9 @@ export class Game<Storage extends Database = Database> {
       const flight = savedStoryFlight!;
       this.spawnPlayer(session, flight.x, flight.y, flight.a, 0);
     } else {
-      this.landed(session);
       this.features.story.storyOnLand(session, STELLARS[playerAccount.stellar!]);
       this.features.arcs.arcOnLand(session, STELLARS[playerAccount.stellar!]);
+      if (!session.ent) this.landed(session);
     } // a story step waiting where you logged off still pops up
     if (!this.solo)
       this.broadcast({ t: 'chat', from: '', msg: `${playerAccount.name} entered the Rift.` }); // no join messages in a solo game
@@ -2188,9 +2188,9 @@ export class Game<Storage extends Database = Database> {
     if (stellarBody.site) this.tut(session, 'site');
     this.db.touch();
     this.you(session);
-    this.landed(session);
     this.features.story.storyOnLand(session, stellarBody);
     this.features.arcs.arcOnLand(session, stellarBody);
+    if (!session.ent) this.landed(session);
     if (!this.solo) {
       const armadaState = this.features.coop.armadaOf(playerData);
       if (armadaState) this.features.coop.armadaPush(armadaState);

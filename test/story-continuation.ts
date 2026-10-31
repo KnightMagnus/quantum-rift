@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { verifyDockedProgression } from './helpers/story-docked-progression.ts';
 import { verifyStoryClarity } from './helpers/story-clarity.ts';
 import { verifyStorySeededMotion } from './helpers/story-seeded-motion.ts';
 import { verifyStoryIntegrationEdges } from './helpers/story-integration-edge.ts';
@@ -376,6 +377,7 @@ try {
   );
   finalePlayer.story.flags.crossed_quantum_rift = true;
   assert.equal(game.features.story.storyPayload(finalePlayer).preparation, null);
+  verifyDockedProgression(game);
   verifyStoryClarity(game, captain, packets);
   verifyStoryIntegrationEdges(game);
   verifyStorySeededMotion(game.A);
