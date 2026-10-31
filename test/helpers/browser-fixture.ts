@@ -48,7 +48,18 @@ export async function cleanup(
   } finally {
     if (server.exitCode === null && server.signalCode === null) {
       server.kill('SIGTERM');
-      await Promise.race([once(server, 'exit'), delay(3000)]);
+      let shutdownTimer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        await Promise.race([
+          once(server, 'exit'),
+          new Promise<void>((resolve) => {
+            shutdownTimer = setTimeout(resolve, 3000);
+          }),
+        ]);
+      } finally {
+        // A successful shutdown must not keep the test process alive for three seconds.
+        clearTimeout(shutdownTimer);
+      }
       if (server.exitCode === null && server.signalCode === null) {
         server.kill('SIGKILL');
         await once(server, 'exit');

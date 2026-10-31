@@ -43,6 +43,50 @@ assert.throws(
   /Duplicate/,
 );
 
+const durations = JSON.parse(
+  filesystem.readFileSync(new URL('./regression-browser-durations.json', import.meta.url), 'utf8'),
+) as { seconds: Record<string, number> };
+for (const count of [1, 2, 4, manifest.browser.length + 1]) {
+  const shards = Array.from({ length: count }, (_, index) =>
+    selectShard(manifest.browser, { index: index + 1, count }, durations.seconds),
+  );
+  assert.deepEqual(shards.flat().sort(), [...manifest.browser].sort());
+  assert.deepEqual(
+    shards,
+    Array.from({ length: count }, (_, index) =>
+      selectShard(manifest.browser, { index: index + 1, count }, durations.seconds),
+    ),
+    'Assignments are repeatable',
+  );
+}
+assert.deepEqual(
+  selectShard(manifest.browser, parseShard(undefined), durations.seconds),
+  manifest.browser,
+);
+const synthetic = ['slow', 'fast', 'medium', 'new'];
+const weights = { slow: 10, fast: 1, medium: 5 };
+assert.deepEqual(selectShard(synthetic, { index: 1, count: 2 }, weights), ['slow', 'fast']);
+assert.deepEqual(selectShard(synthetic, { index: 2, count: 2 }, weights), ['medium', 'new']);
+for (const seconds of [0, -1, NaN, Infinity])
+  assert.throws(() => selectShard(synthetic, parseShard(undefined), { slow: seconds }), /positive/);
+assert.throws(() => selectShard(synthetic, parseShard(undefined), {}), /positive/);
+assert.throws(() => selectShard(['same', 'same'], parseShard(undefined), weights), /Duplicate/);
+const withoutSample = { ...durations.seconds };
+delete withoutSample[manifest.browser[0]];
+assert.deepEqual(
+  Array.from({ length: 4 }, (_, index) =>
+    selectShard(manifest.browser, { index: index + 1, count: 4 }, withoutSample),
+  )
+    .flat()
+    .sort(),
+  [...manifest.browser].sort(),
+  'Missing timing samples never omit registered programs',
+);
+const workload = ['a', 'b', 'c', 'd'];
+const workloadDurations = { a: 10, b: 1, c: 8, d: 1 };
+assert.deepEqual(selectShard(workload, { index: 1, count: 2 }, workloadDurations), ['a']);
+assert.deepEqual(selectShard(workload, { index: 2, count: 2 }, workloadDurations), ['b', 'c', 'd']);
+
 const directory = filesystem.mkdtempSync(
   path.join(operatingSystem.tmpdir(), 'rift-runner-contracts-'),
 );
@@ -108,6 +152,33 @@ try {
     assert.equal(cancelled.result.passed, false);
   } finally {
     clearTimeout(cancellation);
+  }
+  if (process.platform !== 'win32') {
+    const helper = new URL('./helpers/browser-fixture.ts', import.meta.url).href;
+    for (const stubborn of [false, true]) {
+      const source = `
+        const { spawn } = await import('node:child_process');
+        const { once } = await import('node:events');
+        const fs = await import('node:fs');
+        const { cleanup } = await import(${JSON.stringify(helper)});
+        const child = spawn(process.execPath, ['-e', ${JSON.stringify(
+          stubborn
+            ? "process.on('SIGTERM', () => {}); console.log('ready'); setInterval(() => {}, 1000)"
+            : "console.log('ready'); setInterval(() => {}, 1000)",
+        )}], { stdio: ['ignore', 'pipe', 'pipe'] });
+        await once(child.stdout, 'data');
+        const log = fs.createWriteStream(process.env.TMPDIR + '/server.log');
+        const scratch = fs.mkdtempSync(process.env.TMPDIR + '/cleanup-');
+        await cleanup(child, null, log, scratch);
+        if (fs.existsSync(scratch)) throw Error('cleanup left scratch');
+        if (child.signalCode !== ${JSON.stringify(stubborn ? 'SIGKILL' : 'SIGTERM')}) throw Error('wrong shutdown signal');
+      `;
+      const cleanupResult = await execute('fixture-cleanup-' + stubborn, prelude + source);
+      assert.equal(cleanupResult.result.passed, true, cleanupResult.log);
+      if (stubborn) assert.ok(cleanupResult.result.seconds >= 3, 'Grace period retained');
+      else
+        assert.ok(cleanupResult.result.seconds < 2, 'No losing shutdown timer keeps process alive');
+    }
   }
   const gracefulMarker = path.join(directory, 'graceful-cleanup');
   const gracefulController = new AbortController();
