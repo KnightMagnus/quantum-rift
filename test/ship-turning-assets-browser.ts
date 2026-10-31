@@ -181,7 +181,7 @@ try {
     result.proof
       .filter((hull) => hull.id >= 850 && hull.id <= 853)
       .map((hull) => hull.id)
-      .sort(),
+      .sort((left, right) => left - right),
     [850, 851, 852, 853],
     'all four security hulls retain strict banking coverage',
   );
