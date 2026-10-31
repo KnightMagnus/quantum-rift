@@ -591,13 +591,38 @@ export const StoryOperations = {
       this.nhal.storyCreature(space, 904, session.id, 1300, -900, 11);
     if (!active2 || active2.ready) return;
     const storyMission = STORY.find((storyMission) => storyMission.id === active2.id)!;
-    if (
-      storyMission.sys !== playerData.sys ||
-      [...space.ships.values()].some(
-        (entity) => entity.story === session.id && (entity.storyKill || entity.storyBoard),
-      )
-    )
+    if (storyMission.sys !== playerData.sys) return;
+    const existing = [...space.ships.values()].filter(
+      (entity) =>
+        entity.story === session.id &&
+        entity.storyMission === active2.id &&
+        (entity.storyKill || entity.storyBoard),
+    );
+    if (existing.length) {
+      // Recover abandoned targets without healing them or interrupting another captain's fight.
+      for (const [index, target] of existing.entries()) {
+        if (
+          !session.ent ||
+          Math.hypot(target.x - session.ent.x, target.y - session.ent.y) <= 12000 ||
+          (target.target && !target.target.dead && space.ships.has(target.target.id)) ||
+          [...space.ships.values()].some(
+            (attacker) =>
+              !attacker.dead &&
+              (attacker.target === target ||
+                attacker.combatTarget === target ||
+                attacker.fireAt === target),
+          )
+        )
+          continue;
+        const angle = (index / existing.length) * Math.PI * 2;
+        target.x = session.ent.x + Math.cos(angle) * 1400;
+        target.y = session.ent.y + Math.sin(angle) * 1400;
+        target.vx = 0;
+        target.vy = 0;
+        if (target.storyKill) target.target = session.ent;
+      }
       return;
+    }
     const entity = session.ent,
       left = (storyMission.count || 1) - active2.got;
     if (storyMission.type === 'board')
@@ -614,6 +639,7 @@ export const StoryOperations = {
         entity.armor = entity.st.armor * 0.1;
         entity.story = session.id;
         entity.storyBoard = true;
+        entity.storyMission = storyMission.id;
         entity.life = 1e9;
         entity.wreckT = 1e9;
         entity.rescueOf = { id: 'story', owner: session.id };
@@ -641,6 +667,7 @@ export const StoryOperations = {
                 });
         entity3.story = session.id;
         entity3.storyKill = true;
+        entity3.storyMission = storyMission.id;
         entity3.life = 1e9;
         entity3.target = entity;
       }
@@ -660,6 +687,7 @@ export const StoryOperations = {
       rightEntity.home = { x: 0, y: 0 };
       rightEntity.story = session.id;
       rightEntity.storyKill = true;
+      rightEntity.storyMission = storyMission.id;
       rightEntity.life = 1e9;
       rightEntity.noDisable = true;
       for (let index = 0; index < (storyMission.id === 'dreamer' ? 0 : 2); index++) {
@@ -717,8 +745,17 @@ export const StoryOperations = {
     const playerData = session.data,
       savedStory = this.storyInit(playerData),
       active2 = savedStory.active;
-    if (!active2 || entity.story !== session.id) return;
+    if (
+      !active2 ||
+      active2.ready ||
+      entity.story !== session.id ||
+      entity.storyMission !== active2.id ||
+      entity.storyCredited
+    )
+      return;
     const storyMission = STORY.find((storyMission) => storyMission.id === active2.id)!;
+    if (storyMission.sys !== playerData.sys || !(entity.storyKill || entity.storyBoard)) return;
+    entity.storyCredited = true;
     if (storyMission.id === 'dreamer') (savedStory.flags ||= {}).dreamer_defeated = true;
     active2.got++;
     this.toast(

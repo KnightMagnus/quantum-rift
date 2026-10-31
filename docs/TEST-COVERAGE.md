@@ -1974,6 +1974,12 @@ unchanged across notification retries. Existing partial-mutation abort and nativ
 checkpoint-freeze fixtures remain separate. These offline fixtures establish no
 rollback guarantee or live-network delivery guarantee.
 
+`story-encounters.ts` checks patrol and wing final hits, independent captain objectives,
+unchanged generic kill accounting, absent-owner denial, stale chapters and repeated credit.
+It reproduces abandoned hunter drift with seeded AI and movement, then checks bounded
+recovery on reentry without healing, duplicate targets or moving ships in active combat.
+The simulation does not establish behavior across every random seed or live multiplayer latency.
+
 ## Concord security fleet (`qcs-security-fleet`)
 
 `qcs-fleet.ts` exercises one bounded world roster, armed friendly hulls, slow cruise,

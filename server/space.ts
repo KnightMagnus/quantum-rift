@@ -48,6 +48,10 @@ export interface EntityFeatureState {
   hailEscort?: { owner: number; expires: number; dest: string };
   rescueOf?: { id: string; owner: number };
   story?: number;
+  /** Story step that spawned this objective; unrelated chapters cannot consume it. */
+  storyMission?: string;
+  /** Set after this entity has advanced its owner’s story once. */
+  storyCredited?: boolean;
   storyBoard?: boolean;
   storyAlly?: boolean;
   /** A personal convoy cannot be found until a Thalassi contact gives its bearing. */
@@ -2775,6 +2779,16 @@ export class Space {
     if (entity.player) {
       this.game.onPlayerDeath(entity.player, this, entity2);
       return;
+    }
+    if (entity.storyKill) {
+      const owner = this.game.sessions.get(entity.story!);
+      if (
+        owner?.ent &&
+        !owner.ent.dead &&
+        owner.data?.sys === this.id &&
+        this.ships.get(owner.ent.id) === owner.ent
+      )
+        this.game.features.story.storyProgress(owner, entity);
     }
     if (this.game?.features?.nhal?.killed(this, entity, entity2)) {
       if (entity2?.player)
