@@ -260,6 +260,7 @@ export const StoryOperations = {
               ? 'Morrow opens the envelope. The keepers will help rebuild the Night Anchor.'
               : 'Morrow leaves the envelope closed. Some debts will last another generation.',
       });
+      this.landed(session);
       return;
     }
     const current = STORY.find((step) => step.id === message.id);
@@ -417,6 +418,7 @@ export const StoryOperations = {
     });
     this.db.touch();
     this.you(session);
+    if (!session.ent && playerData.stellar) this.landed(session);
   },
   /**
    * Award the unique Que'vari flagship reward as part of the storyline culmination.

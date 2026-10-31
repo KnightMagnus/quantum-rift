@@ -80,6 +80,19 @@ Object.assign(webglCaptain, {
   tut: 999,
   story: structuredClone(choiceCaptain.story),
 });
+const dockedCaptain = database.create('Reality Docked', '', game.fresh());
+const berthIndex = STORY.findIndex((mission) => mission.id === 'berth');
+Object.assign(dockedCaptain, {
+  sys: 'qgate',
+  stellar: 'qstation',
+  tut: 999,
+  story: {
+    step: berthIndex,
+    done: STORY.slice(0, berthIndex).map((mission) => mission.id),
+    active: { id: 'berth', ready: true, got: 0, spawned: false },
+    flags: {},
+  },
+});
 database.touch();
 database.flush();
 const port = await availablePort(),
@@ -114,6 +127,29 @@ try {
     headless: true,
     args: ['--no-sandbox'],
   });
+  const docked = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await docked.goto(origin + '/?renderer=canvas');
+  await docked.locator('[data-slot="Reality Docked"]').click();
+  await docked
+    .locator('#storyb button')
+    .getByText('Give the manifest to the Concord', { exact: true })
+    .click();
+  await docked.waitForFunction(() => G.landed?.story?.id === 'shades-below');
+  await docked.locator('#storyok').click();
+  await docked.locator('[data-lt="jobs"]').click();
+  await docked.locator('.card.story .t').filter({ hasText: 'Shades Below' }).waitFor();
+  assert.equal(
+    await docked.locator('#depart').isVisible(),
+    true,
+    'new chapter is visible without relaunching',
+  );
+  assert.equal(
+    await docked.evaluate(() => G.you!.story.active),
+    null,
+    'the visible offer is not autoaccepted',
+  );
+  await docked.screenshot({ path: path.join(evidence, 'docked-next-chapter.png') });
+  await docked.close();
   const page = await browser.newPage({
     viewport: { width: 1440, height: 1000 },
     reducedMotion: 'no-preference',

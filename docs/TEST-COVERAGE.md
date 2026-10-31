@@ -1141,7 +1141,12 @@ combat authority; authoritative choices and access gates have separate story tes
 
 `story-continuation` checks the authoritative Acts II and III lifecycle, landed
 choice denials and replay protection, per-captain flags, exhaustive ending gates,
-actual journal persistence and hidden-place travel gates. Table departure tests
+actual journal persistence and hidden-place travel gates. Docked progression checks
+cover refreshed chapter and side-job offers after choices and actual landings,
+no automatic chapter acceptance, same-port survey-to-delivery settlement and
+repeated-call payout protection. Remote delivery steps still require travel.
+The browser story test also checks the rendered Jobs card after a docked choice
+without relaunching. Same-port delivery checks inspect authoritative packets. Table departure tests
 cover shipless denial before commitment, a resumable safe Rift standoff, private
 bounded movement/damage protection, rejected early completion, idempotent release
 through the message router and unchanged rewards. The automatically accepted
