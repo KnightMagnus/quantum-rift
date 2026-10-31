@@ -166,9 +166,9 @@ try {
       contact: contact.toDataURL('image/png'),
     };
   });
-  assert.equal(result.hulls, 146);
+  assert.equal(result.hulls, 150);
   assert.equal(
-    result.proof.filter((hull) => hull.id < 900).length,
+    result.proof.filter((hull) => hull.id < 900 && (hull.id < 850 || hull.id > 853)).length,
     122,
     'all original hulls retain strict banking coverage',
   );
@@ -176,6 +176,14 @@ try {
     result.proof.filter((hull) => hull.id >= 900).length,
     24,
     'every new combat form decodes its declared frames',
+  );
+  assert.deepEqual(
+    result.proof
+      .filter((hull) => hull.id >= 850 && hull.id <= 853)
+      .map((hull) => hull.id)
+      .sort(),
+    [850, 851, 852, 853],
+    'all four security hulls retain strict banking coverage',
   );
   assert.equal(result.repaired, 17);
   fileSystem.writeFileSync(
@@ -185,7 +193,7 @@ try {
   Reflect.deleteProperty(result, 'contact');
   fileSystem.writeFileSync(path.join(output, 'RESULTS.json'), JSON.stringify(result, null, 2));
   console.log(
-    'Ship turning assets: all122 original hulls retain108-frame banking;24 new faction forms decode declared level/bank frames and glow;17 repaired hull contact sheet.',
+    'Ship turning assets: 122 original and four security hulls retain 108-frame banking;24 faction forms decode declared level/bank frames and glow;17 repaired hull contact sheet.',
   );
 } catch (error) {
   await failureEvidence(browser, output, error);
