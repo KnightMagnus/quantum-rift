@@ -50,7 +50,7 @@ export interface CombatPlayabilityScenario {
 }
 /** Observable outcomes; survival alone is not proof of clearing a system. */
 export interface CombatPlayabilityResult extends CombatPlayabilityScenario {
-  /** Whether the captain remained alive for the requested duration. */
+  /** Whether the captain remained alive until the duration cap or story boss defeat. */
   survived: boolean;
   /** Seconds alive, capped at the requested duration. */
   aliveSeconds: number;
@@ -518,7 +518,7 @@ export function simulateCombatPlayability(
       ...(boss
         ? {
             storyOutcome: {
-              bossDefeated: !!boss.dead,
+              bossDefeated: !!boss.dead && !lead.dead && session.ent === lead,
               bossHealthFraction: Math.max(0, (boss.shield + boss.armor) / bossInitialHealth),
               bossInitialHealth,
               bossDamage,

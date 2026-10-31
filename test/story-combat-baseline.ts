@@ -32,6 +32,7 @@ const results = scenarios.flatMap((scenario) =>
     });
     const observed = result.storyOutcome!;
     assert.ok(observed.bossInitialHealth > 0);
+    if (observed.bossDefeated) assert.equal(result.survived, true, 'a mutual death is not a clear');
     assert.ok(Number.isFinite(observed.bossHealthFraction));
     assert.ok(observed.distance.min >= 0 && observed.distance.max >= observed.distance.mean);
     assert.ok(Object.values(observed.bossDamage).every((damage) => damage >= 0));
