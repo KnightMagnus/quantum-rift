@@ -1973,3 +1973,11 @@ the world update; exact balances, credit changes and loan schedules remain
 unchanged across notification retries. Existing partial-mutation abort and native
 checkpoint-freeze fixtures remain separate. These offline fixtures establish no
 rollback guarantee or live-network delivery guarantee.
+
+## Concord security fleet (`qcs-security-fleet`)
+
+`qcs-fleet.ts` exercises one bounded world roster, armed friendly hulls, slow cruise,
+connected Concord-only travel, no duplicate fleet when other systems wake, damage
+and death retention across travel and runtime restore, an eight-drone carrier
+complement, and heading-relative runway origins. It does not prove balance across
+every combat matchup or long-running server population.

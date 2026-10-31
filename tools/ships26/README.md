@@ -49,3 +49,18 @@ frames pixel-exactly, adds 72 bank frames and matching glows, and encodes lossle
 with transparent RGB retained. `render-proof.json` records IDs, geometry checks,
 output hashes and preservation proof. It expects the original 3.0.4 sheets; it
 refuses to reinterpret an already banked sheet. No game saves/network are used.
+
+## Concord security fleet
+
+`hulls_qcs.py` defines Concordance's blue hull and lowered aft pontoons, the
+Bastion's integrated gun decks, Custodian's continuous runway, and Warden/Watch
+escorts. Rebuild just these ships and their yard portraits:
+
+```sh
+PYTHONHASHSEED=0 python tools/ships26/rift_ships26.py /path/to/staging-game 3 736 850 851 852 853
+PYTHONHASHSEED=0 python tools/ships26/qcs_yards.py /path/to/staging-game
+```
+
+The flight sheets retain all 108 heading/bank frames and separate engine glows.
+Concordance retains its 360-pixel gameplay envelope; the carrier is 380 pixels,
+Bastion 310, Warden 90 and Watch 44. Small craft use doubled-resolution sheets.
