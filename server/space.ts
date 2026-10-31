@@ -2052,7 +2052,11 @@ export class Space {
         }
         const [lateralOffset, back] = SLOTS[entity.slot % SLOTS.length],
           ring = Math.floor(entity.slot / SLOTS.length),
-          size2 = Math.max(60, owner.st.size * 0.5);
+          size2 = Math.max(
+            60,
+            owner.st.size * 0.5,
+            [850, 851].includes(Number(entity.hull)) ? (owner.st.size + entity.st.size) * 1.2 : 0,
+          );
         const length2 = lateralOffset * (55 + size2 * 0.4),
           secondValue = back * (60 + size2 * 0.45) + ring * 70;
         const offsetX = owner.x + Math.cos(owner.a) * length2 - Math.sin(owner.a) * secondValue,
@@ -2082,6 +2086,7 @@ export class Space {
         }
         if (
           entity.fighterOf &&
+          entity.hull !== 853 &&
           owner &&
           !owner.player &&
           !owner.target &&

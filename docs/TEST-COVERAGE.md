@@ -1979,3 +1979,11 @@ unchanged generic kill accounting, absent-owner denial, stale chapters and repea
 It reproduces abandoned hunter drift with seeded AI and movement, then checks bounded
 recovery on reentry without healing, duplicate targets or moving ships in active combat.
 The simulation does not establish behavior across every random seed or live multiplayer latency.
+
+## Concord security fleet (`qcs-security-fleet`)
+
+`qcs-fleet.ts` exercises one bounded world roster, armed friendly hulls, slow cruise,
+connected Concord-only travel, no duplicate fleet when other systems wake, damage
+and death retention across travel and runtime restore, an eight-drone carrier
+complement, and heading-relative runway origins. It does not prove balance across
+every combat matchup or long-running server population.

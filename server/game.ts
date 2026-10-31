@@ -1,3 +1,4 @@
+import { tickQcsFleet } from './qcs-fleet.ts';
 import { sharedSnapshotEncoder } from './snapshot-encoding.ts';
 import {
   createStationService,
@@ -3302,6 +3303,7 @@ export class Game<Storage extends Database = Database> {
     } // solo pause
     this.features.mining.advanceClock(1 / TICK);
     this.tickN++;
+    tickQcsFleet(this, 1 / TICK);
     this.tickFaults.operation = 'refinery';
     if (this.tickN % 60 === 0)
       for (const session of this.sessions.values()) {

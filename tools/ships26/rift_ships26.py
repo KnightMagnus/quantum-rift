@@ -7,7 +7,7 @@ import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
 from PIL import Image
-import hulls2, hulls3, hulls5, hulls52, hulls08, hulls22, artgen_mk2   # artgen_mk2 registers the Mk II designs
+import hulls2, hulls3, hulls5, hulls52, hulls08, hulls22, artgen_mk2, hulls_qcs   # artgen_mk2 registers the Mk II designs
 from artgen3 import build
 from render2 import render
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -15,6 +15,7 @@ KEYS = {int(k): v[1] for k, v in json.load(open(os.path.join(HERE, 'ship_keys.js
 KEYS.update({735: 'surveyor', 736: 'constitution', 746: 'halberd_mk3', 748: 'hive_mk3', 749: 'tempest_mk3', 763: 'umbral_dread'})   # sprites the EV sheets shared
 KEYS.update({805: 'sp_lodestar', 806: 'sp_swarmbreaker', 807: 'sp_nightglass', 808: 'sp_corsair', 809: 'sp_herald', 810: 'sp_tidecaller', 811: 'sp_pathfinder', 812: 'sp_bulwark', 813: 'sp_wraith', 814: 'sp_vanguard'})
 KEYS.update({820: 'wasp', 821: 'swift', 822: 'pelican', 823: 'sabre', 824: 'caravel', 825: 'talon', 826: 'lighthouse', 827: 'monarch', 828: 'aegis', 829: 'vigil'})
+KEYS.update({736: 'concordance_qcs', 850: 'qcs_battleship', 851: 'qcs_carrier', 852: 'qcs_fighter', 853: 'qcs_drone'})
 ROLLS = (0, -28, 28)   # level, then the two roll sets in the order the EV Quantum sheets used
 COLS = 12
 NPC = set()   # Render every hull at high resolution.
