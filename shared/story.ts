@@ -148,7 +148,7 @@ export const STORY: StoryMission[] = [
     crate: ['crystal', 4],
     text: 'Every Que\'vari choir-of-war is gathering over Ina Lumen. "The Night Anchor has put out the light of a hundred ships," Sel\'ani says. "Tomorrow we go to Umbra and put an end to it. The elders ask you to lead us."',
     brief:
-      "Lead the Que'vari choirs-of-war into Umbra and destroy the Night Anchor. Then return to Ina Lumen.",
+      "Lead the Que'vari choirs-of-war into Umbra and destroy the Night Anchor. Then return to Ina Lumen. Prepare at the outfitter and hangar first; bridge crew, defensive research or wing support can help.",
     acc: 'Lead them',
     ref: 'Not yet',
     progress:
