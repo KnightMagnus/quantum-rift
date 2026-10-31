@@ -384,20 +384,41 @@ for (const failure of [
     run();
     assert.deepEqual(order, ['bank:0', 'bank:1', 'payload', 'space', 'checkpoint']);
     order.length = 0;
+    recipients[0].sock.send = (message) => {
+      if (typeof message === 'string' && JSON.parse(message).t === 'world') {
+        order.push('forced-failure');
+        throw new TypeError(secret);
+      }
+    };
     game.worldKey = null;
     state.lastCheckpointAt = -100000;
     state.pendingEconomicCheckpoint = true;
     game.tickN = 899;
-    run();
+    try {
+      console.error = (...argumentsList: unknown[]) => localLogs.push(argumentsList);
+      run();
+    } finally {
+      console.error = originalConsoleError;
+    }
     assert.deepEqual(order, [
       'bank:0',
       'bank:1',
       'payload',
-      'retry',
+      'forced-failure',
       'World second',
       'space',
       'checkpoint',
     ]);
+    assert.equal(recipients[0].worldNotificationSignature, undefined);
+    order.length = 0;
+    recipients[0].sock.send = (message) => {
+      if (typeof message === 'string' && JSON.parse(message).t === 'world') order.push('retry');
+    };
+    state.lastCheckpointAt = -100000;
+    state.pendingEconomicCheckpoint = true;
+    game.tickN = 899;
+    run();
+    assert.deepEqual(order, ['bank:0', 'bank:1', 'payload', 'retry', 'space', 'checkpoint']);
   } else {
     assert.deepEqual(order, ['bank:0', 'bank:1', 'payload']);
     assert.equal(

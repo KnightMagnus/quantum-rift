@@ -3404,6 +3404,8 @@ export class Game<Storage extends Database = Database> {
           session.data &&
           (stringify2 !== this.worldKey || session.worldNotificationSignature !== stringify2),
       );
+      if (stringify2 !== this.worldKey)
+        for (const session of recipients) session.worldNotificationSignature = undefined;
       this.worldKey = stringify2;
       if (recipients.length) {
         this.tickFaults.operation = 'world-broadcast';
