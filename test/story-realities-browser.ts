@@ -268,6 +268,7 @@ try {
     Reflect.set(window, 'fixtureMovingLightning', 0);
     Reflect.set(window, 'fixtureLampBursts', 0);
     Reflect.set(window, 'fixtureCoreFacing', false);
+    Reflect.set(window, 'fixtureCoreWisps', 0);
     // oxlint-disable-next-line typescript/unbound-method -- Reflect.apply preserves the native canvas receiver.
     const fillRect = CanvasRenderingContext2D.prototype.fillRect;
     CanvasRenderingContext2D.prototype.fillRect = function (
@@ -284,6 +285,17 @@ try {
           Number(Reflect.get(window, 'fixtureLampBursts')) + 1,
         );
       Reflect.apply(fillRect, this, args);
+    };
+    // oxlint-disable-next-line typescript/unbound-method -- Reflect.apply preserves the native canvas receiver.
+    const fill = CanvasRenderingContext2D.prototype.fill;
+    CanvasRenderingContext2D.prototype.fill = function (...args: unknown[]) {
+      if (this.canvas.dataset.scene === 'core' && this.globalCompositeOperation === 'lighter')
+        Reflect.set(
+          window,
+          'fixtureCoreWisps',
+          Number(Reflect.get(window, 'fixtureCoreWisps')) + 1,
+        );
+      Reflect.apply(fill, this, args);
     };
     // Record actual canvas output, not copies of the renderer's scene definitions.
     // oxlint-disable-next-line typescript/unbound-method -- Reflect.apply preserves the native canvas receiver.
@@ -570,25 +582,44 @@ try {
     'cinematic ark never enters the combat entity registry',
   );
   await choice.screenshot({ path: path.join(evidence, 'table-ark-departure.png') });
-  for (const [advance, scene] of [
-    [12000, 'core'],
-    [18000, 'gateway'],
-    [10000, 'rift'],
-    [18000, 'captain'],
-    [8000, 'briefing'],
+  for (const [seconds, scene] of [
+    [68, 'core'],
+    [80, 'gateway'],
+    [90, 'rift'],
+    [108, 'captain'],
+    [116, 'briefing'],
   ] as const) {
     if (scene === 'captain') {
-      await choice.clock.fastForward(5500);
-      await choice.clock.runFor(40);
+      await filmTo(95.5);
       assert.ok(
         await choice.evaluate(() => Number(Reflect.get(window, 'fixtureLightning')) > 0),
         'purple lightning threads the breaking ark',
       );
       await choice.screenshot({ path: path.join(evidence, 'ark-lightning.png') });
-      await choice.clock.fastForward(advance - 5500);
-    } else await choice.clock.fastForward(advance);
-    if (scene === 'core')
+    }
+    await filmTo(seconds);
+    if (scene === 'core') {
       await choice.screenshot({ path: path.join(evidence, 'core-station-facing.png') });
+      const before = await choice.evaluate(() => Number(Reflect.get(window, 'fixtureCoreWisps')));
+      await choice.setViewportSize({ width: 3440, height: 1440 });
+      await filmTo(70);
+      assert.ok(
+        (await choice.evaluate(() => Number(Reflect.get(window, 'fixtureCoreWisps')))) > before,
+        'glowing tapered wisps render during the shortened transfer',
+      );
+      await choice.screenshot({ path: path.join(evidence, 'core-wisps-ultrawide.png') });
+      await filmTo(70.5);
+      await choice.screenshot({ path: path.join(evidence, 'core-wisps-ultrawide-moving.png') });
+      await filmTo(76);
+      const settled = await choice.evaluate(() => Number(Reflect.get(window, 'fixtureCoreWisps')));
+      await choice.clock.runFor(200);
+      assert.equal(
+        await choice.evaluate(() => Number(Reflect.get(window, 'fixtureCoreWisps'))),
+        settled,
+        'wisps converge and disappear at arrival rather than lingering on the station',
+      );
+      await choice.setViewportSize({ width: 1440, height: 1000 });
+    }
     if (scene === 'gateway') await choice.clock.runFor(1300);
     await choice.clock.runFor(40);
     assert.equal(await choice.locator('#endingcinematic canvas').getAttribute('data-scene'), scene);
@@ -597,6 +628,11 @@ try {
     () => Reflect.get(window, 'fixtureFilmText') as string[],
   );
   assert.ok(renderedText.includes('core:The Riftweavers depart for their ancient ark.'));
+  assert.ok(renderedText.includes('gateway:The Ark carries it forth.. to where?'));
+  assert.equal(
+    renderedText.includes('gateway:It carries the Core through the Second Door.'),
+    false,
+  );
   assert.equal(
     renderedText.some((line) => line.startsWith('lamps:')),
     false,

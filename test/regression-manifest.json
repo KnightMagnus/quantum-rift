@@ -1862,7 +1862,7 @@
       ],
       "tests": ["story-realities-browser.ts"],
       "services": [],
-      "asserts": "Viewer-only Act III and permanent Unsettling faction ghosts, owner chains, friend/group precedence, native hull/glow/name opacity with opaque targets, reduced effects, hidden chart picking and supplied endgame atlas/backdrop artwork. Fullscreen Table-choice and scene ordering, real hull rendering, one-shot soundtrack completion, denied radio retuning, mandatory five-component briefing, unavailable-audio fallback and account-teardown restoration."
+      "asserts": "Viewer-only Act III and permanent Unsettling faction ghosts, owner chains, friend/group precedence, native hull/glow/name opacity with opaque targets, reduced effects, hidden chart picking and supplied endgame atlas/backdrop artwork. Fullscreen Table-choice and scene ordering, real hull rendering, bounded transfer timing and transient glowing trails, one-shot soundtrack completion, denied radio retuning, mandatory five-component briefing, unavailable-audio fallback and account-teardown restoration."
     },
     {
       "id": "story-continuation",
