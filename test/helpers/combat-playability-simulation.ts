@@ -7,6 +7,7 @@ import { NakamaDatabase } from '../../server/nakama-storage.ts';
 import { AuthorityCallbacks } from '../../server/authority-callbacks.ts';
 import type { StorageBackend } from '../../shared/nakama-contracts.ts';
 import { SYS, STELLARS, RESEARCH } from '../../shared/galaxy.ts';
+import { STORY } from '../../shared/story.ts';
 import { TICK } from '../../shared/rules.ts';
 import type { Entity } from '../../server/space.ts';
 
@@ -22,6 +23,17 @@ export interface CombatPlayabilityScenario {
   seconds: number;
   /** Full station research and Epic level-10, rank-3 combat crew. */
   upgraded: boolean;
+  /** Isolated authored Act I climax; ordinary traffic is excluded, story allies and wings retained. */
+  storyEncounter?: {
+    /** Override only for disclosed balance experiments; absent preserves production spawn. */
+    bonusPct?: number;
+    /** Add a disclosed modest defensive/mobility outfit package to the lead only. */
+    fitted?: boolean;
+    /** Common level-3 bridge crew plus first shield/hull research; no rank or late upgrades. */
+    prepared?: boolean;
+    /** Scripted manual stand-off distance; absent uses ordinary Assist. */
+    standOff?: number;
+  };
   /** Optional isolated two-ship experiment; normal arrivals remain the default. */
   experiment?: {
     /** Stock opponent hull ID. */
@@ -38,7 +50,7 @@ export interface CombatPlayabilityScenario {
 }
 /** Observable outcomes; survival alone is not proof of clearing a system. */
 export interface CombatPlayabilityResult extends CombatPlayabilityScenario {
-  /** Whether the captain remained alive for the requested duration. */
+  /** Whether the captain remained alive through the duration cap or post-boss window. */
   survived: boolean;
   /** Seconds alive, capped at the requested duration. */
   aliveSeconds: number;
@@ -72,6 +84,27 @@ export interface CombatPlayabilityResult extends CombatPlayabilityScenario {
   tickP95Ms: number;
   /** Maximum measured Game.tick duration. */
   tickMaxMs: number;
+  /** Authored encounter observations; damage is real applied damage, including shield hits. */
+  storyOutcome?: {
+    /** Whether the actual story boss was destroyed before the captain died or time expired. */
+    bossDefeated: boolean;
+    /** Simulated seconds after boss defeat, bounded at ten and the scenario duration cap. */
+    postBossSeconds: number;
+    /** Captain remains alive after the full ten-second post-boss window. */
+    postBossSurvived: boolean;
+    /** Boss health fraction remaining, capped at zero. */
+    bossHealthFraction: number;
+    /** Boss initial shield plus armor. */
+    bossInitialHealth: number;
+    /** Applied damage to the boss, separated by source; regeneration can make sums exceed initial health. */
+    bossDamage: { lead: number; choir: number; wing: number; other: number };
+    /** Applied damage suffered by the lead, attributed to boss versus other ships. */
+    leadDamage: { boss: number; other: number };
+    /** Tick-sampled lead-to-boss center distance while both are alive. */
+    distance: { mean: number; min: number; max: number };
+    /** Lead effective primary weapon ranges at spawn, after production unit scaling. */
+    primaryRanges: number[];
+  };
   /** Bounded initial loadouts/positions and important events for offline reproduction. */
   capture: {
     /** Capture format revision. */
@@ -163,7 +196,12 @@ export function simulateCombatPlayability(
     data.station.ops = 5;
     assert.equal(game.newcomer(data), false, 'fixture has no newcomer protection');
     data.station.done = options.upgraded ? RESEARCH.map((research) => research.id) : [];
-    const officer = (role: string) => ({ name: 'Balance ' + role, role, rarity: 3, lv: 10 });
+    const officer = (role: string) => ({
+      name: 'Balance ' + role,
+      role,
+      rarity: options.upgraded ? 3 : 0,
+      lv: options.upgraded ? 10 : 3,
+    });
     // Exercise a real shipyard purchase before the disclosed fixture supplies wings/bonuses.
     const purchaseHull = 708;
     const yard = Object.values(STELLARS).find((port) =>
@@ -180,12 +218,37 @@ export function simulateCombatPlayability(
       crew: options.upgraded
         ? [officer('gunner'), officer('engineer'), officer('gunner'), officer('engineer')]
         : [],
-      spare: options.upgraded ? [officer('gunner'), officer('engineer'), officer('captain')] : [],
+      spare:
+        options.upgraded || options.storyEncounter?.prepared
+          ? [officer('gunner'), officer('engineer'), officer('captain')]
+          : [],
     });
-    if (options.upgraded) {
-      for (const member of data.officers) member.rank = 3;
+    if (options.upgraded || options.storyEncounter?.prepared) {
+      for (const member of data.officers) member.rank = options.upgraded ? 3 : 0;
       for (const [index, member] of data.officers.slice(-3).entries())
         data.bridge[['captain', 'bridge1', 'bridge2'][index]] = member.id;
+    }
+    if (options.storyEncounter?.prepared) {
+      data.station.done = ['shield1', 'hull1'];
+      for (const slot of ['captain', 'bridge1', 'bridge2']) {
+        const member = data.officers.find((candidate) => candidate.id === data.bridge[slot]);
+        assert.ok(member, 'declared preparation includes all three bridge officers');
+        assert.equal(member.rarity, 0, 'prepared bridge officer is Common');
+        assert.equal(member.lv, 3, 'prepared bridge officer is level 3');
+        assert.equal(member.rank, 0, 'prepared bridge officer has no rank upgrades');
+      }
+    }
+    if (options.storyEncounter) {
+      assert.equal(options.system, 'umbra');
+      data.story.step = STORY.findIndex((mission) => mission.id === 'qv4');
+      data.story.active = { id: 'qv4', got: 0, ready: false, spawned: false };
+      if (options.storyEncounter.fitted) {
+        Object.assign(data.ship.outfits, { 563: 4, 567: 4, 572: 1, 576: 1 });
+        assert.ok(
+          game.features.shipStats.stats(data)!.free >= 0,
+          'declared fit uses available outfit space',
+        );
+      }
     }
     const origin = SYS[options.system].links[0];
     assert.ok(origin, 'destination has a normal neighbouring arrival route');
@@ -202,6 +265,37 @@ export function simulateCombatPlayability(
     session.inputScheduling = 'match';
     const lead = session.ent!;
     assert.equal(lead.player?.s, session);
+    let boss: Entity | undefined;
+    if (options.storyEncounter) {
+      boss = [...space.ships.values()].find(
+        (actor) => actor.story === session.id && actor.storyKill,
+      );
+      assert.ok(boss, 'production story arrival spawns Night Anchor');
+      for (const actor of space.ships.values()) {
+        const root = space.root(actor);
+        if (actor !== lead && !actor.storyAlly && root !== lead && root.story !== session.id)
+          space.remove(actor);
+      }
+      space.spawnT = Infinity;
+      space.raidBudget = () => 0;
+      const actors = [...space.ships.values()];
+      const identities = new Map(actors.map((actor, index) => [actor.id, 1000000000 + index]));
+      space.ships.clear();
+      for (const actor of actors) {
+        actor.id = identities.get(actor.id)!;
+        if (actor.owner) actor.owner = identities.get(actor.owner) ?? actor.owner;
+        actor.aggro.clear();
+        space.ships.set(actor.id, actor);
+      }
+      if (options.storyEncounter.bonusPct !== undefined) {
+        // Preserve every production boss weapon, movement and targeting rule.
+        const multiplier = 1 + options.storyEncounter.bonusPct / 100;
+        boss.st.shield = game.A.ships[boss.hull].shield * multiplier;
+        boss.st.armor = game.A.ships[boss.hull].armor * multiplier;
+        boss.shield = boss.st.shield;
+        boss.armor = boss.st.armor;
+      }
+    }
     if (options.experiment) {
       assert.ok(options.experiment.distance > 0 && options.experiment.distance <= 3000);
       assert.ok(Number.isFinite(options.experiment.angle));
@@ -290,6 +384,16 @@ export function simulateCombatPlayability(
       [...space.ships.values()].filter((ship) => !ship.dead && space.isHostile(lead, ship));
     const disableCandidates = new Set<Entity>();
     const confirmedDisables = new Set<Entity>();
+    const bossInitialHealth = boss ? boss.shield + boss.armor : 0;
+    const bossDamage = { lead: 0, choir: 0, wing: 0, other: 0 };
+    const leadDamage = { boss: 0, other: 0 };
+    let distanceTotal = 0,
+      distanceCount = 0,
+      distanceMin = Infinity,
+      distanceMax = 0;
+    const primaryRanges = lead.guns
+      .filter((mount) => !mount.sec && !mount.p.pd && !mount.p.bay)
+      .map((mount) => mount.p.range);
     const applyDamage = space.damage.bind(space);
     // Observe real damage without changing its inputs, return value or production disable rule.
     space.damage = (...arguments_) => {
@@ -304,6 +408,18 @@ export function simulateCombatPlayability(
       const wasHostile = playerAttack && space.isHostile(lead, target);
       const result = applyDamage(...arguments_);
       if (result && result[0] > 0) {
+        if (target === boss) {
+          const source =
+            attacker === lead
+              ? 'lead'
+              : attacker?.storyAlly
+                ? 'choir'
+                : attacker && space.root(attacker) === lead
+                  ? 'wing'
+                  : 'other';
+          bossDamage[source] += result[0];
+        }
+        if (target === lead) leadDamage[attacker === boss ? 'boss' : 'other'] += result[0];
         if (attacker === lead) damageContacts++;
         event('damage', attacker?.id ?? 0, target.id, result[0]);
       }
@@ -323,14 +439,39 @@ export function simulateCombatPlayability(
     let damageTaken = 0;
     let previousHealth = lead.shield + lead.armor;
     const originalHealth = previousHealth;
+    let bossDefeatedTick: number | null = null;
     // Explicit nearest-hostile acquisition is the keyboard R equivalent. Assist flies and fires.
     for (; ticks < options.seconds * TICK; ticks++) {
+      if (boss?.dead && bossDefeatedTick === null) bossDefeatedTick = ticks;
       if (lead.dead || session.ent !== lead) break;
+      if (bossDefeatedTick !== null && ticks - bossDefeatedTick >= 10 * TICK) break;
+      if (boss && !boss.dead) {
+        const distance = Math.hypot(boss.x - lead.x, boss.y - lead.y);
+        distanceTotal += distance;
+        distanceCount++;
+        distanceMin = Math.min(distanceMin, distance);
+        distanceMax = Math.max(distanceMax, distance);
+      }
       if (ticks % 3 === 0) {
         session.actT = now;
         const enemies = hostiles();
         peakHostiles = Math.max(peakHostiles, enemies.length);
-        if (
+        if (boss && !boss.dead && options.storyEncounter?.standOff) {
+          const desired = options.storyEncounter.standOff;
+          const distance = Math.hypot(boss.x - lead.x, boss.y - lead.y);
+          const bearing = Math.atan2(boss.x - lead.x, -(boss.y - lead.y));
+          const heading = bearing + (distance < desired * 0.9 ? Math.PI : 0);
+          const difference = Math.atan2(Math.sin(heading - lead.a), Math.cos(heading - lead.a));
+          game.onMessage(session, { t: 'target', id: boss.id });
+          game.onMessage(session, {
+            t: 'input',
+            seq: ticks + 1,
+            th: Math.abs(difference) < 0.4 && Math.abs(distance - desired) > desired * 0.1 ? 1 : 0,
+            tu: Math.abs(difference) < 0.08 ? 0 : Math.sign(difference),
+            f1: 1,
+            f2: 1,
+          });
+        } else if (
           !lead.target ||
           lead.target.dead ||
           !space.ships.has(lead.target.id) ||
@@ -347,6 +488,12 @@ export function simulateCombatPlayability(
             options.experiment?.control !== 'manual' &&
             game.combatAssist.valid(space, lead, nearest)
           ) {
+            event(
+              'acquire',
+              lead.id,
+              nearest.id,
+              Math.hypot(nearest.x - lead.x, nearest.y - lead.y),
+            );
             game.onMessage(session, { t: 'target', id: nearest.id });
             game.onMessage(session, { t: 'combat', op: 'assist', on: true });
           } else {
@@ -392,6 +539,25 @@ export function simulateCombatPlayability(
     tickTimes.sort((left, right) => left - right);
     return {
       ...options,
+      ...(boss
+        ? {
+            storyOutcome: {
+              bossDefeated: !!boss.dead,
+              postBossSeconds: bossDefeatedTick === null ? 0 : (ticks - bossDefeatedTick) / TICK,
+              postBossSurvived:
+                bossDefeatedTick !== null &&
+                ticks - bossDefeatedTick >= 10 * TICK &&
+                !lead.dead &&
+                session.ent === lead,
+              bossHealthFraction: Math.max(0, (boss.shield + boss.armor) / bossInitialHealth),
+              bossInitialHealth,
+              bossDamage,
+              leadDamage,
+              distance: { mean: distanceTotal / distanceCount, min: distanceMin, max: distanceMax },
+              primaryRanges,
+            },
+          }
+        : {}),
       primaryShots,
       beamShots,
       beamHits,

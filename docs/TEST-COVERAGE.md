@@ -1777,6 +1777,16 @@ and real-device qualification remain tracked in issue #82.
 
 ## Shared combat maneuvering
 
+`story-combat-baseline.ts` runs eight declared fleet/preparation policies across
+three seeds against the production Act I story spawn. Real Game ticks retain
+boss escorts and choir allies; ambient traffic is explicitly excluded. The test
+checks prepared mid-tier solo and modest-wing survival through all three seeds
+and ten seconds after boss defeat,
+continued failure for an unprepared light hull, applied damage attribution,
+distances and exact deterministic replay. `--bonus 120` recreates the former
+health multiplier as an experiment; `--export PATH` retains full bounded captures.
+The scripted 3,200-unit retreat policy is not a human skill or optimal-kiting claim.
+
 `combat-maneuver.ts` calls the existing `Space.fight` entry point with a live
 steering fixture. Thirty hand-authored cases check primary/secondary battery
 selection, empty ammo and point-defense/bay exclusion, the unarmed fallback,
