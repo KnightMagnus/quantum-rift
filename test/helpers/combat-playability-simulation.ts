@@ -192,7 +192,12 @@ export function simulateCombatPlayability(
     data.station.ops = 5;
     assert.equal(game.newcomer(data), false, 'fixture has no newcomer protection');
     data.station.done = options.upgraded ? RESEARCH.map((research) => research.id) : [];
-    const officer = (role: string) => ({ name: 'Balance ' + role, role, rarity: 3, lv: 10 });
+    const officer = (role: string) => ({
+      name: 'Balance ' + role,
+      role,
+      rarity: options.upgraded ? 3 : 0,
+      lv: options.upgraded ? 10 : 3,
+    });
     // Exercise a real shipyard purchase before the disclosed fixture supplies wings/bonuses.
     const purchaseHull = 708;
     const yard = Object.values(STELLARS).find((port) =>
@@ -209,14 +214,26 @@ export function simulateCombatPlayability(
       crew: options.upgraded
         ? [officer('gunner'), officer('engineer'), officer('gunner'), officer('engineer')]
         : [],
-      spare: options.upgraded ? [officer('gunner'), officer('engineer'), officer('captain')] : [],
+      spare:
+        options.upgraded || options.storyEncounter?.prepared
+          ? [officer('gunner'), officer('engineer'), officer('captain')]
+          : [],
     });
-    if (options.upgraded) {
+    if (options.upgraded || options.storyEncounter?.prepared) {
       for (const member of data.officers) member.rank = options.upgraded ? 3 : 0;
       for (const [index, member] of data.officers.slice(-3).entries())
         data.bridge[['captain', 'bridge1', 'bridge2'][index]] = member.id;
     }
-    if (options.storyEncounter?.prepared) data.station.done = ['shield1', 'hull1'];
+    if (options.storyEncounter?.prepared) {
+      data.station.done = ['shield1', 'hull1'];
+      for (const slot of ['captain', 'bridge1', 'bridge2']) {
+        const member = data.officers.find((candidate) => candidate.id === data.bridge[slot]);
+        assert.ok(member, 'declared preparation includes all three bridge officers');
+        assert.equal(member.rarity, 0, 'prepared bridge officer is Common');
+        assert.equal(member.lv, 3, 'prepared bridge officer is level 3');
+        assert.equal(member.rank, 0, 'prepared bridge officer has no rank upgrades');
+      }
+    }
     if (options.storyEncounter) {
       assert.equal(options.system, 'umbra');
       data.story.step = STORY.findIndex((mission) => mission.id === 'qv4');

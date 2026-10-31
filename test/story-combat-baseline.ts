@@ -55,7 +55,7 @@ assert.deepEqual(
   deterministic(original),
   'seed and geometry reproduce exact outcome',
 );
-assert.equal(results[0].storyOutcome!.bossInitialHealth, 6600 * (1 + (override ?? 0) / 100));
+assert.equal(results[0].storyOutcome!.bossInitialHealth, 6600 * (1 + (override ?? 20) / 100));
 if (override === undefined) {
   for (const label of ['prepared-cruiser', 'modest-wing']) {
     assert.ok(
