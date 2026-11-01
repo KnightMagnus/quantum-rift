@@ -307,7 +307,6 @@ export type RenderShip = Pick<
 import { drawTowing } from './towing_render.ts';
 import { drawMining } from './mining_render.ts';
 // Quantum Rift renderer: starfield, stellars, ship sprite sheets, shots, beams, effects, radar.
-import { stationWheel } from './station_wheel.ts';
 import { planetSprite } from './planets.ts';
 import { drawStar } from './stars.ts';
 import { drawExoticSky, drawPulseBoundary } from './exotic_scenery.ts';
@@ -1702,10 +1701,15 @@ export function stationDesign(stellarBody: StellarBody): string {
     toLowerCase2 = ((stellarBody.desc || '') + ' ' + stellarBody.id).toLowerCase(),
     hashStr2 = hashStr(stellarBody.id);
   const authored: Record<string, string> = {
-    'twins-exchange': 'twin',
+    luna: 'luna',
+    'waystation-hub': 'crescent',
+    'longhaul-depot': 'refinery',
+    'cinder-hold': 'bastion',
+    threshold: 'relay',
+    'twins-exchange': 'cylinder',
+    'nightjar-beacon': 'biodome',
     'aureole-ring': 'ring',
     'reliquary-watch': 'disc',
-    'nightjar-beacon': 'spindle',
     'glasswake-foundry': 'forge',
     'palinode-observatory': 'crystal',
   };
@@ -1740,8 +1744,6 @@ export function stationDesign(stellarBody: StellarBody): string {
  * @returns Loaded image or null if loading
  */
 function stationSprite(stellarBody: StellarBody): HTMLImageElement | HTMLCanvasElement | null {
-  // Luna keeps the original glowing wheel rather than inheriting the generic shipyard.
-  if (stellarBody.id === 'luna') return stationWheel(stellarBody)!;
   const stationDesign2 = stationDesign(stellarBody);
   const htmlImageElement = assetImage(`stations/s_${stationDesign2}.webp`);
   return htmlImageElement.complete && htmlImageElement.naturalWidth ? htmlImageElement : null;
