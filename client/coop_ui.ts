@@ -536,14 +536,16 @@ function armadaHtml() {
       <div class="dim small">An Armada is a short co-op group of up to ${ARMADA.max} captains, each with their own wingmates. Members and their wingmates can't hurt each other and show in green. You get a private chat (/a), +5% shield recharge and bounties while another member shares your system, a share of each other's bounties and kill credit, Armada contracts, co-op Holdouts, and a rescue window if your ship goes down. It disbands when everyone has been offline for ${ARMADA.idleMin} minutes.</div>`
     );
   }
+  height += `<p class="small">Armada buffs: ${armada2.buffsActive ? '+5% shield recharge and +5% bounties active' : 'inactive — another member must be flying in your system'}.</p>`;
   const lead = armada2.leader === myName2;
+  height += `<section class="mcard"><h3>SHARED STORY FIGHT</h3><p class="small">Helpers choose READY TO HELP for the owner below. In the fight system, the owner starts assistance with that fixed roster. Only the owner advances their story and receives unique rewards. Helpers receive ordinary combat bounties, not duplicate story rewards. Assistance ends after 15 minutes, disconnect, departure or leaving the Armada. Stop and arrange a new roster to add someone.</p><button class="btn sm" data-cact="storyshare">START MY SHARED FIGHT</button> <button class="btn sm" data-cact="storystop">STOP ASSISTANCE</button></section>`;
   height += `<div class="sect" style="margin-top:4px">${escapeHtml2(armada2.name)} <span class="dim small">${armada2.members!.length}/${armada2.max}</span></div>`;
   height += armada2
     .members!.map((message) => {
       const live = liveMember(message.name);
-      return `<div class="frow"><div class="kv"><span>${message.online ? presenceIndicators.online : presenceIndicators.offline} <b style="color:${message.name === myName2 ? '#ddd' : '#7af0a0'}">${escapeHtml2(message.name)}</b>${message.name === armada2.leader ? ' <span class="dim small">leader</span>' : ''}</span><span class="dim small">${escapeHtml2(message.hull)}${message.sys ? ` · ${message.sysId ? `<a href="#" data-cact="plot" data-sys="${escapeHtml2(message.sysId)}">${escapeHtml2(message.sys)}</a>` : escapeHtml2(message.sys)}` : ''}${message.landed ? ' · landed' : ''}</span></div>
+      return `<div class="frow"><div class="kv"><span>${message.online ? presenceIndicators.online : presenceIndicators.offline} <b style="color:${message.name === myName2 ? '#ddd' : '#7af0a0'}">${escapeHtml2(message.name)}</b>${message.name === armada2.leader ? ' <span class="dim small">leader</span>' : ''}</span><span class="dim small">${escapeHtml2(message.hull)}${message.sys ? ` · ${message.sysId ? `<a href="#" data-cact="plot" data-sys="${escapeHtml2(message.sysId)}">${escapeHtml2(message.sys)}</a>` : escapeHtml2(message.sys)}` : ''}${message.landed ? ' · landed' : ''}${message.storyStatus ? ` · ${escapeHtml2(message.storyStatus)}` : ''}</span></div>
       ${live ? `<div class="bars2"><div class="bar thin"><i style="width:${live.sh}%"></i></div><div class="bar thin"><i class="ar" style="width:${live.ar}%"></i></div></div>` : ''}
-      ${message.name !== myName2 ? `<div class="frbtn"><button class="btn sm" data-cact="dm" data-n="${escapeHtml2(message.name)}">MESSAGE</button>${message.online && clientGameState.landed && clientGameState.landed!.site && clientGameState.landed!.site.own ? ` <button class="btn sm" data-cact="topen" data-n="${escapeHtml2(message.name)}">TRADE</button>` : ''}${lead ? ` <button class="btn sm" data-cact="alead" data-n="${escapeHtml2(message.name)}">MAKE LEADER</button> <button class="btn sm" data-cact="akick" data-n="${escapeHtml2(message.name)}">REMOVE</button>` : ''}</div>` : ''}</div>`;
+      ${message.name !== myName2 ? `<div class="frbtn"><button class="btn sm" data-cact="dm" data-n="${escapeHtml2(message.name)}">MESSAGE</button>${message.online ? ` <button class="btn sm" data-cact="storyassist" data-n="${escapeHtml2(message.name)}">READY TO HELP</button>` : ''}${message.online && clientGameState.landed && clientGameState.landed!.site && clientGameState.landed!.site.own ? ` <button class="btn sm" data-cact="topen" data-n="${escapeHtml2(message.name)}">TRADE</button>` : ''}${lead ? ` <button class="btn sm" data-cact="alead" data-n="${escapeHtml2(message.name)}">MAKE LEADER</button> <button class="btn sm" data-cact="akick" data-n="${escapeHtml2(message.name)}">REMOVE</button>` : ''}</div>` : ''}</div>`;
     })
     .join('');
   if (armada2.pending && armada2.pending.length)
@@ -784,6 +786,15 @@ function onClick(mouseEvent: MouseEvent) {
     }
     case 'rally':
       send({ t: 'armada', op: 'rally' });
+      break;
+    case 'storyassist':
+      send({ t: 'armada', op: 'storyAssist', name: count });
+      break;
+    case 'storyshare':
+      send({ t: 'armada', op: 'storyShare' });
+      break;
+    case 'storystop':
+      send({ t: 'armada', op: 'storyStop' });
       break;
     case 'afollow':
       if (!(htmlElement2 as HTMLInputElement).checked) {

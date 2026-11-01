@@ -983,6 +983,11 @@ export function refreshCompanion(): void {
 export function drawMini(): void {
   if (clientGameState.ctab === 'missions' && clientGameState.you!) {
     const targets = missionTargets(clientGameState);
+    if (clientGameState.pinnedObjective === undefined) {
+      clientGameState.pinnedObjective =
+        targets.find((target) => target.kind === 'story')?.key || '';
+      clientGameState.views.remember();
+    }
     if (
       clientGameState.pinnedObjective &&
       !targets.some((missionTarget) => missionTarget.key === clientGameState.pinnedObjective)
@@ -2968,9 +2973,9 @@ export function plot(destination: number | string | undefined | null): void {
  * Displays the ship destruction and insurance reconstruction notice modal.
  * @param message2 Rebuild event payload containing location and insurance fee
  */
-export function showDead(message: { at: string; fee: number }): void {
+export function showDead(message: { at: string; fee: number; summary?: string }): void {
   elementById2('deadmsg').textContent =
-    `Your ship was destroyed. The insurers rebuilt it at ${message.at} for ${credits(message.fee)} credits. Your cargo was lost; your wingmates flew home.`;
+    `Your ship was destroyed. The insurers rebuilt it at ${message.at} for ${credits(message.fee)} credits. Your cargo was lost; your wingmates flew home.${message.summary ? ` ${message.summary} Revisit this report in Captain’s Log.` : ''}`;
   overlays.open('deadbox');
 }
 export { escapeHtml2 as esc };

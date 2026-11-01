@@ -1,3 +1,5 @@
+import { encounterFeedback } from './encounter-feedback.ts';
+import { storyParticipant } from './shared-story.ts';
 import { flightFeedbackPayload } from './flight-feedback.ts';
 import { tickQcsFleet } from './qcs-fleet.ts';
 import { sharedSnapshotEncoder } from './snapshot-encoding.ts';
@@ -243,6 +245,20 @@ export interface FormationTarget {
   gap: number;
 }
 export type Session = {
+  /** Explicit helper consent, private to this connection and owner session. */
+  storyAssistOwner?: number;
+  /** Both original flight identities must survive until the owner starts assistance. */
+  storyAssistFlight?: { owner: number; helper: number };
+  /** Owner-started frozen roster; expires on disconnect, chapter change or timeout. */
+  sharedStory?: {
+    mission: string;
+    sys: string;
+    helpers: number[];
+    ownerEntity: number;
+    helperEntities: Record<number, number>;
+    armada: string | number;
+    until: number;
+  };
   /** Bounded private cinematic freeze; never pauses the shared world. */
   endingUntil?: number;
   /** Wall-clock start validates the completion acknowledgment. */
@@ -2714,6 +2730,14 @@ export class Game<Storage extends Database = Database> {
     const session = playerReference.s,
       playerData = session.data;
     if (!playerData) return;
+    const damageBreakdown =
+      Object.entries(session.ent?.damageReceived || {})
+        .map(([source, amount]) => `${source}: ${Math.round(amount)}`)
+        .join(', ') || 'No damage detail recorded';
+    const enemyHealth = entity
+      ? `${entity.name || this.A.ships[entity.hull]?.name || 'Last attacker'}: ${Math.max(0, Math.round((100 * entity.armor) / Math.max(1, entity.st.armor)))}% hull, ${Math.max(0, Math.round((100 * entity.shield) / Math.max(1, entity.st.shield)))}% shields remaining.`
+      : 'Last attacker unavailable.';
+    const defeatSummary = `Damage received — ${damageBreakdown}. ${enemyHealth} Before retrying, repair, reload and check weapon range against the briefing.`;
     if (playerData.story) delete playerData.story.flight;
     this.features.towing.detach(session);
     if (space.sys.arena && this.features.frontier.onArenaDeath(session, space)) return;
@@ -2721,7 +2745,7 @@ export class Game<Storage extends Database = Database> {
     space.players--;
     session.ent = null;
     const serviceFee = Math.min(
-      playerData.credits,
+      Math.floor(Math.max(0, playerData.credits) * 0.1),
       Math.round((this.A.ships[playerData.ship.hull].cost || 0) * 0.05),
     );
     playerData.credits -= serviceFee;
@@ -2776,9 +2800,14 @@ export class Game<Storage extends Database = Database> {
     playerData.missions = playerData.missions.filter((mission) => !mission.lost);
     this.log(
       playerData,
-      `Ship destroyed${entity && entity.player ? ' by ' + entity.player.name : ''}. The insurers rebuilt it at ${STELLARS[back].name} for ${credits(serviceFee)} credits; the cargo was lost.`,
+      `Ship destroyed${entity && entity.player ? ' by ' + entity.player.name : ''}. The insurers rebuilt it at ${STELLARS[back].name} for ${credits(serviceFee)} credits; the cargo was lost. ${defeatSummary}`,
     );
-    this.send(session, { t: 'dead', fee: serviceFee, at: STELLARS[back].name });
+    this.send(session, {
+      t: 'dead',
+      fee: serviceFee,
+      at: STELLARS[back].name,
+      summary: defeatSummary,
+    });
     if (entity && entity.player)
       this.broadcast({
         t: 'chat',
@@ -3540,7 +3569,7 @@ export class Game<Storage extends Database = Database> {
           const actor = privateSpace.ships.get(identifier);
           return (
             !actor ||
-            ((!actor.story || actor.story === session.id) &&
+            ((!actor.story || storyParticipant(this, actor, session.id)) &&
               (!actor.storySight || !!session.data.story.flags?.convoy_visible))
           );
         };
@@ -3564,6 +3593,12 @@ export class Game<Storage extends Database = Database> {
         }
         const serializeStarted = health?.now() ?? 0;
         const recipientFields = {
+          encounters: encounterFeedback(
+            this,
+            session,
+            privateSpace,
+            new Set(personalSnapshot.ships.map((row) => Number(row[0]))),
+          ),
           attention: attentionPayload(session, this.spaces[starSystem]),
           flightFeedback: flightFeedbackPayload(session, this.spaces[starSystem]),
           nhal: this.features.nhal.status(this.spaces[starSystem], entity),

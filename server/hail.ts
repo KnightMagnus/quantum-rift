@@ -234,6 +234,11 @@ export const HailOperations = {
         k: 'fuel',
         label: `Ask for fuel (${(playerData.rep[root.faction] || 0) >= 30 ? 'free, friends help friends' : '600 cr'})`,
       });
+    if (this.hails.canHire(session, entity2, space))
+      options3.push({
+        k: 'mercenary',
+        label: 'Hire support: 1,500 cr / 5 min, this system only; no refunds',
+      });
     if (hurt) options3.push({ k: 'repair', label: 'Ask for emergency repairs (1,500 cr)' });
     return announce(contextualHail(session, entity2, space), options3);
   },
@@ -290,6 +295,8 @@ export const HailOperations = {
       }
     };
     switch (message.k) {
+      case 'mercenary':
+        return announce(this.hails.hire(session, entity2, space));
       case 'bribe': {
         const lawful = !FACTIONS[root.faction].pirate && !root.rival,
           cost = lawful

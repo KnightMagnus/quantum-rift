@@ -43,6 +43,8 @@ interface HailState {
   pairs: Map<number, number>;
   sent: number;
   escort: { source: number; sys: string; expires: number } | null;
+  /** Temporary support belongs to this flight and never enters saved fleet slots. */
+  mercenary?: { source: number; expires: number; previousAi: Entity['ai'] };
 }
 interface HailRequest {
   op?: unknown;
@@ -124,6 +126,7 @@ export class HailService {
     // docked player's otherwise sleeping system on every communications tick.
     const space2 = flying(session) ? this.game.live[session.data.sys] || null : null;
     if (hailState.space !== space2 || hailState.ent !== session.ent) {
+      this.releaseMercenary(hailState);
       this.cancelEscort(session, hailState);
       hailState.space = space2;
       hailState.ent = session.ent;
@@ -172,6 +175,7 @@ export class HailService {
         if (hailEntry.opened) hailEntry.opened += deltaTime;
       }
       if (hailState.escort) hailState.escort.expires += deltaTime;
+      if (hailState.mercenary) hailState.mercenary.expires += deltaTime;
       if (hailState.space) spaces.add(hailState.space);
     }
     for (const space of spaces)
@@ -662,11 +666,73 @@ export class HailService {
     this.game.toast(session, 'Spontaneous escort completed: 750 cr.');
     this.game.send(session, { t: 'hailmark', until: 0 });
   }
+  /** Only ordinary independent patrols may sell local support. No story credit is transferred. */
+  canHire(session: Session, entity: Entity, space: Space): boolean {
+    return !!(
+      flying(session) &&
+      space.ships.get(entity.id) === entity &&
+      !this.states.get(session.id)?.mercenary &&
+      !entity.player &&
+      !entity.owner &&
+      !entity.rival &&
+      !entity.name &&
+      !entity.mission &&
+      !entity.boss &&
+      !entity.dread &&
+      !entity.story &&
+      !entity.rescueOf &&
+      !entity.arcOf &&
+      !entity.indexWorksite &&
+      !silent(entity) &&
+      !entity.dead &&
+      !entity.disabled &&
+      entity.state === 'fly' &&
+      entity.ai === 'patrol' &&
+      !entity.target &&
+      !space.isHostile(entity, session.ent) &&
+      distance(entity, session.ent) <= 3500 &&
+      ![...space.ships.values()].some((child) => child.owner === entity.id)
+    );
+  }
+  hire(session: Session, entity: Entity, space: Space): string {
+    const hailState = this.state(session);
+    if (!this.canHire(session, entity, space)) return 'That patrol is not available for hire.';
+    const fee = 1500;
+    if (!Number.isFinite(session.data.credits) || session.data.credits < fee)
+      return 'Local support costs 1,500 credits.';
+    hailState.mercenary = {
+      source: entity.id,
+      expires: this.now() + 300000,
+      previousAi: entity.ai,
+    };
+    entity.owner = session.ent!.id;
+    entity.ai = 'escort';
+    entity.target = null;
+    entity.slot = null;
+    entity.life = Math.max(entity.life, 330);
+    session.data.credits -= fee;
+    this.game.db.touch();
+    this.game.you(session);
+    return 'Support hired for five minutes in this system. Docking, jumping, disconnecting or ship loss ends the contract. No refunds; no story rewards or progress are shared.';
+  }
+  releaseMercenary(hailState: HailState) {
+    const contract = hailState.mercenary;
+    if (!contract) return;
+    const entity = hailState.space?.ships.get(contract.source);
+    if (entity && entity.owner === hailState.ent?.id) {
+      entity.owner = null;
+      entity.ai = contract.previousAi;
+      entity.target = null;
+      entity.slot = null;
+    }
+    delete hailState.mercenary;
+  }
   tick() {
     const game2 = this.game,
       currentTime = this.now();
     for (const [identifier, hailState] of this.states)
       if (!game2.sessions.has(identifier)) {
+        this.releaseMercenary(hailState);
         this.cancelEscort({ id: identifier }, hailState);
         this.states.delete(identifier);
       }
@@ -674,6 +740,18 @@ export class HailService {
       if (!session.data) continue;
       const hailState = this.state(session),
         space2 = hailState.space;
+      if (hailState.mercenary) {
+        const mercenary = space2?.ships.get(hailState.mercenary.source);
+        if (
+          currentTime >= hailState.mercenary.expires ||
+          !mercenary ||
+          mercenary.dead ||
+          mercenary.owner !== session.ent?.id
+        ) {
+          this.releaseMercenary(hailState);
+          game2.toast(session, 'Local support contract ended.');
+        }
+      }
       const before = hailState.queue.length;
       // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
       for (const hailEntry of [...hailState.queue])

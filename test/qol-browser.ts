@@ -32,7 +32,12 @@ try {
   await page.waitForFunction(() => G.you!.missions.length > 0);
   await page.click('#traytoggle');
   await page.click('#ctabs [data-tab="missions"]');
-  const inputBinding = page.locator('#mlist [data-pin]').first();
+  assert.equal(
+    await page.evaluate(() => G.pinnedObjective),
+    'story',
+    'Fresh captains start with their disclosed main objective pinned',
+  );
+  const inputBinding = page.locator('#mlist [data-pin]:not([data-pin="story"])').first();
   await inputBinding.click();
   const pinnedKey = await page.evaluate(() => G.pinnedObjective);
   assert.ok(pinnedKey);
@@ -193,8 +198,8 @@ try {
   await other.waitForFunction(() => G.you && G.landed);
   assert.equal(
     await other.evaluate(() => G.pinnedObjective || ''),
-    '',
-    'Another captain never inherits the pin',
+    'story',
+    'Another captain receives their own default story pin, not the custom job pin',
   );
   assert.equal(
     await other.evaluate(() => G.codexQuery || ''),
