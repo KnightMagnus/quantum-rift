@@ -10,7 +10,9 @@ export function maneuverCombat(steering: CombatSteering, attacker: Entity, targe
   // Both NPCs and Assist close for their primary battery. A long-range
   // secondary must not keep the ship outside its main guns' effective range.
   const battery = primary.length ? primary : available;
-  const batteryRange = battery.length ? Math.max(...battery.map((mount) => mount.p.range)) : 300;
+  const batteryRange = battery.length
+    ? (attacker.autoCombat ? Math.min : Math.max)(...battery.map((mount) => mount.p.range))
+    : 300;
   const deltaX = target.x - attacker.x,
     deltaY = target.y - attacker.y,
     distance = Math.hypot(deltaX, deltaY);
@@ -20,6 +22,10 @@ export function maneuverCombat(steering: CombatSteering, attacker: Entity, targe
   if (
     attacker.st.size >= 110 &&
     attacker.st.turrets >= 2 &&
+    (!attacker.autoCombat ||
+      (battery.length > 0 &&
+        battery.every((mount) => mount.p.turret) &&
+        Math.hypot(target.vx, target.vy) < attacker.st.maxSpeed * 0.6)) &&
     distance < batteryRange * 1.1 &&
     distance > Math.max(140, attacker.st.size)
   ) {

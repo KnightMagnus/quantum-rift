@@ -280,15 +280,37 @@ export const ArcsOperations = {
         active2 = savedArc.active;
       if (!active2 || active2.ready) continue;
       const arcStep = ARCS[factionId].steps[savedArc.step];
-      if (
-        arcStep.type === 'carry' ||
-        arcStep.sys !== playerData.sys ||
-        [...space.ships.values()].some(
-          (entity) =>
-            entity.arcOf && entity.arcOf.sid === session.id && entity.arcOf.fac === factionId,
-        )
-      )
+      if (arcStep.type === 'carry' || arcStep.sys !== playerData.sys) continue;
+      const existing = [...space.ships.values()].filter(
+        (target) => target.arcOf?.sid === session.id && target.arcOf.fac === factionId,
+      );
+      if (existing.length) {
+        for (const [index, target] of existing.entries()) {
+          if (
+            !entity ||
+            Math.hypot(target.x - entity.x, target.y - entity.y) <= 12000 ||
+            (target.target &&
+              !target.target.dead &&
+              space.ships.has(target.target.id) &&
+              Math.hypot(target.x - target.target.x, target.y - target.target.y) < 2400) ||
+            [...space.ships.values()].some(
+              (attacker) =>
+                !attacker.dead &&
+                Math.hypot(attacker.x - target.x, attacker.y - target.y) < 2400 &&
+                (attacker.target === target ||
+                  attacker.combatTarget === target ||
+                  attacker.fireAt === target),
+            )
+          )
+            continue;
+          const angle = (index / existing.length) * Math.PI * 2;
+          target.x = entity.x + Math.cos(angle) * 1400;
+          target.y = entity.y + Math.sin(angle) * 1400;
+          target.vx = target.vy = 0;
+          if (!target.rescueOf) target.target = entity;
+        }
         continue;
+      }
       const left = (arcStep.count || 1) - active2.got;
       for (let index = 0; index < left; index++) {
         const angle = Math.random() * 6.283,
@@ -302,7 +324,7 @@ export const ArcsOperations = {
           name: arcStep.type === 'boss' ? arcStep.bossName : null,
           bonus: arcStep.type === 'boss' ? { shieldPct: 80, armorPct: 80, damagePct: 30 } : {},
         });
-        entity2.arcOf = { sid: session.id, fac: factionId };
+        entity2.arcOf = { sid: session.id, fac: factionId, step: savedArc.step };
         entity2.life = 1e9;
         if (arcStep.type === 'board') {
           entity2.disabled = true;
@@ -339,7 +361,12 @@ export const ArcsOperations = {
       factionId = entity.arcOf.fac,
       savedArc = this.arcState(playerData, factionId),
       active2 = savedArc.active;
-    if (!active2) return;
+    if (
+      !active2 ||
+      active2.ready ||
+      (entity.arcOf.step !== undefined && entity.arcOf.step !== savedArc.step)
+    )
+      return;
     const arcStep = ARCS[factionId].steps[savedArc.step];
     active2.got++;
     entity.arcOf = null;

@@ -12,7 +12,7 @@ const mount = (
     n: 1,
     ammo: options.ammo ?? Infinity,
     sec: options.sec ?? false,
-    p: { range, pd: options.pd, bay: options.bay },
+    p: { range, turret: true, pd: options.pd, bay: options.bay },
   });
 const traces: object[] = [];
 function fixture(
@@ -126,3 +126,18 @@ console.log(JSON.stringify(traces));
 console.log(
   `Combat maneuver compatibility: ${traces.length} deterministic steering/input/identity traces pass.`,
 );
+
+for (const player of [false, true]) {
+  const current = fixture(425, { size: 110, turrets: 2 });
+  if (player) current.attacker.player = { id: 1 } as Entity['player'];
+  current.attacker.autoCombat = true;
+  const front = mount(1260);
+  front.p.turret = false;
+  current.attacker.guns = [mount(360), front];
+  assert.deepEqual(current.run('mixed capital closes for short battery'), [425, 0]);
+  assert.equal(current.attacker.inp.thrust, 1);
+}
+const fleeing = fixture(400, { size: 110, turrets: 2 });
+fleeing.attacker.autoCombat = true;
+fleeing.target.vx = 60;
+assert.deepEqual(fleeing.run('moving capital target prevents parallel chase'), [440, 0]);

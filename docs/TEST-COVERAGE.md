@@ -2021,3 +2021,7 @@ connected Concord-only travel, no duplicate fleet when other systems wake, damag
 and death retention across travel and runtime restore, an eight-drone carrier
 complement, and heading-relative runway origins. It does not prove balance across
 every combat matchup or long-running server population.
+
+## Mission recovery and capital maneuvering
+
+`quest-recovery.ts` checks owner-only mission-wreck boarding, missing-wreck recovery without duplication, completed-rescue exclusion, NPC hit denial, faction objective credit after patrol kills, abandoned-target recovery without healing, contract-target recovery and patrol completion, and insurance when no able rescuer remains. It also runs actual Assist and weapon physics for both affected capital hulls against a moving target after finite ammunition is exhausted, requiring damage in each 30-second window. `combat-maneuver.ts` covers mixed forward/turret batteries and pursuit of moving targets. These deterministic checks do not establish combat balance or human completion times.

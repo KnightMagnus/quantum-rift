@@ -1568,6 +1568,9 @@ export const CoopOperations = {
         session3.data &&
         session3.data.armada === playerData.armada &&
         session3.ent &&
+        !session3.ent.dead &&
+        !session3.ent.disabled &&
+        session3.ent.state === 'fly' &&
         session3.data.sys === playerData.sys,
     );
     if (!mates.length) return false;
@@ -1632,7 +1635,20 @@ export const CoopOperations = {
     for (const space of Object.values(this.live))
       // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
       for (const entity of [...space.ships.values()])
-        if (entity.player && entity.rescueT && space.t > entity.rescueT) {
+        if (
+          entity.player &&
+          entity.rescueT &&
+          (space.t > entity.rescueT ||
+            ![...space.ships.values()].some(
+              (mate) =>
+                !!entity.player?.s?.data?.armada &&
+                mate !== entity &&
+                mate.player?.s?.data?.armada === entity.player?.s?.data?.armada &&
+                !mate.dead &&
+                !mate.disabled &&
+                mate.state === 'fly',
+            ))
+        ) {
           entity.rescueT = 0;
           entity.disabled = false;
           entity.armor = 0;

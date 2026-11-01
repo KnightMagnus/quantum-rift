@@ -728,6 +728,11 @@ export const FrontsOperations = {
           `Your convoy, the ${mission.convoyName}, is with you. Get it safely to ${stellarBody.name}.`,
         );
       }
+      if (mission.type === 'rescue')
+        mission.spawned = [...space.ships.values()].some(
+          (wreck) =>
+            !wreck.dead && wreck.rescueOf?.owner === session.id && wreck.rescueOf.id === mission.id,
+        );
       if (mission.type === 'rescue' && !mission.spawned) {
         mission.spawned = true;
         const angle = Math.random() * 6.28;
@@ -758,6 +763,13 @@ export const FrontsOperations = {
           `Distress beacon: the ${mission.wreckName} is drifting in this system. Board it and choose Rescue.`,
         );
       }
+      if (mission.type === 'assassinate')
+        mission.spawned = [...space.ships.values()].some(
+          (target) =>
+            !target.dead &&
+            target.mission?.owner === session.id &&
+            target.mission.id === mission.id,
+        );
       if (mission.type === 'assassinate' && !mission.spawned) {
         mission.spawned = true;
         const entity = space.spawnMissionTarget({ ...mission, owner: session.id })!;

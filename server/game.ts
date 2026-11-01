@@ -2619,7 +2619,6 @@ export class Game<Storage extends Database = Database> {
     } // 1.1
     if (entity.kingpin) this.features.coop.warbandDown(entity); // an Armada contract's kingpin
     this.features.living.stateOnKill(session, entity, space); // 2.4
-    if (entity.arcOf) this.features.arcs.arcProgress(session, entity); // 1.2 faction arcs
     if (entity.boss || entity.bossMinion) {
       this.features.fronts.goal(session, 'kills');
       this.you(session);

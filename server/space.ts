@@ -393,7 +393,11 @@ export type Entity = EntityFeatureState & {
   storyKill?: boolean;
 
   /** Faction arc objective identifier. */
-  arcOf?: { sid: number; fac: string } | null;
+  arcOf?: {
+    sid: number;
+    fac: string;
+    /** Arc step that owns this live objective. */ step?: number;
+  } | null;
 
   /** Hunt mission identifier. */
   huntOf?: number;
@@ -1166,6 +1170,7 @@ export class Space {
 
   /** Checks whether attacks can connect and damage target. */
   canHit(attacker: Entity, rightEntity: Entity): boolean {
+    if (rightEntity.rescueOf) return false;
     if (
       (this.root(attacker).player?.s?.endingUntil || 0) > Date.now() ||
       (this.root(rightEntity).player?.s?.endingUntil || 0) > Date.now()
@@ -2794,6 +2799,29 @@ export class Space {
     if (entity.player) {
       this.game.onPlayerDeath(entity.player, this, entity2);
       return;
+    }
+    if (entity.arcOf && !entity.rescueOf) {
+      const owner = this.game.sessions.get(entity.arcOf.sid);
+      if (
+        owner?.ent &&
+        !owner.ent.dead &&
+        owner.data?.sys === this.id &&
+        this.ships.get(owner.ent.id) === owner.ent
+      )
+        this.game.features.arcs.arcProgress(owner, entity);
+    }
+    if (entity.mission) {
+      const owner = this.game.sessions.get(entity.mission.owner!);
+      const mission = owner?.data?.missions.find(
+        (mission) =>
+          mission.type === 'assassinate' && mission.id === entity.mission!.id && !mission.done,
+      );
+      if (owner?.ent && !owner.ent.dead && owner.data.sys === this.id && mission) {
+        mission.done = true;
+        this.game.toast(owner, 'Contract target destroyed. Land anywhere to collect your pay.');
+        this.game.db.touch();
+        this.game.you(owner);
+      }
     }
     if (entity.storyKill) {
       const owner = this.game.sessions.get(entity.story!);
