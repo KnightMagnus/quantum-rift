@@ -16,6 +16,10 @@
 
 `equipped-outfits-browser.ts` checks the MINING filter against combat weapons, real equipped-item previews, outfitter sales of modular and built-in weapons, refunds, live panel refresh, reconnect persistence, flight denial, narrow cards, and default/reassigned Ship and Captain shortcuts. `ship-economy.ts` checks every player hull with built-in banks for once-only refunds and conservation of sale proceeds plus trade-in, along with flight/no-outfitter/unknown-weapon and purchase denial. `wire-contracts.ts` validates the optional built-in sale selector. Equipment sales still require an outfitter; previews are available in flight.
 
+## Flight heading precision
+
+`flight-heading.ts` drives landing and Gateway guidance through the actual input handler and shared physics, comparing authority with prediction every tick for four hulls, both schedulers and headings on either side of angle wrap. It checks fractional turns, nonfinite rejection and clamping. `nakama-world-lease.ts` exercises fractional-turn admission and invalid-turn denial through the native match callback. Existing landing, combat, formation and jump-arrival tests cover their respective flight policies; this does not prove every latency schedule or hull/outfit combination.
+
 ## Headless network landing
 
 The two-captain network bot uses the production landing guidance with per-tick prediction between authoritative snapshots, quantized turn packets and the navigation-braking flag. It still flies through the real WebSocket server and must land at Meridian Yards within its existing 40-second approach deadline, inside 90 units and below 60 speed, before checking refuelling and destination trade. Manual thrust, firing and jumping remain part of the same scenario.

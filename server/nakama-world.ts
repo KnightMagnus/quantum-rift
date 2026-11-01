@@ -315,7 +315,8 @@ function validInput(packet: Record<string, unknown>, previous: number): boolean 
       return false;
   }
   return (
-    (packet.tu === undefined || packet.tu === -1 || packet.tu === 0 || packet.tu === 1) &&
+    (packet.tu === undefined ||
+      (typeof packet.tu === 'number' && Number.isFinite(packet.tu) && Math.abs(packet.tu) <= 1)) &&
     (packet.nav === undefined || typeof packet.nav === 'boolean')
   );
 }
