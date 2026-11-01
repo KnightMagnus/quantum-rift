@@ -169,6 +169,7 @@
     "flight-heading.ts",
     "fleet-capacity.ts",
     "station-defenses.ts",
+    "system-diversity.ts",
     "captain-log.ts",
     "shared-story.ts",
     "story-pacing.ts"
@@ -240,7 +241,8 @@
     "landed-zoom-browser.ts",
     "touch-controls-browser.ts",
     "combat-browser.ts",
-    "station-defenses-browser.ts"
+    "station-defenses-browser.ts",
+    "system-diversity-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -2278,6 +2280,19 @@
       "services": [],
       "tests": ["station-defenses.ts", "station-defenses-browser.ts"],
       "asserts": "Claimed operating Personal Stations deploy anchored native Triad Sentinel sprites, never unclaimed or Tier 0 abandoned hulls. Turrets damage nearby hostile NPCs, respect friendly reputation and player safety, remain anchored, rebuild after a delay, retain identity on upgrades, reuse the permanent roster during Holdouts and clean up after relocation or abandonment."
+    },
+    {
+      "id": "system-diversity",
+      "services": [],
+      "tests": ["system-diversity.ts", "system-diversity-browser.ts"],
+      "asserts": "Authored scene placement and artwork resolve across 217 systems; new trading ports have usable commodity prices, orbiters move, irregular moons rotate and rendering preserves gameplay radii and special skies; unknown systems retain fallback.",
+      "owners": [
+        "shared/body-artwork.ts",
+        "client/scenery-allocation.ts",
+        "client/planets.ts",
+        "client/render.ts",
+        "client/system-scenes.ts"
+      ]
     }
   ],
   "routes": {

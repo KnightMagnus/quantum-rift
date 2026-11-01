@@ -1,3 +1,4 @@
+import { withLegacyMarketWarmup } from './helpers/legacy-market-warmup.ts';
 // Farside Index groups tour real bodies and fields, label what they catalogue, and keep
 // their drones on a fixed orbit leash while they swing out on scanning passes.
 import assert from 'node:assert/strict';
@@ -15,7 +16,8 @@ const directory = filesystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'ri
 const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
-const game = new Game(assets, new Database(directory));
+// Preserve this fixed movement scenario independently of unrelated market RNG.
+const game = withLegacyMarketWarmup(() => new Game(assets, new Database(directory)));
 try {
   // A Farside system with no asteroid fields used to leave the group circling empty space.
   const systemId = Object.values(SYS).find(

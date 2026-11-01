@@ -1,3 +1,4 @@
+import { bodyArtwork } from './body-artwork.ts';
 import worlds from './landscape-worlds.json' with { type: 'json' };
 import type { StellarBody } from './galaxy.ts';
 import { planetType } from './planet-type.ts';
@@ -30,7 +31,8 @@ export function colonyStage(level: unknown): number {
 export function landscapeScene(body: StellarBody, level: unknown = 0): string {
   if (body.kind === 'station' || body.hub || body.site) return '';
   const known = worlds as Record<string, string>;
-  let key = known[body.id];
+  // Colony stages use the existing staged family, not a missing derived filename.
+  let key = colonyStage(level) ? known[body.id] : bodyArtwork(body.id)?.landing || known[body.id];
   if (!key) {
     let hash = 2166136261;
     for (const character of body.id) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619);

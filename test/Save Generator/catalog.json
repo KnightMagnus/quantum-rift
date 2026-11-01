@@ -1339,15 +1339,18 @@
     { "id": "cartwheel", "system": "longhaul", "label": "Longhaul / Cartwheel" },
     { "id": "brightwater-iv", "system": "brightwater", "label": "Brightwater / Brightwater IV" },
     { "id": "lanternfall", "system": "hesper", "label": "Hesper / Lanternfall" },
+    { "id": "hesper-world", "system": "hesper", "label": "Hesper / Hesper" },
     { "id": "vigil-lamp", "system": "emberlight", "label": "Emberlight / Keeper's Vigil" },
     { "id": "gloam-remnant", "system": "gloam", "label": "Gloam / Gloam Remnant" },
     { "id": "cinder-hold", "system": "cinderverge", "label": "Cinder Verge / Cinder Hold" },
     { "id": "thrum", "system": "thrumhive", "label": "Thrumhive / Thrum" },
     { "id": "molt", "system": "chitinreach", "label": "Chitin Reach / Moltfield" },
     { "id": "brood", "system": "broodhollow", "label": "Broodhollow / The Brood Spire" },
+    { "id": "broodhollow-world", "system": "broodhollow", "label": "Broodhollow / Broodhollow" },
     { "id": "slag", "system": "slagforge", "label": "Slagforge / Slag" },
     { "id": "deepmine", "system": "basaltdeep", "label": "Basalt Deep / Deepmine Anvil" },
     { "id": "hold", "system": "mountainhold", "label": "Mountainhold / The Hold" },
+    { "id": "mountainhold-anvil", "system": "mountainhold", "label": "Mountainhold / The Anvil" },
     { "id": "facet", "system": "facetfall", "label": "Facetfall / Facet" },
     { "id": "choirhall", "system": "resonance", "label": "Resonance / The Choirhall" },
     { "id": "geode", "system": "geodesy", "label": "Geodesy / Hollow Geode" },
@@ -1360,6 +1363,7 @@
     { "id": "threshold", "system": "farmouth", "label": "Far Mouth / Threshold Spire" },
     { "id": "inalumen", "system": "quevar", "label": "Que'var / Ina Lumen" },
     { "id": "glasswind", "system": "shoalight", "label": "Shoalight / Glasswind Station" },
+    { "id": "dimmer-rock", "system": "dimmer", "label": "Dimmer Reach / Dimmer Rock" },
     { "id": "wild-minor", "system": "wild-landing", "label": "Wild Landing / Wild Minor" },
     { "id": "quiet-port", "system": "quiet-shelf", "label": "Quiet Shelf / Quiet Port" },
     { "id": "quiet-beta", "system": "quiet-shelf", "label": "Quiet Shelf / Quiet Beta" },
@@ -1373,6 +1377,7 @@
       "label": "Vigilfall Lantern / Vigilfall Hub"
     },
     { "id": "anchorreach-hub", "system": "anchorreach", "label": "Anchorreach / Anchorreach Hub" },
+    { "id": "anchorreach-hook", "system": "anchorreach", "label": "Anchorreach / The Hook" },
     { "id": "vrrhive-moon", "system": "vrrhive", "label": "Vrrhive / Vrrhive Moon" },
     { "id": "cold-port", "system": "cold-mile", "label": "Cold Mile / Cold Port" },
     {
@@ -1395,7 +1400,9 @@
       "label": "Fathompool / Fathompool Station"
     },
     { "id": "seimira-hub", "system": "seimira", "label": "Seimira / Seimira Hub" },
+    { "id": "seimira-world", "system": "seimira", "label": "Seimira / Seimira" },
     { "id": "serita-exchange", "system": "serita", "label": "Serita / Serita Exchange" },
+    { "id": "serita-minor", "system": "serita", "label": "Serita / Serita Minor" },
     { "id": "lyrene-yards", "system": "lyrene", "label": "Lyrene / Lyrene Yards" },
     { "id": "far-prime", "system": "far-reach", "label": "Far Reach / Far Prime" },
     { "id": "free-port", "system": "free-reach", "label": "Free Reach / Free Port" },
@@ -1410,6 +1417,7 @@
     },
     { "id": "knifemaw-prime", "system": "knifemaw", "label": "Knifemaw / Knifemaw Prime" },
     { "id": "outer-minor", "system": "outer-signal", "label": "Outer Signal / Outer Minor" },
+    { "id": "skrrspire-spire", "system": "skrrspire", "label": "Skrrspire / Skrrspire" },
     { "id": "broken-prime", "system": "broken-reach", "label": "Broken Reach / Broken Prime" },
     { "id": "the-moonlet", "system": "the-unlight", "label": "The Unlight / The Moonlet" },
     { "id": "gallowsden-minor", "system": "gallowsden", "label": "Gallowsden / Gallowsden Minor" },
@@ -1418,10 +1426,19 @@
     { "id": "longreach-port", "system": "longreach", "label": "Longreach / Longreach Port" },
     { "id": "iriace-station", "system": "iriace", "label": "Iriace / Iriace Station" },
     { "id": "iriace-yards", "system": "iriace", "label": "Iriace / Iriace Yards" },
+    { "id": "iriace-world", "system": "iriace", "label": "Iriace / Iriace" },
+    { "id": "ashshade-keep", "system": "ashshade", "label": "Ashshade / Keeper's Rock" },
+    { "id": "driftyard-camp", "system": "driftyard", "label": "Driftyard / Driftyard Camp" },
     { "id": "scrapverge-yards", "system": "scrapverge", "label": "Scrapverge / Scrapverge Yards" },
+    { "id": "chitath-seed", "system": "chitath", "label": "Chitath / Chitath" },
     { "id": "emberburn-prime", "system": "emberburn", "label": "Emberburn / Emberburn Prime" },
     { "id": "far-yards", "system": "far-mile", "label": "Far Mile / Far Yards" },
     { "id": "anchorwater-0", "system": "anchorwater", "label": "Anchorwater / Anchorwater" },
+    {
+      "id": "grimpeak-smelter",
+      "system": "grimpeak-deep",
+      "label": "Grimpeak Deep / Grimpeak Smelter"
+    },
     { "id": "outer-chance-0", "system": "outer-chance", "label": "Outer Chance / Outer Chance" },
     { "id": "vrrath-moon", "system": "vrrath", "label": "Vrrath / Vrrath Moon" },
     {
@@ -1441,6 +1458,7 @@
       "system": "gutteryard-den",
       "label": "Gutteryard Den / Gutteryard Major"
     },
+    { "id": "facetsene-seed", "system": "facetsene", "label": "Facetsene / The Seed" },
     { "id": "kraggard-station", "system": "kraggard", "label": "Kraggard / Kraggard Station" },
     { "id": "flickerglow-0", "system": "flickerglow", "label": "Flickerglow / Flickerglow" },
     {
@@ -1466,14 +1484,23 @@
     { "id": "lone-moon", "system": "lone-expanse", "label": "Lone Expanse / Lone Moon" },
     { "id": "last-anchorage", "system": "last-shelf", "label": "Last Shelf / Last Anchorage" },
     { "id": "praeenna-yards", "system": "praeenna", "label": "Praeenna / Praeenna Yards" },
+    { "id": "praeenna-veil", "system": "praeenna", "label": "Praeenna / Praeenna Veil" },
+    { "id": "wagonroad-tower", "system": "wagonroad", "label": "Wagonroad / Wagonroad Tower" },
+    { "id": "thrmire-moon", "system": "thrmire", "label": "Thrmire / Thrmire" },
     { "id": "astita-yards", "system": "astita", "label": "Astita / Astita Yards" },
     { "id": "ironpost-exchange", "system": "ironpost", "label": "Ironpost / Ironpost Exchange" },
     { "id": "ironpost-station", "system": "ironpost", "label": "Ironpost / Ironpost Station" },
+    { "id": "ironpost-tank", "system": "ironpost", "label": "Ironpost / Tank" },
     { "id": "maghelm-yards", "system": "maghelm-hold", "label": "Maghelm Hold / Maghelm Yards" },
     {
       "id": "wickburn-minor",
       "system": "wickburn-watch",
       "label": "Wickburn Watch / Wickburn Minor"
+    },
+    {
+      "id": "wickburn-tower",
+      "system": "wickburn-watch",
+      "label": "Wickburn Watch / Wickburn Tower"
     },
     { "id": "hookhole-prime", "system": "hookhole", "label": "Hookhole / Hookhole Prime" },
     {
@@ -1481,6 +1508,12 @@
       "system": "second-signal",
       "label": "Second Signal / Second Outpost"
     },
+    {
+      "id": "copperharbor-world",
+      "system": "copperharbor",
+      "label": "Copperharbor / Copperharbor"
+    },
+    { "id": "farhaul-relay", "system": "farhaul", "label": "Farhaul / Farhaul Relay" },
     { "id": "opalvane-rock", "system": "opalvane", "label": "Opalvane / Opalvane Rock" },
     { "id": "hookyard-minor", "system": "hookyard", "label": "Hookyard / Hookyard Minor" },
     { "id": "spokeserai-hub", "system": "spokeserai", "label": "Spokeserai / Spokeserai Hub" },
@@ -1488,6 +1521,7 @@
     { "id": "abyssdrift-rock", "system": "abyssdrift", "label": "Abyssdrift / Abyssdrift Rock" },
     { "id": "quiet-outpost", "system": "quiet-mile", "label": "Quiet Mile / Quiet Outpost" },
     { "id": "quiet-exchange", "system": "quiet-mile", "label": "Quiet Mile / Quiet Exchange" },
+    { "id": "kragdelve-rock", "system": "kragdelve", "label": "Kragdelve / Kragdelve" },
     { "id": "wild-hub", "system": "wild-reach", "label": "Wild Reach / Wild Hub" },
     { "id": "free-anchorage", "system": "free-hope", "label": "Free Hope / Free Anchorage" },
     { "id": "free-exchange", "system": "free-hope", "label": "Free Hope / Free Exchange" },
@@ -1497,6 +1531,7 @@
       "label": "Dunstone Hold / Dunstone Moonlet"
     },
     { "id": "corora-exchange", "system": "corora", "label": "Corora / Corora Exchange" },
+    { "id": "luora-garden", "system": "luora", "label": "Luora / Luora Garden" },
     {
       "id": "saddlerest-moonlet",
       "system": "saddlerest-market",
@@ -1528,6 +1563,8 @@
     { "id": "zzclutch-port", "system": "zzclutch", "label": "Zzclutch / Zzclutch Port" },
     { "id": "maggard-major", "system": "maggard", "label": "Maggard / Maggard Major" },
     { "id": "valeon-world", "system": "valeon", "label": "Valeon / Valeon World" },
+    { "id": "astenna-gate", "system": "astenna", "label": "Astenna / Astenna Gate" },
+    { "id": "astenna-world", "system": "astenna", "label": "Astenna / Astenna World" },
     { "id": "wagonford-0", "system": "wagonford", "label": "Wagonford / Wagonford" },
     { "id": "bilgeyard-station", "system": "bilgeyard", "label": "Bilgeyard / Bilgeyard Station" },
     {
@@ -1548,6 +1585,7 @@
       "label": "Free Expanse / Free Anchorage"
     },
     { "id": "burnt-chance-0", "system": "burnt-chance", "label": "Burnt Chance / Burnt Chance" },
+    { "id": "broodhive-world", "system": "broodhive", "label": "Broodhive / Broodhive" },
     { "id": "mandihive-rock", "system": "mandihive", "label": "Mandihive / Mandihive Rock" },
     { "id": "axleford-hub", "system": "axleford", "label": "Axleford / Axleford Hub" },
     {
@@ -1597,6 +1635,7 @@
     { "id": "shoalbloom-hub", "system": "shoalbloom", "label": "Shoalbloom / Shoalbloom Hub" },
     { "id": "shoalbloom-world", "system": "shoalbloom", "label": "Shoalbloom / Shoalbloom World" },
     { "id": "tapermere-0", "system": "tapermere", "label": "Tapermere / Tapermere" },
+    { "id": "tapermere-chapel", "system": "tapermere", "label": "Tapermere / Tapermere Chapel" },
     {
       "id": "saddletrack-world",
       "system": "saddletrack",
@@ -1610,6 +1649,11 @@
     { "id": "outer-moon", "system": "outer-hope", "label": "Outer Hope / Outer Moon" },
     { "id": "rustverge-0", "system": "rustverge", "label": "Rustverge / Rustverge" },
     { "id": "rustverge-port", "system": "rustverge", "label": "Rustverge / Rustverge Port" },
+    {
+      "id": "ropewater-raft",
+      "system": "ropewater-rest",
+      "label": "Ropewater Rest / Ropewater Raft"
+    },
     { "id": "mandikesh-world", "system": "mandikesh", "label": "Mandikesh / Mandikesh World" },
     { "id": "mandikesh-hub", "system": "mandikesh", "label": "Mandikesh / Mandikesh Hub" },
     { "id": "ebbreef-prime", "system": "ebbreef", "label": "Ebbreef / Ebbreef Prime" },
@@ -1651,12 +1695,15 @@
     { "id": "coldharbor", "system": "coldharbor", "label": "Coldharbor / Coldharbor" },
     { "id": "coldharbor-yards", "system": "coldharbor", "label": "Coldharbor / Coldharbor Yards" },
     { "id": "farside-span", "system": "coldharbor", "label": "Coldharbor / Farside Foothold" },
+    { "id": "mirrorfall-claim", "system": "mirrorfall", "label": "Mirrorfall / Mirrorfall Claim" },
     { "id": "greyline-moon", "system": "greyline", "label": "Greyline / Greyline Moon" },
     { "id": "greyline-moon-1", "system": "greyline", "label": "Greyline / Greyline Moon" },
     { "id": "sable-outpost", "system": "sable-reach", "label": "Sable Reach / Sable Outpost" },
     { "id": "quietude-anchorage", "system": "quietude", "label": "Quietude / Quietude Anchorage" },
     { "id": "ember-minor", "system": "ember-drift", "label": "Ember Drift / Ember Minor" },
     { "id": "lowtide-station", "system": "lowtide", "label": "Lowtide / Lowtide Station" },
+    { "id": "lowtide-world", "system": "lowtide", "label": "Lowtide / Lowtide" },
+    { "id": "vesper-camp", "system": "vesper-gate", "label": "Vesper Gate / Vesper Camp" },
     { "id": "northmark-station", "system": "northmark", "label": "Northmark / Northmark Station" },
     { "id": "ninefold-prime", "system": "ninefold", "label": "Ninefold / Ninefold Prime" },
     {

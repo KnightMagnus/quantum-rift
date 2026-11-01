@@ -1,3 +1,4 @@
+import diversityWorlds from '../../shared/diversity-worlds.json' with { type: 'json' };
 import assert from 'node:assert/strict';
 import type { StarSystem } from '../../shared/galaxy.ts';
 
@@ -8,6 +9,13 @@ export function legacyStorySystems(systems: StarSystem[]): StarSystem[] {
     systems.filter((system) => !additions.has(system.id)),
   );
   for (const system of legacy) {
+    // Authored additions are independently checked by system-diversity.ts. Preserve every
+    // pre-existing body/field byte in these older generation goldens.
+    for (const addition of diversityWorlds.filter((entry) => entry.system === system.id)) {
+      const body = system.stellars.find((entry) => entry.id === addition.body.id);
+      assert.deepEqual(body, addition.body);
+      system.stellars = system.stellars.filter((entry) => entry.id !== addition.body.id);
+    }
     // Exclude the authored port and reverse its companion artwork description;
     // the station landing regression covers their current identities and artwork.
     system.stellars = system.stellars.filter((body) => body.id !== 'farside-span');

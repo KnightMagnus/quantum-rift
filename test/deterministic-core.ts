@@ -1,3 +1,4 @@
+import additions from '../shared/diversity-worlds.json' with { type: 'json' };
 import { legacyStorySystems } from './helpers/legacy-story-systems.ts';
 import { mockPlayerData } from './helpers/mocks.ts';
 import assert from 'node:assert/strict';
@@ -147,20 +148,31 @@ assert.equal(
   baseline.arcs,
   'Original arc objectives, ordering and prose preserve parity beneath reviewed tie-ins',
 );
-for (const [standing, expected] of Object.entries(baseline.tours)) {
-  const reputationFixture = {
-    rep: Object.fromEntries(
-      [...new Set(Object.values(systemsById).map((session) => session.faction))].map((faction) => [
-        faction,
-        +standing,
-      ]),
-    ),
-  };
-  const tours = legacyStorySystems(Object.values(systemsById)).map(({ id: origin }) => [
-    origin,
-    tourRoute(origin, mockPlayerData(reputationFixture)),
-  ]);
-  assert.equal(sha256(tours), expected, `Sorted, safe radio tours at standing ${standing}`);
+// Keep the original tour golden on original ports; live-catalog tours are tested separately.
+const legacyTourSystems = legacyStorySystems(Object.values(systemsById));
+const additionIds = new Set(additions.map((addition) => addition.body.id));
+const originalBodies = new Map(
+  Object.values(systemsById).map((system) => [system, system.stellars]),
+);
+try {
+  for (const system of Object.values(systemsById))
+    system.stellars = system.stellars.filter((body) => !additionIds.has(body.id));
+  for (const [standing, expected] of Object.entries(baseline.tours)) {
+    const reputationFixture = {
+      rep: Object.fromEntries(
+        [...new Set(Object.values(systemsById).map((session) => session.faction))].map(
+          (faction) => [faction, +standing],
+        ),
+      ),
+    };
+    const tours = legacyTourSystems.map(({ id: origin }) => [
+      origin,
+      tourRoute(origin, mockPlayerData(reputationFixture)),
+    ]);
+    assert.equal(sha256(tours), expected, `Sorted, safe radio tours at standing ${standing}`);
+  }
+} finally {
+  for (const [system, bodies] of originalBodies) system.stellars = bodies;
 }
 assert.equal(tourRoute('missing-system', mockPlayerData({})), null);
 console.log(

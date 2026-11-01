@@ -1,0 +1,6972 @@
+{
+  "meridian": {
+    "bodies": {},
+    "stations": {
+      "meridian-yards": {
+        "design": "yard",
+        "landing": "s_yard"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jade",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3"],
+      "galaxies": ["galaxy_9", "galaxy_10"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2"],
+      "props": ["pod_3"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "the-silence": {
+    "bodies": {},
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_15", "nebula_4"],
+      "galaxies": ["galaxy_4", "galaxy_11"],
+      "far": "far_blackhole_blue",
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_11", "wreck_s_9", "wreck_s_7"],
+      "props": ["pod_6"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "mirrorfall": {
+    "bodies": {
+      "mirrorfall-claim": {
+        "art": "irr_3",
+        "shape": "irregular"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_dwarf",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5"],
+      "galaxies": ["galaxy_8", "galaxy_7"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6"],
+      "props": ["satellite_6"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "ninefold": {
+    "bodies": {
+      "ninefold-prime": {
+        "art": "ocean2"
+      },
+      "ninefold-prime-m1": {
+        "art": "barren9"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_cream",
+        "large": true
+      },
+      {
+        "art": "desert3",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_11", "nebula_6", "nebula_5", "nebula_3"],
+      "galaxies": [],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_8", "wreck_s_10"],
+      "props": ["iceberg_1"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "axleway": {
+    "bodies": {
+      "axleway-moon": {
+        "art": "barren10"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_saturn",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8", "nebula_13"],
+      "galaxies": ["galaxy_5", "galaxy_1"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "hookyard": {
+    "bodies": {
+      "hookyard-minor": {
+        "art": "desert14"
+      },
+      "hookyard-minor-m1": {
+        "art": "barren6"
+      },
+      "hookyard-minor-m2": {
+        "art": "barren3"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_sea",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_14", "nebula_1"],
+      "galaxies": ["galaxy_3"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3", "wreck_s_9"],
+      "props": ["satellite_6"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "sparith-facet": {
+    "bodies": {
+      "sparith-facet-0": {
+        "art": "crystal1"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_hot",
+        "large": true
+      },
+      {
+        "art": "shattered0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_11"],
+      "galaxies": ["galaxy_6"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4"],
+      "props": ["pod_3"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "gutteryard-den": {
+    "bodies": {
+      "gutteryard-minor": {
+        "art": "lava0"
+      },
+      "gutteryard-major": {
+        "art": "desert8"
+      },
+      "gutteryard-minor-m1": {
+        "art": "ice3"
+      },
+      "gutteryard-minor-m2": {
+        "art": "barren4"
+      },
+      "gutteryard-major-m1": {
+        "art": "ice10"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_storm",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_7", "nebula_11", "nebula_1"],
+      "galaxies": ["galaxy_2", "galaxy_0"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0", "wreck_s_2"],
+      "props": ["satellite_6", "pod_4", "iceberg_2"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "emberburn": {
+    "bodies": {
+      "emberburn-prime": {
+        "art": "desert12"
+      },
+      "emberburn-prime-m1": {
+        "art": "barren10"
+      },
+      "emberburn-prime-m2": {
+        "art": "ice11"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_neptune",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_13"],
+      "galaxies": ["galaxy_11", "galaxy_10"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_8"],
+      "props": ["beacon_0", "beacon_1", "iceberg_2"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "waystation": {
+    "bodies": {},
+    "stations": {
+      "waystation-hub": {
+        "design": "crescent",
+        "landing": "s_crescent_landed"
+      }
+    },
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_11"],
+      "galaxies": [],
+      "far": "far_supernova",
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_3"],
+      "props": ["pod_4"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "maw": {
+    "bodies": {
+      "maw-major": {
+        "art": "barren3"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jovian2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_9"],
+      "galaxies": ["galaxy_0", "galaxy_4"],
+      "far": "far_pulsar",
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_8", "wreck_s_10", "wreck_s_4"],
+      "props": ["ruin_3"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "sol": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_uranus",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_11", "nebula_3"],
+      "galaxies": ["galaxy_8"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": [],
+      "props": ["pod_5"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "hushvoid": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jade2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_15", "nebula_1"],
+      "galaxies": ["galaxy_9"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_8"],
+      "props": ["satellite_6"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "resonance": {
+    "bodies": {},
+    "stations": {
+      "choirhall": {
+        "design": "crystal",
+        "landing": "s_crystal"
+      }
+    },
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_4", "nebula_14"],
+      "galaxies": ["galaxy_6"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "vesper-gate": {
+    "bodies": {},
+    "stations": {
+      "vesper-camp": {
+        "design": "prefab",
+        "landing": "s_prefab_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_lilac",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_15", "nebula_9", "nebula_3"],
+      "galaxies": ["galaxy_7"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_8", "wreck_s_2"],
+      "props": ["satellite_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "lone-expanse": {
+    "bodies": {
+      "lone-moon": {
+        "art": "ice8"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_aurora",
+        "large": true
+      },
+      {
+        "art": "sulfur2",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_9"],
+      "galaxies": ["galaxy_5"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_0"],
+      "props": ["satellite_6", "iceberg_0"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "wild-signal": {
+    "bodies": {},
+    "stations": {
+      "wild-port": {
+        "design": "outpost",
+        "landing": "s_outpost_landed"
+      }
+    },
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_8", "nebula_3"],
+      "galaxies": ["galaxy_2"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_5",
+      "small_wrecks": ["wreck_s_0", "wreck_s_6", "wreck_s_8", "wreck_s_10"],
+      "props": ["pod_5"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "saddlerest-market": {
+    "bodies": {
+      "saddlerest-moonlet": {
+        "art": "barren5"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ember",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8", "nebula_13"],
+      "galaxies": ["galaxy_3"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5", "wreck_s_3"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "abyssal": {
+    "bodies": {
+      "deep": {
+        "art": "ocean5"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_12"],
+      "galaxies": [],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_11", "wreck_s_9"],
+      "props": ["leviathan_0"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "cold-mile": {
+    "bodies": {},
+    "stations": {
+      "cold-port": {
+        "design": "biodome",
+        "landing": "s_biodome_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_amber",
+        "large": true
+      },
+      {
+        "art": "barren1",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_2"],
+      "galaxies": [],
+      "far": "far_protostar",
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5", "wreck_s_11", "wreck_s_1", "wreck_s_3"],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "grimpeak-deep": {
+    "bodies": {},
+    "stations": {
+      "grimpeak-smelter": {
+        "design": "smelter",
+        "landing": "s_smelter_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jovian",
+        "large": true
+      },
+      {
+        "art": "barren10",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8"],
+      "galaxies": ["galaxy_1"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3", "wreck_s_9"],
+      "props": [],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "second-light": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_neptune2",
+        "large": true
+      },
+      {
+        "art": "barren9",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_9", "nebula_2", "nebula_6"],
+      "galaxies": ["galaxy_11"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_10", "wreck_s_0"],
+      "props": ["satellite_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "dunpeak": {
+    "bodies": {
+      "dunpeak-major": {
+        "art": "lava3"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_rust",
+        "large": true
+      },
+      {
+        "art": "ice9",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_14"],
+      "galaxies": [],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3"],
+      "props": [],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "astita": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ochre",
+        "large": true
+      },
+      {
+        "art": "jungle1",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5"],
+      "galaxies": [],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_0"],
+      "props": ["pod_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "tidepool": {
+    "bodies": {
+      "tide": {
+        "art": "ocean2"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ember2",
+        "large": true
+      },
+      {
+        "art": "crystal3",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_12"],
+      "galaxies": ["galaxy_10"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_11"],
+      "props": ["leviathan_0"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "tinpost-market": {
+    "bodies": {
+      "tinpost-outpost": {
+        "art": "ice7"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ice",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_13"],
+      "galaxies": ["galaxy_3"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_0", "wreck_s_10"],
+      "props": ["pod_3", "iceberg_0"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "wagonrest": {
+    "bodies": {
+      "wagonrest-world": {
+        "art": "desert2"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_violet",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_7"],
+      "galaxies": [],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_9", "wreck_s_11", "wreck_s_5"],
+      "props": ["pod_6"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "brasstrack-wells": {
+    "bodies": {
+      "brasstrack-minor": {
+        "art": "desert12"
+      }
+    },
+    "stations": {
+      "brasstrack-station": {
+        "design": "caravanserai",
+        "landing": "s_caravanserai_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_hot",
+        "large": true
+      },
+      {
+        "art": "barren4",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_7", "nebula_2"],
+      "galaxies": [],
+      "far": "far_protostar",
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": [],
+      "props": ["pod_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "seimira": {
+    "bodies": {
+      "seimira-world": {
+        "art": "ice12"
+      }
+    },
+    "stations": {
+      "seimira-hub": {
+        "design": "spindle",
+        "landing": "s_spindle"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_dwarf",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3"],
+      "galaxies": ["galaxy_9"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_10", "wreck_s_4"],
+      "props": ["pod_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "wild-claim": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_neptune",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8", "nebula_13"],
+      "galaxies": ["galaxy_6", "galaxy_2"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5", "wreck_s_11", "wreck_s_9", "wreck_s_7"],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "reliquary": {
+    "bodies": {
+      "reliquary-husk": {
+        "art": "lava4"
+      }
+    },
+    "stations": {
+      "reliquary-watch": {
+        "design": "disc",
+        "landing": "s_disc"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_rust",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_10", "nebula_4"],
+      "galaxies": ["galaxy_1", "galaxy_5"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_5"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "iridell": {
+    "bodies": {
+      "iridell-minor": {
+        "art": "crystal1"
+      },
+      "iridell-prime": {
+        "art": "crystal0"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jade2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_11"],
+      "galaxies": ["galaxy_0"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_4"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "maggard": {
+    "bodies": {
+      "maggard-major": {
+        "art": "lava5"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_2"],
+      "galaxies": ["galaxy_8"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_6",
+      "small_wrecks": ["wreck_s_9", "wreck_s_11"],
+      "props": [],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "chimeith-facet": {
+    "bodies": {},
+    "stations": {
+      "chimeith-station": {
+        "design": "crystal",
+        "landing": "s_crystal"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_aurora",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_3"],
+      "galaxies": [],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_8"],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "longhaul": {
+    "bodies": {
+      "cartwheel": {
+        "art": "ice4"
+      }
+    },
+    "stations": {
+      "longhaul-depot": {
+        "design": "refinery",
+        "landing": "s_refinery_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jovian2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_11"],
+      "galaxies": ["galaxy_4"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_0"],
+      "props": ["pod_5", "iceberg_2"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "the-hunger": {
+    "bodies": {},
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_4", "nebula_15"],
+      "galaxies": ["galaxy_7"],
+      "far": "far_pulsar",
+      "sun": "yellow"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_2",
+      "small_wrecks": ["wreck_s_10", "wreck_s_0"],
+      "props": ["satellite_6", "ruin_3"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "elasai": {
+    "bodies": {
+      "elasai-moonlet": {
+        "art": "ice1"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_uranus",
+        "large": true
+      },
+      {
+        "art": "crystal4",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_11", "nebula_6"],
+      "galaxies": ["galaxy_11", "galaxy_10"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_8"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "vrrhive": {
+    "bodies": {
+      "vrrhive-moon": {
+        "art": "barren2"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_saturn",
+        "large": true
+      },
+      {
+        "art": "ice8",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_8"],
+      "galaxies": ["galaxy_0", "galaxy_4"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_8",
+      "small_wrecks": ["wreck_s_3", "wreck_s_1"],
+      "props": ["iceberg_0"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "last-haven": {
+    "bodies": {
+      "last-haven-0": {
+        "art": "barren3"
+      },
+      "last-haven-0-m1": {
+        "art": "irr_1",
+        "shape": "irregular"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_2", "nebula_9"],
+      "galaxies": ["galaxy_1", "galaxy_5"],
+      "far": "far_protostar",
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_7", "wreck_s_9"],
+      "props": ["pod_4"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "sparvane": {
+    "bodies": {},
+    "stations": {
+      "sparvane-hub": {
+        "design": "chime",
+        "landing": "s_chime_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jovian",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_12", "nebula_10"],
+      "galaxies": [],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_11", "wreck_s_9"],
+      "props": ["pod_4"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "free-landing": {
+    "bodies": {
+      "free-minor": {
+        "art": "barren12"
+      },
+      "free-minor-m1": {
+        "art": "irr_5",
+        "shape": "irregular",
+        "landing": "l_moon_irregular"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_violet",
+        "large": true
+      },
+      {
+        "art": "barren3",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_13", "nebula_12"],
+      "galaxies": [],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_9", "wreck_s_11"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "outer-claim": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ice",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3"],
+      "galaxies": ["galaxy_8", "galaxy_9"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4", "wreck_s_2", "wreck_s_0"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "skrrspire": {
+    "bodies": {},
+    "stations": {
+      "skrrspire-spire": {
+        "design": "hive_spire",
+        "landing": "s_hive_spire_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_ember2",
+        "large": true
+      },
+      {
+        "art": "terran2",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3", "nebula_13", "nebula_2"],
+      "galaxies": ["galaxy_6"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_5"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "outer-landing": {
+    "bodies": {
+      "outer-moon-0": {
+        "art": "barren8"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_lilac",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_9", "nebula_2"],
+      "galaxies": [],
+      "far": "far_binary_dwarf",
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4", "wreck_s_10", "wreck_s_0"],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "flickerglow": {
+    "bodies": {
+      "flickerglow-0": {
+        "art": "desert10"
+      },
+      "flickerglow-world": {
+        "art": "sulfur1"
+      },
+      "flickerglow-world-m1": {
+        "art": "ice2"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_cream",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_11", "nebula_6"],
+      "galaxies": ["galaxy_2"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_4", "wreck_s_10"],
+      "props": ["beacon_0", "beacon_1", "iceberg_1"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "free-hope": {
+    "bodies": {},
+    "stations": {
+      "free-anchorage": {
+        "design": "spindle",
+        "landing": "s_spindle"
+      },
+      "free-exchange": {
+        "design": "relay",
+        "landing": "s_relay_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jade",
+        "large": true
+      },
+      {
+        "art": "barren0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_2"],
+      "galaxies": ["galaxy_7", "galaxy_3"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_1"],
+      "props": ["pod_6"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "sparfall": {
+    "bodies": {},
+    "stations": {
+      "sparfall-hub": {
+        "design": "crystal",
+        "landing": "s_crystal"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_storm",
+        "large": true
+      },
+      {
+        "art": "barren8",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_11"],
+      "galaxies": ["galaxy_10", "galaxy_9"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_11"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "coldharbor": {
+    "bodies": {
+      "coldharbor": {
+        "art": "ocean3"
+      },
+      "coldharbor-m1": {
+        "art": "eyeball0"
+      },
+      "coldharbor-m2": {
+        "art": "barren7"
+      }
+    },
+    "stations": {
+      "coldharbor-yards": {
+        "design": "farside",
+        "landing": "s_farside_landed"
+      },
+      "farside-span": {
+        "design": "farside",
+        "landing": "s_farside_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_ochre",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3", "nebula_6"],
+      "galaxies": ["galaxy_1"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3", "wreck_s_9", "wreck_s_7"],
+      "props": ["iceberg_2"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "broken-mile": {
+    "bodies": {},
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_3", "nebula_13", "nebula_8"],
+      "galaxies": ["galaxy_11"],
+      "far": "far_pulsar",
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0", "wreck_s_6", "wreck_s_4", "wreck_s_10"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "stray-reach": {
+    "bodies": {
+      "stray-prime-0": {
+        "art": "barren0"
+      },
+      "stray-prime-0-m1": {
+        "art": "ice8"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_amber",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_3"],
+      "galaxies": [],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0", "wreck_s_10", "wreck_s_8"],
+      "props": ["iceberg_2"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "flickerfall": {
+    "bodies": {},
+    "stations": {
+      "flickerfall-port": {
+        "design": "voidlantern",
+        "landing": "s_voidlantern_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_neptune2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2"],
+      "galaxies": ["galaxy_5"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_3", "wreck_s_9"],
+      "props": ["beacon_0", "beacon_1", "pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "shoalight": {
+    "bodies": {},
+    "stations": {
+      "glasswind": {
+        "design": "sailstation",
+        "landing": "s_sailstation_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_sea",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_13"],
+      "galaxies": ["galaxy_8"],
+      "far": "far_dyson",
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_4"],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "shoalpool": {
+    "bodies": {
+      "shoalpool-major": {
+        "art": "ocean1"
+      },
+      "shoalpool-prime": {
+        "art": "ocean4"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ember",
+        "large": true
+      },
+      {
+        "art": "ringed_rock0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_12"],
+      "galaxies": ["galaxy_0"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5", "wreck_s_3"],
+      "props": ["iceberg_1"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "farmouth": {
+    "bodies": {},
+    "stations": {
+      "threshold": {
+        "design": "relay",
+        "landing": "s_relay_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_rust",
+        "large": true
+      },
+      {
+        "art": "ringed_ice0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_10"],
+      "galaxies": [],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5", "wreck_s_11"],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "stray-margin": {
+    "bodies": {
+      "stray-prime": {
+        "art": "sulfur0"
+      },
+      "stray-minor": {
+        "art": "sulfur2"
+      },
+      "stray-prime-m1": {
+        "art": "irr_2",
+        "shape": "irregular"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_uranus",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_9", "nebula_10"],
+      "galaxies": [],
+      "far": "far_supernova",
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_11", "wreck_s_5", "wreck_s_7", "wreck_s_9"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "hearthlight": {
+    "bodies": {
+      "hearthlight-world": {
+        "art": "city2"
+      },
+      "hearthlight-world-m1": {
+        "art": "barren7"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_cream",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_2"],
+      "galaxies": [],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_0"],
+      "props": ["beacon_0", "beacon_1", "pod_3"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "shoalbloom": {
+    "bodies": {
+      "shoalbloom-world": {
+        "art": "ocean6"
+      }
+    },
+    "stations": {
+      "shoalbloom-hub": {
+        "design": "reef",
+        "landing": "s_reef"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_hot",
+        "large": true
+      },
+      {
+        "art": "barren2",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_11"],
+      "galaxies": ["galaxy_6"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3", "wreck_s_1"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "dunstone-hold": {
+    "bodies": {
+      "dunstone-moonlet": {
+        "art": "barren9"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_dwarf",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2"],
+      "galaxies": ["galaxy_4"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_9", "wreck_s_3"],
+      "props": [],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "glasswake": {
+    "bodies": {
+      "glasswake-remnant": {
+        "art": "shattered0"
+      }
+    },
+    "stations": {
+      "glasswake-foundry": {
+        "design": "forge",
+        "landing": "s_forge"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jade2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6"],
+      "galaxies": ["galaxy_3", "galaxy_7"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_3", "wreck_s_5"],
+      "props": ["pod_6"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "hookhole": {
+    "bodies": {
+      "hookhole-prime": {
+        "art": "lava4"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jovian",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_1", "nebula_14", "nebula_7"],
+      "galaxies": ["galaxy_2"],
+      "sun": "white"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_13",
+      "small_wrecks": ["wreck_s_5"],
+      "props": ["satellite_6", "pod_3", "iceberg_0"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "burnt-chance": {
+    "bodies": {
+      "burnt-chance-0": {
+        "art": "barren5"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jade",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_9"],
+      "galaxies": ["galaxy_8"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_2",
+      "small_wrecks": ["wreck_s_6", "wreck_s_0", "wreck_s_10"],
+      "props": ["satellite_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "geodesy": {
+    "bodies": {
+      "geode": {
+        "art": "crystal3"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_lilac",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_7"],
+      "galaxies": ["galaxy_9"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0", "wreck_s_6", "wreck_s_8"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "vantdeep-night": {
+    "bodies": {
+      "vantdeep-major": {
+        "art": "iron0"
+      },
+      "vantdeep-major-m1": {
+        "art": "ice8"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_15", "nebula_11"],
+      "galaxies": ["galaxy_10"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_11",
+      "small_wrecks": ["wreck_s_0", "wreck_s_10"],
+      "props": ["iceberg_0"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "lost-claim": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_storm",
+        "large": true
+      },
+      {
+        "art": "ice12",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_3"],
+      "galaxies": ["galaxy_6"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5", "wreck_s_7", "wreck_s_1"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "wagonroad": {
+    "bodies": {},
+    "stations": {
+      "wagonroad-tower": {
+        "design": "lighthouse",
+        "landing": "s_lighthouse_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_aurora",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_7", "nebula_2"],
+      "galaxies": ["galaxy_2"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": [],
+      "props": ["pod_6"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "thrmire": {
+    "bodies": {
+      "thrmire-moon": {
+        "art": "toxic2"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ochre",
+        "large": true
+      },
+      {
+        "art": "desert0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_4"],
+      "galaxies": ["galaxy_11"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3", "wreck_s_5"],
+      "props": ["swarm_0", "pod_3"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "quietude": {
+    "bodies": {},
+    "stations": {
+      "quietude-anchorage": {
+        "design": "junk",
+        "landing": "s_junk"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_saturn",
+        "large": true
+      },
+      {
+        "art": "toxic4",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_10", "nebula_11"],
+      "galaxies": ["galaxy_7"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_9", "wreck_s_3"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "longreach": {
+    "bodies": {
+      "longreach-prime": {
+        "art": "terran3"
+      }
+    },
+    "stations": {
+      "longreach-port": {
+        "design": "tradepost",
+        "landing": "s_tradepost_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_ember",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3"],
+      "galaxies": [],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_10", "wreck_s_8", "wreck_s_6"],
+      "props": ["pod_4"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "tapershade": {
+    "bodies": {
+      "tapershade-minor": {
+        "art": "desert4"
+      },
+      "tapershade-minor-m1": {
+        "art": "irr_6",
+        "shape": "irregular"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jovian2",
+        "large": true
+      },
+      {
+        "art": "sulfur0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_4"],
+      "galaxies": [],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_9"],
+      "props": ["beacon_0", "beacon_1", "pod_5", "iceberg_0"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "umbra": {
+    "bodies": {
+      "umbra-heart": {
+        "art": "carbon0"
+      },
+      "umbra-heart-m1": {
+        "art": "barren6"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_neptune2",
+        "large": true
+      },
+      {
+        "art": "barren7",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_1", "nebula_15"],
+      "galaxies": ["galaxy_4"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_11", "wreck_s_7"],
+      "props": [],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "stray-harbor": {
+    "bodies": {
+      "stray-world": {
+        "art": "barren4"
+      },
+      "stray-world-m1": {
+        "art": "irr_4",
+        "shape": "irregular",
+        "landing": "l_moon_irregular"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_amber",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8"],
+      "galaxies": [],
+      "sun": "white"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_13",
+      "small_wrecks": ["wreck_s_7", "wreck_s_1"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "anchorwater": {
+    "bodies": {
+      "anchorwater-0": {
+        "art": "terran2"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ice",
+        "large": true
+      },
+      {
+        "art": "jungle2",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_6"],
+      "galaxies": ["galaxy_5"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_8", "wreck_s_6"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "the-drowned-sun": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_sea",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_15", "nebula_9"],
+      "galaxies": ["galaxy_3", "galaxy_1"],
+      "far": "far_dyson",
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0", "wreck_s_2", "wreck_s_8", "wreck_s_6"],
+      "props": ["leviathan_0"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "surfwake-current": {
+    "bodies": {
+      "surfwake-outpost": {
+        "art": "ice3"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_neptune",
+        "large": true
+      },
+      {
+        "art": "crystal2",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_11", "nebula_0"],
+      "galaxies": [],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4"],
+      "props": ["iceberg_1"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "outer-hope": {
+    "bodies": {
+      "outer-moon": {
+        "art": "sulfur1"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_violet",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8", "nebula_13"],
+      "galaxies": ["galaxy_0"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_9"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "hivemire": {
+    "bodies": {
+      "hivemire-minor": {
+        "art": "jungle1"
+      },
+      "hivemire-minor-m1": {
+        "art": "irr_1",
+        "shape": "irregular"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_4"],
+      "galaxies": ["galaxy_0"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3"],
+      "props": ["swarm_0", "pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "far-mile": {
+    "bodies": {},
+    "stations": {
+      "far-yards": {
+        "design": "depot",
+        "landing": "s_depot_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_ember2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_6", "nebula_9"],
+      "galaxies": ["galaxy_8"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0", "wreck_s_6", "wreck_s_4"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "bilgeyard": {
+    "bodies": {},
+    "stations": {
+      "bilgeyard-station": {
+        "design": "den",
+        "landing": "s_den_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jade2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_14", "nebula_7", "nebula_1", "nebula_10"],
+      "galaxies": ["galaxy_5"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1"],
+      "props": ["satellite_6", "pod_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "chitinreach": {
+    "bodies": {
+      "molt": {
+        "art": "barren5"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ember",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_10"],
+      "galaxies": ["galaxy_6", "galaxy_10"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_9"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "iriace": {
+    "bodies": {
+      "iriace-world": {
+        "art": "crystal4"
+      }
+    },
+    "stations": {
+      "iriace-station": {
+        "design": "crystal",
+        "landing": "s_crystal"
+      },
+      "iriace-yards": {
+        "design": "chime",
+        "landing": "s_chime_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_neptune",
+        "large": true
+      },
+      {
+        "art": "terran6",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_11", "nebula_5"],
+      "galaxies": ["galaxy_11", "galaxy_9"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4", "wreck_s_2", "wreck_s_8"],
+      "props": ["pod_5"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "nightjar": {
+    "bodies": {
+      "nightjar-refuge": {
+        "art": "ice6"
+      }
+    },
+    "stations": {
+      "nightjar-beacon": {
+        "design": "biodome",
+        "landing": "s_biodome_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_saturn",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_11"],
+      "galaxies": [],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0", "wreck_s_2"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "saddletrack": {
+    "bodies": {
+      "saddletrack-world": {
+        "art": "desert13"
+      }
+    },
+    "stations": {
+      "saddletrack-anchorage": {
+        "design": "caravanserai",
+        "landing": "s_caravanserai_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_violet",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_7"],
+      "galaxies": ["galaxy_4"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_4"],
+      "props": ["pod_4", "iceberg_2"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "burnt-light": {
+    "bodies": {},
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_11", "nebula_2", "nebula_6"],
+      "galaxies": ["galaxy_3", "galaxy_7"],
+      "far": "far_pulsar",
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_8", "wreck_s_2"],
+      "props": ["satellite_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "gallowsden": {
+    "bodies": {
+      "gallowsden-minor": {
+        "art": "lava3"
+      },
+      "gallowsden-minor-m1": {
+        "art": "barren1"
+      },
+      "gallowsden-minor-m2": {
+        "art": "irr_2",
+        "shape": "irregular"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_sea",
+        "large": true
+      },
+      {
+        "art": "jungle0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_14", "nebula_1", "nebula_7"],
+      "galaxies": [],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_8", "wreck_s_2", "wreck_s_0"],
+      "props": ["satellite_6", "pod_6", "iceberg_1"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "free-expanse": {
+    "bodies": {},
+    "stations": {
+      "free-anchorage-0": {
+        "design": "cross",
+        "landing": "s_cross"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jovian2",
+        "large": true
+      },
+      {
+        "art": "iron0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_9"],
+      "galaxies": ["galaxy_1", "galaxy_2"],
+      "far": "far_binary_dwarf",
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_10", "wreck_s_8"],
+      "props": ["satellite_6", "pod_4"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "caravantrack": {
+    "bodies": {
+      "caravantrack-outpost": {
+        "art": "barren4"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_hot",
+        "large": true
+      },
+      {
+        "art": "barren5",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_7"],
+      "galaxies": ["galaxy_5"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5"],
+      "props": ["pod_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "scrapverge": {
+    "bodies": {},
+    "stations": {
+      "scrapverge-yards": {
+        "design": "junk",
+        "landing": "s_junk"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_dwarf",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_7", "nebula_1"],
+      "galaxies": ["galaxy_8", "galaxy_10"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_5",
+      "small_wrecks": ["wreck_s_7", "wreck_s_5", "wreck_s_11"],
+      "props": ["satellite_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "burnt-mile": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ember2",
+        "large": true
+      },
+      {
+        "art": "carbon0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_8"],
+      "galaxies": ["galaxy_9"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_11", "wreck_s_5", "wreck_s_7"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "coralwake": {
+    "bodies": {},
+    "stations": {
+      "reef": {
+        "design": "reef",
+        "landing": "s_reef"
+      }
+    },
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_12", "nebula_5"],
+      "galaxies": ["galaxy_1", "galaxy_4"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7"],
+      "props": ["leviathan_0"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "facethymn-chord": {
+    "bodies": {
+      "facethymn-chord-0": {
+        "art": "crystal4"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_10", "nebula_0"],
+      "galaxies": ["galaxy_7"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_9", "wreck_s_3"],
+      "props": ["iceberg_2"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "the-teeth": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_amber",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_9"],
+      "galaxies": ["galaxy_11", "galaxy_0"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0", "wreck_s_6"],
+      "props": ["pod_5"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "facetvane-facet": {
+    "bodies": {
+      "facetvane-outpost": {
+        "art": "crystal3"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_cream",
+        "large": true
+      },
+      {
+        "art": "ice5",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_10", "nebula_15"],
+      "galaxies": ["galaxy_6", "galaxy_3"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_10", "wreck_s_8"],
+      "props": ["pod_4"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "lone-claim": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ice",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_9", "nebula_6", "nebula_2"],
+      "galaxies": [],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_4"],
+      "props": ["satellite_6", "pod_6"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "sable-reach": {
+    "bodies": {
+      "sable-outpost": {
+        "art": "barren1"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_lilac",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_14", "nebula_6"],
+      "galaxies": ["galaxy_2"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3", "wreck_s_9", "wreck_s_11", "wreck_s_1"],
+      "props": ["iceberg_1"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "mandikesh": {
+    "bodies": {
+      "mandikesh-world": {
+        "art": "jungle0"
+      },
+      "mandikesh-world-m1": {
+        "art": "ice4"
+      }
+    },
+    "stations": {
+      "mandikesh-hub": {
+        "design": "hive_spire",
+        "landing": "s_hive_spire_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_rust",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_9", "nebula_15"],
+      "galaxies": ["galaxy_6", "galaxy_10"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_8",
+      "small_wrecks": ["wreck_s_4", "wreck_s_10"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "broodhive": {
+    "bodies": {
+      "broodhive-world": {
+        "art": "jungle3"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_neptune2",
+        "large": true
+      },
+      {
+        "art": "toxic5",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13"],
+      "galaxies": ["galaxy_5"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": [],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "vrrath": {
+    "bodies": {
+      "vrrath-moon": {
+        "art": "barren12"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_12", "nebula_6"],
+      "galaxies": ["galaxy_11"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_11", "wreck_s_1", "wreck_s_3"],
+      "props": ["swarm_0"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "vigilfall-lantern": {
+    "bodies": {},
+    "stations": {
+      "vigilfall-hub": {
+        "design": "lighthouse",
+        "landing": "s_lighthouse_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jovian",
+        "large": true
+      },
+      {
+        "art": "jungle3",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6"],
+      "galaxies": ["galaxy_9"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_0"],
+      "props": ["beacon_0", "beacon_1"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "lyrene": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_storm",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_0"],
+      "galaxies": [],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": [],
+      "props": ["pod_6"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "sconcefall-vigil": {
+    "bodies": {
+      "sconcefall-moonlet": {
+        "art": "barren12"
+      }
+    },
+    "stations": {
+      "sconcefall-port": {
+        "design": "lighthouse",
+        "landing": "s_lighthouse_landed"
+      }
+    },
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_13"],
+      "galaxies": ["galaxy_2"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": [],
+      "props": ["beacon_0", "beacon_1", "iceberg_2"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "ironpost": {
+    "bodies": {
+      "ironpost-tank": {
+        "art": "ice9"
+      }
+    },
+    "stations": {
+      "ironpost-exchange": {
+        "design": "bazaar",
+        "landing": "s_bazaar_landed"
+      },
+      "ironpost-station": {
+        "design": "caravanserai",
+        "landing": "s_caravanserai_landed"
+      }
+    },
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_6"],
+      "galaxies": ["galaxy_7"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "ashshade": {
+    "bodies": {
+      "ashshade-world": {
+        "art": "lava5"
+      },
+      "ashshade-keep": {
+        "art": "barren6"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ochre",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_10"],
+      "galaxies": [],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2"],
+      "props": ["beacon_0", "beacon_1"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "mandihive": {
+    "bodies": {
+      "mandihive-rock": {
+        "art": "barren10"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jade",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_12"],
+      "galaxies": ["galaxy_8"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_9"],
+      "props": ["swarm_0", "pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "far-shelf": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_aurora",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_2", "nebula_9"],
+      "galaxies": ["galaxy_0"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_11"],
+      "props": ["pod_4"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "emberwake": {
+    "bodies": {
+      "emberwake-0": {
+        "art": "desert9"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_uranus",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_13"],
+      "galaxies": ["galaxy_3"],
+      "far": "far_protostar",
+      "sun": "orange"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_1",
+      "small_wrecks": ["wreck_s_7", "wreck_s_1", "wreck_s_3"],
+      "props": ["beacon_0", "beacon_1"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "spokeroad": {
+    "bodies": {},
+    "stations": {
+      "spoke": {
+        "design": "caravanserai",
+        "landing": "s_caravanserai_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_cream",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_5", "nebula_15"],
+      "galaxies": ["galaxy_1"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_8"],
+      "props": ["pod_3"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "free-claim": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_saturn",
+        "large": true
+      },
+      {
+        "art": "crystal1",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_3"],
+      "galaxies": ["galaxy_4"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4", "wreck_s_10"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "spokeserai": {
+    "bodies": {},
+    "stations": {
+      "spokeserai-hub": {
+        "design": "caravanserai",
+        "landing": "s_caravanserai_landed"
+      },
+      "spokeserai-port": {
+        "design": "ring",
+        "landing": "s_ring"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_rust",
+        "large": true
+      },
+      {
+        "art": "barren6",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8", "nebula_2"],
+      "galaxies": ["galaxy_5", "galaxy_1"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5"],
+      "props": ["pod_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "shoaldeep": {
+    "bodies": {},
+    "stations": {
+      "shoaldeep-yards": {
+        "design": "reef",
+        "landing": "s_reef"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_storm",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_12"],
+      "galaxies": ["galaxy_0"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": [],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "northmark": {
+    "bodies": {},
+    "stations": {
+      "northmark-station": {
+        "design": "bastion",
+        "landing": "s_bastion_landed"
+      }
+    },
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_5"],
+      "galaxies": ["galaxy_11"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_3", "wreck_s_9", "wreck_s_7"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "halcyon": {
+    "bodies": {
+      "halcyon-prime": {
+        "art": "ocean6"
+      },
+      "halcyon-prime-m1": {
+        "art": "irr_0",
+        "shape": "irregular"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_5", "nebula_9"],
+      "galaxies": ["galaxy_9"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_8"],
+      "props": ["pod_4"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "corora": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ochre",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_0"],
+      "galaxies": ["galaxy_10"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2"],
+      "props": ["pod_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "last-shelf": {
+    "bodies": {},
+    "stations": {
+      "last-anchorage": {
+        "design": "spindle",
+        "landing": "s_spindle"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_amber",
+        "large": true
+      },
+      {
+        "art": "ice10",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8", "nebula_0", "nebula_3"],
+      "galaxies": ["galaxy_8", "galaxy_2"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_5"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "axleford": {
+    "bodies": {},
+    "stations": {
+      "axleford-hub": {
+        "design": "ring",
+        "landing": "s_ring"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_neptune2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_15", "nebula_5"],
+      "galaxies": ["galaxy_3"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4"],
+      "props": ["pod_4"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "the-pale-eye": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jovian",
+        "large": true
+      },
+      {
+        "art": "terran3",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_4", "nebula_15", "nebula_12"],
+      "galaxies": ["galaxy_4"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_11", "wreck_s_1", "wreck_s_9"],
+      "props": [],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "valora-prime": {
+    "bodies": {
+      "valora-minor": {
+        "art": "city1"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jovian2",
+        "large": true
+      },
+      {
+        "art": "terran1",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0"],
+      "galaxies": [],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": [],
+      "props": ["pod_4", "iceberg_2"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "quiet-mile": {
+    "bodies": {
+      "quiet-outpost": {
+        "art": "barren2"
+      }
+    },
+    "stations": {
+      "quiet-exchange": {
+        "design": "depot",
+        "landing": "s_depot_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_ice",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_9", "nebula_2", "nebula_6"],
+      "galaxies": ["galaxy_7", "galaxy_6"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0", "wreck_s_6"],
+      "props": ["pod_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "outer-haven": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_dwarf",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_6"],
+      "galaxies": [],
+      "far": "far_dyson",
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_12",
+      "small_wrecks": ["wreck_s_0", "wreck_s_10"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "the-black-tide": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_neptune",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8", "nebula_0", "nebula_9"],
+      "galaxies": ["galaxy_10", "galaxy_11"],
+      "far": "far_supernova",
+      "sun": "yellow"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_3",
+      "small_wrecks": ["wreck_s_1", "wreck_s_3", "wreck_s_9", "wreck_s_7"],
+      "props": [],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "fathomtrench": {
+    "bodies": {
+      "fathomtrench-world": {
+        "art": "ocean3"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_11"],
+      "galaxies": ["galaxy_8"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6"],
+      "props": ["pod_4"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "broodhollow": {
+    "bodies": {
+      "broodhollow-world": {
+        "art": "jungle0"
+      }
+    },
+    "stations": {
+      "brood": {
+        "design": "hive_spire",
+        "landing": "s_hive_spire_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_lilac",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_12", "nebula_6"],
+      "galaxies": ["galaxy_9"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_9"],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "gutteryard": {
+    "bodies": {
+      "gutteryard-moon": {
+        "art": "barren13"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ember2",
+        "large": true
+      },
+      {
+        "art": "lava0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_14", "nebula_7"],
+      "galaxies": ["galaxy_7"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_3",
+      "small_wrecks": ["wreck_s_6", "wreck_s_0", "wreck_s_2"],
+      "props": ["satellite_6", "pod_3"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "the-abyss": {
+    "bodies": {
+      "the-rock": {
+        "art": "carbon0",
+        "landing": "l_carbon_plains"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_9", "nebula_0"],
+      "galaxies": ["galaxy_2"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_1"],
+      "props": [],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "ironpeak-forge": {
+    "bodies": {},
+    "stations": {
+      "ironpeak-hub": {
+        "design": "forge",
+        "landing": "s_forge"
+      },
+      "ironpeak-anchorage": {
+        "design": "rock",
+        "landing": "s_rock"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_ember",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2"],
+      "galaxies": ["galaxy_5"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5"],
+      "props": [],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "kragdelve": {
+    "bodies": {
+      "kragdelve-rock": {
+        "art": "irr_4",
+        "shape": "irregular"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_violet",
+        "large": true
+      },
+      {
+        "art": "ice11",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8", "nebula_2"],
+      "galaxies": ["galaxy_4"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_8"],
+      "props": ["pod_6"],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "wickburn-watch": {
+    "bodies": {
+      "wickburn-minor": {
+        "art": "desert13"
+      }
+    },
+    "stations": {
+      "wickburn-tower": {
+        "design": "lighthouse",
+        "landing": "s_lighthouse_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_aurora",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_2", "nebula_5"],
+      "galaxies": ["galaxy_6"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0"],
+      "props": ["beacon_0", "beacon_1", "pod_3"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "wild-reach": {
+    "bodies": {},
+    "stations": {
+      "wild-hub": {
+        "design": "outpost",
+        "landing": "s_outpost_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jade",
+        "large": true
+      },
+      {
+        "art": "barren13",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_9", "nebula_4"],
+      "galaxies": ["galaxy_1"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_9", "wreck_s_7", "wreck_s_3"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "hesper": {
+    "bodies": {
+      "hesper-world": {
+        "art": "desert11"
+      }
+    },
+    "stations": {
+      "lanternfall": {
+        "design": "voidlantern",
+        "landing": "s_voidlantern_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jade2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_13", "nebula_7"],
+      "galaxies": ["galaxy_3", "galaxy_0"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": [],
+      "props": ["beacon_0", "beacon_1", "pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "gloam": {
+    "bodies": {
+      "gloam-remnant": {
+        "art": "shattered0"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_sea",
+        "large": true
+      },
+      {
+        "art": "ocean4",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_7"],
+      "galaxies": [],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_4"],
+      "props": ["satellite_6", "iceberg_1"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "the-maw": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_uranus",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_4", "nebula_15"],
+      "galaxies": ["galaxy_8"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4", "wreck_s_6"],
+      "props": ["ruin_3"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "outer-chance": {
+    "bodies": {
+      "outer-chance-0": {
+        "art": "sulfur1"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_hot",
+        "large": true
+      },
+      {
+        "art": "crystal0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_2"],
+      "galaxies": ["galaxy_0"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_12",
+      "small_wrecks": ["wreck_s_2", "wreck_s_8", "wreck_s_6"],
+      "props": ["satellite_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "farhaul": {
+    "bodies": {},
+    "stations": {
+      "farhaul-relay": {
+        "design": "relay",
+        "landing": "s_relay_landed"
+      }
+    },
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_13"],
+      "galaxies": ["galaxy_10"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "copperharbor": {
+    "bodies": {
+      "copperharbor-world": {
+        "art": "desert6"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_6"],
+      "galaxies": [],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_10"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "vrrath-clutch": {
+    "bodies": {
+      "vrrath-minor": {
+        "art": "jungle3"
+      },
+      "vrrath-beta": {
+        "art": "toxic1"
+      },
+      "vrrath-minor-m1": {
+        "art": "barren1"
+      },
+      "vrrath-beta-m1": {
+        "art": "barren7"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jovian",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0"],
+      "galaxies": [],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5"],
+      "props": ["iceberg_1"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "free-harbor": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_rust",
+        "large": true
+      },
+      {
+        "art": "toxic3",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8"],
+      "galaxies": ["galaxy_9"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3", "wreck_s_9"],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "new-expanse": {
+    "bodies": {
+      "new-expanse-0": {
+        "art": "barren10"
+      },
+      "new-expanse-0-m1": {
+        "art": "barren11"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ember2",
+        "large": true
+      },
+      {
+        "art": "ocean5",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8"],
+      "galaxies": ["galaxy_11"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_9"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "greyline": {
+    "bodies": {
+      "greyline-moon": {
+        "art": "barren11"
+      },
+      "greyline-moon-1": {
+        "art": "barren4"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_aurora",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3"],
+      "galaxies": [],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_9", "wreck_s_11"],
+      "props": ["iceberg_0"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "dimmer": {
+    "bodies": {
+      "dimmer-rock": {
+        "art": "irr_7",
+        "shape": "irregular"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_dwarf",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_14", "nebula_7"],
+      "galaxies": [],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_4", "wreck_s_6"],
+      "props": ["satellite_6", "pod_6"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "serita": {
+    "bodies": {
+      "serita-minor": {
+        "art": "ocean1"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_saturn",
+        "large": true
+      },
+      {
+        "art": "sulfur1",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8", "nebula_3", "nebula_11"],
+      "galaxies": ["galaxy_1", "galaxy_5"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_11"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "lost-signal": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_cream",
+        "large": true
+      },
+      {
+        "art": "forest0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8", "nebula_3"],
+      "galaxies": ["galaxy_4"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_7"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "qgate": {
+    "bodies": {
+      "concordia": {
+        "art": "ocean6"
+      },
+      "concordia-m1": {
+        "art": "barren12"
+      },
+      "concordia-m2": {
+        "art": "barren10"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jovian2",
+        "large": true
+      },
+      {
+        "art": "forest1",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3"],
+      "galaxies": ["galaxy_6", "galaxy_2"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_0"],
+      "props": ["pod_3"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "anvilhelm-hold": {
+    "bodies": {},
+    "stations": {
+      "anvilhelm-station": {
+        "design": "rock",
+        "landing": "s_rock"
+      },
+      "anvilhelm-exchange": {
+        "design": "forge",
+        "landing": "s_forge"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jade",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6"],
+      "galaxies": ["galaxy_3", "galaxy_7"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_0"],
+      "props": [],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "lone-light": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_neptune",
+        "large": true
+      },
+      {
+        "art": "ice1",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3", "nebula_13"],
+      "galaxies": [],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4", "wreck_s_10", "wreck_s_8"],
+      "props": ["pod_5"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "luora": {
+    "bodies": {
+      "luora-garden": {
+        "art": "crystal2"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_storm",
+        "large": true
+      },
+      {
+        "art": "ice2",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5"],
+      "galaxies": [],
+      "far": "far_protostar",
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7"],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "anchorreach": {
+    "bodies": {
+      "anchorreach-hook": {
+        "art": "irr_5",
+        "shape": "irregular"
+      }
+    },
+    "stations": {
+      "anchorreach-hub": {
+        "design": "yard",
+        "landing": "s_yard"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_ice",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_13"],
+      "galaxies": [],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4", "wreck_s_2"],
+      "props": ["pod_3"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "basaltforge-deep": {
+    "bodies": {
+      "basaltforge-major": {
+        "art": "lava1"
+      },
+      "basaltforge-major-m1": {
+        "art": "eyeball0"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ember",
+        "large": true
+      },
+      {
+        "art": "toxic1",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8", "nebula_3"],
+      "galaxies": ["galaxy_9"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4"],
+      "props": [],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "slagforge": {
+    "bodies": {
+      "slag": {
+        "art": "lava0"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_hot",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_11", "nebula_8", "nebula_2"],
+      "galaxies": ["galaxy_10"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_0"],
+      "props": [],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "coralreef-current": {
+    "bodies": {
+      "coralreef-outpost": {
+        "art": "ice6"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_uranus",
+        "large": true
+      },
+      {
+        "art": "ocean6",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_9"],
+      "galaxies": [],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0"],
+      "props": ["iceberg_1"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "ironwell-market": {
+    "bodies": {
+      "ironwell-moon": {
+        "art": "barren8"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_neptune2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_6"],
+      "galaxies": ["galaxy_11", "galaxy_8"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_11"],
+      "props": ["pod_5"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "the-last-shore": {
+    "bodies": {},
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_9"],
+      "galaxies": [],
+      "far": "far_binary_dwarf",
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0", "wreck_s_6", "wreck_s_4"],
+      "props": [],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "nulward": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_violet",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_1", "nebula_15"],
+      "galaxies": ["galaxy_3", "galaxy_7"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_8"],
+      "props": ["satellite_6", "pod_3"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "second-harbor": {
+    "bodies": {},
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_3", "nebula_9", "nebula_8", "nebula_13"],
+      "galaxies": ["galaxy_6"],
+      "far": "far_dyson",
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_4"],
+      "props": ["satellite_6", "pod_3"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "nulreach": {
+    "bodies": {},
+    "stations": {
+      "nulreach-lattice": {
+        "design": "brood_lattice",
+        "landing": "s_brood_lattice_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jade2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_15", "nebula_3"],
+      "galaxies": ["galaxy_2"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0", "wreck_s_6", "wreck_s_8"],
+      "props": [],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "palinode": {
+    "bodies": {
+      "palinode-listener": {
+        "art": "barren0"
+      }
+    },
+    "stations": {
+      "palinode-observatory": {
+        "design": "crystal",
+        "landing": "s_crystal"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_sea",
+        "large": true
+      },
+      {
+        "art": "ocean3",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_11", "nebula_10"],
+      "galaxies": ["galaxy_1", "galaxy_5"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_9", "wreck_s_3", "wreck_s_1", "wreck_s_11"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "rustverge": {
+    "bodies": {
+      "rustverge-0": {
+        "art": "desert6"
+      },
+      "rustverge-0-m1": {
+        "art": "barren9"
+      }
+    },
+    "stations": {
+      "rustverge-port": {
+        "design": "den",
+        "landing": "s_den_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_amber",
+        "large": true
+      },
+      {
+        "art": "terran0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_1", "nebula_6", "nebula_7"],
+      "galaxies": ["galaxy_0", "galaxy_4"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5", "wreck_s_11"],
+      "props": ["satellite_6"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "brightwater": {
+    "bodies": {
+      "brightwater-iv": {
+        "art": "ocean4"
+      },
+      "brightwater-iv-m1": {
+        "art": "barren2"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_lilac",
+        "large": true
+      },
+      {
+        "art": "lava4",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3", "nebula_11"],
+      "galaxies": ["galaxy_11"],
+      "far": "far_supernova",
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7"],
+      "props": ["pod_4"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "praeenna": {
+    "bodies": {
+      "praeenna-veil": {
+        "art": "ringed_ice0"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ochre",
+        "large": true
+      },
+      {
+        "art": "toxic2",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0"],
+      "galaxies": ["galaxy_2"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3"],
+      "props": ["pod_4"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "the-undertow": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_cream",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_15", "nebula_4"],
+      "galaxies": ["galaxy_10", "galaxy_0"],
+      "far": "far_binary_dwarf",
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_4", "wreck_s_0"],
+      "props": ["satellite_6", "pod_6"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "the-unlight": {
+    "bodies": {
+      "the-moonlet": {
+        "art": "barren0"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_lilac",
+        "large": true
+      },
+      {
+        "art": "lava1",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_9", "nebula_0"],
+      "galaxies": [],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_11", "wreck_s_1", "wreck_s_3", "wreck_s_5"],
+      "props": [],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "the-blind-star": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_saturn",
+        "large": true
+      },
+      {
+        "art": "desert8",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_12"],
+      "galaxies": [],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3", "wreck_s_5"],
+      "props": ["pod_5"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "basaltdeep": {
+    "bodies": {},
+    "stations": {
+      "deepmine": {
+        "design": "rock",
+        "landing": "s_rock"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jovian",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8"],
+      "galaxies": ["galaxy_4"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_6",
+      "small_wrecks": ["wreck_s_5", "wreck_s_11"],
+      "props": [],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "free-light": {
+    "bodies": {
+      "free-moonlet": {
+        "art": "ice12"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_rust",
+        "large": true
+      },
+      {
+        "art": "ice3",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_9", "nebula_13"],
+      "galaxies": ["galaxy_9"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_8", "wreck_s_10"],
+      "props": ["satellite_6", "iceberg_1"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "mountainhold": {
+    "bodies": {
+      "hold": {
+        "art": "barren8"
+      },
+      "mountainhold-anvil": {
+        "art": "lava2"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_neptune",
+        "large": true
+      },
+      {
+        "art": "terran4",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_9", "nebula_2", "nebula_8"],
+      "galaxies": [],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4", "wreck_s_6"],
+      "props": ["pod_6"],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "basaltgard": {
+    "bodies": {
+      "basaltgard-minor": {
+        "art": "lava2"
+      },
+      "basaltgard-minor-m1": {
+        "art": "barren8"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_violet",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_10", "nebula_13", "nebula_6"],
+      "galaxies": ["galaxy_6"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_9", "wreck_s_3"],
+      "props": ["pod_5"],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "astenna": {
+    "bodies": {
+      "astenna-world": {
+        "art": "terran5"
+      }
+    },
+    "stations": {
+      "astenna-gate": {
+        "design": "customs",
+        "landing": "s_customs_landed"
+      }
+    },
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_5"],
+      "galaxies": ["galaxy_8"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": [],
+      "props": ["pod_6"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "the-long-dark": {
+    "bodies": {},
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_9"],
+      "galaxies": [],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_9", "wreck_s_11"],
+      "props": ["leviathan_0", "ruin_3"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "opalace-facet": {
+    "bodies": {},
+    "stations": {
+      "opalace-station": {
+        "design": "chime",
+        "landing": "s_chime_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_storm",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0", "nebula_10"],
+      "galaxies": [],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_10", "wreck_s_8"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "valeon": {
+    "bodies": {
+      "valeon-world": {
+        "art": "terran5"
+      },
+      "valeon-world-m1": {
+        "art": "barren11"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jovian2",
+        "large": true
+      },
+      {
+        "art": "desert4",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_11"],
+      "galaxies": ["galaxy_3"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4"],
+      "props": ["pod_5", "iceberg_2"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "zzclutch": {
+    "bodies": {
+      "zzclutch-rock": {
+        "art": "barren4"
+      }
+    },
+    "stations": {
+      "zzclutch-port": {
+        "design": "hive",
+        "landing": "s_hive"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_ember2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_3"],
+      "galaxies": [],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_8", "wreck_s_10"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "lantern-twins": {
+    "bodies": {
+      "twins-cinder": {
+        "art": "lava2"
+      }
+    },
+    "stations": {
+      "twins-exchange": {
+        "design": "cylinder",
+        "landing": "s_cylinder_landed"
+      }
+    },
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_11", "nebula_5"],
+      "galaxies": ["galaxy_7"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_10", "wreck_s_0", "wreck_s_4"],
+      "props": ["satellite_6", "pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "abyssdrift": {
+    "bodies": {
+      "abyssdrift-rock": {
+        "art": "ice10"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_uranus",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_0", "nebula_11"],
+      "galaxies": ["galaxy_5"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4", "wreck_s_2", "wreck_s_8"],
+      "props": ["iceberg_1"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "outer-signal": {
+    "bodies": {
+      "outer-minor": {
+        "art": "sulfur1"
+      },
+      "outer-minor-m1": {
+        "art": "ice9"
+      },
+      "outer-minor-m2": {
+        "art": "ice0"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_amber",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_1", "nebula_2", "nebula_13"],
+      "galaxies": ["galaxy_1", "galaxy_9"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_8", "wreck_s_10", "wreck_s_4", "wreck_s_6"],
+      "props": ["iceberg_0"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "kraggard": {
+    "bodies": {},
+    "stations": {
+      "kraggard-station": {
+        "design": "rock",
+        "landing": "s_rock"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_sea",
+        "large": true
+      },
+      {
+        "art": "lava3",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_8"],
+      "galaxies": ["galaxy_10"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4"],
+      "props": [],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "tapermere": {
+    "bodies": {
+      "tapermere-0": {
+        "art": "desert1"
+      }
+    },
+    "stations": {
+      "tapermere-chapel": {
+        "design": "bell",
+        "landing": "s_bell_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_neptune2",
+        "large": true
+      },
+      {
+        "art": "terran5",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_10"],
+      "galaxies": ["galaxy_6", "galaxy_2"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_11"],
+      "props": ["beacon_0", "beacon_1"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "lost-harbor": {
+    "bodies": {},
+    "stations": {
+      "lost-anchorage": {
+        "design": "cross",
+        "landing": "s_cross"
+      },
+      "lost-station": {
+        "design": "relay",
+        "landing": "s_relay_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_aurora",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_9", "nebula_14", "nebula_6", "nebula_2"],
+      "galaxies": [],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5", "wreck_s_3", "wreck_s_9"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "ember-drift": {
+    "bodies": {
+      "ember-minor": {
+        "art": "ocean0"
+      },
+      "ember-minor-m1": {
+        "art": "barren6"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jade2",
+        "large": true
+      },
+      {
+        "art": "desert5",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3", "nebula_10"],
+      "galaxies": ["galaxy_8"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_11", "wreck_s_5"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "facetsene": {
+    "bodies": {
+      "facetsene-seed": {
+        "art": "crystal2"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ice",
+        "large": true
+      },
+      {
+        "art": "ocean2",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0"],
+      "galaxies": ["galaxy_11", "galaxy_7"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_8"],
+      "props": ["pod_4"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "shoaldrift": {
+    "bodies": {
+      "shoaldrift-moon": {
+        "art": "ice9"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ember",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_11"],
+      "galaxies": ["galaxy_4"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0", "wreck_s_2", "wreck_s_8"],
+      "props": ["leviathan_0", "pod_6", "iceberg_2"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "driftyard": {
+    "bodies": {},
+    "stations": {
+      "driftyard-camp": {
+        "design": "junk",
+        "landing": "s_junk"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_hot",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_6"],
+      "galaxies": ["galaxy_3"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4", "wreck_s_10", "wreck_s_0"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "gloammark-night": {
+    "bodies": {
+      "gloammark-minor": {
+        "art": "iron0"
+      },
+      "gloammark-minor-m1": {
+        "art": "barren13"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ochre",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_15", "nebula_1"],
+      "galaxies": ["galaxy_5"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_8", "wreck_s_10"],
+      "props": ["satellite_6"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "free-reach": {
+    "bodies": {},
+    "stations": {
+      "free-port": {
+        "design": "biodome",
+        "landing": "s_biodome_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jade",
+        "large": true
+      },
+      {
+        "art": "eyeball1",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_9"],
+      "galaxies": ["galaxy_0", "galaxy_1"],
+      "far": "far_pulsar",
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_0", "wreck_s_2", "wreck_s_4"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "ebbreef": {
+    "bodies": {
+      "ebbreef-prime": {
+        "art": "ocean0"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_dwarf",
+        "large": true
+      },
+      {
+        "art": "eyeball0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_11"],
+      "galaxies": ["galaxy_8"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_7", "wreck_s_9"],
+      "props": ["pod_6"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "aureole": {
+    "bodies": {
+      "aureole-ash": {
+        "art": "barren13"
+      }
+    },
+    "stations": {
+      "aureole-ring": {
+        "design": "ring",
+        "landing": "s_ring"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jade",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_8"],
+      "galaxies": ["galaxy_10", "galaxy_11"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3", "wreck_s_9", "wreck_s_11", "wreck_s_5"],
+      "props": ["pod_4"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "caravanserai": {
+    "bodies": {
+      "serai": {
+        "art": "desert0"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ember2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13"],
+      "galaxies": [],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_10", "wreck_s_4", "wreck_s_2"],
+      "props": ["pod_3"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "broken-reach": {
+    "bodies": {
+      "broken-prime": {
+        "art": "barren13"
+      },
+      "broken-prime-m1": {
+        "art": "irr_4",
+        "shape": "irregular",
+        "landing": "l_moon_irregular"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_jovian",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_3"],
+      "galaxies": ["galaxy_9"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_8", "wreck_s_2", "wreck_s_0", "wreck_s_6"],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "wheelwright": {
+    "bodies": {
+      "rest": {
+        "art": "barren0"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ice",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6"],
+      "galaxies": ["galaxy_4", "galaxy_0"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_5"],
+      "props": ["pod_3"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "gravehole": {
+    "bodies": {
+      "gravehole-outpost": {
+        "art": "barren11"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_7", "nebula_1"],
+      "galaxies": ["galaxy_3"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_0"],
+      "props": ["satellite_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "duneroad-market": {
+    "bodies": {},
+    "stations": {
+      "duneroad-port": {
+        "design": "bazaar",
+        "landing": "s_bazaar_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_violet",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_7", "nebula_2"],
+      "galaxies": [],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_6", "wreck_s_8"],
+      "props": ["pod_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "novion": {
+    "bodies": {
+      "novion-minor": {
+        "art": "ocean1"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_6"],
+      "galaxies": ["galaxy_1"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5", "wreck_s_7"],
+      "props": ["pod_6"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "emberlight": {
+    "bodies": {
+      "vigil-lamp": {
+        "art": "desert3"
+      },
+      "vigil-lamp-m1": {
+        "art": "barren5"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_10", "nebula_6"],
+      "galaxies": [],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_5"],
+      "props": ["beacon_0", "beacon_1", "pod_4"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "new-landing": {
+    "bodies": {},
+    "stations": {
+      "new-port": {
+        "design": "biodome",
+        "landing": "s_biodome_landed"
+      }
+    },
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_2"],
+      "galaxies": ["galaxy_2"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_8", "wreck_s_10", "wreck_s_0"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "wild-landing": {
+    "bodies": {
+      "wild-minor": {
+        "art": "barren2"
+      },
+      "wild-minor-m1": {
+        "art": "irr_3",
+        "shape": "irregular"
+      },
+      "wild-minor-m2": {
+        "art": "barren10"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_9", "nebula_2", "nebula_6"],
+      "galaxies": ["galaxy_5"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_2",
+      "small_wrecks": ["wreck_s_1", "wreck_s_11"],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "valora": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_saturn",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3"],
+      "galaxies": ["galaxy_7", "galaxy_6"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": [],
+      "props": ["pod_3"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "opalvane": {
+    "bodies": {
+      "opalvane-rock": {
+        "art": "crystal3"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_cream",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_10", "nebula_0"],
+      "galaxies": ["galaxy_11"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_1", "wreck_s_3"],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "far-reach": {
+    "bodies": {
+      "far-prime": {
+        "art": "gas_jovian"
+      },
+      "far-prime-m1": {
+        "art": "ice11"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_amber",
+        "large": true
+      },
+      {
+        "art": "lava5",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_12"],
+      "galaxies": ["galaxy_10", "galaxy_7"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3", "wreck_s_5"],
+      "props": ["pod_3", "iceberg_0"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "quevar": {
+    "bodies": {
+      "inalumen": {
+        "art": "city0"
+      },
+      "inalumen-m1": {
+        "art": "ice0"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_lilac",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2"],
+      "galaxies": [],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_11"],
+      "props": ["pod_4", "iceberg_1"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "facetfall": {
+    "bodies": {
+      "facet": {
+        "art": "crystal0"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_10", "nebula_0", "nebula_2"],
+      "galaxies": ["galaxy_5", "galaxy_1"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3"],
+      "props": [],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "lost-haven": {
+    "bodies": {},
+    "stations": {
+      "lost-station-0": {
+        "design": "depot",
+        "landing": "s_depot_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jovian2",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_2", "nebula_9"],
+      "galaxies": ["galaxy_0"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5", "wreck_s_3", "wreck_s_9"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "kelpbloom": {
+    "bodies": {},
+    "stations": {
+      "kelpbloom-exchange": {
+        "design": "kelp",
+        "landing": "s_kelp_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_aurora",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_5", "nebula_12"],
+      "galaxies": ["galaxy_4"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5", "wreck_s_3", "wreck_s_1"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "vespervoid": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_hot",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_8", "nebula_15", "nebula_1"],
+      "galaxies": ["galaxy_9"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_3"],
+      "props": ["pod_3"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "cinderverge": {
+    "bodies": {},
+    "stations": {
+      "cinder-hold": {
+        "design": "stronghold",
+        "landing": "s_stronghold_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_uranus",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_10", "nebula_14"],
+      "galaxies": ["galaxy_8"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_9"],
+      "props": ["satellite_6", "pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "quiet-shelf": {
+    "bodies": {
+      "quiet-beta": {
+        "art": "ringed_rock0",
+        "landing": "l_moon_ringed_sky"
+      },
+      "quiet-beta-m1": {
+        "art": "ice9"
+      }
+    },
+    "stations": {
+      "quiet-port": {
+        "design": "spindle",
+        "landing": "s_spindle"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_rust",
+        "large": true
+      },
+      {
+        "art": "toxic0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_9", "nebula_7"],
+      "galaxies": [],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4", "wreck_s_2"],
+      "props": ["iceberg_0"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "vantvoid": {
+    "bodies": {
+      "vantvoid-minor": {
+        "art": "carbon0"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_sea",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_1", "nebula_2", "nebula_8"],
+      "galaxies": ["galaxy_3", "galaxy_6"],
+      "sun": "white"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_1", "wreck_s_3", "wreck_s_5", "wreck_s_11"],
+      "props": ["pod_3"],
+      "rocks": ["rock14", "rock15"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "maghelm-hold": {
+    "bodies": {},
+    "stations": {
+      "maghelm-yards": {
+        "design": "refinery",
+        "landing": "s_refinery_landed"
+      }
+    },
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_10", "nebula_12", "nebula_6"],
+      "galaxies": ["galaxy_2", "galaxy_10"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_11", "wreck_s_9"],
+      "props": [],
+      "rocks": ["rock12", "rock13"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "chitath": {
+    "bodies": {
+      "chitath-seed": {
+        "art": "forest1"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_dwarf",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_3"],
+      "galaxies": ["galaxy_11", "galaxy_1"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_8",
+      "small_wrecks": ["wreck_s_4"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "fathompool": {
+    "bodies": {},
+    "stations": {
+      "fathompool-station": {
+        "design": "kelp",
+        "landing": "s_kelp_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_storm",
+        "large": true
+      },
+      {
+        "art": "lava2",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_0"],
+      "galaxies": ["galaxy_8"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_1"],
+      "props": ["leviathan_0"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "copperwell": {
+    "bodies": {},
+    "stations": {
+      "copperwell-port": {
+        "design": "caravanserai",
+        "landing": "s_caravanserai_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jade2",
+        "large": true
+      },
+      {
+        "art": "ocean0",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3", "nebula_14"],
+      "galaxies": ["galaxy_9", "galaxy_0"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_5", "wreck_s_7"],
+      "props": ["pod_4"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "wild-hope": {
+    "bodies": {},
+    "stations": {
+      "wild-yards": {
+        "design": "cross",
+        "landing": "s_cross"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_ember",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_2", "nebula_4"],
+      "galaxies": ["galaxy_3"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_9", "wreck_s_7"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "knifemaw": {
+    "bodies": {
+      "knifemaw-prime": {
+        "art": "lava1"
+      },
+      "knifemaw-prime-m1": {
+        "art": "ice5"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_7", "nebula_1", "nebula_14"],
+      "galaxies": ["galaxy_4", "galaxy_2"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_9", "wreck_s_7", "wreck_s_1"],
+      "props": ["satellite_6", "pod_3", "iceberg_2"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "thrumhive": {
+    "bodies": {
+      "thrum": {
+        "art": "jungle2"
+      },
+      "thrum-m1": {
+        "art": "barren1"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_neptune2",
+        "large": true
+      },
+      {
+        "art": "ice6",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13"],
+      "galaxies": ["galaxy_5"],
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3", "wreck_s_5"],
+      "props": ["swarm_0", "iceberg_1"],
+      "rocks": ["rock10", "rock11"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "wagonford": {
+    "bodies": {
+      "wagonford-0": {
+        "art": "desert10"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_neptune",
+        "large": true
+      },
+      {
+        "art": "ice4",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_7"],
+      "galaxies": ["galaxy_6"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_7", "wreck_s_5"],
+      "props": ["pod_6"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "second-signal": {
+    "bodies": {
+      "second-outpost": {
+        "art": "barren5"
+      }
+    },
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_ochre",
+        "large": true
+      },
+      {
+        "art": "barren12",
+        "large": false
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6", "nebula_9"],
+      "galaxies": ["galaxy_7", "galaxy_11"],
+      "far": "far_dyson",
+      "sun": "red dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_2", "wreck_s_0"],
+      "props": ["satellite_6"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "ropewater-rest": {
+    "bodies": {},
+    "stations": {
+      "ropewater-raft": {
+        "design": "caravanserai",
+        "landing": "s_caravanserai_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_aurora",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_6"],
+      "galaxies": ["galaxy_10"],
+      "sun": "white"
+    },
+    "clutter": {
+      "massive_wreck": "wreck_13",
+      "small_wrecks": ["wreck_s_5", "wreck_s_7"],
+      "props": ["pod_3"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "stray-landing": {
+    "bodies": {},
+    "stations": {},
+    "background": [
+      {
+        "art": "gas_uranus",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_13", "nebula_14", "nebula_8"],
+      "galaxies": ["galaxy_2", "galaxy_6"],
+      "sun": "orange"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_3", "wreck_s_9", "wreck_s_1"],
+      "props": [],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "lowtide": {
+    "bodies": {
+      "lowtide-world": {
+        "art": "ocean5"
+      }
+    },
+    "stations": {
+      "lowtide-station": {
+        "design": "ring",
+        "landing": "s_ring"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_saturn",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_9", "nebula_10"],
+      "galaxies": ["galaxy_7"],
+      "sun": "white dwarf"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_4", "wreck_s_6"],
+      "props": ["pod_5"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "broken-landing": {
+    "bodies": {},
+    "stations": {
+      "broken-exchange": {
+        "design": "relay",
+        "landing": "s_relay_landed"
+      }
+    },
+    "background": [
+      {
+        "art": "gas_jade",
+        "large": true
+      }
+    ],
+    "sky": {
+      "nebulae": ["nebula_3", "nebula_8"],
+      "galaxies": ["galaxy_8"],
+      "sun": "yellow"
+    },
+    "clutter": {
+      "small_wrecks": ["wreck_s_9", "wreck_s_3"],
+      "props": ["pod_3"],
+      "rocks": ["rock16", "rock17"],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  },
+  "novium-verge": {
+    "bodies": {
+      "novium-world": {
+        "art": "terran6"
+      },
+      "novium-world-m1": {
+        "art": "eyeball1"
+      }
+    },
+    "stations": {},
+    "background": [],
+    "sky": {
+      "nebulae": ["nebula_3"],
+      "galaxies": ["galaxy_5", "galaxy_1"],
+      "sun": "blue-white giant"
+    },
+    "clutter": {
+      "small_wrecks": [],
+      "props": ["pod_4"],
+      "rocks": [
+        "rock0",
+        "rock1",
+        "rock2",
+        "rock3",
+        "rock4",
+        "rock5",
+        "rock6",
+        "rock7",
+        "rock8",
+        "rock9"
+      ],
+      "shards": ["crys0", "crys1", "crys2", "crys3", "crys4", "crys5"]
+    }
+  }
+}

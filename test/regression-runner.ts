@@ -31,6 +31,8 @@ const results = [];
 const programTimeouts: Record<string, number> = {
   'network-systems.ts': 240000,
   'landed-responsive-browser.ts': 360000,
+  // The station matrix decodes every authored design and visits 19 ports.
+  'station-landing-browser.ts': 360000,
 };
 const cancellation = new AbortController();
 const cancel = () => cancellation.abort();

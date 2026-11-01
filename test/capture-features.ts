@@ -54,6 +54,18 @@ for (const [file, methods] of Object.entries(phases)) {
     };
   }
 }
+// The characterization predates scene-pack ports. Keep its original market pool;
+// features.ts separately checks live market eligibility and cache behavior.
+const additionsPath = path.join(root, 'shared/diversity-worlds.json');
+if (fileSystem.existsSync(additionsPath)) {
+  const additions = JSON.parse(fileSystem.readFileSync(additionsPath, 'utf8')) as {
+    body: { id: string };
+  }[];
+  const additionIds = new Set(additions.map((addition) => addition.body.id));
+  const { SYSTEMS } = await load('shared/galaxy.ts');
+  for (const system of SYSTEMS)
+    system.stellars = system.stellars.filter((body: { id: string }) => !additionIds.has(body.id));
+}
 const { Game } = await load('server/game.ts');
 const directory = fileSystem.mkdtempSync(
   path.join(operatingSystem.tmpdir(), 'rift-feature-fixture-'),
