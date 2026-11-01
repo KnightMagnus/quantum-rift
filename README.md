@@ -95,7 +95,7 @@ One slow patrol moves through Concord territory: a Concordance flagship, a carri
 
 ![Concord security patrol in Concordia, with the redesigned Concordance, carrier and escorts](docs/screenshots/qcs-patrol.png)
 
-![Permanent Triad Sentinel platforms guarding an operating Personal Station](docs/screenshots/triad-sentinels-flight.png)
+![Satin-hulled Personal Station with a habitat ring, docking pods and three permanent Triad Sentinel guards](docs/screenshots/triad-sentinels-flight.png)
 
 **Flight controls**
 
