@@ -1,7 +1,8 @@
 import type { Entity, Space } from './space.ts';
+import { COMBAT_ASSIST_RANGE } from './combat-assist.ts';
 
 /** The live steering capability used by shared NPC and Assist maneuvering. */
-export type CombatSteering = Pick<Space, 'steer'>;
+export type CombatSteering = Pick<Space, 'steer' | 't'>;
 
 /** Choose approach, retreat or broadside movement without owning targets or weapon discharge. */
 export function maneuverCombat(steering: CombatSteering, attacker: Entity, target: Entity): void {
@@ -10,23 +11,38 @@ export function maneuverCombat(steering: CombatSteering, attacker: Entity, targe
   // Both NPCs and Assist close for their primary battery. A long-range
   // secondary must not keep the ship outside its main guns' effective range.
   const battery = primary.length ? primary : available;
-  const batteryRange = battery.length
-    ? (attacker.autoCombat ? Math.min : Math.max)(...battery.map((mount) => mount.p.range))
-    : 300;
+  const batteryRange = battery.length ? Math.max(...battery.map((mount) => mount.p.range)) : 300;
   const deltaX = target.x - attacker.x,
     deltaY = target.y - attacker.y,
     distance = Math.hypot(deltaX, deltaY);
+  if (attacker.combatManeuverTarget !== target.id) {
+    attacker.combatManeuverTarget = target.id;
+    attacker.combatLastHitT = steering.t;
+    attacker.combatForward = false;
+  }
+  const closingSpeed = distance
+    ? ((attacker.vx - target.vx) * deltaX + (attacker.vy - target.vy) * deltaY) / distance
+    : 0;
+  // Keep normal approaches and productive broadsides unchanged. Recover stalled fire,
+  // and turn long-range ships back before their orbit loses the selected target.
+  if (
+    attacker.autoCombat &&
+    ((steering.t - (attacker.combatLastHitT ?? steering.t) > 5 && closingSpeed < 5) ||
+      (batteryRange > COMBAT_ASSIST_RANGE && distance > 1200 && closingSpeed < 0))
+  )
+    attacker.combatForward = true;
+  const maneuverRange =
+    attacker.autoCombat && attacker.combatForward && batteryRange > COMBAT_ASSIST_RANGE
+      ? Math.min(1200, ...battery.map((mount) => mount.p.range))
+      : batteryRange;
   const lead = Math.min(1.2, distance / 600);
   const leadX = target.x + (target.vx - attacker.vx) * lead,
     leadY = target.y + (target.vy - attacker.vy) * lead;
   if (
     attacker.st.size >= 110 &&
     attacker.st.turrets >= 2 &&
-    (!attacker.autoCombat ||
-      (battery.length > 0 &&
-        battery.every((mount) => mount.p.turret) &&
-        Math.hypot(target.vx, target.vy) < attacker.st.maxSpeed * 0.6)) &&
-    distance < batteryRange * 1.1 &&
+    !(attacker.autoCombat && attacker.combatForward) &&
+    distance < maneuverRange * 1.1 &&
     distance > Math.max(140, attacker.st.size)
   ) {
     // capitals with turrets circle and fire broadsides instead of ramming
@@ -35,7 +51,7 @@ export function maneuverCombat(steering: CombatSteering, attacker: Entity, targe
         Math.atan2(deltaX, -deltaY) +
         side *
           (Math.PI / 2 -
-            (distance > batteryRange * 0.8 ? 0.35 : distance < batteryRange * 0.5 ? -0.35 : 0));
+            (distance > maneuverRange * 0.8 ? 0.35 : distance < maneuverRange * 0.5 ? -0.35 : 0));
     steering.steer(
       attacker,
       attacker.x + Math.sin(targetAngle) * 300,
@@ -44,7 +60,7 @@ export function maneuverCombat(steering: CombatSteering, attacker: Entity, targe
     );
     attacker.inp.thrust =
       Math.hypot(attacker.vx, attacker.vy) < attacker.st.maxSpeed * 0.6 ? attacker.inp.thrust : 0;
-  } else if (distance > batteryRange * 0.75) steering.steer(attacker, leadX, leadY, false);
+  } else if (distance > maneuverRange * 0.75) steering.steer(attacker, leadX, leadY, false);
   else if (distance < Math.max(120, attacker.st.size * 0.9)) {
     const away = Math.atan2(-deltaX, deltaY) + 0.8;
     steering.steer(

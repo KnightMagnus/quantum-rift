@@ -183,7 +183,8 @@ import { winOdds } from '../shared/hostile.ts';
 /**
  * Maximum distance in space units for target engagement validity.
  */
-const BOUNDARY: number = 2200;
+/** Maximum distance at which Assist retains a combat target. */
+export const COMBAT_ASSIST_RANGE: number = 2200;
 
 /**
  * Fleet orders that halt or suppress offensive combat actions.
@@ -398,7 +399,7 @@ export class CombatAssist {
       // Protection is directional: our arrival/newcomer truce limits NPC initiation,
       // not an explicitly selected player attack. Match the player-to-target canHit direction.
       !space.spared(lead, entity) &&
-      Math.hypot(entity.x - lead.x, entity.y - lead.y) <= BOUNDARY
+      Math.hypot(entity.x - lead.x, entity.y - lead.y) <= COMBAT_ASSIST_RANGE
     );
   }
 

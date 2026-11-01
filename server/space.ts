@@ -392,6 +392,13 @@ export type Entity = EntityFeatureState & {
   /** Linked story objective ID. */
   storyKill?: boolean;
 
+  /** Target whose maneuver recovery is currently tracked. */
+  combatManeuverTarget?: number;
+  /** Last positive damage to the maneuver target, in simulation seconds. */
+  combatLastHitT?: number;
+  /** Keep facing the target after a broadside stall until the target changes. */
+  combatForward?: boolean;
+
   /** Faction arc objective identifier. */
   arcOf?: {
     sid: number;
@@ -2755,6 +2762,7 @@ export class Space {
       this.game.features.coop.rescueHold(entity, srcRoot, this)
     )
       return [done, hadShield ? 1 : 0, srcRoot ? srcRoot.id : 0]; // an Armada can rescue a downed captain
+    if (done > 0 && srcRoot?.combatManeuverTarget === entity.id) srcRoot.combatLastHitT = this.t;
     if (entity.armor <= 0) this.kill(entity, srcRoot);
     return [done, hadShield ? 1 : 0, srcRoot ? srcRoot.id : 0];
   }

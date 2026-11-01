@@ -131,13 +131,26 @@ for (const player of [false, true]) {
   const current = fixture(425, { size: 110, turrets: 2 });
   if (player) current.attacker.player = { id: 1 } as Entity['player'];
   current.attacker.autoCombat = true;
+  current.attacker.combatManeuverTarget = current.target.id;
+  current.attacker.combatLastHitT = 0;
+  current.space.t = 6;
   const front = mount(1260);
   front.p.turret = false;
   current.attacker.guns = [mount(360), front];
-  assert.deepEqual(current.run('mixed capital closes for short battery'), [425, 0]);
+  assert.deepEqual(current.run('mixed capital faces forward battery'), [425, 0]);
   assert.equal(current.attacker.inp.thrust, 1);
 }
 const fleeing = fixture(400, { size: 110, turrets: 2 });
 fleeing.attacker.autoCombat = true;
+fleeing.attacker.combatManeuverTarget = fleeing.target.id;
+fleeing.attacker.combatLastHitT = 0;
+fleeing.space.t = 6;
 fleeing.target.vx = 60;
 assert.deepEqual(fleeing.run('moving capital target prevents parallel chase'), [440, 0]);
+
+const retargeted = fixture(400, { size: 110, turrets: 2 });
+retargeted.attacker.autoCombat = true;
+retargeted.attacker.combatForward = true;
+retargeted.attacker.combatManeuverTarget = -1;
+retargeted.run('new target clears stale recovery');
+assert.equal(retargeted.attacker.combatForward, false);

@@ -165,6 +165,7 @@ for (const hull of [744, 774]) {
   attacker.target = target;
   game.combatAssist.command(owner, { op: 'assist', on: true });
   target.guns = [];
+  target.life = 1e9;
   target.vx = 30;
   target.ai = null;
   for (const mount of attacker.guns) if (Number.isFinite(mount.ammo)) mount.ammo = 0;
@@ -179,6 +180,7 @@ for (const hull of [744, 774]) {
   for (let frame = 0; frame < 90 / DT; frame++) {
     target.inp = {};
     target.vx = 30;
+    target.vy = 0;
     combatSpace.tick();
     if ((frame + 1) % Math.round(30 / DT) === 0) {
       assert.ok(
