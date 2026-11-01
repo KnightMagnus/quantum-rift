@@ -846,7 +846,7 @@ let budget = 0,
 let renderManifest: Record<string, Omit<RenderedDefinition, 'id'>> | null = null;
 const images = new Map<string, HTMLImageElement>(),
   pick = new Map<string, RenderedDefinition | null>();
-const irregularCanvases = new Map<string, HTMLCanvasElement>();
+const irregularSprites = new Map<string, PlanetSprite>();
 // A transient failed response must not permanently strand the renderer in its fallback.
 // Retry only twice, with a cache-busting URL, then leave the procedural world usable.
 const ASSET_RETRY_DELAYS = [1000, 4000];
@@ -1426,19 +1426,21 @@ export function planetSprite(planetDef: PlanetDef, currentTime: number): PlanetS
     }
     if (image.complete && image.naturalWidth) {
       const size = image.naturalWidth;
-      let canvas = irregularCanvases.get(planetDef.id);
-      if (!canvas) {
-        canvas = document.createElement('canvas');
+      let sprite = irregularSprites.get(planetDef.id);
+      if (!sprite) {
+        const canvas = document.createElement('canvas');
         canvas.width = canvas.height = size;
-        irregularCanvases.set(planetDef.id, canvas);
+        sprite = { canvas, S: size, D: size, scale: (2 * planetDef.r) / size };
+        irregularSprites.set(planetDef.id, sprite);
       }
+      const canvas = sprite.canvas as HTMLCanvasElement;
       const context = canvas.getContext('2d')!;
       context.setTransform(1, 0, 0, 1, 0, 0);
       context.clearRect(0, 0, size, size);
       context.translate(size / 2, size / 2);
       context.rotate(currentTime / 180000 + (hashStr(planetDef.id) % 628) / 100);
       context.drawImage(image, -size / 2, -size / 2);
-      return { canvas, S: size, D: size, scale: (2 * planetDef.r) / size };
+      return sprite;
     }
     return procSprite(planetDef, currentTime);
   }

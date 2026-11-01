@@ -211,8 +211,10 @@ try {
 
     const budget = bounded[0].usage[kind].budgetBytes;
     assert.ok(Number.isFinite(budget), `${kind} cache has a byte budget`);
+    // Texture-count eviction can release rendered worlds later in the tour.
+    // The control must cross the byte budget, not remain above it at the final stop.
     assert.ok(
-      retained(unbounded.at(-1)!, kind) > budget,
+      Math.max(...unbounded.map((visit) => retained(visit, kind))) > budget,
       `${kind}: the unbounded tour outgrows the budget`,
     );
     for (const visit of bounded) {
