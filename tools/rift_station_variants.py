@@ -202,7 +202,125 @@ def luna():
     return meshes
 
 
+armor = renderer.mat((0.28, 0.30, 0.36), metal=0.5, rough=0.65, panel=0.7, grime=0.3)
+edge = renderer.mat((0.48, 0.49, 0.55), metal=0.5, rough=0.6, panel=0.8)
+hab = renderer.mat(
+    (0.43, 0.40, 0.34), metal=0.3, panel=0.8, windows=(-0.03, 0.03, (1, 0.65, 0.28), 12)
+)
+
+
+def stronghold():
+    meshes = [station_mesh.zcyl((0, 0, 0), 0.16, 1.65, armor, ring=12)]
+    for z, radius, height in [
+        (-1.35, 0.29, 0.15),
+        (-0.92, 0.38, 0.16),
+        (-0.42, 0.49, 0.17),
+        (0.18, 0.72, 0.15),
+        (0.52, 0.55, 0.12),
+        (0.91, 0.34, 0.17),
+        (1.25, 0.23, 0.12),
+    ]:
+        meshes += [
+            station_mesh.zcyl((0, 0, z), radius, height, edge, ring=12),
+            station_mesh.flat_torus(radius, 0.028, station_mesh.DARK, z=z + height),
+        ]
+        for k in range(8):
+            angle = k * math.pi / 4
+            meshes += [
+                station_mesh.light(
+                    angle, radius, z + height + 0.015, station_mesh.GVIOLET, 0.012
+                )
+            ]
+    for k in range(6):
+        angle = k * math.pi / 3
+        meshes += [
+            station_mesh.rot_z(
+                station_mesh.block((0.26, 0, -0.50), (0.065, 0.09, 0.77), armor), angle
+            )
+        ]
+        meshes += [
+            station_mesh.rot_z(
+                station_mesh.block((0.69, 0, 0.23), (0.25, 0.15, 0.12), armor), angle
+            )
+        ]
+        # Visible recessed docking mouth and violet approach bars.
+        meshes += [
+            station_mesh.rot_z(
+                station_mesh.block(
+                    (0.935, 0, 0.23), (0.008, 0.115, 0.068), station_mesh.DARK
+                ),
+                angle,
+            )
+        ]
+        for y in [-0.12, 0.12]:
+            meshes += [
+                station_mesh.rot_z(
+                    station_mesh.block(
+                        (0.98, y, 0.16), (0.17, 0.009, 0.008), station_mesh.GVIOLET
+                    ),
+                    angle,
+                )
+            ]
+    meshes += [station_mesh.zcyl((0, 0, 1.63), 0.045, 0.29, edge, ring=8)]
+    angle = math.radians(24)
+    for mesh in meshes:
+        mesh.tf(
+            lambda vertices: np.column_stack(
+                [
+                    vertices[:, 0] * math.cos(angle) + vertices[:, 2] * math.sin(angle),
+                    vertices[:, 1],
+                    -vertices[:, 0] * math.sin(angle)
+                    + vertices[:, 2] * math.cos(angle),
+                ]
+            )
+        )
+    return meshes
+
+
+def farside():
+    meshes = []
+    for x, seed, radius in [(-1.05, 27, 0.75), (1.05, 41, 0.66)]:
+        meshes += [
+            station_mesh.lumpy((x, 0, 0), radius, station_mesh.ROCK, seed, squash=1.35)
+        ]
+    # Several city decks bridge the gap, not angle literal circular space ring.
+    for z in [-0.28, 0, 0.25]:
+        meshes += [
+            station_mesh.block((0, 0, z), (1.09, 0.22, 0.035), station_mesh.RUST)
+        ]
+        for y in [-0.23, 0.23]:
+            meshes += [
+                station_mesh.block(
+                    (0, y, z + 0.06), (1.03, 0.018, 0.08), station_mesh.DARK
+                )
+            ]
+    random = np.random.default_rng(41)
+    for i in range(90):
+        x = random.uniform(-1.38, 1.38)
+        y = random.uniform(-0.36, 0.36)
+        z = 0.30 if abs(x) < 0.65 else 0.52
+        height = random.uniform(0.035, 0.19)
+        meshes += [
+            station_mesh.block(
+                (x, y, z + height),
+                (0.045, 0.045, height),
+                hab if i % 3 else station_mesh.RUST,
+            )
+        ]
+    for x in [-0.38, 0.38]:
+        meshes += [station_mesh.block((x, -0.53, -0.1), (0.23, 0.30, 0.035), armor)]
+        for y in [-0.76, -0.56, -0.36]:
+            meshes += [
+                station_mesh.block(
+                    (x, y, -0.055), (0.19, 0.008, 0.006), station_mesh.GAMBER
+                )
+            ]
+    return meshes
+
+
 DESIGNS = {
+    "stronghold": stronghold,
+    "farside": farside,
     "biodome": biodome,
     "cylinder": cylinder,
     "crescent": crescent,
@@ -215,14 +333,24 @@ DESIGNS = {
 if __name__ == "__main__":
     output = Path(__file__).resolve().parents[1] / "client/assets/stations"
     output.mkdir(parents=True, exist_ok=True)
+    import sys
+
     for key, make_meshes in DESIGNS.items():
+        if len(sys.argv) > 1 and key not in sys.argv[1:]:
+            continue
         meshes = make_meshes()
         extent = np.linalg.norm(
-            np.concatenate([mesh.vertices for mesh in meshes]), axis=1
+            np.concatenate([mesh.V for mesh in meshes]), axis=1
         ).max()
         for size, suffix in [(360, ""), (800, "_landed")]:
             rgb, alpha = renderer.render(
-                meshes, size, 25, size * 0.43 / extent, tilt=50, ss=3, density=10
+                meshes,
+                size,
+                25,
+                size * 0.43 / extent,
+                tilt=72 if key == "stronghold" else 48 if key == "farside" else 50,
+                ss=3,
+                density=10,
             )[0]
             pixels = (
                 np.dstack([np.clip(rgb, 0, 1) * 255, np.clip(alpha, 0, 1) * 255])
