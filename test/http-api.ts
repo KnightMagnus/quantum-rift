@@ -9,12 +9,12 @@ import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { root, availablePort, ready, cleanup, evidenceDir } from './helpers/browser-fixture.ts';
 import { tempDataDir } from './helpers/temp-data.ts';
-const version = JSON.parse(
+const version: string = JSON.parse(
   fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8'),
 ).publicVersion;
 assert.match(
   version,
-  /^0\.\d+(?:(?:\.\d+){1,2}| MP Beta [1-9]\d*)?$/,
+  /^0\.\d+(?:(?:\.\d+){1,2}|(?:\.\d+)? MP Beta [1-9]\d*)?$/,
   'beta labels include numeric releases and numbered MP betas',
 );
 const packageVersion = JSON.parse(
@@ -23,7 +23,10 @@ const packageVersion = JSON.parse(
 assert.equal(
   packageVersion,
   version.includes(' MP Beta ')
-    ? version.replace(/^(0\.\d+) MP Beta ([1-9]\d*)$/, '$1.0-mp-beta.$2')
+    ? version.replace(
+        /^(0\.\d+)(\.\d+)? MP Beta ([1-9]\d*)$/,
+        (_, base, patch, beta) => `${base}${patch ?? '.0'}-mp-beta.${beta}`,
+      )
     : version.split('.').length === 4
       ? version.replace(/\.(\d+)$/, '-$1')
       : version.split('.').length === 2

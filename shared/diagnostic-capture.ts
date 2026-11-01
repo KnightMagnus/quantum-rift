@@ -106,7 +106,7 @@ export type DiagnosticCaptureParse =
 
 const COMMODITY_PATTERN = /^[a-z][a-z0-9_]{0,47}$/;
 const BUILD_PATTERN = /^[0-9A-Za-z][0-9A-Za-z.+-]{0,31}$/;
-const MULTIPLAYER_BETA_BUILD_PATTERN = /^0\.\d+ MP Beta [1-9]\d*$/;
+const MULTIPLAYER_BETA_BUILD_PATTERN = /^0\.\d+(?:\.\d+)? MP Beta [1-9]\d*$/;
 const MAX_MAGNITUDE = 1e15;
 
 class CaptureShapeError extends Error {}

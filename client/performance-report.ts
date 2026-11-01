@@ -14,7 +14,8 @@ let timer: ReturnType<typeof setTimeout> | undefined;
 
 export function setPerformanceBuild(version: string): void {
   const supportedLabel =
-    /^\d+(\.\d+){1,3}([+-][\w.-]+)?$/.test(version) || /^0\.\d+ MP Beta [1-9]\d*$/.test(version);
+    /^\d+(\.\d+){1,3}([+-][\w.-]+)?$/.test(version) ||
+    /^0\.\d+(?:\.\d+)? MP Beta [1-9]\d*$/.test(version);
   build = supportedLabel && version.trim() === version ? version.slice(0, 80) : null;
 }
 
