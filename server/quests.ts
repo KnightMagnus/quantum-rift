@@ -536,7 +536,8 @@ export const QuestOperations = {
         return;
       if (
         sideStory.id === SCIENTIST_STORY &&
-        this.stats(playerData)!.cargo - this.holdUsed(playerData) < needsOf(sideStory.steps).hold
+        this.transportCapacity(playerData).cargo - this.holdUsed(playerData) <
+          needsOf(sideStory.steps).hold
       )
         return this.toast(session, 'Free two tonnes of hold space for the repair kit first.');
       if (sideStory.id === 'keepers-vigil') (playerData.story.flags ||= {}).founding_vigil = true;
@@ -804,9 +805,7 @@ export const QuestOperations = {
         others = playerData.missions.filter(
           (mission2) => mission2.id !== mission.id && !mission2.paid,
         ),
-        free =
-          (playerData.shipless ? 0 : this.stats(playerData)!.passengerSeats || 0) -
-          occupiedPassengerSeats(others);
+        free = this.transportCapacity(playerData).passengerSeats - occupiedPassengerSeats(others);
       if (waiting && (session.ent || playerData.stellar !== location)) return false;
       if (free < mission.pax! || others.length >= 6) {
         quest.awaitingSeats = {
@@ -827,7 +826,7 @@ export const QuestOperations = {
     playerData.missions = playerData.missions.filter((mission2) => mission2.id !== mission.id);
     playerData.missions.push(mission);
     if (mission.type === 'cargo' || mission.type === 'smuggle') {
-      const free = this.stats(playerData)!.cargo - this.holdUsed(playerData);
+      const free = this.transportCapacity(playerData).cargo - this.holdUsed(playerData);
       if (free < 0)
         this.toast(
           session,

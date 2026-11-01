@@ -11,7 +11,7 @@ import type { CoopOperations } from './coop-contracts.ts';
 
 import type { CombatSession } from './combat-assist.ts';
 import type { BoundOperations } from './feature-service.ts';
-import type { Game, StellarBody } from './game.ts';
+import type { Game, StellarBody, PlayerData } from './game.ts';
 import type { IndustrialCapabilities } from './industrial-contracts.ts';
 import type { MiningCapabilities } from './mining-contracts.ts';
 import type { PressureCapabilities } from './mining-pressure-contracts.ts';
@@ -52,6 +52,8 @@ export type FeatureServices = {
 };
 export type HangarCapabilities = Pick<
   FeatureCore,
+  | 'fitsJobs'
+  | 'transportCapacity'
   | 'A'
   | 'holdUsed'
   | 'db'
@@ -144,6 +146,7 @@ export type FrontsCapabilities = {
   Pick<BoundOperations<FrontierOperations>, 'worldPayload'>;
 export type FrontierCapabilities = { readonly frontierState: FrontierState } & Pick<
   FeatureCore,
+  | 'transportCapacity'
   | 'A'
   | 'holdUsed'
   | 'broadcast'
@@ -270,7 +273,7 @@ export type HailCapabilities = Pick<
 export type FleetCommandsCapabilities = import('./contracts.ts').FleetCommandsCapabilities;
 export type SyndicateCapabilities = Pick<
   FeatureCore,
-  'A' | 'db' | 'landed' | 'log' | 'toast' | 'you'
+  'A' | 'db' | 'landed' | 'log' | 'toast' | 'you' | 'transportCapacity'
 > &
   Pick<BoundOperations<SyndicateOperations>, 'bankAt' | 'bankInfo' | 'blackMarketAt' | 'synInit'> &
   Pick<BoundOperations<FrontierOperations>, 'notify'>;
@@ -332,6 +335,7 @@ export type LivingCapabilities = {
   Pick<BoundOperations<RivalsOperations>, 'news'>;
 export type QuestsCapabilities = Pick<
   FeatureCore,
+  | 'transportCapacity'
   | 'A'
   | 'db'
   | 'holdUsed'
@@ -597,6 +601,8 @@ export function createFeatures(core: Game): FeatureServices {
       return features.syndicate.synGain;
     },
     takeMats: core.takeMats.bind(core),
+    fitsJobs: core.fitsJobs.bind(core),
+    transportCapacity: core.transportCapacity.bind(core),
     toast: core.toast.bind(core),
     tut: core.tut.bind(core),
     get uid() {
@@ -816,6 +822,7 @@ export function createFeatures(core: Game): FeatureServices {
       return features.shipStats.stats;
     },
     takeMats: core.takeMats.bind(core),
+    transportCapacity: core.transportCapacity.bind(core),
     toast: core.toast.bind(core),
     get tryMatch() {
       return features.frontier.tryMatch;
@@ -1092,7 +1099,10 @@ export function createFeatures(core: Game): FeatureServices {
       return core.spaces;
     },
     get stats() {
-      return features.shipStats.stats;
+      return (playerData: PlayerData) => {
+        const stats = features.shipStats.stats(playerData);
+        return stats ? { ...stats, cargo: core.transportCapacity(playerData).cargo } : null;
+      };
     },
     toast: core.toast.bind(core),
     you: core.you.bind(core),
@@ -1126,6 +1136,7 @@ export function createFeatures(core: Game): FeatureServices {
     get synInit() {
       return features.syndicate.synInit;
     },
+    transportCapacity: core.transportCapacity.bind(core),
     toast: core.toast.bind(core),
     you: core.you.bind(core),
   };
@@ -1349,6 +1360,7 @@ export function createFeatures(core: Game): FeatureServices {
     get stats() {
       return features.shipStats.stats;
     },
+    transportCapacity: core.transportCapacity.bind(core),
     toast: core.toast.bind(core),
     get uid() {
       return features.hangar.uid;
@@ -1586,7 +1598,7 @@ export function createFeatures(core: Game): FeatureServices {
     now: () => Date.now(),
     paused: () => !!core.paused,
     room: (playerData) =>
-      Math.max(0, (features.shipStats.stats(playerData)?.cargo || 0) - core.holdUsed(playerData)),
+      Math.max(0, core.transportCapacity(playerData).cargo - core.holdUsed(playerData)),
     fuelCapacity: (playerData) => features.shipStats.stats(playerData)?.fuel || 0,
     access(playerData, port) {
       const stellarBody = STELLARS[port] as StellarBody,
@@ -1701,7 +1713,7 @@ export function createFeatures(core: Game): FeatureServices {
     },
     paused: () => !!core.paused,
     room: (playerData) =>
-      Math.max(0, (features.shipStats.stats(playerData)?.cargo || 0) - core.holdUsed(playerData)),
+      Math.max(0, core.transportCapacity(playerData).cargo - core.holdUsed(playerData)),
     get power() {
       return features.specialists.power;
     },
@@ -1729,8 +1741,7 @@ export function createFeatures(core: Game): FeatureServices {
     room: (playerData) =>
       Math.max(
         0,
-        (features.shipStats.stats(playerData)?.cargo || 0) -
-          core.holdUsed(playerData as RefineryPlayer),
+        core.transportCapacity(playerData).cargo - core.holdUsed(playerData as RefineryPlayer),
       ),
     stats: (playerData) => features.shipStats.stats(playerData),
     field: (starSystem, field) => features.pressure.fieldState(starSystem, field),

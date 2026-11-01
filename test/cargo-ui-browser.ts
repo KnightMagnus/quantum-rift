@@ -7,7 +7,7 @@ import { spawn } from 'node:child_process';
 
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
-import { augmentAssets, makeLoadout } from '../shared/rules.ts';
+import { augmentAssets, makeLoadout, shipStats } from '../shared/rules.ts';
 import { addLots } from '../shared/cargo-lots.ts';
 import { tempDataDir } from './helpers/temp-data.ts';
 import {
@@ -25,18 +25,54 @@ augmentAssets(assets);
 const database = new Database(path.join(directory, 'data')),
   playerData = Game.prototype.fresh.call({ A: assets }) as ReturnType<
     import('../server/game.ts').Game['fresh']
-  > & {
-    story?: { done: string[]; active: null; step: number };
-  };
+  > &
+    Pick<import('../server/game.ts').PlayerData, 'dock' | 'docks' | 'activeDock'> & {
+      story?: { done: string[]; active: null; step: number };
+    };
 playerData.tut = 999;
 playerData.story = { done: ['start'], active: null, step: 0 };
 playerData.ship = makeLoadout(assets, 704, 'Grade hauler');
+playerData.ship.uid = 'grade-lead';
+playerData.station.site = 'site-qgate';
+playerData.station.claimed = true;
+playerData.station.ops = 4;
+playerData.credits = 1e7;
+const wingHauler = makeLoadout(assets, 704, 'Cargo wing');
+wingHauler.uid = 'grade-dory';
+const wingLiner = makeLoadout(assets, 714, 'Passenger wing');
+wingLiner.uid = 'grade-liner';
+playerData.dock = [
+  { ship: wingHauler, bridge: {} },
+  { ship: wingLiner, bridge: {} },
+];
+playerData.docks = [
+  {
+    lead: playerData.ship.uid,
+    wings: [
+      { uid: wingHauler.uid, cap: null, crew: null },
+      { uid: wingLiner.uid, cap: null, crew: null },
+    ],
+  },
+];
+playerData.activeDock = 0;
+const fleetCapacity = [playerData.ship, wingHauler, wingLiner].reduce(
+  (total, ship) => {
+    const stats = shipStats(assets, ship)!;
+    return {
+      cargo: total.cargo + stats.cargo,
+      passengerSeats: total.passengerSeats + stats.passengerSeats,
+    };
+  },
+  { cargo: 0, passengerSeats: 0 },
+);
+
 addLots(playerData.cargo, playerData.cargoLots, {
   cid: 'ore',
   qty: 6,
   grades: { common: 1, rich: 2, pure: 3 },
 });
 database.create('Grade Pilot', 'fixture', playerData);
+database.world.sites['site-qgate'] = database.key('Grade Pilot');
 database.flush();
 const port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;
@@ -128,6 +164,28 @@ try {
   for (let index = 0; index < 10 && (await page.locator('#storybox').isVisible()); index++)
     await page.locator('#storyb button').first().click();
   await page.locator('[data-lt="trade"]').click();
+  const footer = page.locator('#landcargo');
+  assert.match(await footer.innerText(), new RegExp(`Cargo 6/${fleetCapacity.cargo} t`));
+  assert.match(
+    await footer.innerText(),
+    new RegExp(`Passengers 0/${fleetCapacity.passengerSeats} seats`),
+  );
+  await page.locator('[data-act="trade"][data-c="food"]').filter({ hasText: /^MAX$/ }).click();
+  await page.waitForFunction((capacity) => G.you!.cargo.food === capacity - 6, fleetCapacity.cargo);
+  assert.match(
+    await footer.innerText(),
+    new RegExp(`Cargo ${fleetCapacity.cargo}/${fleetCapacity.cargo} t`),
+  );
+  await page.locator('#landbody').evaluate((element) => {
+    element.scrollTop = 0;
+  });
+  await page.screenshot({
+    animations: 'disabled',
+    path: path.join(output, 'fleet-capacity-landed.png'),
+  });
+  await page.locator('[data-act="trade"][data-c="food"][data-q="-999"]').click();
+  await page.waitForFunction(() => !G.you!.cargo.food);
+
   const pure = page.locator('[data-act="trade"][data-c="ore"][data-grade="pure"][data-q="-1"]');
   await pure.waitFor();
   assert.equal(await page.locator('[data-grade="rich"][data-act="trade"]').count(), 2);

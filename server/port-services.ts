@@ -54,6 +54,7 @@ export type PortCapabilities = Pick<
   | 'db'
   | 'features'
   | 'fitsJobs'
+  | 'transportCapacity'
   | 'holdUsed'
   | 'jobBunks'
   | 'landed'
@@ -216,10 +217,10 @@ const PortOperations: PortOperations = {
         (1 - impact);
     const tradeBonus = this.features.bonuses.bonus(playerData).tradePct || 0;
     const sell = this.features.fronts.mods(port.system).sell;
-    const shipStats = this.features.shipStats!.stats(playerData),
+    const capacity = this.transportCapacity(playerData),
       usedHold = this.holdUsed(playerData);
     if (quantity > 0) {
-      quantity = Math.min(quantity, shipStats!.cargo - usedHold);
+      quantity = Math.min(quantity, capacity.cargo - usedHold);
       let lower = 0,
         upper = quantity;
       while (lower < upper) {
@@ -255,7 +256,7 @@ const PortOperations: PortOperations = {
           ...commonLots(commodityId, quantity),
           basis: { common: purchaseTotal, rich: 0, pure: 0 },
         },
-        Math.max(0, shipStats!.cargo - usedHold),
+        Math.max(0, capacity.cargo - usedHold),
       );
       playerData.credits -= purchaseTotal;
       recordEconomy(playerData, port.id, 'purchases', purchaseTotal);
@@ -635,13 +636,15 @@ const PortOperations: PortOperations = {
       if (!transferQuantity) return;
       if (
         outfit.eff!.cargo &&
-        this.holdUsed(playerData) > shipStats!.cargo - outfit.eff!.cargo * transferQuantity
+        this.holdUsed(playerData) >
+          this.transportCapacity(playerData).cargo - outfit.eff!.cargo * transferQuantity
       )
         return this.toast(session, 'Sell cargo first.');
       if (
         outfit.eff!.passengerSeats &&
         this.jobBunks(playerData) >
-          shipStats!.passengerSeats - outfit.eff!.passengerSeats * transferQuantity
+          this.transportCapacity(playerData).passengerSeats -
+            outfit.eff!.passengerSeats * transferQuantity
       )
         return this.toast(session, 'Deliver your passengers before removing their seats.');
       const refund = outfitSaleValue(this.A, playerData.ship, outfitId, transferQuantity);

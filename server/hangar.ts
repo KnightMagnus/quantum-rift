@@ -987,6 +987,12 @@ export const HangarOperations = {
           ? playerData.dock.find((storedShip3) => storedShip3.ship.uid === message.uid)
           : playerData.dock[message.i! | 0];
         if (!storedShip) return;
+        const candidate = {
+          ...playerData,
+          dock: playerData.dock.filter((ship) => ship !== storedShip),
+        };
+        const problem = this.fitsJobs(candidate, candidate.ship);
+        if (problem) return this.toast(session, problem);
         const storedValue2 = this.storedValue(storedShip);
         playerData.credits += storedValue2;
         playerData.dock = playerData.dock.filter((storedShip3) => storedShip3 !== storedShip);
@@ -1078,9 +1084,8 @@ export const HangarOperations = {
         playerData.credits += credits2;
         playerData.stats.earned += credits2;
         const received = [`${credits(credits2)} credits`];
-        const computedShipStats = this.stats(playerData),
-          used = this.holdUsed(playerData),
-          room = computedShipStats!.cargo - used;
+        const used = this.holdUsed(playerData),
+          room = this.transportCapacity(playerData).cargo - used;
         if (room > 0) {
           const commodityDef = COMMODITIES[Math.floor(Math.random() * COMMODITIES.length)],
             quantity = Math.min(room, 2 + Math.floor(Math.random() * 9));

@@ -164,7 +164,8 @@
     "performance-growth.ts",
     "fuzz-seeds.ts",
     "qcs-fleet.ts",
-    "flight-heading.ts"
+    "flight-heading.ts",
+    "fleet-capacity.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -902,7 +903,13 @@
     "touch-controls-browser.ts": ["helpers/landed-responsive.ts"],
     "helpers/touch-controls.ts": ["helpers/chromium.ts", "helpers/browser-fixture.ts"],
     "combat-browser.ts": ["helpers/chromium.ts", "fixtures/preload-combat-browser.ts"],
-    "flight-heading.ts": ["helpers/required.ts"]
+    "flight-heading.ts": ["helpers/required.ts"],
+    "fleet-capacity.ts": [
+      "helpers/temp-data.ts",
+      "helpers/legacy-fixture.ts",
+      "helpers/mocks.ts",
+      "helpers/cargo-fixture.ts"
+    ]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -2200,6 +2207,26 @@
       "services": [],
       "tests": ["touch-controls-browser.ts"],
       "asserts": "Trusted Chromium touch events hit MAP/FIRE/LAND above the cockpit; map/dock dialogs retain input precedence and the map has a native touch-close control. Primary fire holds, releases, cancels and drags without latching; joystick cancellation and modal entry release input; hiding without blur synchronously sends neutral before RAF; LAND completes through the authoritative game handler. Two tablet sizes and UI scales 1/1.4; no physical-device claim."
+    },
+    {
+      "id": "fleet-transport-capacity",
+      "owners": [
+        "server/game.ts",
+        "server/docks.ts",
+        "server/port-services.ts",
+        "server/jobs.ts",
+        "server/syndicate.ts",
+        "client/ui.ts"
+      ],
+      "services": [],
+      "tests": [
+        "fleet-capacity.ts",
+        "cargo-ui-browser.ts",
+        "passengers.ts",
+        "passenger-quests.ts",
+        "v21.ts"
+      ],
+      "asserts": "Ready assigned wingmates contribute fitted cargo holds and passenger seats to Trade and transport missions without changing lead physical stats. Shared manifests persist, exclude repairing and unassigned ships, deny loaded carrier removal or sale, and drive the actual landed footer and MAX purchase controls."
     }
   ],
   "routes": {

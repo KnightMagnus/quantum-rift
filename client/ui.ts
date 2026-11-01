@@ -1693,7 +1693,9 @@ export function renderLanded(): void {
   else if (!elementById2('bankbox').classList.contains('hidden')) renderBank();
   elementById2('landcargo').textContent = playerPayload.shipless
     ? 'No active ship: choose one to depart'
-    : `Cargo ${playerPayload.cargoUsed + (playerPayload.jobCargo || 0)}/${computedShipStats!.cargo} t${playerPayload.jobCargo ? ` (${playerPayload.jobCargo} t for jobs)` : ''} · Passengers ${occupiedPassengerSeats(playerPayload.missions)}/${passengerSeats(clientGameState.A!.ships[playerPayload.ship.hull], playerPayload.ship)} seats · Outfit space ${computedShipStats!.free} t free`;
+    : `Cargo ${playerPayload.cargoUsed + (playerPayload.jobCargo || 0)}/${playerPayload.transportCapacity.cargo} t${playerPayload.jobCargo ? ` (${playerPayload.jobCargo} t for jobs)` : ''} · Passengers ${occupiedPassengerSeats(playerPayload.missions)}/${playerPayload.transportCapacity.passengerSeats} seats · Outfit space ${computedShipStats!.free} t free`;
+  elementById2('landcargo').title =
+    'Cargo and passenger totals include ready wingmates assigned to your active dock. Outfit space is for the ship you pilot.';
   elementById2('depart').disabled = !!playerPayload.shipless;
   elementById2('depart').title = playerPayload.shipless
     ? 'Choose a ship first: a lead ship for your active dock (STATION, then DOCKS), or buy one at a shipyard'
@@ -1760,7 +1762,7 @@ export function renderLanded(): void {
           })
           .join(
             '',
-          )}</table><div class="tradefoot"><span class="dim small">Estimates include cargo grade, your perks and the size of the order. There is no separate trading fee. Prices can change before you click; a price here does not promise the same price elsewhere. Green is cheap here, red is high. Hold: ${playerPayload.cargoUsed + (playerPayload.jobCargo || 0)} / ${computedShipStats!.cargo} t${playerPayload.jobCargo ? ` (${playerPayload.jobCargo} t is job cargo)` : ''}.</span>${holdFree(playerPayload) <= 0 ? '<span class="jwarn">Hold full. Sell cargo or finish a delivery to make room.</span>' : ''}${length2.market.some((marketItem) => playerPayload.cargo[marketItem.id]) ? `<button class="btn sm" data-act="sellall">SELL ALL CARGO</button>` : ''}</div>`;
+          )}</table><div class="tradefoot"><span class="dim small">Estimates include cargo grade, your perks and the size of the order. There is no separate trading fee. Prices can change before you click; a price here does not promise the same price elsewhere. Green is cheap here, red is high. Hold: ${playerPayload.cargoUsed + (playerPayload.jobCargo || 0)} / ${playerPayload.transportCapacity.cargo} t${playerPayload.jobCargo ? ` (${playerPayload.jobCargo} t is job cargo)` : ''}.</span>${holdFree(playerPayload) <= 0 ? '<span class="jwarn">Hold full. Sell cargo or finish a delivery to make room.</span>' : ''}${length2.market.some((marketItem) => playerPayload.cargo[marketItem.id]) ? `<button class="btn sm" data-act="sellall">SELL ALL CARGO</button>` : ''}</div>`;
       if (length2.mats.length)
         height += `<div class="sect">STATION MATERIALS</div><table class="tbl trade-table"><tr><th>CRATE</th><th>PRICE</th><th>HELD</th><th></th></tr>${length2.mats.map((message) => `<tr><td>${message.mat} ${GRADES[message.grade]}</td><td>${credits(message.price)}</td><td>${playerPayload.mats[message.mat][message.grade]}</td><td style="text-align:right"><button class="btn sm" data-act="mat" data-m="${message.mat}" data-g="${message.grade}" data-q="1">BUY</button> <button class="btn sm" data-act="mat" data-m="${message.mat}" data-g="${message.grade}" data-q="-1">SELL</button></td></tr>`).join('')}</table>`;
       break;
@@ -1947,7 +1949,7 @@ export function renderLanded(): void {
     case 'jobs': {
       const story2 = length2.story,
         activeStory = playerPayload.story && playerPayload.story.active;
-      height = `<div class="dim small">Passenger seats: ${occupiedPassengerSeats(playerPayload.missions)} occupied / ${passengerSeats(clientGameState.A!.ships[playerPayload.ship.hull], playerPayload.ship)} total. Bridge officers and working crew have separate accommodation.</div>`;
+      height = `<div class="dim small">Passenger seats: ${occupiedPassengerSeats(playerPayload.missions)} occupied / ${playerPayload.transportCapacity.passengerSeats} total. Bridge officers and working crew have separate accommodation.</div>`;
       if (story2)
         height += `<div class="card story" style="cursor:default"><div class="storytag">MAIN STORY</div><div class="t">${escapeHtml2(story2.title)}</div><div>${escapeHtml2(story2.brief)}</div>${story2.locked ? `<div class="dim small">${escapeHtml2(story2.locked)}</div>` : `<div><button class="btn sm" data-act="storyopen">READ</button></div>`}</div>`;
       height += arcCardsHtml(clientGameState); // 1.2 faction arcs
@@ -2086,7 +2088,7 @@ function stateCard(starSystem: number | string | null): string {
  */
 function holdFree(playerPayload: PlayerPayload): number {
   return new ShipCapacity(
-    playerPayload.shipStats!.cargo,
+    playerPayload.transportCapacity.cargo,
     playerPayload.cargoUsed,
     reservedCargoTonnes(playerPayload.missions),
   ).remaining;
@@ -2134,9 +2136,9 @@ function questNeeds(mission: LandedOffer): string {
     needs2 = mission.needs;
   if (!needs2 || playerPayload.shipless) return '';
   const width = [];
-  if (needs2.hold && (playerPayload.shipStats!.cargo || 0) < needs2.hold)
+  if (needs2.hold && playerPayload.transportCapacity.cargo < needs2.hold)
     width.push(
-      `one step needs ${needs2.hold} t of hold space and your ship has ${playerPayload.shipStats!.cargo || 0} t`,
+      `one step needs ${needs2.hold} t of hold space and your ship has ${playerPayload.transportCapacity.cargo} t`,
     );
   if (needs2.pax && bunkInfo(clientGameState, { type: 'passenger', pax: needs2.pax }))
     width.push(`one step carries ${needs2.pax} passenger${needs2.pax > 1 ? 's' : ''}`);
@@ -2265,9 +2267,9 @@ function jobInfo(mission: LandedOffer, playerPayload: PlayerPayload): JobInfo {
     !note &&
     mission.type === 'supply' &&
     !playerPayload.shipless &&
-    mission.qty! > (playerPayload.shipStats!.cargo || 0)
+    mission.qty! > playerPayload.transportCapacity.cargo
   )
-    note = `You buy and carry the ${mission.qty} t yourself, and your hold takes ${playerPayload.shipStats!.cargo || 0} t.`; // 2.5.2
+    note = `You buy and carry the ${mission.qty} t yourself, and your hold takes ${playerPayload.transportCapacity.cargo} t.`; // 2.5.2
   if (
     !warn &&
     (mission.type === 'cargo' || mission.type === 'smuggle') &&

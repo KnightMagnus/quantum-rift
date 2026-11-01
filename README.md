@@ -36,7 +36,7 @@ Download the latest release, extract it, and follow the launch instructions belo
 ### Build a station and crew
 
 - Turn a derelict hull into your own **Personal Station**, with a Workshop, research, shipbuilding and defenses. Upgrade it or relocate to another hull. Your own station grants you docking clearance even when the local faction is hostile; visitors use a guest dock without access to your private station services.
-- Store ships in your hangar and organize docks around a lead ship and crewed wingmates that fly in formation and follow orders.
+- Store ships in your hangar and organize docks around a lead ship and crewed wingmates that fly in formation and follow orders. Ready wingmates share their cargo space and passenger seats; the landed service bar shows your combined totals.
 - Hire and promote officers for your bridge and fleet, then defend your station in Holdout battles.
 
 ### Play with friends
@@ -114,6 +114,8 @@ Ship details previews equipped outfits, including factory weapons. Land at an ou
 **Landed services**
 
 At trade ports, BANK beside your credits opens loan details and repayment controls.
+
+![Trade screen with combined cargo and passenger capacity from ready wingmates](docs/screenshots/fleet-capacity-landed.png)
 
 ![Compact loan panel over early-game port services](docs/screenshots/pressure-hull-landed.png)
 

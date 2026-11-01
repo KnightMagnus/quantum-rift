@@ -244,9 +244,11 @@ export function bunkInfo(
 ): string {
   if (passengerMissionOffer.type !== 'passenger') return '';
   const playerPayload = clientGameState.you!,
-    bunks2 = bunks(clientGameState.A!.ships[playerPayload.ship.hull], playerPayload.ship),
+    bunks2 =
+      playerPayload.transportCapacity?.passengerSeats ??
+      bunks(clientGameState.A!.ships[playerPayload.ship.hull], playerPayload.ship),
     used = occupiedPassengerSeats(playerPayload.missions);
   return passengerMissionOffer.pax! > bunks2 - used
-    ? `Needs ${passengerMissionOffer.pax} passenger seats; your ship has ${Math.max(0, bunks2 - used)} free.`
+    ? `Needs ${passengerMissionOffer.pax} passenger seats; your fleet has ${Math.max(0, bunks2 - used)} free.`
     : '';
 }

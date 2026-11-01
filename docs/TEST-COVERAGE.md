@@ -16,6 +16,10 @@
 
 `equipped-outfits-browser.ts` checks the MINING filter against combat weapons, real equipped-item previews, outfitter sales of modular and built-in weapons, refunds, live panel refresh, reconnect persistence, flight denial, narrow cards, and default/reassigned Ship and Captain shortcuts. `ship-economy.ts` checks every player hull with built-in banks for once-only refunds and conservation of sale proceeds plus trade-in, along with flight/no-outfitter/unknown-weapon and purchase denial. `wire-contracts.ts` validates the optional built-in sale selector. Equipment sales still require an outfitter; previews are available in flight.
 
+## Fleet cargo and passengers (`fleet-transport-capacity`)
+
+`fleet-capacity.ts` exercises actual Trade purchases and cargo/passenger job admission beyond the lead ship's capacity. It covers fitted ready wingmates, unassigned and repairing ship exclusion, loaded carrier removal/sale denial, and save/reload conservation. `cargo-ui-browser.ts` buys to the combined hold limit with MAX and checks the landed cargo/passenger totals against the authoritative roster. Physical flight and outfit stats remain specific to the lead ship. Cargo and passenger manifests stay captain-owned; loss of a carrier can leave the fleet over capacity without deleting its manifest, but blocks further loading until space is available.
+
 ## Flight heading precision
 
 `flight-heading.ts` drives landing and Gateway guidance through the actual input handler and shared physics, comparing authority with prediction every tick for four hulls, both schedulers and headings on either side of angle wrap. It checks fractional turns, nonfinite rejection and clamping. `nakama-world-lease.ts` exercises fractional-turn admission and invalid-turn denial through the native match callback. Existing landing, combat, formation and jump-arrival tests cover their respective flight policies; this does not prove every latency schedule or hull/outfit combination.

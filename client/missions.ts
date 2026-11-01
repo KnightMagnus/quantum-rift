@@ -222,7 +222,7 @@ export function missionTargets(clientGameState: ClientGameState): MissionTarget[
       !playerPayload.shipless &&
       playerPayload.shipStats &&
       (mission.type === 'cargo' || mission.type === 'smuggle' || mission.type === 'supply') &&
-      mission.qty! > (playerPayload.shipStats.cargo || 0)
+      mission.qty! > (playerPayload.transportCapacity?.cargo ?? playerPayload.shipStats.cargo ?? 0)
     )
       status = `⚠ Needs ${mission.qty} t of hold: switch ships for this step. ${status}`; // the step waits for a ship that can do it
     if (mission.deadline) {
