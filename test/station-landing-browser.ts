@@ -45,8 +45,13 @@ const ports = [
   'waystation-hub',
   'longhaul-depot',
   'cinder-hold',
+  'farside-span',
   'nightjar-beacon',
 ];
+assert.equal(systemsById[STELLARS['cinder-hold'].system].faction, 'hollow');
+assert.equal(systemsById[STELLARS['farside-span'].system].farside, true);
+assert.ok(STELLARS['farside-span'].svc?.includes('L'));
+assert.equal(Object.values(STELLARS).filter((body) => body.id === 'farside-span').length, 1);
 const captain = (identifier: string) => 'Art ' + ports.indexOf(identifier);
 for (const identifier of ports) {
   const player = STELLARS[identifier],
@@ -153,6 +158,7 @@ try {
     }));
     assert.equal(state.solo, true);
     assert.equal(state.stellar, identifier);
+    if (identifier === 'farside-span') assert.match(state.name || '', /Farside Foothold/);
     if (
       STELLARS[identifier].kind === 'station' ||
       STELLARS[identifier].hub ||
@@ -169,7 +175,8 @@ try {
       luna: 'luna',
       'waystation-hub': 'crescent',
       'longhaul-depot': 'refinery',
-      'cinder-hold': 'bastion',
+      'cinder-hold': 'stronghold',
+      'farside-span': 'farside',
       threshold: 'relay',
       'twins-exchange': 'cylinder',
       'nightjar-beacon': 'biodome',
@@ -241,9 +248,17 @@ try {
                 : new URL(sprite.src).pathname ===
                   new URL(source, location.href).pathname.replace('_landed.webp', '.webp');
             if (
-              ['biodome', 'cylinder', 'crescent', 'bastion', 'refinery', 'relay', 'luna'].includes(
-                design,
-              )
+              [
+                'biodome',
+                'cylinder',
+                'crescent',
+                'bastion',
+                'refinery',
+                'relay',
+                'luna',
+                'stronghold',
+                'farside',
+              ].includes(design)
             ) {
               const landingAsset = new Image();
               landingAsset.src = source;
@@ -312,8 +327,8 @@ try {
         path.join(evidence, 'all-designs.png'),
         Buffer.from(audit.contact.split(',')[1], 'base64'),
       );
-      assert.equal(audit.stations, 111);
-      assert.equal(audit.rows.length, 246);
+      assert.equal(audit.stations, 112);
+      assert.equal(audit.rows.length, 247);
       assert.equal(
         audit.rows.filter((row) => row.id === 'table-station').length,
         1,

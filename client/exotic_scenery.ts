@@ -313,7 +313,17 @@ export function stationLandingSource(
   if (stellarBody.hub) return artworkUrl('hub.png');
   if (stellarBody.site)
     return artworkUrl(`stations/${Math.max(0, Math.min(5, site?.ops || 0))}.png`);
-  const landedDesigns = ['biodome', 'cylinder', 'crescent', 'bastion', 'refinery', 'relay', 'luna'];
+  const landedDesigns = [
+    'biodome',
+    'cylinder',
+    'crescent',
+    'bastion',
+    'refinery',
+    'relay',
+    'luna',
+    'stronghold',
+    'farside',
+  ];
   return artworkUrl(
     `stations/s_${design}${landedDesigns.includes(String(design)) ? '_landed' : ''}.webp`,
   );

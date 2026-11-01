@@ -103,6 +103,8 @@ Stations include forest domes, colony cylinders, cargo exchanges, armored outpos
 
 ![Docked at Waystation Hub, with the crescent exchange visible in its landing view](docs/screenshots/station-exchange-landed.png)
 
+![Docked at Farside Foothold, a bridge-city between two asteroids](docs/screenshots/station-span-landed.png)
+
 **Flight controls**
 
 Ship-function controls open above the console. INFO (I) shows ship details and equipped outfits; CAPTAIN (O) opens your profile and career. EJECT opens the quit menu. JUMP can sit in either bottom corner.

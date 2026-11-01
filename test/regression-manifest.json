@@ -1314,10 +1314,15 @@
     },
     {
       "id": "station-art-identity",
-      "owners": ["tools/rift_station_variants.py", "client/exotic_scenery.ts", "client/render.ts"],
+      "owners": [
+        "tools/rift_station_variants.py",
+        "client/exotic_scenery.ts",
+        "client/render.ts",
+        "shared/galaxy.ts"
+      ],
       "services": [],
-      "tests": ["station-landing-browser.ts"],
-      "asserts": "18 real landing/departure sessions, full station/tier artwork audit, authored design routing, dedicated 800px landing variants for six new models and Luna, and transient load recovery."
+      "tests": ["station-landing-browser.ts", "galaxy-graph.ts"],
+      "asserts": "19 real landing/departure sessions, full station/tier artwork audit, authored design routing, dedicated 800px landing variants for six new models, Luna, the unique Hollow stronghold and the Farside asteroid span, and transient load recovery."
     },
     {
       "id": "login-scene",
