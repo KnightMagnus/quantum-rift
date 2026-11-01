@@ -1,4 +1,4 @@
-import sceneAdditions from '../../shared/diversity-worlds.json' with { type: 'json' };
+import { withLegacyMarketWarmup } from './legacy-market-warmup.ts';
 import assert from 'node:assert/strict';
 import { performance } from 'node:perf_hooks';
 import filesystem from 'node:fs';
@@ -174,15 +174,9 @@ export function simulateCombatPlayability(
     const callbacks = new AuthorityCallbacks(() => now);
     // Keep fixed combat seeds independent of unrelated market warmup additions.
     // Live market eligibility is covered by features.ts and system-diversity.ts.
-    const addedMarkets = new Set(
-      sceneAdditions.filter((entry) => entry.body.svc.includes('T')).map((entry) => entry.body.id),
-    );
-    const originalBodies = new Map(Object.values(SYS).map((system) => [system, system.stellars]));
-    for (const system of Object.values(SYS))
-      system.stellars = system.stellars.filter((body) => !addedMarkets.has(body.id));
-    const game = (() => {
-      try {
-        return new Game(
+    const game = withLegacyMarketWarmup(
+      () =>
+        new Game(
           JSON.parse(
             filesystem.readFileSync(new URL('../../shared/assets.json', import.meta.url), 'utf8'),
           ),
@@ -193,11 +187,8 @@ export function simulateCombatPlayability(
             randomUUID: () => `00000000-0000-4000-8000-${String(++uuid).padStart(12, '0')}`,
             defer: (callback, delay) => callbacks.schedule(callback, delay),
           },
-        );
-      } finally {
-        for (const [system, bodies] of originalBodies) system.stellars = bodies;
-      }
-    })();
+        ),
+    );
     game.connect(new DiscardConnection());
     const session = [...game.sessions.values()].at(-1)!;
     database.withAuthenticatedCaptain('Balance Pilot', () =>

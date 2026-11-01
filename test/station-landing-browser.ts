@@ -1,3 +1,4 @@
+import sceneAdditions from '../shared/diversity-worlds.json' with { type: 'json' };
 import { launchChromium } from './helpers/chromium.ts';
 import type { StellarBody, StarSystem } from '../shared/galaxy.ts';
 type StationSite = Parameters<typeof import('../client/exotic_scenery.ts').stationLanding>[3];
@@ -327,8 +328,17 @@ try {
         path.join(evidence, 'all-designs.png'),
         Buffer.from(audit.contact.split(',')[1], 'base64'),
       );
-      assert.equal(audit.stations, 112);
-      assert.equal(audit.rows.length, 247);
+      const newStations = sceneAdditions.filter(
+        (entry) => entry.body.kind === 'station' && entry.body.svc.includes('L'),
+      );
+      assert.equal(audit.stations, 112 + newStations.length);
+      assert.equal(audit.rows.length, 247 + newStations.length);
+      for (const entry of newStations)
+        assert.equal(
+          audit.rows.filter((row) => row.id === entry.body.id).length,
+          1,
+          'Every new scene station joins the real flight/landing artwork audit',
+        );
       assert.equal(
         audit.rows.filter((row) => row.id === 'table-station').length,
         1,
