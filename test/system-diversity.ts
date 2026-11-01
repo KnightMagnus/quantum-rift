@@ -47,6 +47,11 @@ assert.equal(bodyArtwork('unknown-player-world'), undefined);
 for (const addition of additions) {
   const body = STELLARS[addition.body.id];
   assert.equal(body.system, addition.system);
+  for (const field of SYS[addition.system].fields || [])
+    assert.ok(
+      Math.hypot(field.x - body.x, field.y - body.y) >= field.r + body.r + 150,
+      'Quiet worlds leave existing mining fields clear',
+    );
   assert.deepEqual(freightOffers(body, 0), [], 'Quiet worlds do not gain cargo boards');
   assert.ok(!body.site && !body.svc.includes('T') && !body.svc.includes('Y'));
   if (body.svc.includes('L')) exists(`land/${landscapeScene(body)}.jpg`);
