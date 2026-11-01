@@ -262,18 +262,6 @@ def stronghold():
                 )
             ]
     meshes += [station_mesh.zcyl((0, 0, 1.63), 0.045, 0.29, edge, ring=8)]
-    angle = math.radians(24)
-    for mesh in meshes:
-        mesh.tf(
-            lambda vertices: np.column_stack(
-                [
-                    vertices[:, 0] * math.cos(angle) + vertices[:, 2] * math.sin(angle),
-                    vertices[:, 1],
-                    -vertices[:, 0] * math.sin(angle)
-                    + vertices[:, 2] * math.cos(angle),
-                ]
-            )
-        )
     return meshes
 
 
@@ -283,7 +271,7 @@ def farside():
         meshes += [
             station_mesh.lumpy((x, 0, 0), radius, station_mesh.ROCK, seed, squash=1.35)
         ]
-    # Several city decks bridge the gap, not angle literal circular space ring.
+    # Several city decks bridge the gap, not a literal circular space ring.
     for z in [-0.28, 0, 0.25]:
         meshes += [
             station_mesh.block((0, 0, z), (1.09, 0.22, 0.035), station_mesh.RUST)
@@ -348,7 +336,7 @@ if __name__ == "__main__":
                 size,
                 25,
                 size * 0.43 / extent,
-                tilt=72 if key == "stronghold" else 48 if key == "farside" else 50,
+                tilt=45 if key == "stronghold" else 48 if key == "farside" else 50,
                 ss=3,
                 density=10,
             )[0]
