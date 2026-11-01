@@ -1,5 +1,6 @@
 import { applySystemScene } from './system-scenes.ts';
 import { allocationFor, asteroidArtFor, sceneryRevision } from './scenery-allocation.ts';
+import { drawEncounterFeedback } from './encounter-feedback.ts';
 import { contactEdge } from './flight-feedback.ts';
 import { assetImage } from './asset-resources.ts';
 import { ByteBudgetCache } from './render-cache-budget.ts';
@@ -4052,6 +4053,14 @@ function hudOverlay(
   clientView: ClientView | null,
 ): void {
   if (!clientView) return;
+  drawEncounterFeedback(
+    canvasRenderingContext2D,
+    clientGameState.encounters || [],
+    width,
+    height,
+    screenX,
+    screenY,
+  );
   const starSystem = systemsById[clientGameState.sys!];
   if (!starSystem) return;
   if (typeof document !== 'undefined') refreshEdgeArrowObstacles(width, currentTime);

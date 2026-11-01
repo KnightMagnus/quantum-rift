@@ -166,7 +166,7 @@ export function missionDetails(
     ),
     threat = combatThreat(clientGameState, missionDetailsInput, power, system);
   if (threat != null)
-    risk = `${DANGER_LABELS[dangerTier(power, threat)]} (${missionDetailsInput.type === 'patrol' ? 'estimated raid' : 'threat'} ${Math.round(threat)} vs your ${power})`;
+    risk = `${DANGER_LABELS[dangerTier(power, threat)]} (${missionDetailsInput.type === 'patrol' ? 'estimated raid strength' : 'estimated hostile strength'} ${Math.round(threat)} vs your fleet strength ${power})`;
   const stellarBody =
     pickup || STELLARS[(missionDetailsInput.dest || missionDetailsInput.stellar)!];
   const turnIn = stellarBody
@@ -208,7 +208,7 @@ export function filterMissions<ValueType extends MissionDetailsInput>(
   scope: 'job' | 'mission' = 'job',
   active = false,
 ) {
-  return offers.filter((options) => {
+  const filtered = offers.filter((options) => {
     const missionDetails2 = missionDetails(clientGameState, options, active),
       type = clientGameState[(scope + 'Type') as 'jobType'] || 'all';
     return (
@@ -219,6 +219,13 @@ export function filterMissions<ValueType extends MissionDetailsInput>(
         (missionDetails2.jumps !== null && missionDetails2.jumps <= 1))
     );
   });
+  if (scope === 'job')
+    filtered.sort(
+      (left, right) =>
+        Number(!!missionDetails(clientGameState, left, active).reasons.length) -
+        Number(!!missionDetails(clientGameState, right, active).reasons.length),
+    );
+  return filtered;
 }
 export function missionFiltersHtml(
   clientGameState: ClientGameState,

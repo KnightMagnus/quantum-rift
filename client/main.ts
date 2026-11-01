@@ -1,3 +1,4 @@
+import type { EncounterFeedback } from '../shared/encounter-feedback.ts';
 import type { FlightFeedback } from '../server/flight-feedback.ts';
 import { createOnboarding } from './onboarding.ts';
 import { projectPlayer } from './player-projection.ts';
@@ -211,6 +212,8 @@ export type ClientGameState = RefineryClientState & {
   /** Releases local Follow navigation when consent is withdrawn. */
   cancelFollow?: () => void;
   formation?: boolean;
+  /** Cleared by every authoritative snapshot when no visible encounter remains. */
+  encounters?: EncounterFeedback[];
   /** Last authoritative Armada rescue projection. */
   flightFeedback?: FlightFeedback;
   /** Latest consented leader destination, retained through an in-flight jump. */
@@ -1419,6 +1422,7 @@ function onSnap(snapshotMessage: SnapshotMessage) {
     clientGameState.landed ? undefined : snapshotMessage.nhal,
   );
   receiveMining(clientGameState, snapshotMessage);
+  clientGameState.encounters = snapshotMessage.encounters || [];
   clientGameState.combat = snapshotMessage.combat || {};
   clientGameState.formation = !!snapshotMessage.formation;
   clientGameState.flightFeedback = snapshotMessage.flightFeedback;

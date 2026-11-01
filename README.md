@@ -37,11 +37,12 @@ Download the latest release, extract it, and follow the launch instructions belo
 
 - Turn a derelict hull into your own **Personal Station**, with a Workshop, research, shipbuilding and defenses. Upgrade it or relocate to another hull. Your own station grants you docking clearance even when the local faction is hostile; visitors use a guest dock without access to your private station services.
 - Store ships in your hangar and organize docks around a lead ship and crewed wingmates that fly in formation and follow orders. Ready wingmates share their cargo space and passenger seats; the landed service bar shows your combined totals.
+- Hire temporary patrol support through friendly ship hails without owning a station. Review the five-minute fee and loss policy before hiring.
 - Hire and promote officers for your bridge and fleet. Permanent Triad Sentinel platforms guard operating Personal Stations and help in Holdout battles; abandoned hulls have none.
 
 ### Play with friends
 
-- Form an **Armada** to travel together, share bounties and take on co-op contracts and station defenses. Review team-contract shares and choose Ready before joining.
+- Form an **Armada** to travel together, share bounties and take on co-op contracts and station defenses. Review team-contract shares and choose Ready before joining. For a shared story fight, helpers opt in and the owner starts assistance; story progress and unique rewards stay with the owner.
 - Keep in touch through friends lists, private messages, local chat and player hails, with privacy and blocking controls.
 - Trade credits, cargo and crafting supplies between captains.
 - Choose your PvP: consensual duels or rated team matches in the **Crucible** arena, rather than open-world player hunting.
@@ -146,6 +147,12 @@ On short screens, dock services scroll above a compact instrument console. Scrol
 **Captain profile**
 
 ![Captain Profile with the portrait chooser open](docs/screenshots/pressure-hull-profile.png)
+
+**Captain’s log**
+
+Open Captain → Captain’s Log for your current objective, preparation guidance, other tracked tasks and saved event history. Ship-loss reports remain here with insurance charges, damage sources and the last attacker’s remaining health.
+
+![Captain’s Log with the first main-story objective and preparation guidance](docs/screenshots/captain-log.png)
 
 **Job board**
 

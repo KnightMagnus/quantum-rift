@@ -1,8 +1,9 @@
+import { captainLogHtml } from './captain-log.ts';
 import { FACTION_STORE_OUTFITS } from '../shared/faction-outfits.ts';
 import { storySystemVisible } from '../shared/story-world.ts';
 import type { StellarBody } from '../server/game.ts';
 import type { ClientGameState } from './main.ts';
-export type InfoTab = 'ship' | 'career' | 'fleet' | 'captains';
+export type InfoTab = 'ship' | 'career' | 'fleet' | 'captains' | 'log';
 export type BestSaleResult = {
   /** Stellar body object */
   p: StellarBody;
@@ -217,6 +218,7 @@ const MOODC = {
 export function infoHtml(clientGameState: ClientGameState, activeTab?: string): string {
   const playerPayload = clientGameState.you!;
   if (!playerPayload) return '';
+  if (activeTab === 'log') return captainLogHtml(clientGameState);
   const computedShipStats = playerPayload.shipStats!,
     shipHullAsset = clientGameState.A!.ships[playerPayload.ship.hull],
     rank = playerPayload.rank || { name: 'Harmless', score: 0, next: 400, i: 0 };

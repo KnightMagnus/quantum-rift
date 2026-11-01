@@ -148,7 +148,9 @@ try {
   assert.match(missionDetails(client, objective, true).turnIn, /Collect passengers/);
   const bountyDetails = missionDetails(client, { type: 'bounty', hull: 760, sys: home.system });
   assert.ok(
-    bountyDetails.risk.includes(`threat ${Math.round(hullCombatPower(assets, 760))}`),
+    bountyDetails.risk.includes(
+      `estimated hostile strength ${Math.round(hullCombatPower(assets, 760))}`,
+    ),
     'combat UI uses actual fitted threat rating',
   );
   game.completeOnLanding(session, destination);

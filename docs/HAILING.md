@@ -53,3 +53,7 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node test/hailing-brows
 The focused service test covers Unicode, sender ownership, blocks/privacy, rate limiting, coalescing, invalid and replayed actions, insufficient resources, actual-landing reward/replay/separation, rounded non-player intel, source exclusions, queue caps, expiry and active-ship resets. Two real WebSocket clients cover authenticated identity, reply, nonmodal delivery, flood/block behavior and forged player options. Browser checks cover incoming badge/focus, literal HTML-looking text, Unicode composer/reply, typing T safely, inbox key/Escape, desktop/sidebar resizing, continuous simulation and page errors.
 
 Timing, encounter distribution and monetary amounts are starting balance values, not conclusions from long-session human playtesting. The browser test optionally accepts `RIFT_ASSET_FALLBACK=/path/to/retained/client` to route independently retained binary assets when the upstream LFS remote cannot supply its objects; it never modifies repository pointers/assets.
+
+## Temporary local support
+
+Hail a friendly independent patrol to hire one support ship for 1,500 credits. No station is required. The contract lasts five minutes in the current system; docking, jumping, disconnecting or losing your ship ends it without a refund. The patrol returns to its own work when time expires. Destroyed support is not replaced. Story, mission, named and already-owned ships cannot be hired. This contract grants no shared story progress or unique rewards.

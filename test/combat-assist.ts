@@ -672,3 +672,19 @@ shooter.target = enemyEntity;
 enemyEntity.x = 110;
 Space.prototype.weapons.call(weaponSpace, shooter);
 assert.equal(fired.length, 2, 'manual fire remains available beyond range');
+
+// Readable failure feedback does not confuse a normal weapon cooldown with bad geometry.
+service.state(leader).on = true;
+service.state(leader).target = enemyEntity.id;
+leader.ent.guns = [];
+assert.match(service.firingGuidance(leader, space), /No firing solution/);
+leader.ent.guns = [mockWeaponMount({ p: { range: 600, turret: true }, ammo: 10, cd: 99 })];
+enemyEntity.x = 100;
+assert.equal(service.firingGuidance(leader, space), '');
+enemyEntity.x = 1000;
+assert.match(service.firingGuidance(leader, space), /closing to weapon range/);
+leader.ent.guns[0].ammo = 0;
+assert.match(service.firingGuidance(leader, space), /ammunition/);
+service.state(leader).on = false;
+service.state(leader).delegated = false;
+assert.equal(service.firingGuidance(leader, space), '');

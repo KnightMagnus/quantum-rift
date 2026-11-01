@@ -1,3 +1,4 @@
+import { sharedStoryAction, withdrawStoryAssistance } from './shared-story.ts';
 import type { ShipLoadout } from '../shared/rules.ts';
 import type { CoopMessage, TradeOffer, TradeState, DuelState } from './coop-contracts.ts';
 import type { ArmadaState } from './db.ts';
@@ -650,6 +651,14 @@ export const CoopOperations = {
             ? this.A.ships[playerAccount.ship.hull].name
             : '',
         landed: !!(session && !session.ent),
+        storyStatus: !session
+          ? 'Offline'
+          : playerAccount?.story?.active
+            ? playerAccount.story.active.ready
+              ? 'Report ready'
+              : 'Objective in progress'
+            : 'No active objective',
+
         jobSlots: playerAccount ? Math.max(0, 6 - playerAccount.missions.length) : 0,
       };
     };
@@ -663,6 +672,7 @@ export const CoopOperations = {
         .map(([entryKey]) => (this.db.get(entryKey) || { name: entryKey }).name),
       follow: !!playerData.armadaFollow,
       followingFlight: !!this.sessionOf(playerData.name)?.armadaFormationTarget,
+      buffsActive: !!this.armadaNear(playerData),
       invites,
       max: ARMADA.max,
     };
@@ -678,6 +688,8 @@ export const CoopOperations = {
     )
       return respondContract(this, session2, coopMessage);
     if (this.solo) return this.toast(session2, 'The Armada is for online games.');
+    if (['storyAssist', 'storyShare', 'storyStop'].includes(coopMessage.op))
+      return sharedStoryAction(this, session2, coopMessage);
     const playerData = session2.data,
       worldData = this.db.world,
       armadaState = this.armadaOf(playerData),
@@ -869,6 +881,7 @@ export const CoopOperations = {
     this.armadaChat(armadaState, `${playerData.name} ${reason}.`);
     const session = this.sessionOf(playerData.name);
     if (session) {
+      withdrawStoryAssistance(this, session);
       this.toast(
         session,
         `You ${reason === 'left the Armada' ? 'left' : 'were removed from'} the Armada "${armadaState.name}".`,

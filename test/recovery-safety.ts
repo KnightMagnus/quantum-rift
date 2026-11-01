@@ -109,3 +109,7 @@ graceSpace.fire(rebuilt, rebuilt.guns[0], null, rebuilt.a);
 assert.equal(rebuilt.graceT, 0, 'aggression immediately ends insurance grace');
 assert.equal(graceSpace.spared(threat, rebuilt), false);
 console.log('Insurance exit grace is one-time, NPC-only and ends on aggression.');
+
+await import('./mercenary-contracts.ts');
+
+await import('./encounter-feedback.ts');

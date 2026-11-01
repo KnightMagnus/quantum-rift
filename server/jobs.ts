@@ -1,3 +1,4 @@
+import { storyPreparationPremium } from '../shared/story-pacing.ts';
 export interface JobOperations {
   offers(this: JobCapabilities, stellarBody: StellarBody, playerData: PlayerData): Mission[];
   accept(this: JobCapabilities, session: Session, missionId: string): void;
@@ -296,7 +297,25 @@ const JobOperations: JobOperations = {
             !STELLARS[offer.dest] ||
             storySystemVisible(flags, STELLARS[offer.dest].system)),
       )
-      .map((offer) => ({ ...offer, offerVersion: 1 }));
+      .map((offer) => {
+        const premium =
+          !offer.quest &&
+          !offer.exp &&
+          ['cargo', 'passenger', 'supply'].includes(offer.type) &&
+          storyPreparationPremium(playerData.story, stellarBody.system);
+        return {
+          ...offer,
+          offerVersion: 1,
+          ...(premium
+            ? {
+                reward: Math.round(offer.reward * 1.25),
+                text:
+                  offer.text +
+                  ' Preparation premium: this board pays 25% extra for ordinary transport while your current story objective is on this route. The listed reward includes it.',
+              }
+            : {}),
+        };
+      });
   },
   /**
    * Accepts a mission from the local stellar job board.

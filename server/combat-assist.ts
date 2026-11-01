@@ -489,10 +489,41 @@ export class CombatAssist {
       consent: !!combatState.consent,
       coordinating: combatState.coordinating,
       status: combatState.status,
-      reason: combatState.reason,
+      reason: combatState.reason || this.firingGuidance(session, space),
       target: combatState.target,
       power: this.power(space, this.group(space, leader)),
     };
+  }
+
+  /** Distinguish acquiring/ranging from a usable shot; cooldown alone is not a failed solution. */
+  firingGuidance(session: CombatSession, space: CombatSpace): string {
+    const state = this.state(session);
+    const ship = session.ent;
+    if (!(state.on || state.delegated) || !ship) return '';
+    const target = space.ships.get(state.target);
+    if (!target || !this.valid(space, ship, target))
+      return 'No firing solution — acquire a hostile target.';
+    const distance = Math.hypot(target.x - ship.x, target.y - ship.y);
+    const usable = ship.guns.filter(
+      (mount) =>
+        !mount.p.pd && !mount.p.bay && mount.ammo > 0 && !(mount.sec && state.missiles === false),
+    );
+    if (!usable.length) return 'No firing solution — check ammunition and enabled weapons.';
+    if (!usable.some((mount) => distance <= mount.p.range))
+      return 'No firing solution — closing to weapon range.';
+    const aligned = usable.some((mount) => {
+      if (distance > mount.p.range) return false;
+      if (mount.p.homing || mount.p.turret) return true;
+      const travel = mount.p.beam ? 0 : distance / mount.p.speed;
+      const angle =
+        Math.atan2(
+          target.y + (target.vy - ship.vy) * travel - ship.y,
+          target.x + (target.vx - ship.vx) * travel - ship.x,
+        ) - ship.a;
+      const difference = Math.abs(Math.atan2(Math.sin(angle), Math.cos(angle)));
+      return difference <= Math.max(0.18, mount.p.arc || 0);
+    });
+    return aligned ? '' : 'No firing solution — aligning weapons.';
   }
 
   /**

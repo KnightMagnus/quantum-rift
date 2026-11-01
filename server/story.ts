@@ -1,3 +1,4 @@
+import { storyReportPort, storyReportGuidance } from '../shared/story-pacing.ts';
 export interface StoryPayload {
   flags: StoryFlags;
   ending?: StoryFlags['main_ending'];
@@ -158,7 +159,7 @@ export const StoryOperations = {
       const storyMission = STORY.find((storyMission) => storyMission.id === active2.id)!;
       if (
         (storyMission.type === 'carry' && position.id === storyMission.dest) ||
-        (active2.ready && position.id === storyMission.back)
+        (active2.ready && storyReportPort(storyMission, position.id))
       ) {
         if (storyMission.decision && !savedStory.flags?.[storyMission.decision]) {
           active2.ready = true;
@@ -787,7 +788,10 @@ export const StoryOperations = {
     );
     if (active2.got >= (storyMission.count || 1)) {
       active2.ready = true;
-      this.toast(session, `Return to ${STELLARS[storyMission.back!].name}.`);
+      this.toast(
+        session,
+        `Return to ${STELLARS[storyMission.back!].name}.${storyReportGuidance(storyMission)}`,
+      );
     }
     this.db.touch();
     this.you(session);
