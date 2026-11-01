@@ -19,6 +19,13 @@ const server = http.createServer((request, response) => {
     return response.end(
       '<body style="margin:0;background:#030713"><canvas width="1800" height="1300"></canvas></body>',
     );
+  if (pathname === '/client/render.js') {
+    response.setHeader('Content-Type', 'text/javascript');
+    return response.end(
+      fileSystem.readFileSync(path.join(root, 'dist/client/render.js'), 'utf8') +
+        '\nexport {decorFor};',
+    );
+  }
   let file = path.join(root, decodeURIComponent(pathname));
   if (/^\/(client|shared)\/.+\.js$/.test(pathname))
     file = path.join(root, 'dist', decodeURIComponent(pathname));
@@ -58,7 +65,9 @@ try {
   page.on('pageerror', (error) => errors.push(String(error)));
   await page.goto(`http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}/`);
   const outcome = await page.evaluate(async () => {
-    const { decorFor, draw, stationDesign } = await import('/client/render.js');
+    const { draw, stationDesign } = await import('/client/render.js');
+    const { decorFor } =
+      (await import('/client/render.js')) as typeof import('./helpers/render-probe.ts');
     const { allocationFor, asteroidArtFor } = await import('/client/scenery-allocation.js');
     const { planetSprite } = await import('/client/planets.js');
     const { SYSTEMS, STELLARS } = await import('/shared/galaxy.js');

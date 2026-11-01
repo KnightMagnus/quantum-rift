@@ -637,7 +637,7 @@ function rockSprite(entryKey: number): HTMLCanvasElement {
  * @param starSystem Solar system specification
  * @returns System scenery definitions object
  */
-export function decorFor(starSystem: GalaxySystem): DecorModel {
+function decorFor(starSystem: GalaxySystem): DecorModel {
   if (decorRevision !== sceneryRevision()) {
     decorCache.clear();
     decorRevision = sceneryRevision();
