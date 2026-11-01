@@ -5,11 +5,12 @@ import type { CoopMessage } from './coop-contracts.ts';
 
 /** Check live consent every time; stale rosters never grant access after reconnect or departure. */
 export function storyParticipant(
-  game: Pick<CoopCapabilities, 'sessions'>,
+  game: Pick<CoopCapabilities, 'sessions'> | undefined,
   target: Entity,
   captainId: number,
 ): boolean {
   if (target.story === captainId) return true;
+  if (!game?.sessions) return false;
   const owner = target.story && game.sessions.get(target.story);
   const helper = game.sessions.get(captainId);
   const run = owner && owner.sharedStory;

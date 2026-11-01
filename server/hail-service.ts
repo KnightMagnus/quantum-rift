@@ -675,6 +675,7 @@ export class HailService {
       !entity.player &&
       !entity.owner &&
       !entity.rival &&
+      !entity.name &&
       !entity.mission &&
       !entity.boss &&
       !entity.dread &&
