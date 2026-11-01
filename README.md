@@ -109,7 +109,7 @@ Stations include forest domes, colony cylinders, cargo exchanges, armored outpos
 
 Ship-function controls open above the console. INFO (I) shows ship details and equipped outfits; CAPTAIN (O) opens your profile and career. EJECT opens the quit menu. JUMP can sit in either bottom corner.
 
-![Combat assist controls above the console beside the system radar](docs/screenshots/flight-functions.png)
+![Combat Assist controls, ammunition readout and system radar in an early-game flight](docs/screenshots/flight-functions.png)
 
 On-screen touch controls sit above the instrument console. Hold FIRE to shoot and lift your finger to stop. MAP opens the chart; LAND starts the landing approach.
 

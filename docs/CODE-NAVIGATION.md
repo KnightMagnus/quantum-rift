@@ -495,3 +495,7 @@ slot-limit and reward authorities are unchanged.
 `shared/qcs-fleet.ts` defines its finite roster and NPC hulls. The carrier launches
 eight Watch drones from its runway centre, using ordinary fighter ownership and
 escort AI. `test/qcs-fleet.ts` covers routing, attrition, restore and runway geometry.
+
+## Flight feedback
+
+`server/flight-feedback.ts` projects existing rescue deadlines and same-system Armada contacts into flight snapshots. `client/flight-feedback.ts` formats ammo/rescue guidance and calculates edge-marker positions; `client/ui.ts` and `client/render.ts` own presentation. `server/coop.ts` delivers catch-up destinations to opted-in followers after delayed arrivals, using the existing client navigation and jump gates.
