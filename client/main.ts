@@ -1,4 +1,5 @@
 import type { EncounterFeedback } from '../shared/encounter-feedback.ts';
+import type { FlightFeedback } from '../server/flight-feedback.ts';
 import { createOnboarding } from './onboarding.ts';
 import { projectPlayer } from './player-projection.ts';
 import { ConnectionLifecycle } from './connection-lifecycle.ts';
@@ -208,9 +209,15 @@ export type ClientGameState = RefineryClientState & {
   autoKeep?: boolean;
   autoRoute?: boolean;
   startAutoJump?: () => void;
+  /** Releases local Follow navigation when consent is withdrawn. */
+  cancelFollow?: () => void;
   formation?: boolean;
   /** Cleared by every authoritative snapshot when no visible encounter remains. */
   encounters?: EncounterFeedback[];
+  /** Last authoritative Armada rescue projection. */
+  flightFeedback?: FlightFeedback;
+  /** Latest consented leader destination, retained through an in-flight jump. */
+  followDestination?: string;
   combat: Partial<CombatPayload>;
   rocks: Array<{ id: number; x: number; y: number; r: number; ore: string; hp: number }>;
   rockById: Map<number, ClientGameState['rocks'][number]>;
@@ -1031,6 +1038,9 @@ function onMessage(serverMessage: ServerMessage) {
       refreshStores();
       hideLanded();
       clientGameState.sys = serverMessage.sys;
+      clientGameState.flightFeedback = undefined;
+      if (clientGameState.you?.armada?.follow && clientGameState.followDestination)
+        plot(clientGameState.followDestination);
       clientGameState.myId = serverMessage.id;
       updateAttention();
       clientGameState.view = null;
@@ -1415,6 +1425,7 @@ function onSnap(snapshotMessage: SnapshotMessage) {
   clientGameState.encounters = snapshotMessage.encounters || [];
   clientGameState.combat = snapshotMessage.combat || {};
   clientGameState.formation = !!snapshotMessage.formation;
+  clientGameState.flightFeedback = snapshotMessage.flightFeedback;
   shipFunctions.refresh();
   elementById2('combatstatus').textContent =
     ' · ' +
@@ -2060,7 +2071,7 @@ overlays.register({
 clientGameState.startAutoJump = () => {
   const epoch = sessionEpoch;
   return setTimeout(() => {
-    if (epoch !== sessionEpoch) return;
+    if (epoch !== sessionEpoch || !clientGameState.you?.armada?.follow) return;
     if (clientGameState.view && clientGameState.route.length && !clientGameState.auto) {
       clientGameState.autoKeep = true;
       setAuto(
@@ -2070,6 +2081,11 @@ clientGameState.startAutoJump = () => {
     }
   }, 300);
 }; // follow the leader
+clientGameState.cancelFollow = () => {
+  clientGameState.followDestination = undefined;
+  clientGameState.autoRoute = false;
+  if (clientGameState.auto?.mode === 'jump') setAuto(null);
+};
 const landingFeedback = new LandingFeedback();
 function setAuto(
   firstValue: ClientGameState['auto'],
@@ -3413,6 +3429,8 @@ function fixedTick(): void {
   ) {
     send({ t: 'armada', op: 'follow', on: false });
     clientGameState.you!.armada.follow = false;
+    clientGameState.followDestination = undefined;
+    clientGameState.autoRoute = false;
     clientGameState.formation = false;
     const checkbox = elementById2('afollow');
     if (checkbox) checkbox.checked = false;

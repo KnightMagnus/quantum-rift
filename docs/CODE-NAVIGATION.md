@@ -507,3 +507,7 @@ escort AI. `test/qcs-fleet.ts` covers routing, attrition, restore and runway geo
 ## Shared story assistance and Captain log
 
 `server/shared-story.ts` owns transient two-sided consent and frozen helper sessions. Space hit/hostility and recipient visibility gates consult it; `server/story.ts` remains the only chapter-progress owner. `shared/story-pacing.ts` defines alternate non-choice combat report ports and transport-premium eligibility; ordinary job acceptance still freezes authoritative rewards. `client/captain-log.ts` projects disclosed mission targets and saved event history into the Captain window.
+
+## Flight feedback
+
+`server/flight-feedback.ts` projects existing rescue deadlines and same-system Armada contacts into flight snapshots. `client/flight-feedback.ts` formats ammo/rescue guidance and calculates edge-marker positions; `client/ui.ts` and `client/render.ts` own presentation. `server/coop.ts` delivers catch-up destinations to opted-in followers after delayed arrivals, using the existing client navigation and jump gates.

@@ -36,6 +36,38 @@ import {
 import { SOCIAL, ARMADA, TRADE, DUEL, RESCUE, COOP_HOLDOUT, WARBAND } from '../shared/coop.ts';
 import { credits, makeLoadout, shipStats, allOutfits } from '../shared/rules.ts';
 
+// Route delivery is transient and never restores a captain's flight consent.
+const followRoutes = new WeakMap<Session, string>();
+
+function sendFollowRoute(
+  game: CoopCapabilities,
+  follower: Session,
+  leader: Session,
+  destination: string,
+): void {
+  const armada = game.armadaOf(leader.data);
+  if (
+    !armada ||
+    follower === leader ||
+    !armada.members.includes(follower.data.name) ||
+    follower.data.armada !== armada.id ||
+    !follower.data.armadaFollow ||
+    follower.armadaFormationLeader !== armada.leader ||
+    !follower.ent ||
+    follower.ent.dead ||
+    follower.ent.disabled ||
+    follower.ent.state !== 'fly' ||
+    follower.ent.autoCombat ||
+    !systemsById[destination] ||
+    follower.data.sys === destination
+  )
+    return;
+  const route = `${armada.id}:${armada.leader}:${follower.data.sys}:${destination}`;
+  if (followRoutes.get(follower) === route) return;
+  followRoutes.set(follower, route);
+  game.send(follower, { t: 'follow', to: destination, leader: leader.data.name });
+}
+
 /**
  * Clamps a numeric value between a minimum and maximum bound.
  * @param value - Numeric value to clamp.
@@ -369,7 +401,9 @@ export const CoopOperations = {
   coopLogin(this: CoopCapabilities, session: Session) {
     const playerData = this.socialInit(session.data);
     session.actT = Date.now();
+    const wasFollowing = !!playerData.armadaFollow;
     playerData.armadaFollow = false; // Flight consent never survives reconnects.
+    followRoutes.delete(session);
     session.armadaFormationLeader = null;
     if (this.solo) return;
     if (playerData.armada && !this.db.world.armadas[playerData.armada]) playerData.armada = null;
@@ -389,6 +423,11 @@ export const CoopOperations = {
     const armadaState = this.armadaOf(playerData);
     if (armadaState) {
       armadaState.emptyT = 0;
+      if (wasFollowing)
+        this.toast(
+          session,
+          'Follow paused after reconnect. Re-enable Follow in ALLIES to resume with the Armada leader.',
+        );
       this.armadaChat(armadaState, `${playerData.name} is online.`, playerData.name);
     }
     this.presence(playerData);
@@ -805,6 +844,11 @@ export const CoopOperations = {
         return;
       }
       case 'follow':
+        if (coopMessage.on && (!armadaState || !armadaState.members.includes(playerData.name)))
+          return announce('Join an Armada before enabling Follow.');
+        if (coopMessage.on && armadaState?.leader === playerData.name)
+          return announce('You lead the Armada; other captains can follow you.');
+        followRoutes.delete(session2);
         playerData.armadaFollow = !!coopMessage.on;
         session2.armadaFormationLeader = coopMessage.on && armadaState ? armadaState.leader : null;
         session2.armadaFormationTarget = null;
@@ -931,21 +975,12 @@ export const CoopOperations = {
       this.you(session3);
     }
   },
-  // follow the leader: members in the same system who opted in get the leader's destination for their autopilot
+  // Followers can be several jumps behind; route requests still use normal jump gates.
   armadaLeaderJump(this: CoopCapabilities, session: Session, destination: string) {
-    const playerData = session.data,
-      armadaState = this.armadaOf(playerData);
-    if (!armadaState || this.db.key(armadaState.leader) !== this.db.key(playerData.name)) return;
-    for (const session3 of this.sessions.values())
-      if (
-        session3 !== session &&
-        session3.data &&
-        session3.data.armada === armadaState.id &&
-        session3.data.armadaFollow &&
-        session3.data.sys === playerData.sys &&
-        session3.ent
-      )
-        this.send(session3, { t: 'follow', to: destination, leader: playerData.name });
+    const armada = this.armadaOf(session.data);
+    if (!armada || this.db.key(armada.leader) !== this.db.key(session.data.name)) return;
+    for (const follower of this.sessions.values())
+      if (follower.data) sendFollowRoute(this, follower, session, destination);
   },
 
   // ------------------------------------------------------------------ trading between Personal Stations
@@ -1837,6 +1872,15 @@ export const CoopOperations = {
         delete worldData.armadas[armadaState.id];
         this.db.touch();
         continue;
+      }
+      const leader = this.sessionOf(armadaState.leader);
+      if (leader?.ent && !leader.ent.dead && !leader.ent.disabled) {
+        const destination = leader.ent.state === 'jumpout' ? leader.ent.jumpTo : leader.data.sys;
+        if (destination)
+          for (const member of armadaState.members) {
+            const follower = this.sessionOf(member);
+            if (follower) sendFollowRoute(this, follower, leader, destination);
+          }
       }
       this.armadaRefresh(armadaState);
     }

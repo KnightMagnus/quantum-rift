@@ -7,10 +7,18 @@ const scenarios = [
   { label: 'stock-frigate', fleet: [741], storyEncounter: {} },
   { label: 'stock-cruiser', fleet: [742], storyEncounter: {} },
   { label: 'fitted-cruiser', fleet: [742], storyEncounter: { fitted: true } },
-  { label: 'prepared-cruiser', fleet: [742], storyEncounter: { fitted: true, prepared: true } },
+  {
+    label: 'prepared-cruiser',
+    fleet: [742],
+    storyEncounter: { fitted: true, prepared: true },
+  },
   { label: 'stock-spire', fleet: [795], storyEncounter: {} },
   { label: 'stock-mountain', fleet: [774], storyEncounter: {} },
-  { label: 'manual-mountain', fleet: [774], storyEncounter: { standOff: 3200 } },
+  {
+    label: 'manual-mountain',
+    fleet: [774],
+    storyEncounter: { standOff: 3200 },
+  },
   { label: 'modest-wing', fleet: [742, 741, 741], storyEncounter: {} },
 ];
 const bonusIndex = process.argv.indexOf('--bonus');
@@ -78,17 +86,67 @@ if (override === undefined) {
     'unprepared light ship does not trivialize the climax',
   );
 }
+// Paired controls share the exact preparation, spawn geometry, allies and RNG seed.
+// This is a bounded mechanical comparison, not a player win-rate estimate.
+const pairedControls = [1701, 1702, 1703, 1704, 1705, 1706, 1707, 1708].map((seed) => {
+  const scenario = {
+    system: 'umbra',
+    fleet: [742],
+    seed,
+    seconds: 180,
+    upgraded: false,
+    storyEncounter: {
+      fitted: true,
+      prepared: true,
+      ...(override === undefined ? {} : { bonusPct: override }),
+    },
+  };
+  const assist = simulateCombatPlayability(scenario);
+  const manual = simulateCombatPlayability({
+    ...scenario,
+    storyEncounter: { ...scenario.storyEncounter, standOff: 900 },
+  });
+  assert.deepEqual(assist.capture.actors, manual.capture.actors, 'paired initial actors match');
+  assert.equal(assist.power, manual.power, 'paired fitted power matches');
+  for (const [control, result] of [
+    ['assist', assist],
+    ['scripted-manual', manual],
+  ] as const) {
+    assert.ok(result.primaryShots > 0, control + ' discharges real primary weapons');
+    assert.ok(result.storyOutcome!.bossDamage.lead > 0, control + ' damages the actual boss');
+    assert.ok(result.damageTaken > 0, control + ' faces live opposing damage');
+  }
+  return {
+    seed,
+    assist: {
+      cleared: assist.storyOutcome!.postBossSurvived,
+      damage: assist.storyOutcome!.bossDamage.lead,
+      seconds: assist.aliveSeconds,
+    },
+    scriptedManual: {
+      cleared: manual.storyOutcome!.postBossSurvived,
+      damage: manual.storyOutcome!.bossDamage.lead,
+      seconds: manual.aliveSeconds,
+    },
+  };
+});
+console.log(JSON.stringify({ pairedPreparedControls: pairedControls }));
 const exportIndex = process.argv.indexOf('--export');
 if (exportIndex >= 0)
   filesystem.writeFileSync(
     process.argv[exportIndex + 1],
     JSON.stringify(
       {
-        build: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+        build: execFileSync('git', ['rev-parse', 'HEAD'], {
+          encoding: 'utf8',
+        }).trim(),
         runtime: process.version,
         dirty:
-          execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim().length > 0,
+          execFileSync('git', ['status', '--porcelain'], {
+            encoding: 'utf8',
+          }).trim().length > 0,
         results,
+        pairedPreparedControls: pairedControls,
       },
       null,
       2,

@@ -1,5 +1,6 @@
 import { encounterFeedback } from './encounter-feedback.ts';
 import { storyParticipant } from './shared-story.ts';
+import { flightFeedbackPayload } from './flight-feedback.ts';
 import { tickQcsFleet } from './qcs-fleet.ts';
 import { sharedSnapshotEncoder } from './snapshot-encoding.ts';
 import {
@@ -3599,6 +3600,7 @@ export class Game<Storage extends Database = Database> {
             new Set(personalSnapshot.ships.map((row) => Number(row[0]))),
           ),
           attention: attentionPayload(session, this.spaces[starSystem]),
+          flightFeedback: flightFeedbackPayload(session, this.spaces[starSystem]),
           nhal: this.features.nhal.status(this.spaces[starSystem], entity),
           mining: this.features.mining.payload(session, this.spaces[starSystem]),
           industrial: this.features.industrial.payload(session),

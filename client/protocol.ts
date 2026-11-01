@@ -1,4 +1,5 @@
 import type { EncounterFeedback } from '../shared/encounter-feedback.ts';
+import type { FlightFeedback } from '../server/flight-feedback.ts';
 import type { StateMessage } from '../shared/wire-payloads.ts';
 import type { ClientGameState, PlayerPayload, LandedPayload, ContractPlan } from './main.ts';
 import type { AttentionPayload } from '../server/attention.ts';
@@ -99,6 +100,8 @@ export interface SnapshotMessage extends MiningMessage {
   encounters?: EncounterFeedback[];
   combat?: CombatPayload;
   formation?: boolean;
+  /** Private same-system Armada and rescue readout. */
+  flightFeedback?: FlightFeedback;
   me?: [
     number,
     number,

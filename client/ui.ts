@@ -1,3 +1,4 @@
+import { ammoReadout, rescueReadout } from './flight-feedback.ts';
 import { overlays } from './overlay-controller.ts';
 import { storySystemVisible, storyDescription } from '../shared/story-world.ts';
 import { ui as playInterfaceSound } from './audio.ts';
@@ -910,14 +911,34 @@ export function hud(): void {
     }[clientGameState.order || 'gather']!;
   const weaponAssets = Object.keys(computedShipStats!.weapons)
     .map((width) => clientGameState.A!.weapons[width])
-    .filter((weaponAsset) => weaponAsset && ['homing', 'rocket', 'bay'].includes(weaponAsset.type));
+    .filter(
+      (weaponAsset) =>
+        weaponAsset &&
+        weaponAsset.ammo !== -1 &&
+        ['homing', 'rocket', 'bay'].includes(weaponAsset.type),
+    );
   elementById2('secw').textContent = weaponAssets.length
     ? weaponAssets
-        .map(
-          (weaponAsset) => `${weaponAsset.name} (${clientGameState.ammo[weaponAsset.id] ?? '?'})`,
-        )
+        .map((weaponAsset) => ammoReadout(weaponAsset.name, clientGameState.ammo[weaponAsset.id]))
         .join(', ')
     : 'None';
+  const ammoText = weaponAssets.length ? elementById2('secw').textContent! : '';
+  elementById2('secw').classList.toggle('warnf', /LOW|EMPTY/.test(ammoText));
+  let feedback = document.getElementById('flightfeedback');
+  if (!feedback) {
+    feedback = document.createElement('div');
+    feedback.id = 'flightfeedback';
+  }
+  const rescueText =
+    clientView && !clientGameState.landed
+      ? rescueReadout(clientGameState.flightFeedback, clientView.x, clientView.y)
+      : '';
+  const rescueSidebar = elementById2('rescuefeedback');
+  if (rescueSidebar.textContent !== rescueText) rescueSidebar.textContent = rescueText;
+  rescueSidebar.classList.toggle('hidden', !rescueText);
+  feedback.textContent = [ammoText, rescueText].filter(Boolean).join(' · ');
+  feedback.classList.toggle('warnf', !!rescueText || /LOW|EMPTY/.test(ammoText));
+  if (!flightStatus.dataset.disconnected) flightStatus.append(feedback);
 }
 
 // ------------------------------------------------------------------ companion tabs

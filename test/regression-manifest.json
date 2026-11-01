@@ -5,6 +5,7 @@
     "regression-runner-contracts.ts",
     "excalibur-contracts.ts",
     "flight-prediction.ts",
+    "flight-feedback.ts",
     "connection-lifecycle.ts",
     "player-projection.ts",
     "station-service.ts",
@@ -1232,6 +1233,13 @@
         "quest-recovery.ts"
       ],
       "asserts": "Movement/fire/hit events, weapon damage/types, missiles/point defense/drone controls, ship-role interactions, disabled cleanup and respawn."
+    },
+    {
+      "id": "flight-feedback",
+      "owners": ["server/flight-feedback.ts", "client/flight-feedback.ts"],
+      "services": [],
+      "tests": ["flight-feedback.ts", "responsive-hud-browser.ts"],
+      "asserts": "Authoritative rescue deadline, same-Armada privacy, eligible contacts, ammo thresholds, offscreen markers and HUD transitions."
     },
     {
       "id": "combat-assist",

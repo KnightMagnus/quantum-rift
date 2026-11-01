@@ -298,6 +298,28 @@ assert.equal(fired.length, 2, 're-enabling restores ordinary automated firing');
 enemyEntity.disabled = true;
 Space.prototype.weapons.call(weaponSpace, shooter);
 assert.equal(fired.length, 2, 'disabled target gets no new intentional shot');
+// Guided secondaries must not spend finite ammo outside their nominal travel range.
+enemyEntity.disabled = false;
+shooter.guns = [
+  mockWeaponMount({
+    p: { range: 700, speed: 500, homing: true },
+    ammo: 4,
+    cd: 0,
+    sec: true,
+  }),
+];
+for (const distance of [701, 700, 699]) {
+  enemyEntity.x = distance;
+  fired.length = 0;
+  Space.prototype.weapons.call(weaponSpace, shooter);
+  assert.equal(fired.length, distance <= 700 ? 1 : 0, 'Assist guided range boundary ' + distance);
+}
+shooter.autoCombat = false;
+shooter.target = enemyEntity;
+enemyEntity.x = 701;
+fired.length = 0;
+Space.prototype.weapons.call(weaponSpace, shooter);
+assert.equal(fired.length, 1, 'manual launch retains player control outside nominal range');
 // A target selected BEFORE enabling assist must initiate combat without being an attacker.
 const selectedLead = ship(),
   selectedFoe = ship();
