@@ -1,3 +1,4 @@
+import { storyParticipant } from './shared-story.ts';
 import {
   syncStationDefenses,
   steerStationDefense,
@@ -77,6 +78,8 @@ export interface EntityFeatureState {
   beamAcc?: number;
   beamEvT?: number;
   dmgBy?: Record<string, number>;
+  /** Bounded damage totals for the current player sortie; never authoritative reward credit. */
+  damageReceived?: Record<string, number>;
   bribed?: Set<string | number>;
   relHitT?: number;
   thankT?: number;
@@ -1186,8 +1189,10 @@ export class Space {
     const sourceCaptain = this.root(attacker).player?.id;
     const targetCaptain = this.root(rightEntity).player?.id;
     if (
-      (rightEntity.story && sourceCaptain && rightEntity.story !== sourceCaptain) ||
-      (attacker.story && targetCaptain && attacker.story !== targetCaptain)
+      (rightEntity.story &&
+        sourceCaptain &&
+        !storyParticipant(this.game, rightEntity, sourceCaptain)) ||
+      (attacker.story && targetCaptain && !storyParticipant(this.game, attacker, targetCaptain))
     )
       return false;
     if (attacker.industrialRoot || rightEntity.industrialRoot) return false;
@@ -1248,8 +1253,12 @@ export class Space {
     const firstCaptain = this.root(leftEntity).player;
     const secondCaptain = this.root(rightEntity).player;
     if (
-      (leftEntity.story && secondCaptain && leftEntity.story !== secondCaptain.id) ||
-      (rightEntity.story && firstCaptain && rightEntity.story !== firstCaptain.id)
+      (leftEntity.story &&
+        secondCaptain &&
+        !storyParticipant(this.game, leftEntity, secondCaptain.id)) ||
+      (rightEntity.story &&
+        firstCaptain &&
+        !storyParticipant(this.game, rightEntity, firstCaptain.id))
     )
       return false;
     if (
@@ -2676,6 +2685,15 @@ export class Space {
     entity.hitT = this.t;
     if (entity2) entity.lastHitBy = entity2.id;
     const done = Math.max(0, shield2 - entity.shield) + Math.max(0, armor2 - entity.armor);
+    if (done > 0 && entity.player) {
+      const totals = (entity.damageReceived ||= Object.create(null) as Record<string, number>);
+      const sourceName = srcRoot?.name || srcRoot?.player?.name || 'Other damage';
+      const key =
+        Object.hasOwn(totals, sourceName) || Object.keys(totals).length < 8
+          ? sourceName
+          : 'Other damage';
+      totals[key] = (totals[key] || 0) + done;
+    }
     if (done > 0 && srcRoot?.player && entity.mission?.owner === srcRoot.player.id) {
       const captain = srcRoot.player.s?.data;
       if (

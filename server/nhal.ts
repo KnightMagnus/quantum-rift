@@ -1,3 +1,4 @@
+import { storyParticipant } from './shared-story.ts';
 import type { NhalCapabilities } from './story-faction-contracts.ts';
 export type { NhalCapabilities } from './story-faction-contracts.ts';
 import type { Entity, Space } from './space.ts';
@@ -278,7 +279,12 @@ export const NhalOperations = {
       !creature.aggro.has(space.root(visitor).id)
     )
       return false;
-    if (owner !== undefined && space.root(visitor).player?.id !== owner && visitor.story !== owner)
+    if (
+      owner !== undefined &&
+      space.root(visitor).player?.id !== owner &&
+      visitor.story !== owner &&
+      !storyParticipant(space.game, creature, space.root(visitor).player?.id ?? -1)
+    )
       return false;
     return !visitor.industrialRoot && !(space.root(visitor).rescueT! > space.t);
   },
@@ -575,3 +581,18 @@ export const NhalOperations = {
     return true;
   },
 };
+
+/** Read active windups without changing AI cadence or exposing future creature state. */
+export function nhalTelegraph(space: Space, entity: Entity) {
+  const windup = localStates.get(space)?.creatures.get(entity.id)?.windup;
+  if (!windup || windup.until <= space.t) return undefined;
+  const ability =
+    Number(entity.hull) === 901
+      ? { name: 'Reinforcement call', radius: 900 }
+      : Number(entity.hull) === 906
+        ? { name: 'Grasp', radius: 500 }
+        : Number(entity.hull) === 908
+          ? { name: 'Pulse', radius: 900 }
+          : undefined;
+  return ability && { ...ability, seconds: windup.until - space.t };
+}

@@ -65,10 +65,14 @@ export interface ArmadaPayload {
     hull: string;
     landed: boolean;
     jobSlots: number;
+    /** Generic story status, never a hidden chapter title or destination. */
+    storyStatus?: string;
   }>;
   pending: string[];
   follow: boolean;
   followingFlight: boolean;
+  /** Existing same-system Armada shield-recharge and bounty bonuses. */
+  buffsActive?: boolean;
   invites: ArmadaInvite[];
   max: number;
 }
