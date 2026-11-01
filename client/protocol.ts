@@ -1,3 +1,4 @@
+import type { EncounterFeedback } from '../shared/encounter-feedback.ts';
 import type { StateMessage } from '../shared/wire-payloads.ts';
 import type { ClientGameState, PlayerPayload, LandedPayload, ContractPlan } from './main.ts';
 import type { AttentionPayload } from '../server/attention.ts';
@@ -94,6 +95,8 @@ export interface SnapshotMessage extends MiningMessage {
   attention?: AttentionPayload;
   /** One countdown per active creature status, never a stacking icon list. */
   nhal?: { slow: number; ichor: number; latch: number };
+  /** Visible encounter health and real active windups only. */
+  encounters?: EncounterFeedback[];
   combat?: CombatPayload;
   formation?: boolean;
   me?: [
@@ -148,7 +151,7 @@ export type ServerMessage =
   | { t: 'profile'; p: ClientGameState['prof'] | null }
   | { t: 'notify'; title: string; body: string }
   | { t: 'sites'; sites: NonNullable<ClientGameState['sites']> }
-  | { t: 'dead'; at: string; fee: number }
+  | { t: 'dead'; at: string; fee: number; summary?: string }
   | {
       t: 'hailinbox';
       entries?: Array<{

@@ -1,3 +1,4 @@
+import { storyReportGuidance } from '../shared/story-pacing.ts';
 import type { ClientGameState } from './main.ts';
 export type MissionKind = 'story' | 'career' | 'arc' | 'job';
 export type MissionTarget = {
@@ -110,7 +111,7 @@ export function missionTargets(clientGameState: ClientGameState): MissionTarget[
           stellar2 = storyMission.dest;
         } else if (story2.active.ready) {
           starSystem = systemOf(storyMission.back);
-          status = `Return to ${placeName(storyMission.back)}.`;
+          status = `Return to ${placeName(storyMission.back)}.${storyReportGuidance(storyMission)}`;
           stellar2 = storyMission.back;
         } else {
           starSystem = storyMission.sys;
@@ -122,7 +123,7 @@ export function missionTargets(clientGameState: ClientGameState): MissionTarget[
           key: 'story',
           kind: 'story',
           title: storyMission.title,
-          text: storyMission.brief,
+          text: story2.active.brief,
           status,
           sys: starSystem,
           stellar: stellar2,

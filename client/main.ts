@@ -1,3 +1,4 @@
+import type { EncounterFeedback } from '../shared/encounter-feedback.ts';
 import { createOnboarding } from './onboarding.ts';
 import { projectPlayer } from './player-projection.ts';
 import { ConnectionLifecycle } from './connection-lifecycle.ts';
@@ -208,6 +209,8 @@ export type ClientGameState = RefineryClientState & {
   autoRoute?: boolean;
   startAutoJump?: () => void;
   formation?: boolean;
+  /** Cleared by every authoritative snapshot when no visible encounter remains. */
+  encounters?: EncounterFeedback[];
   combat: Partial<CombatPayload>;
   rocks: Array<{ id: number; x: number; y: number; r: number; ore: string; hp: number }>;
   rockById: Map<number, ClientGameState['rocks'][number]>;
@@ -1409,6 +1412,7 @@ function onSnap(snapshotMessage: SnapshotMessage) {
     clientGameState.landed ? undefined : snapshotMessage.nhal,
   );
   receiveMining(clientGameState, snapshotMessage);
+  clientGameState.encounters = snapshotMessage.encounters || [];
   clientGameState.combat = snapshotMessage.combat || {};
   clientGameState.formation = !!snapshotMessage.formation;
   shipFunctions.refresh();
