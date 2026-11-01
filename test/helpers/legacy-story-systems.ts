@@ -12,6 +12,15 @@ export function legacyStorySystems(systems: StarSystem[]): StarSystem[] {
     // the station landing regression covers their current identities and artwork.
     system.stellars = system.stellars.filter((body) => body.id !== 'farside-span');
     for (const body of system.stellars)
+      if (body.id === 'nightjar-beacon') {
+        assert.equal(
+          body.desc,
+          'A forest-filled refuge dome beside the emergency beacon. Crews rest among its trees, coordinate searches and take survey reports here.',
+        );
+        body.desc =
+          'A staffed emergency beacon. Refuge crews coordinate searches and take survey reports here.';
+      }
+    for (const body of system.stellars)
       if (body.id === 'cinder-hold') {
         assert.equal(
           body.desc,
