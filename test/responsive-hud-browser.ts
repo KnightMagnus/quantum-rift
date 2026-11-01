@@ -88,6 +88,113 @@ try {
   }
   await page.click('#depart');
   await page.waitForFunction(() => G.view && !G.landed);
+  const feedbackChecks = await page.evaluate(async () => {
+    const { hud } = await import('/ui.js');
+    const previous = G.flightFeedback;
+    const savedWeapons = G.you!.shipStats!.weapons;
+    const savedAmmo = G.ammo;
+    const launcher = Object.values(G.A!.weapons).find(
+      (weapon) => weapon.type === 'rocket' && weapon.ammo !== -1,
+    )!;
+    G.you!.shipStats!.weapons = { [launcher.id]: 1 };
+    G.ammo = { [launcher.id]: 0 };
+    G.flightFeedback = {
+      rescueSeconds: 23,
+      contacts: [
+        {
+          id: 900001,
+          name: 'Fixture Wing',
+          x: G.view!.x + 4500,
+          y: G.view!.y,
+          canRescue: true,
+          rescueSeconds: 0,
+        },
+      ],
+    };
+    hud();
+    const disabled = document.querySelector('#flightfeedback')!.textContent!;
+    const sidebar = document.querySelector('#secw')!.textContent!;
+    const rescueSidebar = document.querySelector('#rescuefeedback')!.textContent!;
+    G.flightFeedback = { rescueSeconds: 0, contacts: [] };
+    G.ammo = { [launcher.id]: 4 };
+    hud();
+    const low = document.querySelector('#flightfeedback')!.textContent!;
+    G.ammo = { [launcher.id]: 10 };
+    hud();
+    const replenished = document.querySelector('#flightfeedback')!.textContent!;
+    G.flightFeedback = previous;
+    G.you!.shipStats!.weapons = savedWeapons;
+    G.ammo = savedAmmo;
+    hud();
+    return { disabled, sidebar, rescueSidebar, low, replenished };
+  });
+  assert.match(feedbackChecks.disabled, /EMPTY.*DISABLED · Rescue: 23s.*Fixture Wing, 10 km/);
+  assert.match(feedbackChecks.sidebar, /EMPTY/);
+  assert.match(
+    feedbackChecks.rescueSidebar,
+    /Rescue: 23s/,
+    'Expanded Tray retains rescue countdown',
+  );
+  assert.match(feedbackChecks.low, /LOW/);
+  assert.doesNotMatch(
+    feedbackChecks.low,
+    /DISABLED|Rescue:/,
+    'Rescue completion clears persistent warning',
+  );
+  assert.doesNotMatch(feedbackChecks.replenished, /LOW|EMPTY/, 'Replenishment clears ammo warning');
+  const followChecks = await page.evaluate(async () => {
+    const { onCoopMsg } = await import('/coop_ui.js');
+    const previousArmada = G.you!.armada;
+    const previousJumping = G._jumping;
+    const previousRoute = G.route;
+    G.you!.armada = {
+      id: 'fixture',
+      name: 'Fixture',
+      leader: 'Fixture Leader',
+      members: [],
+      pending: [],
+      follow: true,
+      followingFlight: false,
+      invites: [],
+      max: 5,
+    };
+    G._jumping = true;
+    onCoopMsg({ t: 'follow', to: 'meridian', leader: 'Former Leader' });
+    const pinned = !G.followDestination;
+    onCoopMsg({ t: 'follow', to: 'meridian', leader: 'Fixture Leader' });
+    const retained = G.followDestination === 'meridian' && G.route === previousRoute;
+    G.cancelFollow!();
+    const cancelled = !G.followDestination && !G.autoRoute;
+    G.you!.armada!.follow = false;
+    onCoopMsg({ t: 'follow', to: 'meridian', leader: 'Fixture Leader' });
+    const denied = !G.followDestination;
+    G.you!.armada = previousArmada;
+    G._jumping = previousJumping;
+    G.route = previousRoute;
+    return { retained, cancelled, denied, pinned };
+  });
+  assert.deepEqual(
+    followChecks,
+    { retained: true, cancelled: true, denied: true, pinned: true },
+    'Mid-jump leader destinations wait for arrival; manual cancellation cannot be undone by later packets',
+  );
+  if (process.env.RIFT_README_CAPTURE === '1') {
+    const collapsed = await page
+      .locator('#hud')
+      .evaluate((element) => element instanceof HTMLElement && element.inert);
+    if (collapsed) await page.locator('#traytoggle').click();
+    await page.locator('#ctabs button[data-tab=radio]').click();
+    await page.locator('#combatindicator').click();
+    await page.waitForTimeout(400);
+    await page.screenshot({
+      path: 'docs/screenshots/flight-functions.png',
+      animations: 'disabled',
+    });
+    await page.locator('#combatindicator').click();
+    await page.locator('#ctabs button[data-tab=missions]').click();
+    if (collapsed) await page.locator('#traytoggle').click();
+  }
+
   let reference: Awaited<ReturnType<typeof geometry>>['buttons'] | undefined;
   let lastChatWidth = 0;
   for (const [width, height] of [...largeSizes].sort((left, right) => left[0] - right[0])) {

@@ -296,10 +296,15 @@ export function onCoopMsg(message: SocialMessage): void {
         clientGameState.you &&
         clientGameState.you!.armada &&
         clientGameState.you!.armada.follow &&
+        clientGameState.you!.armada.leader === message.leader &&
+        !(clientGameState.combat.on || clientGameState.combat.delegated) &&
         clientGameState.view &&
         systemsById[message.to]
       ) {
+        clientGameState.followDestination = message.to;
+        if (clientGameState._jumping) break;
         plot(message.to);
+        if (clientGameState.route.at(-1) !== message.to) break;
         clientGameState.autoRoute = true;
         toast(`Following ${message.leader} to ${systemsById[message.to].name}.`);
         if (clientGameState.startAutoJump) clientGameState.startAutoJump();
@@ -314,6 +319,8 @@ export function onCoopMsg(message: SocialMessage): void {
  * Synchronizes local social state and badges when the 'you' payload is received.
  */
 export function coopYou(): void {
+  if (!clientGameState.you?.armada?.follow && clientGameState.followDestination)
+    clientGameState.cancelFollow?.();
   loadDms();
   if (clientGameState.you && clientGameState.you!.social !== undefined)
     clientGameState.social = clientGameState.you!.social;
@@ -779,6 +786,10 @@ function onClick(mouseEvent: MouseEvent) {
       send({ t: 'armada', op: 'rally' });
       break;
     case 'afollow':
+      if (!(htmlElement2 as HTMLInputElement).checked) {
+        clientGameState.cancelFollow?.();
+        if (clientGameState.you?.armada) clientGameState.you.armada.follow = false;
+      }
       send({ t: 'armada', op: 'follow', on: (htmlElement2 as HTMLInputElement).checked });
       break;
     case 'aduel':

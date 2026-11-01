@@ -2025,3 +2025,7 @@ every combat matchup or long-running server population.
 ## Mission recovery and capital maneuvering
 
 `quest-recovery.ts` checks owner-only mission-wreck boarding, missing-wreck recovery without duplication, completed-rescue exclusion, NPC hit denial, faction objective credit after patrol kills, abandoned-target recovery without healing, contract-target recovery and patrol completion, and insurance when no able rescuer remains. It also runs actual Assist and weapon physics for both affected capital hulls against a moving target after finite ammunition is exhausted, requiring damage in each 30-second window. `combat-maneuver.ts` covers mixed forward/turret batteries and pursuit of moving targets. These deterministic checks do not establish combat balance or human completion times.
+
+## Flight feedback (`flight-feedback`) and multi-jump Follow
+
+`flight-feedback.ts` checks authoritative rescue timing, same-Armada contact privacy, rescuer eligibility, expired deadlines, ammo thresholds and viewport-edge markers. `responsive-hud-browser.ts` checks the ammo/rescue readouts and contact transitions across cockpit sizes. `armada-formation.ts` covers delayed followers catching up to a stopped leader without replacing active jumps or repeatedly issuing denied routes. `combat-assist.ts` covers automated guided-ammo range gating while retaining manual launches. `story-combat-baseline.ts` compares eight paired deterministic prepared encounters; these scripted controls do not estimate player win rates.

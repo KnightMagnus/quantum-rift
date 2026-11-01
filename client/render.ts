@@ -1,3 +1,4 @@
+import { contactEdge } from './flight-feedback.ts';
 import { assetImage } from './asset-resources.ts';
 import { ByteBudgetCache } from './render-cache-budget.ts';
 import { storyShipOpacity, storyScenery, reducedStoryEffects } from './story-reality.ts';
@@ -3243,6 +3244,33 @@ export function draw(
         zoom2,
         currentTime,
       );
+  }
+  if ((layer === 'foreground' || layer === 'all') && clientView && !clientGameState.landed) {
+    for (const contact of clientGameState.flightFeedback?.contacts || []) {
+      const edge = contactEdge(screenX(contact.x), screenY(contact.y), width2, height2);
+      if (!edge) continue;
+      canvasRenderingContext2D.save();
+      canvasRenderingContext2D.translate(edge.x, edge.y);
+      canvasRenderingContext2D.fillStyle = contact.rescueSeconds
+        ? '#ffb070'
+        : clientGameState.pal.ally;
+      canvasRenderingContext2D.rotate(edge.angle);
+      canvasRenderingContext2D.beginPath();
+      canvasRenderingContext2D.moveTo(9, 0);
+      canvasRenderingContext2D.lineTo(-6, -5);
+      canvasRenderingContext2D.lineTo(-6, 5);
+      canvasRenderingContext2D.closePath();
+      canvasRenderingContext2D.fill();
+      canvasRenderingContext2D.rotate(-edge.angle);
+      canvasRenderingContext2D.font = '12px sans-serif';
+      canvasRenderingContext2D.textAlign = edge.x > width2 / 2 ? 'right' : 'left';
+      canvasRenderingContext2D.fillText(
+        contact.name + (contact.rescueSeconds ? ` · RESCUE ${contact.rescueSeconds}s` : ''),
+        0,
+        -12,
+      );
+      canvasRenderingContext2D.restore();
+    }
   }
   if (layer === 'foreground') {
     for (const ship of clientGameState.ents.values())
