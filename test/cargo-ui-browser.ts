@@ -73,6 +73,7 @@ addLots(playerData.cargo, playerData.cargoLots, {
 });
 database.create('Grade Pilot', 'fixture', playerData);
 database.world.sites['site-qgate'] = database.key('Grade Pilot');
+database.touch();
 database.flush();
 const port = await availablePort(),
   origin = `http://127.0.0.1:${port}`;

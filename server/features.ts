@@ -87,7 +87,7 @@ export type HangarCapabilities = Pick<
   > &
   Pick<BoundOperations<SpecialistOperations>, 'bonus' | 'flying' | 'power' | 'specOnBoard'> &
   Pick<BoundOperations<DocksOperations>, 'docksOp' | 'shipUid' | 'unassign' | 'unwingOfficer'> &
-  Pick<BoundOperations<FrontsOperations>, 'goal' | 'mods' | 'stats'> &
+  Pick<BoundOperations<FrontsOperations>, 'goal' | 'mods'> &
   Pick<BoundOperations<FrontierOperations>, 'notify'> &
   Pick<BoundOperations<CoopOperations>, 'rescueBoard'> &
   Pick<BoundOperations<StoryOperations>, 'storyProgress'> &
@@ -186,7 +186,7 @@ export type FrontierCapabilities = { readonly frontierState: FrontierState } & P
     | 'tryMatch'
   > &
   Pick<BoundOperations<SpecialistOperations>, 'flying' | 'specOnRaid'> &
-  Pick<BoundOperations<FrontsOperations>, 'pushWorld' | 'stats'> &
+  Pick<BoundOperations<FrontsOperations>, 'pushWorld'> &
   Pick<BoundOperations<RivalsOperations>, 'rivalBoard'> &
   Pick<BoundOperations<CoopOperations>, 'sessionOf'> & {
     frontsBonus: OmitThisParameter<typeof FrontsOperations.bonus>;
@@ -588,9 +588,6 @@ export function createFeatures(core: Game): FeatureServices {
     get startQueued() {
       return features.hangar.startQueued;
     },
-    get stats() {
-      return features.shipStats.stats;
-    },
     get storedValue() {
       return features.hangar.storedValue;
     },
@@ -817,9 +814,6 @@ export function createFeatures(core: Game): FeatureServices {
     },
     get startWave() {
       return features.frontier.startWave;
-    },
-    get stats() {
-      return features.shipStats.stats;
     },
     takeMats: core.takeMats.bind(core),
     transportCapacity: core.transportCapacity.bind(core),

@@ -991,7 +991,7 @@ export const HangarOperations = {
           ...playerData,
           dock: playerData.dock.filter((ship) => ship !== storedShip),
         };
-        const problem = this.fitsJobs(candidate, candidate.ship);
+        const problem = playerData.shipless ? null : this.fitsJobs(candidate, candidate.ship);
         if (problem) return this.toast(session, problem);
         const storedValue2 = this.storedValue(storedShip);
         playerData.credits += storedValue2;
