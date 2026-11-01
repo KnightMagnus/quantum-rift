@@ -1360,6 +1360,16 @@
     { "id": "threshold", "system": "farmouth", "label": "Far Mouth / Threshold Spire" },
     { "id": "inalumen", "system": "quevar", "label": "Que'var / Ina Lumen" },
     { "id": "glasswind", "system": "shoalight", "label": "Shoalight / Glasswind Station" },
+    {
+      "id": "dimmer-diversity-world",
+      "system": "dimmer",
+      "label": "Dimmer Reach / Dimmer Reach Minor"
+    },
+    {
+      "id": "lone-light-diversity-world",
+      "system": "lone-light",
+      "label": "Lone Light / Lone Light Minor"
+    },
     { "id": "wild-minor", "system": "wild-landing", "label": "Wild Landing / Wild Minor" },
     { "id": "quiet-port", "system": "quiet-shelf", "label": "Quiet Shelf / Quiet Port" },
     { "id": "quiet-beta", "system": "quiet-shelf", "label": "Quiet Shelf / Quiet Beta" },
@@ -1410,6 +1420,11 @@
     },
     { "id": "knifemaw-prime", "system": "knifemaw", "label": "Knifemaw / Knifemaw Prime" },
     { "id": "outer-minor", "system": "outer-signal", "label": "Outer Signal / Outer Minor" },
+    {
+      "id": "skrrspire-diversity-world",
+      "system": "skrrspire",
+      "label": "Skrrspire / Skrrspire Minor"
+    },
     { "id": "broken-prime", "system": "broken-reach", "label": "Broken Reach / Broken Prime" },
     { "id": "the-moonlet", "system": "the-unlight", "label": "The Unlight / The Moonlet" },
     { "id": "gallowsden-minor", "system": "gallowsden", "label": "Gallowsden / Gallowsden Minor" },
@@ -1418,10 +1433,26 @@
     { "id": "longreach-port", "system": "longreach", "label": "Longreach / Longreach Port" },
     { "id": "iriace-station", "system": "iriace", "label": "Iriace / Iriace Station" },
     { "id": "iriace-yards", "system": "iriace", "label": "Iriace / Iriace Yards" },
+    {
+      "id": "ashshade-diversity-world",
+      "system": "ashshade",
+      "label": "Ashshade / Ashshade Minor"
+    },
+    {
+      "id": "driftyard-diversity-world",
+      "system": "driftyard",
+      "label": "Driftyard / Driftyard Minor"
+    },
     { "id": "scrapverge-yards", "system": "scrapverge", "label": "Scrapverge / Scrapverge Yards" },
+    { "id": "chitath-diversity-world", "system": "chitath", "label": "Chitath / Chitath Minor" },
     { "id": "emberburn-prime", "system": "emberburn", "label": "Emberburn / Emberburn Prime" },
     { "id": "far-yards", "system": "far-mile", "label": "Far Mile / Far Yards" },
     { "id": "anchorwater-0", "system": "anchorwater", "label": "Anchorwater / Anchorwater" },
+    {
+      "id": "grimpeak-deep-diversity-world",
+      "system": "grimpeak-deep",
+      "label": "Grimpeak Deep / Grimpeak Deep Minor"
+    },
     { "id": "outer-chance-0", "system": "outer-chance", "label": "Outer Chance / Outer Chance" },
     { "id": "vrrath-moon", "system": "vrrath", "label": "Vrrath / Vrrath Moon" },
     {
@@ -1441,6 +1472,11 @@
       "system": "gutteryard-den",
       "label": "Gutteryard Den / Gutteryard Major"
     },
+    {
+      "id": "facetsene-diversity-world",
+      "system": "facetsene",
+      "label": "Facetsene / Facetsene Minor"
+    },
     { "id": "kraggard-station", "system": "kraggard", "label": "Kraggard / Kraggard Station" },
     { "id": "flickerglow-0", "system": "flickerglow", "label": "Flickerglow / Flickerglow" },
     {
@@ -1454,6 +1490,11 @@
     { "id": "dunpeak-major", "system": "dunpeak", "label": "Dunpeak / Dunpeak Major" },
     { "id": "novion-minor", "system": "novion", "label": "Novion / Novion Minor" },
     {
+      "id": "lone-claim-diversity-world",
+      "system": "lone-claim",
+      "label": "Lone Claim / Lone Claim Minor"
+    },
+    {
       "id": "opalace-station",
       "system": "opalace-facet",
       "label": "Opalace Facet / Opalace Station"
@@ -1466,9 +1507,15 @@
     { "id": "lone-moon", "system": "lone-expanse", "label": "Lone Expanse / Lone Moon" },
     { "id": "last-anchorage", "system": "last-shelf", "label": "Last Shelf / Last Anchorage" },
     { "id": "praeenna-yards", "system": "praeenna", "label": "Praeenna / Praeenna Yards" },
+    { "id": "thrmire-diversity-world", "system": "thrmire", "label": "Thrmire / Thrmire Minor" },
     { "id": "astita-yards", "system": "astita", "label": "Astita / Astita Yards" },
     { "id": "ironpost-exchange", "system": "ironpost", "label": "Ironpost / Ironpost Exchange" },
     { "id": "ironpost-station", "system": "ironpost", "label": "Ironpost / Ironpost Station" },
+    {
+      "id": "outer-haven-diversity-world",
+      "system": "outer-haven",
+      "label": "Outer Haven / Outer Haven Minor"
+    },
     { "id": "maghelm-yards", "system": "maghelm-hold", "label": "Maghelm Hold / Maghelm Yards" },
     {
       "id": "wickburn-minor",
@@ -1481,6 +1528,12 @@
       "system": "second-signal",
       "label": "Second Signal / Second Outpost"
     },
+    {
+      "id": "copperharbor-diversity-world",
+      "system": "copperharbor",
+      "label": "Copperharbor / Copperharbor Minor"
+    },
+    { "id": "farhaul-diversity-world", "system": "farhaul", "label": "Farhaul / Farhaul Minor" },
     { "id": "opalvane-rock", "system": "opalvane", "label": "Opalvane / Opalvane Rock" },
     { "id": "hookyard-minor", "system": "hookyard", "label": "Hookyard / Hookyard Minor" },
     { "id": "spokeserai-hub", "system": "spokeserai", "label": "Spokeserai / Spokeserai Hub" },
@@ -1488,6 +1541,16 @@
     { "id": "abyssdrift-rock", "system": "abyssdrift", "label": "Abyssdrift / Abyssdrift Rock" },
     { "id": "quiet-outpost", "system": "quiet-mile", "label": "Quiet Mile / Quiet Outpost" },
     { "id": "quiet-exchange", "system": "quiet-mile", "label": "Quiet Mile / Quiet Exchange" },
+    {
+      "id": "nulreach-diversity-world",
+      "system": "nulreach",
+      "label": "Nulreach / Nulreach Minor"
+    },
+    {
+      "id": "kragdelve-diversity-world",
+      "system": "kragdelve",
+      "label": "Kragdelve / Kragdelve Minor"
+    },
     { "id": "wild-hub", "system": "wild-reach", "label": "Wild Reach / Wild Hub" },
     { "id": "free-anchorage", "system": "free-hope", "label": "Free Hope / Free Anchorage" },
     { "id": "free-exchange", "system": "free-hope", "label": "Free Hope / Free Exchange" },
@@ -1496,7 +1559,14 @@
       "system": "dunstone-hold",
       "label": "Dunstone Hold / Dunstone Moonlet"
     },
+    { "id": "nulward-diversity-world", "system": "nulward", "label": "Nulward / Nulward Minor" },
+    {
+      "id": "far-shelf-diversity-world",
+      "system": "far-shelf",
+      "label": "Far Shelf / Far Shelf Minor"
+    },
     { "id": "corora-exchange", "system": "corora", "label": "Corora / Corora Exchange" },
+    { "id": "luora-diversity-world", "system": "luora", "label": "Luora / Luora Minor" },
     {
       "id": "saddlerest-moonlet",
       "system": "saddlerest-market",
@@ -1511,6 +1581,11 @@
       "id": "chimeith-station",
       "system": "chimeith-facet",
       "label": "Chimeith Facet / Chimeith Station"
+    },
+    {
+      "id": "lost-claim-diversity-world",
+      "system": "lost-claim",
+      "label": "Lost Claim / Lost Claim Minor"
     },
     { "id": "axleway-moon", "system": "axleway", "label": "Axleway / Axleway Moon" },
     {
@@ -1528,6 +1603,17 @@
     { "id": "zzclutch-port", "system": "zzclutch", "label": "Zzclutch / Zzclutch Port" },
     { "id": "maggard-major", "system": "maggard", "label": "Maggard / Maggard Major" },
     { "id": "valeon-world", "system": "valeon", "label": "Valeon / Valeon World" },
+    {
+      "id": "free-harbor-diversity-world",
+      "system": "free-harbor",
+      "label": "Free Harbor / Free Harbor Minor"
+    },
+    {
+      "id": "burnt-mile-diversity-world",
+      "system": "burnt-mile",
+      "label": "Burnt Mile / Burnt Mile Minor"
+    },
+    { "id": "astenna-diversity-world", "system": "astenna", "label": "Astenna / Astenna Minor" },
     { "id": "wagonford-0", "system": "wagonford", "label": "Wagonford / Wagonford" },
     { "id": "bilgeyard-station", "system": "bilgeyard", "label": "Bilgeyard / Bilgeyard Station" },
     {
@@ -1548,6 +1634,16 @@
       "label": "Free Expanse / Free Anchorage"
     },
     { "id": "burnt-chance-0", "system": "burnt-chance", "label": "Burnt Chance / Burnt Chance" },
+    {
+      "id": "stray-landing-diversity-world",
+      "system": "stray-landing",
+      "label": "Stray Landing / Stray Landing Minor"
+    },
+    {
+      "id": "broodhive-diversity-world",
+      "system": "broodhive",
+      "label": "Broodhive / Broodhive Minor"
+    },
     { "id": "mandihive-rock", "system": "mandihive", "label": "Mandihive / Mandihive Rock" },
     { "id": "axleford-hub", "system": "axleford", "label": "Axleford / Axleford Hub" },
     {
@@ -1610,6 +1706,11 @@
     { "id": "outer-moon", "system": "outer-hope", "label": "Outer Hope / Outer Moon" },
     { "id": "rustverge-0", "system": "rustverge", "label": "Rustverge / Rustverge" },
     { "id": "rustverge-port", "system": "rustverge", "label": "Rustverge / Rustverge Port" },
+    {
+      "id": "ropewater-rest-diversity-world",
+      "system": "ropewater-rest",
+      "label": "Ropewater Rest / Ropewater Rest Minor"
+    },
     { "id": "mandikesh-world", "system": "mandikesh", "label": "Mandikesh / Mandikesh World" },
     { "id": "mandikesh-hub", "system": "mandikesh", "label": "Mandikesh / Mandikesh Hub" },
     { "id": "ebbreef-prime", "system": "ebbreef", "label": "Ebbreef / Ebbreef Prime" },
@@ -1643,6 +1744,11 @@
       "label": "Hearthlight / Hearthlight World"
     },
     { "id": "tapershade-minor", "system": "tapershade", "label": "Tapershade / Tapershade Minor" },
+    {
+      "id": "lost-signal-diversity-world",
+      "system": "lost-signal",
+      "label": "Lost Signal / Lost Signal Minor"
+    },
     { "id": "vrrath-minor", "system": "vrrath-clutch", "label": "Vrrath Clutch / Vrrath Minor" },
     { "id": "vrrath-beta", "system": "vrrath-clutch", "label": "Vrrath Clutch / Vrrath Beta" },
     { "id": "gravehole-outpost", "system": "gravehole", "label": "Gravehole / Gravehole Outpost" },
@@ -1651,12 +1757,22 @@
     { "id": "coldharbor", "system": "coldharbor", "label": "Coldharbor / Coldharbor" },
     { "id": "coldharbor-yards", "system": "coldharbor", "label": "Coldharbor / Coldharbor Yards" },
     { "id": "farside-span", "system": "coldharbor", "label": "Coldharbor / Farside Foothold" },
+    {
+      "id": "mirrorfall-diversity-world",
+      "system": "mirrorfall",
+      "label": "Mirrorfall / Mirrorfall Minor"
+    },
     { "id": "greyline-moon", "system": "greyline", "label": "Greyline / Greyline Moon" },
     { "id": "greyline-moon-1", "system": "greyline", "label": "Greyline / Greyline Moon" },
     { "id": "sable-outpost", "system": "sable-reach", "label": "Sable Reach / Sable Outpost" },
     { "id": "quietude-anchorage", "system": "quietude", "label": "Quietude / Quietude Anchorage" },
     { "id": "ember-minor", "system": "ember-drift", "label": "Ember Drift / Ember Minor" },
     { "id": "lowtide-station", "system": "lowtide", "label": "Lowtide / Lowtide Station" },
+    {
+      "id": "vesper-gate-diversity-world",
+      "system": "vesper-gate",
+      "label": "Vesper Gate / Vesper Gate Minor"
+    },
     { "id": "northmark-station", "system": "northmark", "label": "Northmark / Northmark Station" },
     { "id": "ninefold-prime", "system": "ninefold", "label": "Ninefold / Ninefold Prime" },
     {

@@ -2029,3 +2029,7 @@ every combat matchup or long-running server population.
 ## Flight feedback (`flight-feedback`) and multi-jump Follow
 
 `flight-feedback.ts` checks authoritative rescue timing, same-Armada contact privacy, rescuer eligibility, expired deadlines, ammo thresholds and viewport-edge markers. `responsive-hud-browser.ts` checks the ammo/rescue readouts and contact transitions across cockpit sizes. `armada-formation.ts` covers delayed followers catching up to a stopped leader without replacing active jumps or repeatedly issuing denied routes. `combat-assist.ts` covers automated guided-ammo range gating while retaining manual launches. `story-combat-baseline.ts` compares eight paired deterministic prepared encounters; these scripted controls do not estimate player win rates.
+
+## System scenery diversity (`system-diversity`)
+
+`system-diversity.ts` checks all authored system/body/station/sky/rock references, explicit artwork lookup, unknown-body fallback and the quiet worlds’ landing-only services. `system-diversity-browser.ts` exercises production scenery selection for 217 systems, station architecture, ore pools, small-wreck size limits, the massive-wreck cap and a decoded irregular moon that rotates without allocating a new canvas each frame. It captures ordinary Meridian scenery through the production renderer. `planet-portrait-art.ts` retains existing colony-stage images while checking dedicated landing overrides. These checks do not prove every camera position, GPU or image combination.

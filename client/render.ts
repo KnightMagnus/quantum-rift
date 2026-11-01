@@ -1,3 +1,4 @@
+import { allocationFor, asteroidArtFor, sceneryRevision } from './scenery-allocation.ts';
 import { contactEdge } from './flight-feedback.ts';
 import { assetImage } from './asset-resources.ts';
 import { ByteBudgetCache } from './render-cache-budget.ts';
@@ -563,6 +564,7 @@ function decorImg(count: string): HTMLImageElement {
 const ready = (htmlImageElement: HTMLImageElement) =>
   htmlImageElement.complete && htmlImageElement.naturalWidth;
 const decorCache = new Map<string, DecorModel>();
+let decorRevision = -1;
 const NEB_BY_FAC: Record<string, number[]> = {
   umbral: [7, 1],
   deep: [4, 7, 0],
@@ -635,7 +637,11 @@ function rockSprite(entryKey: number): HTMLCanvasElement {
  * @param starSystem Solar system specification
  * @returns System scenery definitions object
  */
-function decorFor(starSystem: GalaxySystem): DecorModel {
+export function decorFor(starSystem: GalaxySystem): DecorModel {
+  if (decorRevision !== sceneryRevision()) {
+    decorCache.clear();
+    decorRevision = sceneryRevision();
+  }
   if (decorCache.has(starSystem.id)) return decorCache.get(starSystem.id)!;
   if (starSystem.arena) {
     // the Crucible has its own look: a ring of pylons in Azure and Crimson, dark crimson nebulae, no borrowed worlds
@@ -1030,6 +1036,125 @@ function decorFor(starSystem: GalaxySystem): DecorModel {
         rot: currentRandomGenerator() * 6,
         sp: (currentRandomGenerator() - 0.5) * 0.4,
       });
+  // Keep the legacy random stream intact so authored art changes do not move its scenery.
+  const allocation = allocationFor(starSystem.id);
+  if (allocation) {
+    const authoredRandom = seeded(hashStr('allocation:' + starSystem.id));
+    const colors: Record<string, [string, string, number]> = {
+      yellow: ['255,244,220', '255,200,120', 1],
+      orange: ['255,230,170', '255,160,70', 0.9],
+      'red dwarf': ['255,175,130', '255,75,45', 0.58],
+      white: ['255,255,255', '200,220,255', 1],
+      'blue-white giant': ['225,240,255', '105,165,255', 1.45],
+      'white dwarf': ['240,248,255', '165,205,255', 0.42],
+    };
+    const star = colors[allocation.sky.sun];
+    if (star && decorModel2.sun && !starSystem.scene) {
+      decorModel2.sun.core = star[0];
+      decorModel2.sun.halo = star[1];
+      decorModel2.sun.size *= star[2];
+    }
+    decorModel2.gal = allocation.sky.galaxies.map((img, index) => ({
+      ...(decorModel2.gal[index] || {
+        x: (authoredRandom() - 0.5) * 2600,
+        y: (authoredRandom() - 0.5) * 2000,
+        size: 240,
+        rot: authoredRandom() * 6.283,
+        squash: 0.8,
+        a: 0.4,
+        depth: 0.04,
+      }),
+      img,
+    }));
+    decorModel2.neb = allocation.sky.nebulae.map((img, index) => ({
+      ...(decorModel2.neb[index] || {
+        x: (authoredRandom() - 0.5) * 7000,
+        y: (authoredRandom() - 0.5) * 7000,
+        size: 2400,
+        rot: authoredRandom() * 6.283,
+        a: 0.65,
+        depth: 0.3,
+      }),
+      img,
+    }));
+    // Authored far objects replace incidental black holes and pulsars, not story skies.
+    decorModel2.hole = null;
+    decorModel2.pulsar = null;
+    if (allocation.sky.far && !starSystem.scene)
+      decorModel2.gal.push({
+        img: allocation.sky.far,
+        x: 620,
+        y: -420,
+        size: 720,
+        rot: 0,
+        squash: 1,
+        a: 0.78,
+        depth: 0.07,
+      });
+    decorModel2.bgp = allocation.background.map((world, index) => {
+      const existing = decorModel2.bgp?.[index] || bgWorld(index, world.large);
+      return {
+        ...existing,
+        p: { ...existing.p, art: world.art },
+        size: world.large ? Math.max(260, existing.size) : Math.min(190, existing.size),
+      };
+    });
+    const wrecks = [
+      ...(allocation.clutter.massive_wreck ? [allocation.clutter.massive_wreck] : []),
+      ...allocation.clutter.small_wrecks,
+    ];
+    decorModel2.wreck = wrecks.flatMap((img, index) => {
+      const existing = decorModel2.wreck[index];
+      const location = existing
+        ? [existing.x, existing.y]
+        : spot(1200, 3400, img.startsWith('wreck_s_') ? 180 : 700);
+      if (!location) return [];
+      const small = img.startsWith('wreck_s_');
+      return [
+        {
+          img,
+          x: location[0],
+          y: location[1],
+          size: small ? 90 + authoredRandom() * 130 : 650 + authoredRandom() * 400,
+          rot: existing?.rot ?? authoredRandom() * 6.283,
+          spin: existing?.spin ?? (authoredRandom() - 0.5) * 0.004,
+          bits: small ? [] : existing?.bits || [],
+        },
+      ];
+    });
+    // Faction props replace random purple crystals and cargo clusters.
+    decorModel2.crystal = [];
+    decorModel2.ruin = [];
+    decorModel2.pods = [];
+    for (const img of allocation.clutter.props) {
+      const location = spot(900, 3600, 220);
+      if (!location) continue;
+      const size =
+        img.startsWith('leviathan_') || img.startsWith('arc_')
+          ? 900
+          : img.startsWith('derelict_')
+            ? 480
+            : img.startsWith('ruin_')
+              ? 760
+              : img.startsWith('swarm_') || img.startsWith('iceberg_') || img.startsWith('crystal_')
+                ? 420
+                : img.startsWith('beacon_')
+                  ? 200
+                  : img.startsWith('satellite_')
+                    ? 100
+                    : 140;
+      decorModel2.ruin.push({
+        img,
+        x: location[0],
+        y: location[1],
+        size,
+        rot: authoredRandom() * 6.283,
+        spin: (authoredRandom() - 0.5) * 0.01,
+      });
+    }
+    if (decorModel2.storm && allocation.sky.nebulae.length)
+      decorModel2.storm.img = allocation.sky.nebulae[0];
+  }
   // Authored Eventide sightlines are fixed after seeded generation: legacy scenery
   // consumes precisely the same RNG and new ports always frame their signature sky.
   if (starSystem.eventide)
@@ -1157,6 +1282,8 @@ function drawDecorFar(
     canvasRenderingContext2D.rotate(game.rot);
     canvasRenderingContext2D.scale(1, game.squash);
     canvasRenderingContext2D.globalAlpha = game.a;
+    if (game.img === 'far_blackhole_blue')
+      canvasRenderingContext2D.globalCompositeOperation = 'source-over';
     canvasRenderingContext2D.drawImage(htmlImageElement, -state / 2, -state / 2, state, state);
     canvasRenderingContext2D.restore();
   }
@@ -1405,7 +1532,14 @@ function drawDecorMid(
       canvasRenderingContext2D.save();
       canvasRenderingContext2D.translate(positionX, positionY);
       canvasRenderingContext2D.rotate(rock.rot + time * rock.sp);
-      canvasRenderingContext2D.drawImage(rockSprite(rock.k), -state / 2, -state / 2, state, state);
+      const renderedRock = objImg(asteroidArtFor(starSystem.id, 'rock', rock.k));
+      canvasRenderingContext2D.drawImage(
+        ready(renderedRock) ? renderedRock : rockSprite(rock.k),
+        -state / 2,
+        -state / 2,
+        state,
+        state,
+      );
       canvasRenderingContext2D.restore();
     }
     canvasRenderingContext2D.globalAlpha = 1;
@@ -1689,12 +1823,17 @@ function hexToRgb(hexColor: string): [number, number, number] {
 }
 // rendered station designs (tools/rift_stations.py), chosen by who built the station and what it is
 const stPick = new Map<string, string>();
+let stationRevision = -1;
 /**
  * Determines the architectural 3D station sprite model name for a station.
  * @param stellarBody Station stellar body definition
  * @returns Station design archetype name
  */
 export function stationDesign(stellarBody: StellarBody): string {
+  if (stationRevision !== sceneryRevision()) {
+    stPick.clear();
+    stationRevision = sceneryRevision();
+  }
   if (stPick.has(stellarBody.id)) return stPick.get(stellarBody.id)!;
   const systemId =
       stellarBody.system || (STELLARS[stellarBody.id] && STELLARS[stellarBody.id].system),
@@ -1717,6 +1856,7 @@ export function stationDesign(stellarBody: StellarBody): string {
   };
   const source =
     authored[stellarBody.id] ||
+    allocationFor(systemId || '')?.stations[stellarBody.id]?.design ||
     (
       {
         vashari: 'hive',
@@ -2960,7 +3100,7 @@ export function draw(
         );
       } // procedural planets (old art until built)
       else if (rawStellarBody.kind === 'station' && (position = stationSprite(rawStellarBody))) {
-        const secondState = rawStellarBody.r * 2.5 * zoom2;
+        const secondState = rawStellarBody.r * 3.625 * zoom2;
         canvasRenderingContext2D.drawImage(
           position,
           positionX - secondState / 2,
@@ -3052,11 +3192,7 @@ export function draw(
         continue;
       const rowIndex =
           entryKey.ore !== 'gas' &&
-          objImg(
-            entryKey.ore === 'shards'
-              ? 'crys' + (Math.abs(entryKey.id) % 4)
-              : 'rock' + (Math.abs(entryKey.id) % 10),
-          ),
+          objImg(asteroidArtFor(starSystem.id, entryKey.ore, entryKey.id)),
         radiusRatio = rowIndex && rowIndex.complete && rowIndex.naturalWidth; // rendered asteroids
       const image = radiusRatio ? rowIndex : rockImage(entryKey),
         secondState = radiusRatio ? entryKey.r * 2.35 * zoom2 : image.width * zoom2;

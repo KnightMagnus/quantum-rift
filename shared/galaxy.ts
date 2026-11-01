@@ -1,3 +1,4 @@
+import diversityWorlds from './diversity-worlds.json' with { type: 'json' };
 export type HazardDefinition = {
   period: number;
   on: number;
@@ -1308,6 +1309,12 @@ for (const stellarBody of SITES)
   SYSTEMS.find((starSystem) => starSystem.id === stellarBody.system)!.stellars.push(stellarBody);
 addSolGateway(SYSTEMS); // Sol (with Earth and the Gateway wormhole) and the ten Farside systems
 addMoonsAndFields(SYSTEMS); // more moons and asteroid fields (a separate seeded pass: no existing ids change)
+// Add quiet worlds only to the explicitly reviewed empty systems. Existing ports and
+// authored story locations stay untouched; these worlds offer landing, not markets.
+for (const addition of diversityWorlds) {
+  const system = SYSTEMS.find((entry) => entry.id === addition.system);
+  if (system && !system.stellars.length) system.stellars.push(addition.body);
+}
 SYSTEMS.find((system) => system.id === 'coldharbor')!.stellars.push({
   id: 'farside-span',
   name: 'Farside Foothold',

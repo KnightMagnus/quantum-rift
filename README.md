@@ -14,7 +14,7 @@ Download the latest release, extract it, and follow the launch instructions belo
 
 ### Explore the galaxy
 
-- Travel between distinctive star systems, rendered planets and stations, from busy trade routes to the remote Eventide frontier. Build your map as you explore, or buy faction star charts to reveal more systems and markets.
+- Travel between star systems with faction-specific stations, varied skies, rotating worlds and irregular moons, from busy trade routes to the remote Eventide frontier. Build your map as you explore, or buy faction star charts to reveal more systems and markets.
 - Meet traders, convoys, patrols, pirates and rival captains with their own personalities and careers.
 - Visit illustrated worlds and see colonies grow through three settlement stages.
 - Discover new places and follow faction stories and spaceport questlines. Your captain's choices shape the main story.
@@ -78,6 +78,12 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 - [Release notes](docs/RELEASE-0.5.1-MP-Beta-1.md)
 
 ## Screenshots
+
+**Meridian system scenery**
+
+The Meridian Yards and its surrounding sky, captured from the game renderer.
+
+![Meridian Yards under a binary sky](docs/screenshots/system-diversity-meridian.png)
 
 **Captain login**
 

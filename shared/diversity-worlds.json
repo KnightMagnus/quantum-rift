@@ -1,0 +1,437 @@
+[
+  {
+    "system": "dimmer",
+    "body": {
+      "id": "dimmer-diversity-world",
+      "name": "Dimmer Reach Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "lone-light",
+    "body": {
+      "id": "lone-light-diversity-world",
+      "name": "Lone Light Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "skrrspire",
+    "body": {
+      "id": "skrrspire-diversity-world",
+      "name": "Skrrspire Minor",
+      "kind": "planet",
+      "color": "#71a677",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "ashshade",
+    "body": {
+      "id": "ashshade-diversity-world",
+      "name": "Ashshade Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "driftyard",
+    "body": {
+      "id": "driftyard-diversity-world",
+      "name": "Driftyard Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "chitath",
+    "body": {
+      "id": "chitath-diversity-world",
+      "name": "Chitath Minor",
+      "kind": "planet",
+      "color": "#71a677",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "grimpeak-deep",
+    "body": {
+      "id": "grimpeak-deep-diversity-world",
+      "name": "Grimpeak Deep Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "facetsene",
+    "body": {
+      "id": "facetsene-diversity-world",
+      "name": "Facetsene Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "lone-claim",
+    "body": {
+      "id": "lone-claim-diversity-world",
+      "name": "Lone Claim Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "wagonroad",
+    "body": {
+      "id": "wagonroad-diversity-world",
+      "name": "Wagonroad Giant",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 300,
+      "x": 1700,
+      "y": -1200,
+      "svc": "",
+      "tech": 0,
+      "desc": "A banded giant surrounded by a thin veil of dust."
+    }
+  },
+  {
+    "system": "thrmire",
+    "body": {
+      "id": "thrmire-diversity-world",
+      "name": "Thrmire Minor",
+      "kind": "planet",
+      "color": "#71a677",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "outer-haven",
+    "body": {
+      "id": "outer-haven-diversity-world",
+      "name": "Outer Haven Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "copperharbor",
+    "body": {
+      "id": "copperharbor-diversity-world",
+      "name": "Copperharbor Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "farhaul",
+    "body": {
+      "id": "farhaul-diversity-world",
+      "name": "Farhaul Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "nulreach",
+    "body": {
+      "id": "nulreach-diversity-world",
+      "name": "Nulreach Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "kragdelve",
+    "body": {
+      "id": "kragdelve-diversity-world",
+      "name": "Kragdelve Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "nulward",
+    "body": {
+      "id": "nulward-diversity-world",
+      "name": "Nulward Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "far-shelf",
+    "body": {
+      "id": "far-shelf-diversity-world",
+      "name": "Far Shelf Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "luora",
+    "body": {
+      "id": "luora-diversity-world",
+      "name": "Luora Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "lost-claim",
+    "body": {
+      "id": "lost-claim-diversity-world",
+      "name": "Lost Claim Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "free-harbor",
+    "body": {
+      "id": "free-harbor-diversity-world",
+      "name": "Free Harbor Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "burnt-mile",
+    "body": {
+      "id": "burnt-mile-diversity-world",
+      "name": "Burnt Mile Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "astenna",
+    "body": {
+      "id": "astenna-diversity-world",
+      "name": "Astenna Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "stray-landing",
+    "body": {
+      "id": "stray-landing-diversity-world",
+      "name": "Stray Landing Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "broodhive",
+    "body": {
+      "id": "broodhive-diversity-world",
+      "name": "Broodhive Minor",
+      "kind": "planet",
+      "color": "#71a677",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "ropewater-rest",
+    "body": {
+      "id": "ropewater-rest-diversity-world",
+      "name": "Ropewater Rest Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "lost-signal",
+    "body": {
+      "id": "lost-signal-diversity-world",
+      "name": "Lost Signal Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "mirrorfall",
+    "body": {
+      "id": "mirrorfall-diversity-world",
+      "name": "Mirrorfall Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  },
+  {
+    "system": "vesper-gate",
+    "body": {
+      "id": "vesper-gate-diversity-world",
+      "name": "Vesper Gate Minor",
+      "kind": "planet",
+      "color": "#b49d7c",
+      "r": 180,
+      "x": 1700,
+      "y": -1200,
+      "svc": "L",
+      "tech": 0,
+      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+    }
+  }
+]

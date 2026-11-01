@@ -1,7 +1,10 @@
+import { bodyArtwork } from '../shared/body-artwork.ts';
 import { planetType } from '../shared/planet-type.ts';
 import { ByteBudgetCache, retainedBytes } from './render-cache-budget.ts';
 export { planetType } from '../shared/planet-type.ts';
 export interface PlanetDef {
+  /** Explicit artwork for distant decorative worlds. */
+  art?: string;
   /** World celestial identifier. */
   id: string;
 
@@ -843,6 +846,7 @@ let budget = 0,
 let renderManifest: Record<string, Omit<RenderedDefinition, 'id'>> | null = null;
 const images = new Map<string, HTMLImageElement>(),
   pick = new Map<string, RenderedDefinition | null>();
+const irregularCanvases = new Map<string, HTMLCanvasElement>();
 // A transient failed response must not permanently strand the renderer in its fallback.
 // Retry only twice, with a cache-busting URL, then leave the procedural world usable.
 const ASSET_RETRY_DELAYS = [1000, 4000];
@@ -882,6 +886,12 @@ const TYPE_POOL: Record<string, string[]> = {
 function chooseRendered(planetDef: PlanetDef) {
   if (pick.has(planetDef.id)) return pick.get(planetDef.id);
   if (!renderManifest) return null;
+  const art = planetDef.art || bodyArtwork(planetDef.id)?.art;
+  if (art && renderManifest[art]) {
+    const definition = { id: art, ...renderManifest[art] };
+    pick.set(planetDef.id, definition);
+    return definition;
+  }
   let type: string = planetType(planetDef);
   const toLowerCase2 = ((planetDef.desc || '') + ' ' + (planetDef.name || '')).toLowerCase();
   if (
@@ -1406,6 +1416,32 @@ function renderRendered(position: RenderedPlanet, horizontalOffset: number, clou
  * @returns Active planet sprite buffer with rendering metrics, or null if loading.
  */
 export function planetSprite(planetDef: PlanetDef, currentTime: number): PlanetSprite | null {
+  const authored = bodyArtwork(planetDef.id);
+  if (authored?.shape === 'irregular') {
+    const source = `moons/${authored.art}`;
+    let image = images.get(source);
+    if (!image) {
+      image = loadImg(`assets/${source}.webp`);
+      images.set(source, image);
+    }
+    if (image.complete && image.naturalWidth) {
+      const size = image.naturalWidth;
+      let canvas = irregularCanvases.get(planetDef.id);
+      if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        irregularCanvases.set(planetDef.id, canvas);
+      }
+      const context = canvas.getContext('2d')!;
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.clearRect(0, 0, size, size);
+      context.translate(size / 2, size / 2);
+      context.rotate(currentTime / 180000 + (hashStr(planetDef.id) % 628) / 100);
+      context.drawImage(image, -size / 2, -size / 2);
+      return { canvas, S: size, D: size, scale: (2 * planetDef.r) / size };
+    }
+    return procSprite(planetDef, currentTime);
+  }
   const renderedDefinition = chooseRendered(planetDef);
   if (renderedDefinition) {
     let position = RCACHE.get(planetDef.id, performance.now());

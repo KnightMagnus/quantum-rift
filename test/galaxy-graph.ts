@@ -1,3 +1,4 @@
+import diversityWorlds from '../shared/diversity-worlds.json' with { type: 'json' };
 import { legacyStorySystems } from './helpers/legacy-story-systems.ts';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
@@ -106,6 +107,16 @@ const currentColdharborPorts = systemsById.coldharbor.stellars;
 systemsById.coldharbor.stellars = currentColdharborPorts.filter(
   (port) => port.id !== 'farside-span',
 );
+const quietWorldIds = new Set(diversityWorlds.map((entry) => entry.body.id));
+const currentSystemBodies = new Map(
+  Object.values(systemsById).map((system) => [system, system.stellars]),
+);
+for (const system of Object.values(systemsById))
+  system.stellars = system.stellars.filter((body) => !quietWorldIds.has(body.id));
+// Rebuild module-local freight eligibility from the original catalog for its golden.
+const { freightOffers: legacyFreightOffers } = (await import(
+  new URL('../server/freight-offers.ts?legacy-diversity', import.meta.url).href
+)) as typeof import('../server/freight-offers.ts');
 const originalClock = Date.now;
 Date.now = () => baseline.time;
 try {
@@ -134,14 +145,14 @@ try {
   }
   // Keep the original ordered-port golden. Moving the service-free Gateway
   // changes only its outer array position; all actual offers use current ports.
-  const legacyPortIds = legacyStorySystems(Object.values(systemsById)).flatMap((system) =>
+  const legacyPortIds = Object.values(legacySystems).flatMap((system) =>
     system.stellars.map((stellar) => stellar.id),
   );
   for (const [window, expected] of Object.entries(baseline.freight)) {
     assert.deepEqual(freightOffers(STELLARS['sol-gateway'], +window), []);
     const offers = legacyPortIds.map((id) => [
       id,
-      freightOffers(STELLARS[id], +window).map((offer) => ({
+      legacyFreightOffers(STELLARS[id], +window).map((offer) => ({
         ...offer,
         // Compare original generation and payouts independently of the display rename.
         text: offer.text.replace('in Sol Minor (', 'in Sol ('),
@@ -150,6 +161,7 @@ try {
     assert.equal(sha256(offers), expected, `Freight offers window ${window}`);
   }
 } finally {
+  for (const [system, bodies] of currentSystemBodies) system.stellars = bodies;
   systemsById.coldharbor.stellars = currentColdharborPorts;
   Date.now = originalClock;
 }
