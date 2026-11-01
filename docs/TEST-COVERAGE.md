@@ -22,7 +22,7 @@
 
 ## Fleet cargo and passengers (`fleet-transport-capacity`)
 
-`fleet-capacity.ts` exercises actual Trade purchases and cargo/passenger job admission beyond the lead ship's capacity. It covers fitted ready wingmates, unassigned and repairing ship exclusion, loaded carrier removal/sale denial, and save/reload conservation. `cargo-ui-browser.ts` buys to the combined hold limit with MAX and checks the landed cargo/passenger totals against the authoritative roster. Physical flight and outfit stats remain specific to the lead ship. Cargo and passenger manifests stay captain-owned; loss of a carrier can leave the fleet over capacity without deleting its manifest, but blocks further loading until space is available.
+`fleet-capacity.ts` exercises actual Trade purchases and cargo/passenger job admission beyond the lead ship's capacity. It covers fitted ready wingmates, unassigned and repairing ship exclusion, loaded carrier removal/sale denial, mined-ore pickup beyond a full lead hold, captain-scoped live wing identities, cleaned bridge presets on dock switches, and save/reload conservation. `cargo-ui-browser.ts` buys to the combined hold limit with MAX and checks the landed cargo/passenger totals against the authoritative roster. Physical flight and outfit stats remain specific to the lead ship. Cargo and passenger manifests stay captain-owned; loss of a carrier can leave the fleet over capacity without deleting its manifest, but blocks further loading until space is available.
 
 ## Flight heading precision
 

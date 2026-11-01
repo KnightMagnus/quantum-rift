@@ -2,6 +2,7 @@ import { QCS_HULLS } from '../shared/qcs-fleet.ts';
 import { ARMADA_HULLS, MK2_OF, MK3_OF } from '../shared/galaxy.ts';
 import { INDEX_FLEET_HULLS } from '../shared/index-fleet.ts';
 import { INDEX_HULLS } from '../shared/index.ts';
+import { STATION_DEFENSE_HULL } from '../shared/station-defense.ts';
 import { NHAL_HULLS } from '../shared/nhal.ts';
 import { allOutfits, type GameAssets, type OutfitAsset } from '../shared/rules.ts';
 import { SHIPS23 } from '../shared/ships23.ts';
@@ -39,6 +40,7 @@ export function hullSources(rawShipIds: Iterable<string>): Map<string, string> {
     ['shared/index.ts', INDEX_HULLS],
     ['shared/index-fleet.ts', INDEX_FLEET_HULLS],
     ['shared/nhal.ts', NHAL_HULLS],
+    ['shared/station-defense.ts', [{ id: STATION_DEFENSE_HULL }]],
   ];
   for (const [source, hulls] of authoredHulls)
     for (const hull of hulls)

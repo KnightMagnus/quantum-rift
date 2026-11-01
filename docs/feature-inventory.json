@@ -614,7 +614,6 @@
         "docksInit",
         "fitsJobs",
         "hangarInit",
-        "jobCargo",
         "landed",
         "log",
         "outfitter",
@@ -858,7 +857,6 @@
         "socialPayload",
         "solo",
         "spaces",
-        "stats",
         "statusOf",
         "toast",
         "tradeCancel",
@@ -866,6 +864,7 @@
         "tradeDo",
         "tradePush",
         "trades",
+        "transportCapacity",
         "you"
       ],
       "baselineExport": "CoopMixin",

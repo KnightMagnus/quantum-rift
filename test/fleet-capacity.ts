@@ -161,6 +161,95 @@ assert.deepEqual(
   game.transportCapacity(player),
   'roster capacity survives reload without a second inventory',
 );
+// Stored bridge presets must be normalized before a loaded roster can switch leads.
+player.officers.push({
+  id: 'capacity-qm',
+  name: 'Quartermaster',
+  race: 'quantum',
+  role: 'quartermaster',
+  rarity: 3,
+  lv: 10,
+  xp: 0,
+});
+const target = makeLoadout(game.A, 703, 'Target lead');
+target.uid = 'capacity-target';
+const targetStored = { ship: target, bridge: { bridge1: 'capacity-qm' } };
+player.dock.push(targetStored);
+player.docks[0].wings = [null, null];
+player.docks[1] = {
+  lead: target.uid,
+  wings: [{ uid: hauler.uid!, cap: 'capacity-qm', crew: null }],
+};
+const prospective = structuredClone(player);
+prospective.ship = target;
+prospective.activeDock = 1;
+prospective.bridge = {};
+const cleanCapacity = game.transportCapacity(prospective).cargo;
+prospective.bridge = { bridge1: 'capacity-qm' };
+assert(
+  game.transportCapacity(prospective).cargo > cleanCapacity,
+  'stale officer preset would overcount capacity',
+);
+player.ship = makeLoadout(game.A, 714, 'Roomy lead');
+player.ship.uid = 'capacity-roomy';
+player.docks[0].lead = player.ship.uid;
+seedCargo(player, { ore: cleanCapacity + 1 });
+const beforeSwitch = JSON.stringify(player);
+game.features.docks.docksOp(session, { op: 'activate', k: 1 });
+assert.equal(
+  JSON.stringify(player),
+  beforeSwitch,
+  'activation denies an overloaded cleaned bridge without mutating the preset',
+);
+player.docks[1].wings = [null];
+player.docks[0].wings[0] = { uid: hauler.uid!, cap: 'capacity-qm', crew: null };
+const beforeAssignment = JSON.stringify(player);
+game.features.docks.docksOp(session, { op: 'assign', k: 0, slot: 'lead', uid: target.uid });
+assert.equal(
+  JSON.stringify(player),
+  beforeAssignment,
+  'lead assignment also checks the cleaned bridge before mutation',
+);
+// Actual mined parcels can fill ready wing holds after the lead hold fills.
+seedCargo(player, {});
+player.docks[0].wings[0] = { uid: hauler.uid!, cap: null, crew: null };
+game.depart(session);
+assert(session.ent, 'fleet departs for real in-flight capacity checks');
+const space = game.live[player.sys];
+const ownWing = [...space.ships.values()].find(
+  (entity) => entity.wingUid === hauler.uid && entity.wingOf === session.id,
+)!;
+assert(ownWing, 'assigned Dory spawned');
+const leadCargo = game.features.shipStats.stats(player)!.cargo;
+seedCargo(player, { ore: leadCargo });
+assert.equal(
+  game.onLoot(game.pref(session), {
+    ore: 'ore',
+    n: 1,
+    remainingLots: { common: 1, rich: 0, pure: 0 },
+  }),
+  true,
+);
+assert.equal(
+  player.cargo.ore,
+  leadCargo + 1,
+  'mined ore enters wing capacity beyond the full lead hold',
+);
+const flyingCapacity = game.transportCapacity(player).cargo;
+// Account-local ship UIDs can overlap, but a foreign captain's carrier is not ours.
+const ownWingKey = ownWing.id;
+space.ships.delete(ownWingKey);
+const foreignWing = space.makeShip({ hull: 704, faction: 'quantum' });
+foreignWing.wingUid = hauler.uid;
+foreignWing.wingOf = session.id + 1000;
+space.ships.set(foreignWing.id, foreignWing);
+assert.equal(
+  game.transportCapacity(player).cargo,
+  flyingCapacity - shipStats(game.A, hauler)!.cargo,
+  'foreign matching UID cannot replace a missing owned wing',
+);
+space.ships.delete(foreignWing.id);
+space.ships.set(ownWingKey, ownWing);
 console.log(
   'Fleet cargo and passenger capacity: actual Trade/jobs, fitted active wings, repair exclusion, roster/sale denials and persistence passed.',
 );

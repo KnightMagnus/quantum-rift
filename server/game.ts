@@ -1514,7 +1514,8 @@ export class Game<Storage extends Database = Database> {
       cargo: leadStats?.cargo || 0,
       passengerSeats: leadStats?.passengerSeats || 0,
     };
-    const flight = [...this.sessions.values()].find((session) => session.data === playerData)?.ent;
+    const ownerSession = [...this.sessions.values()].find((session) => session.data === playerData);
+    const flight = ownerSession?.ent;
     const space = flight ? this.live[playerData.sys] : null;
     const seen = new Set([lead.uid]);
     for (const { w: slot, x: stored } of this.features.docks.activeWings(candidate)) {
@@ -1522,7 +1523,12 @@ export class Game<Storage extends Database = Database> {
       if (
         space &&
         ![...space.ships.values()].some(
-          (entity) => entity.wingUid === stored.ship.uid && !entity.dead && !entity.disabled,
+          (entity) =>
+            entity.wingUid === stored.ship.uid &&
+            entity.wingOf === ownerSession?.id &&
+            space.root(entity) === flight &&
+            !entity.dead &&
+            !entity.disabled,
         )
       )
         continue;
@@ -2839,9 +2845,9 @@ export class Game<Storage extends Database = Database> {
         0,
       );
       if (!want) return true;
-      const computedShipStats = this.features.shipStats.stats(playerData),
+      const capacity = this.transportCapacity(playerData),
         used = this.holdUsed(playerData),
-        count = Math.min(want, computedShipStats!.cargo - used);
+        count = Math.min(want, capacity.cargo - used);
       if (count <= 0) {
         if (!session.fullT || Date.now() - session.fullT > 8000) {
           session.fullT = Date.now(); // say where it can go
@@ -2849,7 +2855,7 @@ export class Game<Storage extends Database = Database> {
             nearestBuyer2 = this.nearestBuyer(playerData.sys, lootItem.ore);
           this.toast(
             session,
-            !computedShipStats!.cargo
+            !capacity.cargo
               ? 'This ship has no cargo hold. Fit a Cargo Compression outfit (it takes no space) to keep what you mine.'
               : `Cargo hold full. ${commodityDef!.name} sells at ${nearestBuyer2 ? `${nearestBuyer2.p.name}${nearestBuyer2.j ? ` (${nearestBuyer2.j} jump${nearestBuyer2.j > 1 ? 's' : ''})` : ' in this system'}` : 'markets further out'}${playerData.station && playerData.station.ops >= 1 ? ', or process it at your station' : ''}.`,
           );
@@ -2861,7 +2867,7 @@ export class Game<Storage extends Database = Database> {
         playerData.cargo,
         playerData.cargoLots,
         { cid: lootItem.ore, qty: count, grades: selected },
-        Math.max(0, computedShipStats!.cargo - used),
+        Math.max(0, capacity.cargo - used),
       );
       for (const game of ['common', 'rich', 'pure'] as const)
         lootItem.remainingLots[game] -= selected[game];

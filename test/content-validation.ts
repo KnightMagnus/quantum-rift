@@ -153,6 +153,7 @@ const rawShipIds = Object.keys(
 );
 const sources = hullSources(rawShipIds);
 assert.equal(sources.get('703'), 'shared/assets.json');
+assert.equal(sources.get('940'), 'shared/station-defense.ts');
 const authoredHull = [...sources].find(([, source]) => source === 'shared/ships23.ts')?.[0];
 assert.ok(authoredHull && assets.ships[authoredHull], 'composed catalog includes ships23 hulls');
 assert.equal(sources.size, Object.keys(assets.ships).length, 'every composed hull has a source');

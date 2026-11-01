@@ -290,7 +290,6 @@ export type DocksCapabilities = Pick<
   | 'A'
   | 'db'
   | 'fitsJobs'
-  | 'jobCargo'
   | 'landed'
   | 'log'
   | 'ownSite'
@@ -374,6 +373,7 @@ export type CoopCapabilities = Pick<
   | 'db'
   | 'duels'
   | 'holdUsed'
+  | 'transportCapacity'
   | 'landed'
   | 'live'
   | 'log'
@@ -421,7 +421,7 @@ export type CoopCapabilities = Pick<
     | 'tradeDo'
     | 'tradePush'
   > &
-  Pick<BoundOperations<FrontsOperations>, 'goal' | 'mods' | 'stats'> &
+  Pick<BoundOperations<FrontsOperations>, 'goal' | 'mods'> &
   Pick<BoundOperations<FrontierOperations>, 'notify'> &
   Pick<BoundOperations<HangarOperations>, 'officerXp'>;
 // Explicit feature composition. No method is installed on Game or another feature.
@@ -1201,7 +1201,6 @@ export function createFeatures(core: Game): FeatureServices {
     get hangarInit() {
       return features.hangar.hangarInit;
     },
-    jobCargo: core.jobCargo.bind(core),
     landed: core.landed.bind(core),
     log: core.log.bind(core),
     ownSite: core.ownSite.bind(core),
@@ -1444,6 +1443,7 @@ export function createFeatures(core: Game): FeatureServices {
       return features.coop.has;
     },
     holdUsed: core.holdUsed.bind(core),
+    transportCapacity: core.transportCapacity.bind(core),
     landed: core.landed.bind(core),
     get live() {
       return core.live;
@@ -1501,9 +1501,6 @@ export function createFeatures(core: Game): FeatureServices {
     },
     get spaces() {
       return core.spaces;
-    },
-    get stats() {
-      return features.shipStats.stats;
     },
     get statusOf() {
       return features.coop.statusOf;
