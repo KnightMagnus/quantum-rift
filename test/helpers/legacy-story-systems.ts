@@ -9,10 +9,9 @@ export function legacyStorySystems(systems: StarSystem[]): StarSystem[] {
     systems.filter((system) => !additions.has(system.id)),
   );
   for (const system of legacy) {
-    // Quiet worlds are independently checked by system-diversity.ts. Preserve every
+    // Authored additions are independently checked by system-diversity.ts. Preserve every
     // pre-existing body/field byte in these older generation goldens.
-    const addition = diversityWorlds.find((entry) => entry.system === system.id);
-    if (addition) {
+    for (const addition of diversityWorlds.filter((entry) => entry.system === system.id)) {
       const body = system.stellars.find((entry) => entry.id === addition.body.id);
       assert.deepEqual(body, addition.body);
       system.stellars = system.stellars.filter((entry) => entry.id !== addition.body.id);

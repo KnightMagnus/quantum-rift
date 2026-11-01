@@ -1,437 +1,651 @@
 [
   {
-    "system": "dimmer",
+    "system": "anchorreach",
     "body": {
-      "id": "dimmer-diversity-world",
-      "name": "Dimmer Reach Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": 636,
-      "y": 1468,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "lone-light",
-    "body": {
-      "id": "lone-light-diversity-world",
-      "name": "Lone Light Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": 681,
-      "y": -1448,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "skrrspire",
-    "body": {
-      "id": "skrrspire-diversity-world",
-      "name": "Skrrspire Minor",
-      "kind": "planet",
-      "color": "#71a677",
-      "r": 180,
-      "x": 1557,
-      "y": -368,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+      "id": "anchorreach-hook",
+      "name": "The Hook",
+      "kind": "moon",
+      "x": 500,
+      "y": 300,
+      "r": 60,
+      "color": "#9a9a9a",
+      "svc": "LTB",
+      "tech": 1,
+      "desc": "A hooked moonlet the haulers tie off to. There is a bar in its crater that has never closed.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
     }
   },
   {
     "system": "ashshade",
     "body": {
-      "id": "ashshade-diversity-world",
-      "name": "Ashshade Minor",
+      "id": "ashshade-world",
+      "name": "Ashshade",
       "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": -1226,
-      "y": 1028,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "driftyard",
-    "body": {
-      "id": "driftyard-diversity-world",
-      "name": "Driftyard Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": -841,
-      "y": -1580,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "chitath",
-    "body": {
-      "id": "chitath-diversity-world",
-      "name": "Chitath Minor",
-      "kind": "planet",
-      "color": "#71a677",
-      "r": 180,
-      "x": 429,
-      "y": -1541,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "grimpeak-deep",
-    "body": {
-      "id": "grimpeak-deep-diversity-world",
-      "name": "Grimpeak Deep Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": -1526,
-      "y": -482,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "facetsene",
-    "body": {
-      "id": "facetsene-diversity-world",
-      "name": "Facetsene Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": 1636,
-      "y": 727,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "lone-claim",
-    "body": {
-      "id": "lone-claim-diversity-world",
-      "name": "Lone Claim Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": -684,
-      "y": -1447,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "wagonroad",
-    "body": {
-      "id": "wagonroad-diversity-world",
-      "name": "Wagonroad Giant",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 300,
-      "x": 579,
-      "y": 1492,
+      "x": -300,
+      "y": 300,
+      "r": 135,
+      "color": "#403030",
       "svc": "",
-      "tech": 0,
-      "desc": "A banded giant surrounded by a thin veil of dust."
+      "tech": 2,
+      "desc": "A world of grey ash and old lava plains. Nobody settled it. The Lamplighters say the ash is warm."
     }
   },
   {
-    "system": "thrmire",
+    "system": "ashshade",
     "body": {
-      "id": "thrmire-diversity-world",
-      "name": "Thrmire Minor",
-      "kind": "planet",
-      "color": "#71a677",
-      "r": 180,
-      "x": 1599,
-      "y": 46,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "outer-haven",
-    "body": {
-      "id": "outer-haven-diversity-world",
-      "name": "Outer Haven Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": 1106,
-      "y": 1156,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "copperharbor",
-    "body": {
-      "id": "copperharbor-diversity-world",
-      "name": "Copperharbor Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": 1016,
-      "y": 1699,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "farhaul",
-    "body": {
-      "id": "farhaul-diversity-world",
-      "name": "Farhaul Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": -1590,
-      "y": 179,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "nulreach",
-    "body": {
-      "id": "nulreach-diversity-world",
-      "name": "Nulreach Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": -1670,
-      "y": -645,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "kragdelve",
-    "body": {
-      "id": "kragdelve-diversity-world",
-      "name": "Kragdelve Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": -372,
-      "y": 1751,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "nulward",
-    "body": {
-      "id": "nulward-diversity-world",
-      "name": "Nulward Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": -677,
-      "y": 1450,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "far-shelf",
-    "body": {
-      "id": "far-shelf-diversity-world",
-      "name": "Far Shelf Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": -776,
-      "y": 1613,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "luora",
-    "body": {
-      "id": "luora-diversity-world",
-      "name": "Luora Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": 369,
-      "y": 1557,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "lost-claim",
-    "body": {
-      "id": "lost-claim-diversity-world",
-      "name": "Lost Claim Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": 1787,
-      "y": 100,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "free-harbor",
-    "body": {
-      "id": "free-harbor-diversity-world",
-      "name": "Free Harbor Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": 1346,
-      "y": -864,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
-    }
-  },
-  {
-    "system": "burnt-mile",
-    "body": {
-      "id": "burnt-mile-diversity-world",
-      "name": "Burnt Mile Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": -1790,
-      "y": -30,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+      "id": "ashshade-keep",
+      "name": "Keeper's Rock",
+      "kind": "moon",
+      "x": 120,
+      "y": 60,
+      "r": 50,
+      "color": "#9a9a9a",
+      "svc": "LB",
+      "tech": 1,
+      "desc": "One beacon, one keeper, a year at a time."
     }
   },
   {
     "system": "astenna",
     "body": {
-      "id": "astenna-diversity-world",
-      "name": "Astenna Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": -1594,
-      "y": -135,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+      "id": "astenna-gate",
+      "name": "Astenna Gate",
+      "kind": "station",
+      "x": -300,
+      "y": 200,
+      "r": 80,
+      "color": "#6a8ab8",
+      "svc": "LTOYB",
+      "tech": 4,
+      "desc": "A Concord customs ring at the end of the line. Inspectors with very little to inspect, and very good coffee.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
     }
   },
   {
-    "system": "stray-landing",
+    "system": "astenna",
     "body": {
-      "id": "stray-landing-diversity-world",
-      "name": "Stray Landing Minor",
+      "id": "astenna-world",
+      "name": "Astenna World",
       "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": 1538,
-      "y": 441,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+      "x": 600,
+      "y": -500,
+      "r": 125,
+      "color": "#c08a50",
+      "svc": "LTO",
+      "tech": 3,
+      "desc": "An autumn-coloured colony of orchards and timber towns, settled by Concord families a generation ago.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
     }
   },
   {
     "system": "broodhive",
     "body": {
-      "id": "broodhive-diversity-world",
-      "name": "Broodhive Minor",
+      "id": "broodhive-world",
+      "name": "Broodhive",
       "kind": "planet",
-      "color": "#71a677",
-      "r": 180,
-      "x": 434,
-      "y": 1540,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+      "x": 300,
+      "y": 300,
+      "r": 140,
+      "color": "#3a7030",
+      "svc": "LTBO",
+      "tech": 2,
+      "desc": "A hot, wet nursery world. The canopy is so thick the surface is always dark.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
     }
   },
   {
-    "system": "ropewater-rest",
+    "system": "broodhollow",
     "body": {
-      "id": "ropewater-rest-diversity-world",
-      "name": "Ropewater Rest Minor",
+      "id": "broodhollow-world",
+      "name": "Broodhollow",
       "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": 1368,
-      "y": 830,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+      "x": 700,
+      "y": -350,
+      "r": 135,
+      "color": "#4a8030",
+      "svc": "LTB",
+      "tech": 2,
+      "desc": "A warm, wet jungle world the brood are carried down to when they hatch.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
     }
   },
   {
-    "system": "lost-signal",
+    "system": "chitath",
     "body": {
-      "id": "lost-signal-diversity-world",
-      "name": "Lost Signal Minor",
+      "id": "chitath-seed",
+      "name": "Chitath",
+      "kind": "moon",
+      "x": 300,
+      "y": -200,
+      "r": 85,
+      "color": "#5a8040",
+      "svc": "LTB",
+      "tech": 1,
+      "desc": "A moon the Vashari are seeding with jungle. Half of it is green; the other half is waiting.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "copperharbor",
+    "body": {
+      "id": "copperharbor-world",
+      "name": "Copperharbor",
       "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": 1743,
-      "y": -406,
+      "x": 300,
+      "y": 300,
+      "r": 130,
+      "color": "#b06030",
+      "svc": "LTBO",
+      "tech": 2,
+      "desc": "A rust-red world with long dry valleys. The Spacer camps here smelt copper in the open air.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "dimmer",
+    "body": {
+      "id": "dimmer-rock",
+      "name": "Dimmer Rock",
+      "kind": "moon",
+      "x": -600,
+      "y": 200,
+      "r": 80,
+      "color": "#9a9a9a",
+      "svc": "LTB",
+      "tech": 1,
+      "desc": "A dark wandering moon that drifted in and stayed. Hollow crews lie up in its caves between raids.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "driftyard",
+    "body": {
+      "id": "driftyard-camp",
+      "name": "Driftyard Camp",
+      "kind": "station",
+      "x": 200,
+      "y": 200,
+      "r": 62,
+      "color": "#a0a0a0",
+      "svc": "LTBO",
+      "tech": 2,
+      "desc": "Spacer breakers live here among the hulls they are cutting up. Anything that still works is for sale.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "facetsene",
+    "body": {
+      "id": "facetsene-seed",
+      "name": "The Seed",
+      "kind": "moon",
+      "x": 200,
+      "y": 200,
+      "r": 80,
+      "color": "#9a9a9a",
       "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+      "tech": 1,
+      "desc": "A seeded crystal moon still growing. Every century it rings a note lower."
+    }
+  },
+  {
+    "system": "farhaul",
+    "body": {
+      "id": "farhaul-relay",
+      "name": "Farhaul Relay",
+      "kind": "station",
+      "x": -400,
+      "y": 300,
+      "r": 52,
+      "color": "#a0a0a0",
+      "svc": "LTB",
+      "tech": 2,
+      "desc": "A refuelling relay a day from anywhere. The logbook in the galley goes back a hundred years.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "grimpeak-deep",
+    "body": {
+      "id": "grimpeak-smelter",
+      "name": "Grimpeak Smelter",
+      "kind": "station",
+      "x": 600,
+      "y": -500,
+      "r": 70,
+      "color": "#a0a0a0",
+      "svc": "LTBO",
+      "tech": 2,
+      "desc": "A Korrund smelter that burns gas to cook ore. The soot drifts for a thousand kilometres.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "hesper",
+    "body": {
+      "id": "hesper-world",
+      "name": "Hesper",
+      "kind": "planet",
+      "x": 350,
+      "y": 250,
+      "r": 140,
+      "color": "#a07030",
+      "svc": "L",
+      "tech": 2,
+      "desc": "An amber world kept for the Lamplighters' dead. Every grave has a lamp."
+    }
+  },
+  {
+    "system": "iriace",
+    "body": {
+      "id": "iriace-world",
+      "name": "Iriace",
+      "kind": "planet",
+      "x": 700,
+      "y": -200,
+      "r": 125,
+      "color": "#a070d0",
+      "svc": "L",
+      "tech": 2,
+      "desc": "A violet crystal world the halls take their tuning from. Its plains hum at dawn."
+    }
+  },
+  {
+    "system": "ironpost",
+    "body": {
+      "id": "ironpost-tank",
+      "name": "Tank",
+      "kind": "moon",
+      "x": 300,
+      "y": 900,
+      "r": 70,
+      "color": "#9a9a9a",
+      "svc": "LTB",
+      "tech": 1,
+      "desc": "A fuel moon split between the two exchanges by a line painted across it. Nobody crosses the line.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "kragdelve",
+    "body": {
+      "id": "kragdelve-rock",
+      "name": "Kragdelve",
+      "kind": "moon",
+      "x": 400,
+      "y": -600,
+      "r": 85,
+      "color": "#9a9a9a",
+      "svc": "LTB",
+      "tech": 1,
+      "desc": "A big asteroid being hollowed into a hold. Its forge vents glow along the fault lines.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "lowtide",
+    "body": {
+      "id": "lowtide-world",
+      "name": "Lowtide",
+      "kind": "planet",
+      "x": 620,
+      "y": 480,
+      "r": 130,
+      "color": "#3a6080",
+      "svc": "LTBO",
+      "tech": 2,
+      "desc": "A cold ocean world with one wide bay of shallow water that drains and fills with the moon. The camps follow the tide line.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "luora",
+    "body": {
+      "id": "luora-garden",
+      "name": "Luora Garden",
+      "kind": "moon",
+      "x": 200,
+      "y": 300,
+      "r": 75,
+      "color": "#9a9a9a",
+      "svc": "LB",
+      "tech": 1,
+      "desc": "A crystal moon. The Que'vari grow its spires slowly and sing to them."
     }
   },
   {
     "system": "mirrorfall",
     "body": {
-      "id": "mirrorfall-diversity-world",
-      "name": "Mirrorfall Minor",
+      "id": "mirrorfall-claim",
+      "name": "Mirrorfall Claim",
+      "kind": "moon",
+      "x": -380,
+      "y": -260,
+      "r": 70,
+      "color": "#9a9a9a",
+      "svc": "LTB",
+      "tech": 1,
+      "desc": "A captured rock with a mining camp dug into its shadow side. The crews call the ore field \"the mirror\".",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "mountainhold",
+    "body": {
+      "id": "mountainhold-anvil",
+      "name": "The Anvil",
+      "kind": "moon",
+      "x": 700,
+      "y": -100,
+      "r": 70,
+      "color": "#9a9a9a",
+      "svc": "LTB",
+      "tech": 1,
+      "desc": "A moon hollowed into one great forge. The hammering can be felt through a docked hull.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "nulreach",
+    "body": {
+      "id": "nulreach-lattice",
+      "name": "The Lattice",
+      "kind": "station",
+      "x": 600,
+      "y": 100,
+      "r": 70,
+      "color": "#a0a0a0",
+      "svc": "",
+      "tech": 2,
+      "desc": "An Umbral structure that does not respond to hails. Ships that dock come back quieter."
+    }
+  },
+  {
+    "system": "praeenna",
+    "body": {
+      "id": "praeenna-veil",
+      "name": "Praeenna Veil",
       "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": -1242,
-      "y": -1009,
+      "x": 900,
+      "y": 700,
+      "r": 105,
+      "color": "#a8b8d8",
+      "svc": "LO",
+      "tech": 2,
+      "desc": "A ringed ice world. The relay crews ski its glacier belts on leave."
+    }
+  },
+  {
+    "system": "ropewater-rest",
+    "body": {
+      "id": "ropewater-raft",
+      "name": "Ropewater Raft",
+      "kind": "station",
+      "x": -200,
+      "y": 0,
+      "r": 70,
+      "color": "#a0a0a0",
+      "svc": "LTBO",
+      "tech": 2,
+      "desc": "Thirty family ships tied hull to hull. Weddings, funerals and arguments all happen on the central deck.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "seimira",
+    "body": {
+      "id": "seimira-world",
+      "name": "Seimira",
+      "kind": "planet",
+      "x": 600,
+      "y": 400,
+      "r": 125,
+      "color": "#b0d0f0",
       "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+      "tech": 2,
+      "desc": "A pale ice world the Que'vari keep for its silence. Pilgrims walk its glaciers."
+    }
+  },
+  {
+    "system": "serita",
+    "body": {
+      "id": "serita-minor",
+      "name": "Serita Minor",
+      "kind": "planet",
+      "x": 600,
+      "y": 520,
+      "r": 120,
+      "color": "#3a7ad0",
+      "svc": "LTO",
+      "tech": 3,
+      "desc": "A temperate ocean world whose island towns keep the relay fed. Customs officers retire to its beaches.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "skrrspire",
+    "body": {
+      "id": "skrrspire-spire",
+      "name": "Skrrspire",
+      "kind": "station",
+      "x": 300,
+      "y": 0,
+      "r": 75,
+      "color": "#a0a0a0",
+      "svc": "LTBO",
+      "tech": 2,
+      "desc": "A young hive spire still growing. Its walls are soft and its docks change shape between visits.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "tapermere",
+    "body": {
+      "id": "tapermere-chapel",
+      "name": "Tapermere Chapel",
+      "kind": "station",
+      "x": -200,
+      "y": 0,
+      "r": 55,
+      "color": "#a0a0a0",
+      "svc": "L",
+      "tech": 2,
+      "desc": "A small dark station where keepers light a lamp for each ship lost on their lanes."
+    }
+  },
+  {
+    "system": "thrmire",
+    "body": {
+      "id": "thrmire-moon",
+      "name": "Thrmire",
+      "kind": "moon",
+      "x": 400,
+      "y": 400,
+      "r": 80,
+      "color": "#7a9a40",
+      "svc": "LTBO",
+      "tech": 1,
+      "desc": "A humid moon under the green giant, wrapped in grown harvest-towers.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
     }
   },
   {
     "system": "vesper-gate",
     "body": {
-      "id": "vesper-gate-diversity-world",
-      "name": "Vesper Gate Minor",
-      "kind": "planet",
-      "color": "#b49d7c",
-      "r": 180,
-      "x": -36,
-      "y": 1600,
-      "svc": "L",
-      "tech": 0,
-      "desc": "A quiet world beyond the shipping lanes. There are no port services here."
+      "id": "vesper-camp",
+      "name": "Vesper Camp",
+      "kind": "station",
+      "x": -380,
+      "y": 420,
+      "r": 60,
+      "color": "#a0a0a0",
+      "svc": "LTB",
+      "tech": 2,
+      "desc": "Prospectors who came to study the empty ring and stayed to mine. They are still waiting for it to open.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
+    }
+  },
+  {
+    "system": "wagonroad",
+    "body": {
+      "id": "wagonroad-tower",
+      "name": "Wagonroad Tower",
+      "kind": "station",
+      "x": -200,
+      "y": 200,
+      "r": 55,
+      "color": "#a0a0a0",
+      "svc": "LB",
+      "tech": 2,
+      "desc": "A brass beacon tower on the caravan road. Travellers scratch their names into its hull."
+    }
+  },
+  {
+    "system": "wickburn-watch",
+    "body": {
+      "id": "wickburn-tower",
+      "name": "Wickburn Tower",
+      "kind": "station",
+      "x": 420,
+      "y": -600,
+      "r": 55,
+      "color": "#a0a0a0",
+      "svc": "LTB",
+      "tech": 2,
+      "desc": "A thin tower of dark metal with a lamp at the top. The watch keeps a light for every ship expected.",
+      "prices": {
+        "food": 0,
+        "metal": 0,
+        "equipment": 0,
+        "medical": 0,
+        "industrial": 0
+      }
     }
   }
 ]

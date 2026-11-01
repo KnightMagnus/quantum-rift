@@ -2272,12 +2272,13 @@
       "id": "system-diversity",
       "services": [],
       "tests": ["system-diversity.ts", "system-diversity-browser.ts"],
-      "asserts": "Authored body, sky, station and rock art resolves; irregular moons and quiet-world landing work without new markets; unknown worlds retain fallback.",
+      "asserts": "Authored scene placement and artwork resolve across 217 systems; new trading ports have usable commodity prices, orbiters move, irregular moons rotate and rendering preserves gameplay radii and special skies; unknown systems retain fallback.",
       "owners": [
         "shared/body-artwork.ts",
         "client/scenery-allocation.ts",
         "client/planets.ts",
-        "client/render.ts"
+        "client/render.ts",
+        "client/system-scenes.ts"
       ]
     }
   ],

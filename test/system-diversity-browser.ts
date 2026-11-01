@@ -23,7 +23,7 @@ const server = http.createServer((request, response) => {
     response.setHeader('Content-Type', 'text/javascript');
     return response.end(
       fileSystem.readFileSync(path.join(root, 'dist/client/render.js'), 'utf8') +
-        '\nexport {decorFor};',
+        '\nexport {decorFor, drawDecorNear};',
     );
   }
   let file = path.join(root, decodeURIComponent(pathname));
@@ -66,13 +66,15 @@ try {
   await page.goto(`http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}/`);
   const outcome = await page.evaluate(async () => {
     const { draw, stationDesign } = await import('/client/render.js');
-    const { decorFor } =
+    const { decorFor, drawDecorNear } =
       (await import('/client/render.js')) as typeof import('./helpers/render-probe.ts');
     const { allocationFor, asteroidArtFor } = await import('/client/scenery-allocation.js');
     const { planetSprite } = await import('/client/planets.js');
     const { SYSTEMS, STELLARS } = await import('/shared/galaxy.js');
     const { bodyArtwork } = await import('/shared/body-artwork.js');
     const failures: string[] = [];
+    const radii = SYSTEMS.flatMap((system) => system.stellars.map((body) => [body.id, body.r]));
+    const spritePaths = new Set<string>();
     let checks = 0;
     for (const system of SYSTEMS) {
       const allocation = allocationFor(system.id);
@@ -89,28 +91,85 @@ try {
       if (asteroidArtFor(system.id, 'ore', 0) !== allocation.clutter.rocks[0])
         failures.push(system.id + ': ore pool');
       for (const [id, station] of Object.entries(allocation.stations)) {
-        if (
-          STELLARS[id] &&
-          ![
-            'luna',
-            'waystation-hub',
-            'longhaul-depot',
-            'cinder-hold',
-            'farside-span',
-            'threshold',
-            'twins-exchange',
-            'nightjar-beacon',
-            'aureole-ring',
-            'reliquary-watch',
-            'glasswake-foundry',
-            'palinode-observatory',
-          ].includes(id) &&
-          stationDesign(STELLARS[id]) !== station.design
-        )
+        if (STELLARS[id] && stationDesign(STELLARS[id]) !== station.design)
           failures.push(id + ': design');
       }
+      for (const sprite of [...decor.derelict, ...decor.sats, ...decor.neb, ...decor.gal])
+        spritePaths.add(
+          sprite.img.startsWith('deco_')
+            ? `stations/s_${sprite.img.slice(5)}.webp`
+            : `decor/${sprite.img}.webp`,
+        );
       checks++;
     }
+    await Promise.all(
+      [...spritePaths].map(async (path) => {
+        const image = new Image();
+        image.src = '/assets/' + path;
+        try {
+          await image.decode();
+        } catch {
+          failures.push('Decode failed: ' + path);
+        }
+      }),
+    );
+    const orbitSystem = SYSTEMS.find((system) => decorFor(system).sats.length)!;
+    const orbiter = decorFor(orbitSystem).sats[0];
+    const orbitCanvas = document.createElement('canvas');
+    orbitCanvas.width = orbitCanvas.height = 1800;
+    const orbitContext = orbitCanvas.getContext('2d')!;
+    const translations: number[][] = [];
+    const originalDraw = orbitContext.drawImage.bind(orbitContext);
+    orbitContext.drawImage = ((...args: Parameters<typeof orbitContext.drawImage>) => {
+      if (
+        args[0] instanceof HTMLImageElement &&
+        args[0].src.endsWith(
+          orbiter.img.startsWith('deco_')
+            ? `s_${orbiter.img.slice(5)}.webp`
+            : `${orbiter.img}.webp`,
+        )
+      ) {
+        const matrix = orbitContext.getTransform();
+        translations.push([matrix.e, matrix.f]);
+      }
+      originalDraw(...args);
+    }) as typeof orbitContext.drawImage;
+    for (const time of [0, 90000]) {
+      drawDecorNear(
+        orbitContext,
+        orbitSystem,
+        1800,
+        1800,
+        0.3,
+        (x) => 900 + (x - orbiter.cx) * 0.3,
+        (y) => 900 + (y - orbiter.cy) * 0.3,
+        time,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    // Repeat after the production image cache has decoded its first frame.
+    translations.length = 0;
+    for (const time of [0, 90000])
+      drawDecorNear(
+        orbitContext,
+        orbitSystem,
+        1800,
+        1800,
+        0.3,
+        (x) => 900 + (x - orbiter.cx) * 0.3,
+        (y) => 900 + (y - orbiter.cy) * 0.3,
+        time,
+      );
+    if (
+      translations.length < 2 ||
+      JSON.stringify(translations[0]) === JSON.stringify(translations.at(-1))
+    )
+      failures.push('Production orbiter does not move');
+    if (
+      JSON.stringify(radii) !==
+      JSON.stringify(SYSTEMS.flatMap((system) => system.stellars.map((body) => [body.id, body.r])))
+    )
+      failures.push('Renderer changed gameplay radii');
     const irregular = Object.values(STELLARS).find(
       (body) => bodyArtwork(body.id)?.shape === 'irregular',
     )!;

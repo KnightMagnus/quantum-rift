@@ -3,8 +3,8 @@
     "bodies": {},
     "stations": {
       "meridian-yards": {
-        "design": "mirror",
-        "landing": "s_mirror_landed"
+        "design": "yard",
+        "landing": "s_yard"
       }
     },
     "background": [
@@ -55,9 +55,9 @@
   },
   "mirrorfall": {
     "bodies": {
-      "mirrorfall-diversity-world": {
-        "art": "ringed_ice0",
-        "landing": "l_moon_ringed_sky"
+      "mirrorfall-claim": {
+        "art": "irr_3",
+        "shape": "irregular"
       }
     },
     "stations": {},
@@ -82,10 +82,10 @@
   "ninefold": {
     "bodies": {
       "ninefold-prime": {
-        "art": "ocean0"
+        "art": "ocean2"
       },
       "ninefold-prime-m1": {
-        "art": "ice8"
+        "art": "barren9"
       }
     },
     "stations": {},
@@ -114,7 +114,7 @@
   "axleway": {
     "bodies": {
       "axleway-moon": {
-        "art": "barren11"
+        "art": "barren10"
       }
     },
     "stations": {},
@@ -150,15 +150,13 @@
   "hookyard": {
     "bodies": {
       "hookyard-minor": {
-        "art": "ocean5",
-        "landing": "l_ocean_violet"
+        "art": "desert14"
       },
       "hookyard-minor-m1": {
-        "art": "desert10",
-        "landing": "l_desert_lilac"
+        "art": "barren6"
       },
       "hookyard-minor-m2": {
-        "art": "desert5"
+        "art": "barren3"
       }
     },
     "stations": {},
@@ -183,13 +181,7 @@
   "sparith-facet": {
     "bodies": {
       "sparith-facet-0": {
-        "art": "gas_violet"
-      },
-      "sparith-facet-0-m1": {
-        "art": "barren12"
-      },
-      "sparith-facet-0-m2": {
-        "art": "barren3"
+        "art": "crystal1"
       }
     },
     "stations": {},
@@ -229,16 +221,16 @@
   "gutteryard-den": {
     "bodies": {
       "gutteryard-minor": {
-        "art": "ocean4"
+        "art": "lava0"
       },
       "gutteryard-major": {
-        "art": "ocean2"
+        "art": "desert8"
       },
       "gutteryard-minor-m1": {
         "art": "ice3"
       },
       "gutteryard-minor-m2": {
-        "art": "barren8"
+        "art": "barren4"
       },
       "gutteryard-major-m1": {
         "art": "ice10"
@@ -266,14 +258,13 @@
   "emberburn": {
     "bodies": {
       "emberburn-prime": {
-        "art": "desert8",
-        "landing": "l_desert_gold_city"
+        "art": "desert12"
       },
       "emberburn-prime-m1": {
-        "art": "barren1"
+        "art": "barren10"
       },
       "emberburn-prime-m2": {
-        "art": "ice10"
+        "art": "ice11"
       }
     },
     "stations": {},
@@ -355,17 +346,8 @@
     }
   },
   "sol": {
-    "bodies": {
-      "earth": {
-        "art": "earth"
-      }
-    },
-    "stations": {
-      "luna": {
-        "design": "luna",
-        "landing": "s_luna_landed"
-      }
-    },
+    "bodies": {},
+    "stations": {},
     "background": [
       {
         "art": "gas_uranus",
@@ -386,12 +368,7 @@
   },
   "hushvoid": {
     "bodies": {},
-    "stations": {
-      "hushvoid-port": {
-        "design": "voidlantern",
-        "landing": "s_voidlantern_landed"
-      }
-    },
+    "stations": {},
     "background": [
       {
         "art": "gas_jade2",
@@ -414,8 +391,8 @@
     "bodies": {},
     "stations": {
       "choirhall": {
-        "design": "bell",
-        "landing": "s_bell_landed"
+        "design": "crystal",
+        "landing": "s_crystal"
       }
     },
     "background": [],
@@ -443,13 +420,13 @@
     }
   },
   "vesper-gate": {
-    "bodies": {
-      "vesper-gate-diversity-world": {
-        "art": "eyeball0",
-        "landing": "l_eyeball_terminator"
+    "bodies": {},
+    "stations": {
+      "vesper-camp": {
+        "design": "prefab",
+        "landing": "s_prefab_landed"
       }
     },
-    "stations": {},
     "background": [
       {
         "art": "gas_lilac",
@@ -533,8 +510,7 @@
   "saddlerest-market": {
     "bodies": {
       "saddlerest-moonlet": {
-        "art": "iron0",
-        "landing": "l_iron_plains"
+        "art": "barren5"
       }
     },
     "stations": {},
@@ -570,8 +546,7 @@
   "abyssal": {
     "bodies": {
       "deep": {
-        "art": "ocean6",
-        "landing": "l_ocean_archipelago"
+        "art": "ocean5"
       }
     },
     "stations": {},
@@ -631,13 +606,13 @@
     }
   },
   "grimpeak-deep": {
-    "bodies": {
-      "grimpeak-deep-diversity-world": {
-        "art": "lava5",
-        "landing": "l_lava1"
+    "bodies": {},
+    "stations": {
+      "grimpeak-smelter": {
+        "design": "smelter",
+        "landing": "s_smelter_landed"
       }
     },
-    "stations": {},
     "background": [
       {
         "art": "gas_jovian",
@@ -699,8 +674,7 @@
   "dunpeak": {
     "bodies": {
       "dunpeak-major": {
-        "art": "lava4",
-        "landing": "l_lava_sulfur"
+        "art": "lava3"
       }
     },
     "stations": {},
@@ -728,12 +702,7 @@
   },
   "astita": {
     "bodies": {},
-    "stations": {
-      "astita-yards": {
-        "design": "yard",
-        "landing": "s_yard"
-      }
-    },
+    "stations": {},
     "background": [
       {
         "art": "gas_ochre",
@@ -770,7 +739,7 @@
   "tidepool": {
     "bodies": {
       "tide": {
-        "art": "ocean3"
+        "art": "ocean2"
       }
     },
     "stations": {},
@@ -810,7 +779,7 @@
   "tinpost-market": {
     "bodies": {
       "tinpost-outpost": {
-        "art": "ice6"
+        "art": "ice7"
       }
     },
     "stations": {},
@@ -836,10 +805,6 @@
     "bodies": {
       "wagonrest-world": {
         "art": "desert2"
-      },
-      "wagonrest-world-m1": {
-        "art": "desert10",
-        "landing": "l_desert_lilac"
       }
     },
     "stations": {},
@@ -864,13 +829,13 @@
   "brasstrack-wells": {
     "bodies": {
       "brasstrack-minor": {
-        "art": "desert0"
+        "art": "desert12"
       }
     },
     "stations": {
       "brasstrack-station": {
-        "design": "ring",
-        "landing": "s_ring"
+        "design": "caravanserai",
+        "landing": "s_caravanserai_landed"
       }
     },
     "background": [
@@ -908,7 +873,11 @@
     }
   },
   "seimira": {
-    "bodies": {},
+    "bodies": {
+      "seimira-world": {
+        "art": "ice12"
+      }
+    },
     "stations": {
       "seimira-hub": {
         "design": "spindle",
@@ -968,7 +937,7 @@
   "reliquary": {
     "bodies": {
       "reliquary-husk": {
-        "art": "barren8"
+        "art": "lava4"
       }
     },
     "stations": {
@@ -1009,10 +978,10 @@
   "iridell": {
     "bodies": {
       "iridell-minor": {
-        "art": "gas_lilac"
+        "art": "crystal1"
       },
       "iridell-prime": {
-        "art": "gas_violet"
+        "art": "crystal0"
       }
     },
     "stations": {},
@@ -1070,8 +1039,8 @@
     "bodies": {},
     "stations": {
       "chimeith-station": {
-        "design": "chime",
-        "landing": "s_chime_landed"
+        "design": "crystal",
+        "landing": "s_crystal"
       }
     },
     "background": [
@@ -1095,7 +1064,7 @@
   "longhaul": {
     "bodies": {
       "cartwheel": {
-        "art": "ice3"
+        "art": "ice4"
       }
     },
     "stations": {
@@ -1143,7 +1112,7 @@
   "elasai": {
     "bodies": {
       "elasai-moonlet": {
-        "art": "barren12"
+        "art": "ice1"
       }
     },
     "stations": {},
@@ -1183,7 +1152,7 @@
   "vrrhive": {
     "bodies": {
       "vrrhive-moon": {
-        "art": "ice12"
+        "art": "barren2"
       }
     },
     "stations": {},
@@ -1239,8 +1208,8 @@
     "bodies": {},
     "stations": {
       "sparvane-hub": {
-        "design": "crystal",
-        "landing": "s_crystal"
+        "design": "chime",
+        "landing": "s_chime_landed"
       }
     },
     "background": [
@@ -1350,13 +1319,13 @@
     }
   },
   "skrrspire": {
-    "bodies": {
-      "skrrspire-diversity-world": {
-        "art": "forest1",
-        "landing": "l_forest_moon2"
+    "bodies": {},
+    "stations": {
+      "skrrspire-spire": {
+        "design": "hive_spire",
+        "landing": "s_hive_spire_landed"
       }
     },
-    "stations": {},
     "background": [
       {
         "art": "gas_ember2",
@@ -1419,15 +1388,13 @@
   "flickerglow": {
     "bodies": {
       "flickerglow-0": {
-        "art": "desert14",
-        "landing": "l_desert_crater_town"
+        "art": "desert10"
       },
       "flickerglow-world": {
-        "art": "desert9",
-        "landing": "l_desert_canyon_colony"
+        "art": "sulfur1"
       },
       "flickerglow-world-m1": {
-        "art": "ice11"
+        "art": "ice2"
       }
     },
     "stations": {},
@@ -1487,8 +1454,8 @@
     "bodies": {},
     "stations": {
       "sparfall-hub": {
-        "design": "chime",
-        "landing": "s_chime_landed"
+        "design": "crystal",
+        "landing": "s_crystal"
       }
     },
     "background": [
@@ -1527,20 +1494,23 @@
   "coldharbor": {
     "bodies": {
       "coldharbor": {
-        "art": "ice10"
+        "art": "ocean3"
       },
       "coldharbor-m1": {
-        "art": "barren9"
+        "art": "eyeball0"
       },
       "coldharbor-m2": {
-        "art": "irr_6",
-        "shape": "irregular"
+        "art": "barren7"
       }
     },
     "stations": {
       "coldharbor-yards": {
-        "design": "outpost",
-        "landing": "s_outpost_landed"
+        "design": "farside",
+        "landing": "s_farside_landed"
+      },
+      "farside-span": {
+        "design": "farside",
+        "landing": "s_farside_landed"
       }
     },
     "background": [
@@ -1621,8 +1591,8 @@
     "bodies": {},
     "stations": {
       "flickerfall-port": {
-        "design": "twin",
-        "landing": "s_twin"
+        "design": "voidlantern",
+        "landing": "s_voidlantern_landed"
       }
     },
     "background": [
@@ -1687,11 +1657,7 @@
         "art": "ocean1"
       },
       "shoalpool-prime": {
-        "art": "ocean6",
-        "landing": "l_ocean_archipelago"
-      },
-      "shoalpool-major-m1": {
-        "art": "ice3"
+        "art": "ocean4"
       }
     },
     "stations": {},
@@ -1794,8 +1760,7 @@
   "hearthlight": {
     "bodies": {
       "hearthlight-world": {
-        "art": "ocean5",
-        "landing": "l_ocean_violet"
+        "art": "city2"
       },
       "hearthlight-world-m1": {
         "art": "barren7"
@@ -1834,10 +1799,7 @@
   "shoalbloom": {
     "bodies": {
       "shoalbloom-world": {
-        "art": "ocean3"
-      },
-      "shoalbloom-world-m1": {
-        "art": "barren9"
+        "art": "ocean6"
       }
     },
     "stations": {
@@ -1882,7 +1844,7 @@
   "dunstone-hold": {
     "bodies": {
       "dunstone-moonlet": {
-        "art": "barren10"
+        "art": "barren9"
       }
     },
     "stations": {},
@@ -1907,8 +1869,7 @@
   "glasswake": {
     "bodies": {
       "glasswake-remnant": {
-        "art": "crystal3",
-        "landing": "l_crystal_gold"
+        "art": "shattered0"
       }
     },
     "stations": {
@@ -1938,7 +1899,7 @@
   "hookhole": {
     "bodies": {
       "hookhole-prime": {
-        "art": "ice6"
+        "art": "lava4"
       }
     },
     "stations": {},
@@ -2001,7 +1962,7 @@
   "geodesy": {
     "bodies": {
       "geode": {
-        "art": "crystal0"
+        "art": "crystal3"
       }
     },
     "stations": {},
@@ -2037,10 +1998,10 @@
   "vantdeep-night": {
     "bodies": {
       "vantdeep-major": {
-        "art": "crystal2"
+        "art": "iron0"
       },
       "vantdeep-major-m1": {
-        "art": "ice4"
+        "art": "ice8"
       }
     },
     "stations": {},
@@ -2059,12 +2020,7 @@
     }
   },
   "lost-claim": {
-    "bodies": {
-      "lost-claim-diversity-world": {
-        "art": "shattered0",
-        "landing": "l_shattered_seams"
-      }
-    },
+    "bodies": {},
     "stations": {},
     "background": [
       {
@@ -2100,13 +2056,13 @@
     }
   },
   "wagonroad": {
-    "bodies": {
-      "wagonroad-diversity-world": {
-        "art": "gas_cream",
-        "landing": "l_gas1"
+    "bodies": {},
+    "stations": {
+      "wagonroad-tower": {
+        "design": "lighthouse",
+        "landing": "s_lighthouse_landed"
       }
     },
-    "stations": {},
     "background": [
       {
         "art": "gas_aurora",
@@ -2127,9 +2083,8 @@
   },
   "thrmire": {
     "bodies": {
-      "thrmire-diversity-world": {
-        "art": "forest1",
-        "landing": "l_forest_moon2"
+      "thrmire-moon": {
+        "art": "toxic2"
       }
     },
     "stations": {},
@@ -2159,8 +2114,8 @@
     "bodies": {},
     "stations": {
       "quietude-anchorage": {
-        "design": "domes",
-        "landing": "s_domes_landed"
+        "design": "junk",
+        "landing": "s_junk"
       }
     },
     "background": [
@@ -2199,8 +2154,7 @@
   "longreach": {
     "bodies": {
       "longreach-prime": {
-        "art": "eyeball1",
-        "landing": "l_eyeball_terminator"
+        "art": "terran3"
       }
     },
     "stations": {
@@ -2230,12 +2184,11 @@
   "tapershade": {
     "bodies": {
       "tapershade-minor": {
-        "art": "desert11",
-        "landing": "l_desert_dome_colony"
+        "art": "desert4"
       },
       "tapershade-minor-m1": {
-        "art": "ice7",
-        "landing": "l_ice_deepblue"
+        "art": "irr_6",
+        "shape": "irregular"
       }
     },
     "stations": {},
@@ -2264,10 +2217,10 @@
   "umbra": {
     "bodies": {
       "umbra-heart": {
-        "art": "crystal0"
+        "art": "carbon0"
       },
       "umbra-heart-m1": {
-        "art": "desert4"
+        "art": "barren6"
       }
     },
     "stations": {},
@@ -2338,7 +2291,7 @@
   "anchorwater": {
     "bodies": {
       "anchorwater-0": {
-        "art": "ocean4"
+        "art": "terran2"
       }
     },
     "stations": {},
@@ -2400,8 +2353,7 @@
   "surfwake-current": {
     "bodies": {
       "surfwake-outpost": {
-        "art": "ringed_ice0",
-        "landing": "l_moon_ringed_sky"
+        "art": "ice3"
       }
     },
     "stations": {},
@@ -2466,11 +2418,11 @@
   "hivemire": {
     "bodies": {
       "hivemire-minor": {
-        "art": "gas_cream"
+        "art": "jungle1"
       },
       "hivemire-minor-m1": {
-        "art": "carbon0",
-        "landing": "l_carbon_plains"
+        "art": "irr_1",
+        "shape": "irregular"
       }
     },
     "stations": {},
@@ -2575,8 +2527,7 @@
   "chitinreach": {
     "bodies": {
       "molt": {
-        "art": "ringed_rock0",
-        "landing": "l_moon_ringed_sky"
+        "art": "barren5"
       }
     },
     "stations": {},
@@ -2610,15 +2561,19 @@
     }
   },
   "iriace": {
-    "bodies": {},
+    "bodies": {
+      "iriace-world": {
+        "art": "crystal4"
+      }
+    },
     "stations": {
       "iriace-station": {
         "design": "crystal",
         "landing": "s_crystal"
       },
       "iriace-yards": {
-        "design": "bell",
-        "landing": "s_bell_landed"
+        "design": "chime",
+        "landing": "s_chime_landed"
       }
     },
     "background": [
@@ -2646,7 +2601,7 @@
   "nightjar": {
     "bodies": {
       "nightjar-refuge": {
-        "art": "gas_sea"
+        "art": "ice6"
       }
     },
     "stations": {
@@ -2687,15 +2642,7 @@
   "saddletrack": {
     "bodies": {
       "saddletrack-world": {
-        "art": "desert6"
-      },
-      "saddletrack-world-m1": {
-        "art": "ice5",
-        "landing": "l_ice_teal"
-      },
-      "saddletrack-world-m2": {
-        "art": "desert12",
-        "landing": "l_desert_saltflat_city"
+        "art": "desert13"
       }
     },
     "stations": {
@@ -2753,15 +2700,14 @@
   "gallowsden": {
     "bodies": {
       "gallowsden-minor": {
-        "art": "shattered0",
-        "landing": "l_shattered_seams"
+        "art": "lava3"
       },
       "gallowsden-minor-m1": {
-        "art": "irr_0",
-        "shape": "irregular"
+        "art": "barren1"
       },
       "gallowsden-minor-m2": {
-        "art": "ice2"
+        "art": "irr_2",
+        "shape": "irregular"
       }
     },
     "stations": {},
@@ -2832,7 +2778,7 @@
   "caravantrack": {
     "bodies": {
       "caravantrack-outpost": {
-        "art": "barren13"
+        "art": "barren4"
       }
     },
     "stations": {},
@@ -2873,8 +2819,8 @@
     "bodies": {},
     "stations": {
       "scrapverge-yards": {
-        "design": "stronghold",
-        "landing": "s_stronghold_landed"
+        "design": "junk",
+        "landing": "s_junk"
       }
     },
     "background": [
@@ -2908,12 +2854,7 @@
     }
   },
   "burnt-mile": {
-    "bodies": {
-      "burnt-mile-diversity-world": {
-        "art": "desert11",
-        "landing": "l_desert_dome_colony"
-      }
-    },
+    "bodies": {},
     "stations": {},
     "background": [
       {
@@ -2952,8 +2893,8 @@
     "bodies": {},
     "stations": {
       "reef": {
-        "design": "waterbell",
-        "landing": "s_waterbell_landed"
+        "design": "reef",
+        "landing": "s_reef"
       }
     },
     "background": [],
@@ -2983,10 +2924,7 @@
   "facethymn-chord": {
     "bodies": {
       "facethymn-chord-0": {
-        "art": "gas_lilac"
-      },
-      "facethymn-chord-0-m1": {
-        "art": "ice1"
+        "art": "crystal4"
       }
     },
     "stations": {},
@@ -3027,7 +2965,7 @@
   "facetvane-facet": {
     "bodies": {
       "facetvane-outpost": {
-        "art": "crystal0"
+        "art": "crystal3"
       }
     },
     "stations": {},
@@ -3065,12 +3003,7 @@
     }
   },
   "lone-claim": {
-    "bodies": {
-      "lone-claim-diversity-world": {
-        "art": "desert14",
-        "landing": "l_desert_crater_town"
-      }
-    },
+    "bodies": {},
     "stations": {},
     "background": [
       {
@@ -3093,7 +3026,7 @@
   "sable-reach": {
     "bodies": {
       "sable-outpost": {
-        "art": "ice6"
+        "art": "barren1"
       }
     },
     "stations": {},
@@ -3118,18 +3051,16 @@
   "mandikesh": {
     "bodies": {
       "mandikesh-world": {
-        "art": "gas_amber"
+        "art": "jungle0"
       },
       "mandikesh-world-m1": {
-        "art": "irr_7",
-        "shape": "irregular",
-        "landing": "l_moon_irregular"
+        "art": "ice4"
       }
     },
     "stations": {
       "mandikesh-hub": {
-        "design": "brood_lattice",
-        "landing": "s_brood_lattice_landed"
+        "design": "hive_spire",
+        "landing": "s_hive_spire_landed"
       }
     },
     "background": [
@@ -3164,9 +3095,8 @@
   },
   "broodhive": {
     "bodies": {
-      "broodhive-diversity-world": {
-        "art": "forest1",
-        "landing": "l_forest_moon2"
+      "broodhive-world": {
+        "art": "jungle3"
       }
     },
     "stations": {},
@@ -3206,7 +3136,7 @@
   "vrrath": {
     "bodies": {
       "vrrath-moon": {
-        "art": "sulfur2"
+        "art": "barren12"
       }
     },
     "stations": {},
@@ -3238,8 +3168,8 @@
     "bodies": {},
     "stations": {
       "vigilfall-hub": {
-        "design": "vigil",
-        "landing": "s_vigil_landed"
+        "design": "lighthouse",
+        "landing": "s_lighthouse_landed"
       }
     },
     "background": [
@@ -3266,12 +3196,7 @@
   },
   "lyrene": {
     "bodies": {},
-    "stations": {
-      "lyrene-yards": {
-        "design": "customs",
-        "landing": "s_customs_landed"
-      }
-    },
+    "stations": {},
     "background": [
       {
         "art": "gas_storm",
@@ -3293,7 +3218,7 @@
   "sconcefall-vigil": {
     "bodies": {
       "sconcefall-moonlet": {
-        "art": "ice11"
+        "art": "barren12"
       }
     },
     "stations": {
@@ -3316,15 +3241,19 @@
     }
   },
   "ironpost": {
-    "bodies": {},
+    "bodies": {
+      "ironpost-tank": {
+        "art": "ice9"
+      }
+    },
     "stations": {
       "ironpost-exchange": {
-        "design": "drydock",
-        "landing": "s_drydock_landed"
+        "design": "bazaar",
+        "landing": "s_bazaar_landed"
       },
       "ironpost-station": {
-        "design": "cylinder",
-        "landing": "s_cylinder_landed"
+        "design": "caravanserai",
+        "landing": "s_caravanserai_landed"
       }
     },
     "background": [],
@@ -3353,9 +3282,11 @@
   },
   "ashshade": {
     "bodies": {
-      "ashshade-diversity-world": {
-        "art": "ice5",
-        "landing": "l_ice_teal"
+      "ashshade-world": {
+        "art": "lava5"
+      },
+      "ashshade-keep": {
+        "art": "barren6"
       }
     },
     "stations": {},
@@ -3380,7 +3311,7 @@
   "mandihive": {
     "bodies": {
       "mandihive-rock": {
-        "art": "sulfur0"
+        "art": "barren10"
       }
     },
     "stations": {},
@@ -3414,12 +3345,7 @@
     }
   },
   "far-shelf": {
-    "bodies": {
-      "far-shelf-diversity-world": {
-        "art": "desert11",
-        "landing": "l_desert_dome_colony"
-      }
-    },
+    "bodies": {},
     "stations": {},
     "background": [
       {
@@ -3453,7 +3379,7 @@
   "emberwake": {
     "bodies": {
       "emberwake-0": {
-        "art": "gas_rust"
+        "art": "desert9"
       }
     },
     "stations": {},
@@ -3492,8 +3418,8 @@
     "bodies": {},
     "stations": {
       "spoke": {
-        "design": "bazaar",
-        "landing": "s_bazaar_landed"
+        "design": "caravanserai",
+        "landing": "s_caravanserai_landed"
       }
     },
     "background": [
@@ -3569,8 +3495,8 @@
         "landing": "s_caravanserai_landed"
       },
       "spokeserai-port": {
-        "design": "bazaar",
-        "landing": "s_bazaar_landed"
+        "design": "ring",
+        "landing": "s_ring"
       }
     },
     "background": [
@@ -3610,8 +3536,8 @@
     "bodies": {},
     "stations": {
       "shoaldeep-yards": {
-        "design": "kelp",
-        "landing": "s_kelp_landed"
+        "design": "reef",
+        "landing": "s_reef"
       }
     },
     "background": [
@@ -3636,8 +3562,8 @@
     "bodies": {},
     "stations": {
       "northmark-station": {
-        "design": "prefab",
-        "landing": "s_prefab_landed"
+        "design": "bastion",
+        "landing": "s_bastion_landed"
       }
     },
     "background": [],
@@ -3667,11 +3593,10 @@
   "halcyon": {
     "bodies": {
       "halcyon-prime": {
-        "art": "forest0",
-        "landing": "l_forest_moon1"
+        "art": "ocean6"
       },
       "halcyon-prime-m1": {
-        "art": "irr_3",
+        "art": "irr_0",
         "shape": "irregular"
       }
     },
@@ -3691,12 +3616,7 @@
   },
   "corora": {
     "bodies": {},
-    "stations": {
-      "corora-exchange": {
-        "design": "cross",
-        "landing": "s_cross"
-      }
-    },
+    "stations": {},
     "background": [
       {
         "art": "gas_ochre",
@@ -3821,7 +3741,7 @@
   "valora-prime": {
     "bodies": {
       "valora-minor": {
-        "art": "ice0"
+        "art": "city1"
       }
     },
     "stations": {},
@@ -3889,12 +3809,7 @@
     }
   },
   "outer-haven": {
-    "bodies": {
-      "outer-haven-diversity-world": {
-        "art": "shattered0",
-        "landing": "l_shattered_seams"
-      }
-    },
+    "bodies": {},
     "stations": {},
     "background": [
       {
@@ -3953,7 +3868,7 @@
   "fathomtrench": {
     "bodies": {
       "fathomtrench-world": {
-        "art": "ocean1"
+        "art": "ocean3"
       }
     },
     "stations": {},
@@ -3982,7 +3897,11 @@
     }
   },
   "broodhollow": {
-    "bodies": {},
+    "bodies": {
+      "broodhollow-world": {
+        "art": "jungle0"
+      }
+    },
     "stations": {
       "brood": {
         "design": "hive_spire",
@@ -4010,7 +3929,7 @@
   "gutteryard": {
     "bodies": {
       "gutteryard-moon": {
-        "art": "barren6"
+        "art": "barren13"
       }
     },
     "stations": {},
@@ -4077,8 +3996,8 @@
         "landing": "s_forge"
       },
       "ironpeak-anchorage": {
-        "design": "hall",
-        "landing": "s_hall_landed"
+        "design": "rock",
+        "landing": "s_rock"
       }
     },
     "background": [
@@ -4101,9 +4020,9 @@
   },
   "kragdelve": {
     "bodies": {
-      "kragdelve-diversity-world": {
-        "art": "lava5",
-        "landing": "l_lava1"
+      "kragdelve-rock": {
+        "art": "irr_4",
+        "shape": "irregular"
       }
     },
     "stations": {},
@@ -4132,10 +4051,15 @@
   "wickburn-watch": {
     "bodies": {
       "wickburn-minor": {
-        "art": "desert1"
+        "art": "desert13"
       }
     },
-    "stations": {},
+    "stations": {
+      "wickburn-tower": {
+        "design": "lighthouse",
+        "landing": "s_lighthouse_landed"
+      }
+    },
     "background": [
       {
         "art": "gas_aurora",
@@ -4207,11 +4131,15 @@
     }
   },
   "hesper": {
-    "bodies": {},
+    "bodies": {
+      "hesper-world": {
+        "art": "desert11"
+      }
+    },
     "stations": {
       "lanternfall": {
-        "design": "disc",
-        "landing": "s_disc"
+        "design": "voidlantern",
+        "landing": "s_voidlantern_landed"
       }
     },
     "background": [
@@ -4246,7 +4174,7 @@
   "gloam": {
     "bodies": {
       "gloam-remnant": {
-        "art": "ice2"
+        "art": "shattered0"
       }
     },
     "stations": {},
@@ -4335,13 +4263,13 @@
     }
   },
   "farhaul": {
-    "bodies": {
-      "farhaul-diversity-world": {
-        "art": "desert12",
-        "landing": "l_desert_saltflat_city"
+    "bodies": {},
+    "stations": {
+      "farhaul-relay": {
+        "design": "relay",
+        "landing": "s_relay_landed"
       }
     },
-    "stations": {},
     "background": [],
     "sky": {
       "nebulae": ["nebula_13"],
@@ -4368,9 +4296,8 @@
   },
   "copperharbor": {
     "bodies": {
-      "copperharbor-diversity-world": {
-        "art": "desert8",
-        "landing": "l_desert_gold_city"
+      "copperharbor-world": {
+        "art": "desert6"
       }
     },
     "stations": {},
@@ -4401,19 +4328,16 @@
   "vrrath-clutch": {
     "bodies": {
       "vrrath-minor": {
-        "art": "desert7"
+        "art": "jungle3"
       },
       "vrrath-beta": {
-        "art": "desert8",
-        "landing": "l_desert_gold_city"
+        "art": "toxic1"
       },
       "vrrath-minor-m1": {
-        "art": "ice9"
+        "art": "barren1"
       },
       "vrrath-beta-m1": {
-        "art": "irr_5",
-        "shape": "irregular",
-        "landing": "l_moon_irregular"
+        "art": "barren7"
       }
     },
     "stations": {},
@@ -4436,12 +4360,7 @@
     }
   },
   "free-harbor": {
-    "bodies": {
-      "free-harbor-diversity-world": {
-        "art": "desert14",
-        "landing": "l_desert_crater_town"
-      }
-    },
+    "bodies": {},
     "stations": {},
     "background": [
       {
@@ -4511,12 +4430,10 @@
   "greyline": {
     "bodies": {
       "greyline-moon": {
-        "art": "ice5",
-        "landing": "l_ice_teal"
+        "art": "barren11"
       },
       "greyline-moon-1": {
-        "art": "ice7",
-        "landing": "l_ice_deepblue"
+        "art": "barren4"
       }
     },
     "stations": {},
@@ -4540,9 +4457,9 @@
   },
   "dimmer": {
     "bodies": {
-      "dimmer-diversity-world": {
-        "art": "carbon0",
-        "landing": "l_carbon_plains"
+      "dimmer-rock": {
+        "art": "irr_7",
+        "shape": "irregular"
       }
     },
     "stations": {},
@@ -4565,13 +4482,12 @@
     }
   },
   "serita": {
-    "bodies": {},
-    "stations": {
-      "serita-exchange": {
-        "design": "bastion",
-        "landing": "s_bastion_landed"
+    "bodies": {
+      "serita-minor": {
+        "art": "ocean1"
       }
     },
+    "stations": {},
     "background": [
       {
         "art": "gas_saturn",
@@ -4606,12 +4522,7 @@
     }
   },
   "lost-signal": {
-    "bodies": {
-      "lost-signal-diversity-world": {
-        "art": "iron0",
-        "landing": "l_iron_plains"
-      }
-    },
+    "bodies": {},
     "stations": {},
     "background": [
       {
@@ -4649,14 +4560,13 @@
   "qgate": {
     "bodies": {
       "concordia": {
-        "art": "ocean2"
+        "art": "ocean6"
       },
       "concordia-m1": {
-        "art": "desert11",
-        "landing": "l_desert_dome_colony"
+        "art": "barren12"
       },
       "concordia-m2": {
-        "art": "barren6"
+        "art": "barren10"
       }
     },
     "stations": {},
@@ -4697,12 +4607,12 @@
     "bodies": {},
     "stations": {
       "anvilhelm-station": {
-        "design": "smelter",
-        "landing": "s_smelter_landed"
-      },
-      "anvilhelm-exchange": {
         "design": "rock",
         "landing": "s_rock"
+      },
+      "anvilhelm-exchange": {
+        "design": "forge",
+        "landing": "s_forge"
       }
     },
     "background": [
@@ -4724,12 +4634,7 @@
     }
   },
   "lone-light": {
-    "bodies": {
-      "lone-light-diversity-world": {
-        "art": "desert11",
-        "landing": "l_desert_dome_colony"
-      }
-    },
+    "bodies": {},
     "stations": {},
     "background": [
       {
@@ -4755,9 +4660,8 @@
   },
   "luora": {
     "bodies": {
-      "luora-diversity-world": {
-        "art": "ocean5",
-        "landing": "l_ocean_violet"
+      "luora-garden": {
+        "art": "crystal2"
       }
     },
     "stations": {},
@@ -4785,11 +4689,16 @@
     }
   },
   "anchorreach": {
-    "bodies": {},
+    "bodies": {
+      "anchorreach-hook": {
+        "art": "irr_5",
+        "shape": "irregular"
+      }
+    },
     "stations": {
       "anchorreach-hub": {
-        "design": "refinery",
-        "landing": "s_refinery_landed"
+        "design": "yard",
+        "landing": "s_yard"
       }
     },
     "background": [
@@ -4813,10 +4722,10 @@
   "basaltforge-deep": {
     "bodies": {
       "basaltforge-major": {
-        "art": "lava0"
+        "art": "lava1"
       },
       "basaltforge-major-m1": {
-        "art": "lava3"
+        "art": "eyeball0"
       }
     },
     "stations": {},
@@ -4845,7 +4754,7 @@
   "slagforge": {
     "bodies": {
       "slag": {
-        "art": "lava2"
+        "art": "lava0"
       }
     },
     "stations": {},
@@ -4870,7 +4779,7 @@
   "coralreef-current": {
     "bodies": {
       "coralreef-outpost": {
-        "art": "ice4"
+        "art": "ice6"
       }
     },
     "stations": {},
@@ -4899,7 +4808,7 @@
   "ironwell-market": {
     "bodies": {
       "ironwell-moon": {
-        "art": "sulfur2"
+        "art": "barren8"
       }
     },
     "stations": {},
@@ -4939,12 +4848,7 @@
     }
   },
   "nulward": {
-    "bodies": {
-      "nulward-diversity-world": {
-        "art": "carbon0",
-        "landing": "l_carbon_plains"
-      }
-    },
+    "bodies": {},
     "stations": {},
     "background": [
       {
@@ -4993,13 +4897,13 @@
     }
   },
   "nulreach": {
-    "bodies": {
-      "nulreach-diversity-world": {
-        "art": "carbon0",
-        "landing": "l_carbon_plains"
+    "bodies": {},
+    "stations": {
+      "nulreach-lattice": {
+        "design": "brood_lattice",
+        "landing": "s_brood_lattice_landed"
       }
     },
-    "stations": {},
     "background": [
       {
         "art": "gas_jade2",
@@ -5021,7 +4925,7 @@
   "palinode": {
     "bodies": {
       "palinode-listener": {
-        "art": "barren9"
+        "art": "barren0"
       }
     },
     "stations": {
@@ -5066,17 +4970,16 @@
   "rustverge": {
     "bodies": {
       "rustverge-0": {
-        "art": "ocean5",
-        "landing": "l_ocean_violet"
+        "art": "desert6"
       },
       "rustverge-0-m1": {
-        "art": "barren1"
+        "art": "barren9"
       }
     },
     "stations": {
       "rustverge-port": {
-        "design": "gutted",
-        "landing": "s_gutted_landed"
+        "design": "den",
+        "landing": "s_den_landed"
       }
     },
     "background": [
@@ -5104,11 +5007,10 @@
   "brightwater": {
     "bodies": {
       "brightwater-iv": {
-        "art": "ocean0"
+        "art": "ocean4"
       },
       "brightwater-iv-m1": {
-        "art": "forest0",
-        "landing": "l_forest_moon1"
+        "art": "barren2"
       }
     },
     "stations": {},
@@ -5136,13 +5038,12 @@
     }
   },
   "praeenna": {
-    "bodies": {},
-    "stations": {
-      "praeenna-yards": {
-        "design": "customs",
-        "landing": "s_customs_landed"
+    "bodies": {
+      "praeenna-veil": {
+        "art": "ringed_ice0"
       }
     },
+    "stations": {},
     "background": [
       {
         "art": "gas_ochre",
@@ -5256,8 +5157,8 @@
     "bodies": {},
     "stations": {
       "deepmine": {
-        "design": "hall",
-        "landing": "s_hall_landed"
+        "design": "rock",
+        "landing": "s_rock"
       }
     },
     "background": [
@@ -5311,8 +5212,10 @@
   "mountainhold": {
     "bodies": {
       "hold": {
-        "art": "ringed_rock0",
-        "landing": "l_moon_ringed_sky"
+        "art": "barren8"
+      },
+      "mountainhold-anvil": {
+        "art": "lava2"
       }
     },
     "stations": {},
@@ -5341,10 +5244,10 @@
   "basaltgard": {
     "bodies": {
       "basaltgard-minor": {
-        "art": "lava1"
+        "art": "lava2"
       },
       "basaltgard-minor-m1": {
-        "art": "barren7"
+        "art": "barren8"
       }
     },
     "stations": {},
@@ -5368,12 +5271,16 @@
   },
   "astenna": {
     "bodies": {
-      "astenna-diversity-world": {
-        "art": "terran5",
-        "landing": "l_terran_autumn"
+      "astenna-world": {
+        "art": "terran5"
       }
     },
-    "stations": {},
+    "stations": {
+      "astenna-gate": {
+        "design": "customs",
+        "landing": "s_customs_landed"
+      }
+    },
     "background": [],
     "sky": {
       "nebulae": ["nebula_5"],
@@ -5407,8 +5314,8 @@
     "bodies": {},
     "stations": {
       "opalace-station": {
-        "design": "bell",
-        "landing": "s_bell_landed"
+        "design": "chime",
+        "landing": "s_chime_landed"
       }
     },
     "background": [
@@ -5443,11 +5350,10 @@
   "valeon": {
     "bodies": {
       "valeon-world": {
-        "art": "ringed_ice0",
-        "landing": "l_moon_ringed_sky"
+        "art": "terran5"
       },
       "valeon-world-m1": {
-        "art": "barren4"
+        "art": "barren11"
       }
     },
     "stations": {},
@@ -5476,7 +5382,7 @@
   "zzclutch": {
     "bodies": {
       "zzclutch-rock": {
-        "art": "sulfur0"
+        "art": "barren4"
       }
     },
     "stations": {
@@ -5517,8 +5423,7 @@
   "lantern-twins": {
     "bodies": {
       "twins-cinder": {
-        "art": "shattered0",
-        "landing": "l_shattered_seams"
+        "art": "lava2"
       }
     },
     "stations": {
@@ -5554,7 +5459,7 @@
   "abyssdrift": {
     "bodies": {
       "abyssdrift-rock": {
-        "art": "ice1"
+        "art": "ice10"
       }
     },
     "stations": {},
@@ -5611,8 +5516,8 @@
     "bodies": {},
     "stations": {
       "kraggard-station": {
-        "design": "smelter",
-        "landing": "s_smelter_landed"
+        "design": "rock",
+        "landing": "s_rock"
       }
     },
     "background": [
@@ -5640,10 +5545,15 @@
   "tapermere": {
     "bodies": {
       "tapermere-0": {
-        "art": "desert3"
+        "art": "desert1"
       }
     },
-    "stations": {},
+    "stations": {
+      "tapermere-chapel": {
+        "design": "bell",
+        "landing": "s_bell_landed"
+      }
+    },
     "background": [
       {
         "art": "gas_neptune2",
@@ -5710,11 +5620,10 @@
   "ember-drift": {
     "bodies": {
       "ember-minor": {
-        "art": "ocean2"
+        "art": "ocean0"
       },
       "ember-minor-m1": {
-        "art": "desert13",
-        "landing": "l_desert_crimson_glass"
+        "art": "barren6"
       }
     },
     "stations": {},
@@ -5753,9 +5662,8 @@
   },
   "facetsene": {
     "bodies": {
-      "facetsene-diversity-world": {
-        "art": "crystal3",
-        "landing": "l_crystal_gold"
+      "facetsene-seed": {
+        "art": "crystal2"
       }
     },
     "stations": {},
@@ -5795,7 +5703,7 @@
   "shoaldrift": {
     "bodies": {
       "shoaldrift-moon": {
-        "art": "ice4"
+        "art": "ice9"
       }
     },
     "stations": {},
@@ -5818,13 +5726,13 @@
     }
   },
   "driftyard": {
-    "bodies": {
-      "driftyard-diversity-world": {
-        "art": "desert12",
-        "landing": "l_desert_saltflat_city"
+    "bodies": {},
+    "stations": {
+      "driftyard-camp": {
+        "design": "junk",
+        "landing": "s_junk"
       }
     },
-    "stations": {},
     "background": [
       {
         "art": "gas_hot",
@@ -5857,11 +5765,10 @@
   "gloammark-night": {
     "bodies": {
       "gloammark-minor": {
-        "art": "crystal2"
+        "art": "iron0"
       },
       "gloammark-minor-m1": {
-        "art": "irr_1",
-        "shape": "irregular"
+        "art": "barren13"
       }
     },
     "stations": {},
@@ -5929,10 +5836,6 @@
     "bodies": {
       "ebbreef-prime": {
         "art": "ocean0"
-      },
-      "ebbreef-prime-m1": {
-        "art": "forest1",
-        "landing": "l_forest_moon2"
       }
     },
     "stations": {},
@@ -5961,7 +5864,7 @@
   "aureole": {
     "bodies": {
       "aureole-ash": {
-        "art": "gas_neptune2"
+        "art": "barren13"
       }
     },
     "stations": {
@@ -6002,11 +5905,7 @@
   "caravanserai": {
     "bodies": {
       "serai": {
-        "art": "desert5"
-      },
-      "serai-m1": {
-        "art": "irr_0",
-        "shape": "irregular"
+        "art": "desert0"
       }
     },
     "stations": {},
@@ -6072,8 +5971,7 @@
   "wheelwright": {
     "bodies": {
       "rest": {
-        "art": "iron0",
-        "landing": "l_iron_plains"
+        "art": "barren0"
       }
     },
     "stations": {},
@@ -6109,7 +6007,7 @@
   "gravehole": {
     "bodies": {
       "gravehole-outpost": {
-        "art": "barren5"
+        "art": "barren11"
       }
     },
     "stations": {},
@@ -6177,7 +6075,7 @@
   "novion": {
     "bodies": {
       "novion-minor": {
-        "art": "ocean4"
+        "art": "ocean1"
       }
     },
     "stations": {},
@@ -6197,11 +6095,10 @@
   "emberlight": {
     "bodies": {
       "vigil-lamp": {
-        "art": "desert14",
-        "landing": "l_desert_crater_town"
+        "art": "desert3"
       },
       "vigil-lamp-m1": {
-        "art": "barren11"
+        "art": "barren5"
       }
     },
     "stations": {},
@@ -6280,12 +6177,7 @@
   },
   "valora": {
     "bodies": {},
-    "stations": {
-      "valora-anchorage": {
-        "design": "cross",
-        "landing": "s_cross"
-      }
-    },
+    "stations": {},
     "background": [
       {
         "art": "gas_saturn",
@@ -6307,7 +6199,7 @@
   "opalvane": {
     "bodies": {
       "opalvane-rock": {
-        "art": "crystal1"
+        "art": "crystal3"
       }
     },
     "stations": {},
@@ -6364,11 +6256,10 @@
   "quevar": {
     "bodies": {
       "inalumen": {
-        "art": "ocean1"
+        "art": "city0"
       },
       "inalumen-m1": {
-        "art": "ice5",
-        "landing": "l_ice_teal"
+        "art": "ice0"
       }
     },
     "stations": {},
@@ -6393,7 +6284,7 @@
   "facetfall": {
     "bodies": {
       "facet": {
-        "art": "gas_dwarf"
+        "art": "crystal0"
       }
     },
     "stations": {},
@@ -6486,12 +6377,7 @@
   },
   "vespervoid": {
     "bodies": {},
-    "stations": {
-      "vespervoid-anchorage": {
-        "design": "disc",
-        "landing": "s_disc"
-      }
-    },
+    "stations": {},
     "background": [
       {
         "art": "gas_hot",
@@ -6588,8 +6474,7 @@
   "vantvoid": {
     "bodies": {
       "vantvoid-minor": {
-        "art": "crystal4",
-        "landing": "l_crystal_emerald"
+        "art": "carbon0"
       }
     },
     "stations": {},
@@ -6615,8 +6500,8 @@
     "bodies": {},
     "stations": {
       "maghelm-yards": {
-        "design": "forge",
-        "landing": "s_forge"
+        "design": "refinery",
+        "landing": "s_refinery_landed"
       }
     },
     "background": [],
@@ -6634,9 +6519,8 @@
   },
   "chitath": {
     "bodies": {
-      "chitath-diversity-world": {
-        "art": "forest1",
-        "landing": "l_forest_moon2"
+      "chitath-seed": {
+        "art": "forest1"
       }
     },
     "stations": {},
@@ -6674,8 +6558,8 @@
     "bodies": {},
     "stations": {
       "fathompool-station": {
-        "design": "waterbell",
-        "landing": "s_waterbell_landed"
+        "design": "kelp",
+        "landing": "s_kelp_landed"
       }
     },
     "background": [
@@ -6715,8 +6599,8 @@
     "bodies": {},
     "stations": {
       "copperwell-port": {
-        "design": "drydock",
-        "landing": "s_drydock_landed"
+        "design": "caravanserai",
+        "landing": "s_caravanserai_landed"
       }
     },
     "background": [
@@ -6792,10 +6676,10 @@
   "knifemaw": {
     "bodies": {
       "knifemaw-prime": {
-        "art": "gas_hot"
+        "art": "lava1"
       },
       "knifemaw-prime-m1": {
-        "art": "ice1"
+        "art": "ice5"
       }
     },
     "stations": {},
@@ -6818,7 +6702,7 @@
         "art": "jungle2"
       },
       "thrum-m1": {
-        "art": "ice0"
+        "art": "barren1"
       }
     },
     "stations": {},
@@ -6847,10 +6731,7 @@
   "wagonford": {
     "bodies": {
       "wagonford-0": {
-        "art": "desert2"
-      },
-      "wagonford-0-m1": {
-        "art": "barren4"
+        "art": "desert10"
       }
     },
     "stations": {},
@@ -6918,13 +6799,13 @@
     }
   },
   "ropewater-rest": {
-    "bodies": {
-      "ropewater-rest-diversity-world": {
-        "art": "desert12",
-        "landing": "l_desert_saltflat_city"
+    "bodies": {},
+    "stations": {
+      "ropewater-raft": {
+        "design": "caravanserai",
+        "landing": "s_caravanserai_landed"
       }
     },
-    "stations": {},
     "background": [
       {
         "art": "gas_aurora",
@@ -6956,12 +6837,7 @@
     }
   },
   "stray-landing": {
-    "bodies": {
-      "stray-landing-diversity-world": {
-        "art": "shattered0",
-        "landing": "l_shattered_seams"
-      }
-    },
+    "bodies": {},
     "stations": {},
     "background": [
       {
@@ -6993,11 +6869,15 @@
     }
   },
   "lowtide": {
-    "bodies": {},
+    "bodies": {
+      "lowtide-world": {
+        "art": "ocean5"
+      }
+    },
     "stations": {
       "lowtide-station": {
-        "design": "twin",
-        "landing": "s_twin"
+        "design": "ring",
+        "landing": "s_ring"
       }
     },
     "background": [
@@ -7058,10 +6938,10 @@
   "novium-verge": {
     "bodies": {
       "novium-world": {
-        "art": "ocean3"
+        "art": "terran6"
       },
       "novium-world-m1": {
-        "art": "barren0"
+        "art": "eyeball1"
       }
     },
     "stations": {},

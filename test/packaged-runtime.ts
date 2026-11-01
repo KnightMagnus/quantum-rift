@@ -148,6 +148,7 @@ try {
     'shared/portrait-catalog.json',
     'shared/scenery-allocation.json',
     'shared/diversity-worlds.json',
+    'shared/system-scenes.json',
     'server/seeds.json',
     'client/index.html',
     'client/style.css',
@@ -275,6 +276,7 @@ try {
     'dist/shared/landscape-worlds.json',
     'dist/shared/scenery-allocation.json',
     'dist/shared/diversity-worlds.json',
+    'dist/shared/system-scenes.json',
     'dist/shared/portrait-catalog.json',
   ])
     assert(manifest.files.some(({ path: filename }) => filename === required));

@@ -1,3 +1,4 @@
+import { applySystemScene } from './system-scenes.ts';
 import { allocationFor, asteroidArtFor, sceneryRevision } from './scenery-allocation.ts';
 import { contactEdge } from './flight-feedback.ts';
 import { assetImage } from './asset-resources.ts';
@@ -28,7 +29,7 @@ type StarBackdrop = {
 type DebrisBit = { a: number; d: number; s: number; sp: number; rot: number; hot?: boolean };
 type DecorSprite = Point & { img: string; size: number; rot: number; spin: number };
 type DecorLayer = Point & { img: string; size: number; rot: number; depth: number };
-type DecorModel = {
+export type DecorModel = {
   sun: (Point & { size: number; core: string; halo: string; depth: number }) | null;
   gal: (DecorLayer & { squash: number; a: number })[];
   hole: (Point & { size: number; rot: number; depth: number }) | null;
@@ -554,7 +555,9 @@ function stars(systemId: string): {
  * @returns HTML Image instance
  */
 function decorImg(count: string): HTMLImageElement {
-  return assetImage(`decor/${count}.webp`);
+  return assetImage(
+    count.startsWith('deco_') ? `stations/s_${count.slice(5)}.webp` : `decor/${count}.webp`,
+  );
 }
 /**
  * Checks whether an image has completely loaded and has positive natural dimensions.
@@ -1155,6 +1158,7 @@ function decorFor(starSystem: GalaxySystem): DecorModel {
     if (decorModel2.storm && allocation.sky.nebulae.length)
       decorModel2.storm.img = allocation.sky.nebulae[0];
   }
+  applySystemScene(starSystem, decorModel2);
   // Authored Eventide sightlines are fixed after seeded generation: legacy scenery
   // consumes precisely the same RNG and new ports always frame their signature sky.
   if (starSystem.eventide)

@@ -1418,7 +1418,7 @@ function renderRendered(position: RenderedPlanet, horizontalOffset: number, clou
 export function planetSprite(planetDef: PlanetDef, currentTime: number): PlanetSprite | null {
   const authored = bodyArtwork(planetDef.id);
   if (authored?.shape === 'irregular') {
-    const source = `moons/${authored.art}`;
+    const source = `${authored.art.startsWith('irr_') ? 'decor' : 'moons'}/${authored.art}`;
     let image = images.get(source);
     if (!image) {
       image = loadImg(`assets/${source}.webp`);
