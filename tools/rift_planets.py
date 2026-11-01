@@ -205,10 +205,19 @@ def render(spec, layers=False):
         ring_c = rcol * rl * 0.95; ring_a = np.clip(dens, 0, 1) * band * rg.get('alpha', 0.85)
         front = Yr > 0   # nearer half (below the planet's centre in screen space)
         cover_front = ring_a * front; cover_back = ring_a * (~front) * (1 - inside)
-        # ring shadow on the planet: a band offset toward the light
+        # Trace lit surface points to the ring plane; density controls the shadow.
         if True:
-            Xs, Ys = X - LIGHT[0] * 0.35, Y - LIGHT[1] * 0.35; Xsr = Xs * ca + Ys * sa; Ysr = -Xs * sa + Ys * ca; rs = np.sqrt(Xsr ** 2 + (Ysr / rg['tilt']) ** 2)
-            ush = (rs - inr) / (outr - inr); shp = ((rs > inr) & (rs < outr) & (Ysr < 0)) * inside * 0.45
+            tl = rg['tilt']; st = math.sqrt(max(1e-6, 1 - tl * tl))
+            Lx_, Ly_, Lz_ = LIGHT[0] * ca + LIGHT[1] * sa, -LIGHT[0] * sa + LIGHT[1] * ca, LIGHT[2]
+            nY, nZ = -st, tl
+            ndl = nY * Ly_ + nZ * Lz_
+            uu = -(nY * Yr + nZ * Z) / (ndl if abs(ndl) > 1e-6 else 1e-6)
+            Hx, Hy, Hz = Xr + uu * Lx_, Yr + uu * Ly_, Z + uu * Lz_
+            rh = np.sqrt(Hx ** 2 + (Hy * tl + Hz * st) ** 2)
+            uh = np.clip((rh - inr) / (outr - inr), 0, 1)
+            dh = 0.35 + 0.65 * (0.5 + 0.5 * np.sin(uh * 47 + np.sin(uh * 13) * 2)) * (0.6 + 0.4 * np.sin(uh * 211)); dh *= smooth(0, 0.06, uh) * smooth(1, 0.9, uh)
+            dh *= (1 - smooth(0.02, 0.0, np.abs(uh - rg.get('gap', 0.62)) - 0.02) * 0.9)
+            shp = (uu > 0) * (rh > inr) * (rh < outr) * inside * np.clip(dh, 0, 1) * rg.get('alpha', 0.85) * 0.75 * smooth(-0.05, 0.25, lam_s)
             out_rgb = out_rgb * (1 - shp[..., None]); fr_a = np.maximum(fr_a, shp)
         bk_rgb = ring_c * cover_back[..., None]; bk_a = cover_back.copy()
         fr_rgb = ring_c * cover_front[..., None]; fr_a = np.maximum(fr_a, cover_front)
