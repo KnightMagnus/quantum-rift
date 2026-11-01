@@ -37,7 +37,7 @@ Download the latest release, extract it, and follow the launch instructions belo
 
 - Turn a derelict hull into your own **Personal Station**, with a Workshop, research, shipbuilding and defenses. Upgrade it or relocate to another hull. Your own station grants you docking clearance even when the local faction is hostile; visitors use a guest dock without access to your private station services.
 - Store ships in your hangar and organize docks around a lead ship and crewed wingmates that fly in formation and follow orders. Ready wingmates share their cargo space and passenger seats; the landed service bar shows your combined totals.
-- Hire and promote officers for your bridge and fleet, then defend your station in Holdout battles.
+- Hire and promote officers for your bridge and fleet. Permanent Triad Sentinel platforms guard operating Personal Stations and help in Holdout battles; abandoned hulls have none.
 
 ### Play with friends
 
@@ -94,6 +94,8 @@ The blue Pressure Hull cockpit is the standard interface for flight, station ser
 One slow patrol moves through Concord territory: a Concordance flagship, a carrier, battleships and fighter escorts. The carrier launches eight Watch drones from its central runway.
 
 ![Concord security patrol in Concordia, with the redesigned Concordance, carrier and escorts](docs/screenshots/qcs-patrol.png)
+
+![Permanent Triad Sentinel platforms guarding an operating Personal Station](docs/screenshots/triad-sentinels-flight.png)
 
 **Flight controls**
 

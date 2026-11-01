@@ -165,7 +165,8 @@
     "fuzz-seeds.ts",
     "qcs-fleet.ts",
     "flight-heading.ts",
-    "fleet-capacity.ts"
+    "fleet-capacity.ts",
+    "station-defenses.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -233,7 +234,8 @@
     "landed-colony-responsive-browser.ts",
     "landed-zoom-browser.ts",
     "touch-controls-browser.ts",
-    "combat-browser.ts"
+    "combat-browser.ts",
+    "station-defenses-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -909,6 +911,12 @@
       "helpers/legacy-fixture.ts",
       "helpers/mocks.ts",
       "helpers/cargo-fixture.ts"
+    ],
+    "station-defenses.ts": ["helpers/temp-data.ts", "helpers/legacy-fixture.ts"],
+    "station-defenses-browser.ts": [
+      "helpers/temp-data.ts",
+      "helpers/chromium.ts",
+      "helpers/browser-fixture.ts"
     ]
   },
   "characterization": ["features.ts"],
@@ -2227,6 +2235,19 @@
         "v21.ts"
       ],
       "asserts": "Ready assigned wingmates contribute fitted cargo holds and passenger seats to Trade and transport missions without changing lead physical stats. Shared manifests persist, exclude repairing and unassigned ships, deny loaded carrier removal or sale, and drive the actual landed footer and MAX purchase controls."
+    },
+    {
+      "id": "permanent-station-defenses",
+      "owners": [
+        "server/station-defense.ts",
+        "shared/station-defense.ts",
+        "tools/rift_station_defenses.py",
+        "server/space.ts",
+        "server/hostile.ts"
+      ],
+      "services": [],
+      "tests": ["station-defenses.ts", "station-defenses-browser.ts"],
+      "asserts": "Claimed operating Personal Stations deploy anchored native Triad Sentinel sprites, never unclaimed or Tier 0 abandoned hulls. Turrets damage nearby hostile NPCs, respect friendly reputation and player safety, remain anchored, rebuild after a delay, retain identity on upgrades, reuse the permanent roster during Holdouts and clean up after relocation or abandonment."
     }
   ],
   "routes": {

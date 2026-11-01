@@ -16,6 +16,10 @@
 
 `equipped-outfits-browser.ts` checks the MINING filter against combat weapons, real equipped-item previews, outfitter sales of modular and built-in weapons, refunds, live panel refresh, reconnect persistence, flight denial, narrow cards, and default/reassigned Ship and Captain shortcuts. `ship-economy.ts` checks every player hull with built-in banks for once-only refunds and conservation of sale proceeds plus trade-in, along with flight/no-outfitter/unknown-weapon and purchase denial. `wire-contracts.ts` validates the optional built-in sale selector. Equipment sales still require an outfitter; previews are available in flight.
 
+## Permanent station defenses (`permanent-station-defenses`)
+
+`station-defenses.ts` uses real Game/Space entities and weapon ticks to check claimed-station deployment, abandoned/Tier 0 denial, upgrade identity, hostile damage, anchoring, protection radius, friendly reputation, player safety, delayed rebuilding, Holdout reuse and cleanup after relocation. `station-defenses-browser.ts` verifies a real Solo departure, three anchored authoritative platforms and a decoded 36-heading native sprite sheet. Platforms are reconstructed from station ownership when an awake system is entered; they do not keep empty systems awake or add a saved ship roster.
+
 ## Fleet cargo and passengers (`fleet-transport-capacity`)
 
 `fleet-capacity.ts` exercises actual Trade purchases and cargo/passenger job admission beyond the lead ship's capacity. It covers fitted ready wingmates, unassigned and repairing ship exclusion, loaded carrier removal/sale denial, and save/reload conservation. `cargo-ui-browser.ts` buys to the combined hold limit with MAX and checks the landed cargo/passenger totals against the authoritative roster. Physical flight and outfit stats remain specific to the lead ship. Cargo and passenger manifests stay captain-owned; loss of a carrier can leave the fleet over capacity without deleting its manifest, but blocks further loading until space is available.

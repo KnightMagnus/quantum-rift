@@ -28,6 +28,7 @@ export type SpriteSheetConfig = {
  * Sprite sheet rendering configurations mapped by ship hull ID.
  */
 export const SPRITES: Record<number, SpriteSheetConfig> = {
+  940: { fs: 176, cols: 12, banks: false, glow: false, packed: true },
   912: { fs: 320, cols: 12, banks: true, glow: true, packed: true },
   913: { fs: 320, cols: 12, banks: false, glow: true, packed: true },
   916: { fs: 200, cols: 12, banks: true, glow: true, packed: true },
