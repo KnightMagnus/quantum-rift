@@ -131,7 +131,7 @@ Game.prototype.tick = function (...args) {
   if (active?.ent && targetShip && Date.now() - previousWrite > 75) {
     previousWrite = Date.now();
     fileSystem.writeFileSync(
-      preloadConfig.telemetryPath,
+      `${preloadConfig.telemetryPath}.pending`,
       JSON.stringify({
         time: Date.now(),
         sys: space!.id,
@@ -177,6 +177,8 @@ Game.prototype.tick = function (...args) {
         reverseSpared: space!.spared(targetShip, active.ent),
       }),
     );
+    // Publish complete snapshots so the browser process never reads a truncated file.
+    fileSystem.renameSync(`${preloadConfig.telemetryPath}.pending`, preloadConfig.telemetryPath);
   }
   return result;
 };
