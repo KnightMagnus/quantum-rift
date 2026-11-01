@@ -143,6 +143,25 @@ try {
     await page.screenshot({
       path: path.join(output, 'captain-log-' + width + 'x' + height + '.png'),
     });
+    const savedLog = await page.evaluate(() => G.you!.log);
+    await page.evaluate(() => {
+      G.you!.log = Array.from({ length: 40 }, (_, index) => ({
+        t: index + 1,
+        text: `History entry ${index + 1}`,
+      }));
+    });
+    await page.click('[data-it="profile"]');
+    await page.click('[data-it="log"]');
+    await page.locator('#infobody').evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+    assert.ok(
+      await page.locator('#infobody').evaluate((element) => element.scrollTop > 0),
+      'Long saved history can be scrolled to its end',
+    );
+    await page.evaluate((log) => {
+      G.you!.log = log;
+    }, savedLog);
     await page.click('[data-it="profile"]');
 
     await page.keyboard.press('Escape');
