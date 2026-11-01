@@ -36,8 +36,8 @@ Download the latest release, extract it, and follow the launch instructions belo
 ### Build a station and crew
 
 - Turn a derelict hull into your own **Personal Station**, with a Workshop, research, shipbuilding and defenses. Upgrade it or relocate to another hull. Your own station grants you docking clearance even when the local faction is hostile; visitors use a guest dock without access to your private station services.
-- Store ships in your hangar and organize docks around a lead ship and crewed wingmates that fly in formation and follow orders.
-- Hire and promote officers for your bridge and fleet, then defend your station in Holdout battles.
+- Store ships in your hangar and organize docks around a lead ship and crewed wingmates that fly in formation and follow orders. Ready wingmates share their cargo space and passenger seats; the landed service bar shows your combined totals.
+- Hire and promote officers for your bridge and fleet. Permanent Triad Sentinel platforms guard operating Personal Stations and help in Holdout battles; abandoned hulls have none.
 
 ### Play with friends
 
@@ -95,6 +95,8 @@ One slow patrol moves through Concord territory: a Concordance flagship, a carri
 
 ![Concord security patrol in Concordia, with the redesigned Concordance, carrier and escorts](docs/screenshots/qcs-patrol.png)
 
+![Permanent Triad Sentinel platforms guarding an operating Personal Station](docs/screenshots/triad-sentinels-flight.png)
+
 **Flight controls**
 
 Ship-function controls open above the console. INFO (I) shows ship details and equipped outfits; CAPTAIN (O) opens your profile and career. EJECT opens the quit menu. JUMP can sit in either bottom corner.
@@ -114,6 +116,8 @@ Ship details previews equipped outfits, including factory weapons. Land at an ou
 **Landed services**
 
 At trade ports, BANK beside your credits opens loan details and repayment controls.
+
+![Trade screen with combined cargo and passenger capacity from ready wingmates](docs/screenshots/fleet-capacity-landed.png)
 
 ![Compact loan panel over early-game port services](docs/screenshots/pressure-hull-landed.png)
 

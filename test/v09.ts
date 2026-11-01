@@ -177,8 +177,12 @@ assertCondition(
   !playerData.holdout.active &&
     playerData.holdout.best === 3 &&
     playerData.credits > credits4 &&
-    !plats.some((shipEntity2) => message2.ships.has(shipEntity2.id)),
-  'leaving ends the Holdout: paid for three waves, platforms withdrawn',
+    plats.every(
+      (shipEntity2) =>
+        message2.ships.get(shipEntity2.id) === shipEntity2 &&
+        shipEntity2.stationDefense?.site === 'site-meridian',
+    ),
+  'leaving ends the Holdout: paid for three waves, permanent platforms retained',
 );
 playerData.stellar = 'site-meridian';
 firstEntry.send({ t: 'holdout' });

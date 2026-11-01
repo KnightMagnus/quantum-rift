@@ -441,8 +441,7 @@ export const FrontierOperations = {
         if (!owner2) return;
         assertLots(playerData.cargo, playerData.cargoLots);
         this.accrue(colonyState);
-        const computedShipStats = this.stats(playerData);
-        let room = computedShipStats!.cargo - this.holdUsed(playerData);
+        let room = this.transportCapacity(playerData).cargo - this.holdUsed(playerData);
         const received = [];
         if (colonyState.store.credits >= 1) {
           const credits2 = Math.floor(colonyState.store.credits);
@@ -1099,8 +1098,7 @@ export const FrontierOperations = {
         break;
       }
       case 'collect': {
-        const computedShipStats = this.stats(playerData);
-        let room = computedShipStats!.cargo - this.holdUsed(playerData),
+        let room = this.transportCapacity(playerData).cargo - this.holdUsed(playerData),
           received = 0;
         for (const [entryKey, value] of Object.entries(playerData.storage)) {
           const count = Math.min(value, room);

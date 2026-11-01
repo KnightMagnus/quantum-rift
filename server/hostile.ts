@@ -1,3 +1,4 @@
+import { syncStationDefenses } from './station-defense.ts';
 export interface HostileOperations {
   hostInit(this: HostileCapabilities, playerData: PlayerData): void;
   myPower(this: HostileCapabilities, playerData: PlayerData): number;
@@ -178,7 +179,7 @@ export const HostileOperations = {
     this.depart(session);
     this.toast(
       session,
-      'HOLDOUT: ten waves are inbound. Your defense platforms are deploying. Hold the station!',
+      'HOLDOUT: ten waves are inbound. Your station defenses will help. Hold the station!',
     );
     if (this.holdoutAnnounce) this.holdoutAnnounce(session); // the Armada is told and can fly in to help
     this.db.touch();
@@ -197,30 +198,10 @@ export const HostileOperations = {
       here = session.ent && playerData.sys === site.system;
     if (!here) return this.holdoutEnd(session, false, 'You left the station.');
     const space = this.spaces[site.system];
-    if (!savedHoldoutRun.platforms.length) {
-      // deploy the platforms around the station
-      const platforms2 = HOLDOUT.platforms(playerData.station.defense!);
-      for (let index = 0; index < platforms2; index++) {
-        const firstValue = (index / platforms2) * Math.PI * 2,
-          positionX = site.x + Math.cos(firstValue) * 220,
-          positionY = site.y + Math.sin(firstValue) * 220;
-        const entity = space.makeShip({
-          hull: 711,
-          faction: 'quantum',
-          x: positionX,
-          y: positionY,
-          ai: 'guard',
-          owner: session.ent!.id,
-          name: 'Defense Platform',
-          bonus: { armorPct: 150, shieldPct: 150, damagePct: 60 },
-        });
-        entity.home = { x: positionX, y: positionY };
-        entity.life = 1e9;
-        entity.noDisable = true;
-        entity.platform = true;
-        savedHoldoutRun.platforms.push(entity.id);
-      }
-    }
+    syncStationDefenses(space);
+    savedHoldoutRun.platforms = [...space.ships.values()]
+      .filter((entity) => entity.stationDefense?.site === site.id)
+      .map((entity) => entity.id);
     const alive = savedHoldoutRun.ids.filter((identifier) => space.ships.has(identifier));
     if (savedHoldoutRun.wave && !alive.length) {
       savedHoldoutRun.cleared = savedHoldoutRun.wave;
@@ -298,7 +279,7 @@ export const HostileOperations = {
     }
   },
   /**
-   * Conclude a holdout event, despawn platforms/enemies, and distribute rewards.
+   * Conclude a Holdout, despawn its enemies and distribute rewards. Station defenses remain.
    * @param session - Player session.
    * @param hasWon - Whether all ten waves were completed.
    * @param reason - Reason for termination if incomplete.
@@ -312,7 +293,7 @@ export const HostileOperations = {
     const site = STELLARS[playerData.station.site!],
       space = this.live[site.system];
     if (space)
-      for (const identifier of [...savedHoldoutRun.platforms, ...savedHoldoutRun.ids]) {
+      for (const identifier of savedHoldoutRun.ids) {
         const entity = space.ships.get(identifier);
         if (entity) space.remove(entity, 'jump');
       }

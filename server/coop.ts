@@ -1217,8 +1217,7 @@ export const CoopOperations = {
         [stagedSecond, session2],
       ] as const) {
         if (!playerAccount7.storage) continue;
-        const computedShipStats = this.stats(playerAccount7)!;
-        let room = computedShipStats.cargo - this.holdUsed(playerAccount7);
+        let room = this.transportCapacity(playerAccount7).cargo - this.holdUsed(playerAccount7);
         for (const [entryKey, value] of Object.entries(playerAccount7.storage)) {
           const quantity = Math.min(value, Math.max(0, room));
           if (quantity > 0) {

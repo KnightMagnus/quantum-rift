@@ -118,14 +118,13 @@ export function missionDetails(
     ? missionDetailsInput.qty || 0
     : 0;
   const free = new ShipCapacity(
-    playerPayload.shipStats?.cargo || 0,
+    playerPayload.transportCapacity?.cargo ?? playerPayload.shipStats?.cargo ?? 0,
     playerPayload.cargoUsed || 0,
     reservedCargoTonnes(playerPayload.missions),
   ).available;
-  const capacity = passengerSeats(
-    clientGameState.A!.ships[playerPayload.ship?.hull],
-    playerPayload.ship,
-  );
+  const capacity =
+    playerPayload.transportCapacity?.passengerSeats ??
+    passengerSeats(clientGameState.A!.ships[playerPayload.ship?.hull], playerPayload.ship);
   const seats = Math.max(0, capacity - occupiedPassengerSeats(playerPayload.missions));
   const team = (playerPayload.armada?.members || []).filter(
     (message) => message.online && message.jobSlots > 0,
@@ -136,10 +135,13 @@ export function missionDetails(
   if (
     !missionDetailsInput.done &&
     ['cargo', 'smuggle'].includes(missionDetailsInput.type!) &&
-    cargo > (active ? playerPayload.shipStats?.cargo || 0 : free)
+    cargo >
+      (active
+        ? (playerPayload.transportCapacity?.cargo ?? playerPayload.shipStats?.cargo ?? 0)
+        : free)
   )
     reasons.push(
-      `Needs ${cargo} t of ${active ? 'hold capacity' : 'free hold'}; you have ${active ? playerPayload.shipStats?.cargo || 0 : free} t.`,
+      `Needs ${cargo} t of ${active ? 'hold capacity' : 'free hold'}; you have ${active ? (playerPayload.transportCapacity?.cargo ?? playerPayload.shipStats?.cargo ?? 0) : free} t.`,
     );
   if (
     !missionDetailsInput.done &&

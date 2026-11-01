@@ -619,7 +619,7 @@ const ARCS_NAME = (factionId: string): string => (ARCS[factionId] ? ARCS[faction
 import { masteryTier } from '../shared/frontier.ts';
 import { SHUTTLES } from '../shared/hangar.ts';
 import { SPEC } from '../shared/specialty.ts';
-import { passengerSeats, occupiedPassengerSeats } from '../shared/passengers.ts';
+import { occupiedPassengerSeats } from '../shared/passengers.ts';
 
 const galaxyGraph = new GalaxyGraph(systemsById);
 
@@ -1399,6 +1399,7 @@ export class Game<Storage extends Database = Database> {
       stats: playerData.stats,
       log: playerData.log.slice(-60),
       shipStats: computedShipStats,
+      transportCapacity: this.transportCapacity(playerData),
       fuel: session.ent ? session.ent.fuel : (playerData.fuel ?? computedShipStats!.fuel),
       cargoUsed: commodityCargoTonnes(playerData.cargo),
       jobCargo: this.jobCargo(playerData),
@@ -1500,6 +1501,45 @@ export class Game<Storage extends Database = Database> {
   jobBunks(playerData: PlayerData): number {
     return occupiedPassengerSeats(playerData.missions);
   }
+  /** Cargo and passenger capacity of the lead and ready ships assigned to its dock. */
+  transportCapacity(
+    playerData: PlayerData,
+    lead: ShipLoadout = playerData.ship,
+    dockIndex: number = playerData.activeDock,
+  ): { cargo: number; passengerSeats: number } {
+    if (playerData.shipless) return { cargo: 0, passengerSeats: 0 };
+    const candidate = { ...playerData, ship: lead, activeDock: dockIndex };
+    const leadStats = shipStats(this.A, lead, this.features.bonuses.bonus(candidate));
+    const capacity = {
+      cargo: leadStats?.cargo || 0,
+      passengerSeats: leadStats?.passengerSeats || 0,
+    };
+    const ownerSession = [...this.sessions.values()].find((session) => session.data === playerData);
+    const flight = ownerSession?.ent;
+    const space = flight ? this.live[playerData.sys] : null;
+    const seen = new Set([lead.uid]);
+    for (const { w: slot, x: stored } of this.features.docks.activeWings(candidate)) {
+      if (!stored.ship.uid || seen.has(stored.ship.uid)) continue;
+      if (
+        space &&
+        ![...space.ships.values()].some(
+          (entity) =>
+            entity.wingUid === stored.ship.uid &&
+            entity.wingOf === ownerSession?.id &&
+            space.root(entity) === flight &&
+            !entity.dead &&
+            !entity.disabled,
+        )
+      )
+        continue;
+      seen.add(stored.ship.uid);
+      const stats = shipStats(this.A, stored.ship, this.features.docks.wingBonus(candidate, slot));
+      if (!stats) continue;
+      capacity.cargo += stats.cargo;
+      capacity.passengerSeats += stats.passengerSeats;
+    }
+    return capacity;
+  }
   // Check the actual destination loadout for swaps; purchases use the stock loadout.
   /**
    * Checks if candidate hull or ship loadout can accommodate current cargo, missions, and passengers.
@@ -1512,17 +1552,19 @@ export class Game<Storage extends Database = Database> {
     playerData: PlayerData,
     hullOrShip: number | ShipLoadout,
     goods: boolean = true,
+    dockIndex: number = playerData.activeDock,
   ): string | null {
     const hull = typeof hullOrShip === 'object' ? hullOrShip.hull : hullOrShip;
     const shipHullAsset = this.A.ships[hull];
     if (!shipHullAsset) return 'Unknown hull.';
     const ship = typeof hullOrShip === 'object' ? hullOrShip : makeLoadout(this.A, hull, '');
     const need = (goods ? commodityCargoTonnes(playerData.cargo) : 0) + this.jobCargo(playerData),
-      cargo2 = shipStats(this.A, ship)!.cargo;
+      capacity = this.transportCapacity(playerData, ship, dockIndex),
+      cargo2 = capacity.cargo;
     if (need > cargo2)
       return `The ${shipHullAsset.name} can't hold your ${need} t of cargo${this.jobCargo(playerData) ? ' (including job cargo)' : ''}.`;
     const jobBunks2 = this.jobBunks(playerData);
-    if (jobBunks2 > passengerSeats(shipHullAsset, ship))
+    if (jobBunks2 > capacity.passengerSeats)
       return `The ${shipHullAsset.name} doesn't have seats for your ${jobBunks2} passenger${jobBunks2 > 1 ? 's' : ''}.`;
     return null;
   }
@@ -2803,9 +2845,9 @@ export class Game<Storage extends Database = Database> {
         0,
       );
       if (!want) return true;
-      const computedShipStats = this.features.shipStats.stats(playerData),
+      const capacity = this.transportCapacity(playerData),
         used = this.holdUsed(playerData),
-        count = Math.min(want, computedShipStats!.cargo - used);
+        count = Math.min(want, capacity.cargo - used);
       if (count <= 0) {
         if (!session.fullT || Date.now() - session.fullT > 8000) {
           session.fullT = Date.now(); // say where it can go
@@ -2813,7 +2855,7 @@ export class Game<Storage extends Database = Database> {
             nearestBuyer2 = this.nearestBuyer(playerData.sys, lootItem.ore);
           this.toast(
             session,
-            !computedShipStats!.cargo
+            !capacity.cargo
               ? 'This ship has no cargo hold. Fit a Cargo Compression outfit (it takes no space) to keep what you mine.'
               : `Cargo hold full. ${commodityDef!.name} sells at ${nearestBuyer2 ? `${nearestBuyer2.p.name}${nearestBuyer2.j ? ` (${nearestBuyer2.j} jump${nearestBuyer2.j > 1 ? 's' : ''})` : ' in this system'}` : 'markets further out'}${playerData.station && playerData.station.ops >= 1 ? ', or process it at your station' : ''}.`,
           );
@@ -2825,7 +2867,7 @@ export class Game<Storage extends Database = Database> {
         playerData.cargo,
         playerData.cargoLots,
         { cid: lootItem.ore, qty: count, grades: selected },
-        Math.max(0, computedShipStats!.cargo - used),
+        Math.max(0, capacity.cargo - used),
       );
       for (const game of ['common', 'rich', 'pure'] as const)
         lootItem.remainingLots[game] -= selected[game];
@@ -2925,6 +2967,7 @@ export class Game<Storage extends Database = Database> {
       },
       fitsJobs: (...argumentsList) => game.fitsJobs(...argumentsList),
       holdUsed: (...argumentsList) => game.holdUsed(...argumentsList),
+      transportCapacity: (...argumentsList) => game.transportCapacity(...argumentsList),
       jobBunks: (...argumentsList) => game.jobBunks(...argumentsList),
       landed: (...argumentsList) => game.landed(...argumentsList),
       log: (...argumentsList) => game.log(...argumentsList),
@@ -3060,6 +3103,7 @@ export class Game<Storage extends Database = Database> {
         return game.features;
       },
       holdUsed: (...argumentsList) => game.holdUsed(...argumentsList),
+      transportCapacity: (...argumentsList) => game.transportCapacity(...argumentsList),
       landed: (...argumentsList) => game.landed(...argumentsList),
       log: (...argumentsList) => game.log(...argumentsList),
       offers: (...argumentsList) => game.offers(...argumentsList),

@@ -1,5 +1,6 @@
 export interface MiningPanelState {
   you?: {
+    transportCapacity?: { cargo: number };
     shipStats?: { cargo?: number; towRig?: boolean } | null;
     ship?: { hull: number | string };
     cargoUsed?: number;
@@ -17,7 +18,7 @@ import { ShipCapacity } from '../shared/ship-capacity.ts';
 export function miningPanelState(miningPanelState2: MiningPanelState) {
   const positionY = miningPanelState2.you!,
     shipStats2 = positionY?.shipStats;
-  const capacity = Math.max(0, shipStats2?.cargo || 0);
+  const capacity = Math.max(0, positionY?.transportCapacity?.cargo ?? shipStats2?.cargo ?? 0);
   const active = !!(
     miningPanelState2.towing?.attached ||
     miningPanelState2.towing?.offers?.length ||

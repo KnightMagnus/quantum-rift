@@ -1,3 +1,8 @@
+import {
+  syncStationDefenses,
+  steerStationDefense,
+  stationDefenseHostility,
+} from './station-defense.ts';
 import { maneuverCombat } from './combat-maneuver.ts';
 import type { IndexWorksite } from './index-worksite.ts';
 import type { RawStellarBody } from '../shared/galaxy.ts';
@@ -36,6 +41,8 @@ export type WeaponMount = {
 };
 export interface EntityFeatureState {
   platform?: boolean;
+  /** Claimed Personal Station that owns this anchored platform. */
+  stationDefense?: { site: string; owner: string };
   holdout?: string;
   civil?: boolean;
   arena?: string;
@@ -1252,6 +1259,8 @@ export class Space {
         ? this.game.features.pressure.allow(this, leftEntity, rightEntity)
         : null;
     if (scoped !== null) return scoped;
+    const stationHostility = stationDefenseHostility(this, leftEntity, rightEntity);
+    if (stationHostility !== null) return stationHostility;
     const entity = this.root(leftEntity),
       entity2 = this.root(rightEntity);
     if (entity === entity2) return false;
@@ -1810,6 +1819,7 @@ export class Space {
    */
   ai(entity: Entity): void {
     if (entity.player) return;
+    if (entity.stationDefense) return steerStationDefense(this, entity);
     if (entity.storySinger) {
       entity.inp = {};
       entity.fireAt = null;
@@ -2622,6 +2632,11 @@ export class Space {
       return;
     if (entity.dead) return;
     const srcRoot = entity2 ? this.root(entity2) : null;
+    if (
+      (entity.stationDefense && srcRoot?.player) ||
+      (entity2?.stationDefense && this.root(entity).player)
+    )
+      return [0, 0, srcRoot?.id || 0];
     if (entity2 && entity2.role && entity.role) {
       const roleMult2 = roleMult(entity2.role, entity.role);
       angleDelta *= roleMult2;
@@ -2893,6 +2908,7 @@ export class Space {
         if (length2 < want) this.spawnTraffic(false);
       }
     }
+    syncStationDefenses(this);
     this.game.combatAssist?.resolve(this);
     const formations = formationTargets(this);
     for (const entity of this.ships.values()) {

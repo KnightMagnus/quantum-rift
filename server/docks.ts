@@ -460,6 +460,57 @@ export const DocksOperations = {
     if (!savedDock || entryKey >= this.dockCount(playerData)) return;
     const name = (storedShip: StoredShip) =>
       `${this.A.ships[storedShip.ship.hull].name} "${storedShip.ship.name}"`;
+    // Check the prospective roster before unassigning any currently loaded carrier.
+    if (message.op === 'assign' || message.op === 'crew') {
+      const candidate = structuredClone(playerData);
+      const dock = candidate.docks[entryKey];
+      if (message.op === 'assign') {
+        const slot = message.slot === 'lead' ? 'lead' : (message.slot as number) | 0;
+        const stored = message.uid
+          ? candidate.dock.find((ship) => ship.ship.uid === message.uid)
+          : null;
+        if (message.uid && !stored) return;
+        if (slot !== 'lead' && (slot < 0 || slot >= this.wingMax(playerData, entryKey))) return;
+        if (stored)
+          for (const other of candidate.docks) {
+            if (other.lead === stored.ship.uid) other.lead = null;
+            other.wings = other.wings.map((wing) => (wing?.uid === stored.ship.uid ? null : wing));
+          }
+        if (slot === 'lead') {
+          dock.lead = stored?.ship.uid || null;
+          if (entryKey === candidate.activeDock) {
+            candidate.ship = stored?.ship || candidate.ship;
+            candidate.bridge = this.cleanBridge(candidate, stored?.bridge || {});
+            candidate.shipless = !stored;
+          }
+        } else
+          dock.wings[slot] = stored
+            ? {
+                cap: dock.wings[slot]?.cap || null,
+                crew: dock.wings[slot]?.crew || null,
+                uid: stored.ship.uid!,
+              }
+            : null;
+      } else {
+        const wing = dock.wings[message.w! | 0];
+        if (!wing || !WING_CREW.includes(message.role as 'cap' | 'crew')) return;
+        const role = message.role as 'cap' | 'crew';
+        const officer = message.oid;
+        if (officer) {
+          for (const slot of BRIDGE_SLOTS)
+            if (candidate.bridge[slot] === officer) delete candidate.bridge[slot];
+          for (const other of candidate.docks)
+            for (const member of other.wings)
+              if (member) {
+                if (member.cap === officer) member.cap = null;
+                if (member.crew === officer) member.crew = null;
+              }
+        }
+        wing[role] = officer || null;
+      }
+      const problem = this.fitsJobs(candidate, candidate.ship);
+      if (problem) return this.toast(session, problem);
+    }
     switch (message.op) {
       case 'activate': {
         // fly with another dock: its lead becomes your ship, and the old one goes back to its berth
@@ -470,7 +521,12 @@ export const DocksOperations = {
             session,
             `Dock ${DOCK_LETTERS[entryKey]} has no lead ship. Assign one first.`,
           );
-        const fitsJobs2 = this.fitsJobs(playerData, storedShip.ship);
+        const candidate = structuredClone(playerData);
+        candidate.ship = storedShip.ship;
+        candidate.shipless = false;
+        candidate.activeDock = entryKey;
+        candidate.bridge = this.cleanBridge(candidate, storedShip.bridge);
+        const fitsJobs2 = this.fitsJobs(candidate, candidate.ship, true, entryKey);
         if (fitsJobs2) return this.toast(session, fitsJobs2);
         if (
           playerData.specState &&
@@ -513,23 +569,6 @@ export const DocksOperations = {
             );
           if (entryKey === playerData.activeDock) {
             // changing the ship you fly
-            if (storedShip) {
-              const fitsJobs3 = this.fitsJobs(playerData, storedShip.ship);
-              if (fitsJobs3) return this.toast(session, fitsJobs3);
-            } else if (
-              Object.values(playerData.cargo).reduce(
-                (firstValue, secondValue) => firstValue + secondValue,
-                0,
-              ) ||
-              this.jobCargo(playerData) ||
-              (playerData.missions || []).some(
-                (mission) => mission.type === 'passenger' && mission.pax! > 0,
-              )
-            )
-              return this.toast(
-                session,
-                'Unload your cargo and complete passenger and cargo missions before storing the ship you fly.',
-              );
             if (!playerData.shipless) {
               if (!storedShip && playerData.dock.length >= this.dockSlots(playerData))
                 return this.toast(session, 'Every berth is taken.');

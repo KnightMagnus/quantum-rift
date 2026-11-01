@@ -16,7 +16,7 @@ export function tradeEstimateHtml(
 ) {
   const playerPayload = clientGameState.you!,
     hold = new ShipCapacity(
-      playerPayload.shipStats!.cargo,
+      playerPayload.transportCapacity?.cargo ?? playerPayload.shipStats!.cargo,
       playerPayload.cargoUsed,
       reservedCargoTonnes(playerPayload.missions),
     );

@@ -155,7 +155,8 @@ export function createGameMessageHandlers(capabilities: MessageCapabilities): Me
           const input = {
             seq: message.seq! | 0,
             thrust: message.th ? 1 : 0,
-            turn: clamp(message.tu! | 0, -1, 1),
+            // Prediction uses fractional autopilot turns; preserve them on both transports.
+            turn: Number.isFinite(message.tu) ? clamp(message.tu!, -1, 1) : 0,
             ab: message.ab ? 1 : 0,
             rev: message.rv ? 1 : 0,
             fire1: message.f1 ? 1 : 0,

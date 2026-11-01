@@ -19,6 +19,7 @@ export type JobCapabilities = Pick<
   | 'A'
   | 'db'
   | 'features'
+  | 'transportCapacity'
   | 'holdUsed'
   | 'landed'
   | 'log'
@@ -320,9 +321,9 @@ const JobOperations: JobOperations = {
     if (mission.type === 'quest') return this.features.quests.questStart(session, mission); // 2.4
     if (mission.type === 'warband') return this.features.coop.warbandAccept(session, mission); // Armada contracts go to the whole Armada
     if (mission.type === 'cargo' || mission.type === 'smuggle') {
-      const shipStats = this.features.shipStats!.stats(playerData),
+      const capacity = this.transportCapacity(playerData),
         usedHold = this.holdUsed(playerData);
-      if (usedHold + mission.qty! > shipStats!.cargo)
+      if (usedHold + mission.qty! > capacity.cargo)
         return this.toast(session, 'Not enough cargo space for that job.');
     }
     if (!this.features.syndicate.acceptCheck(session, mission)) return;

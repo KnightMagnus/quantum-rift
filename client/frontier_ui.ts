@@ -1,3 +1,4 @@
+import { stationPlatformCount } from '../shared/station-defense.ts';
 import { portraitAsset } from '../shared/portraits.ts';
 import { landscapeScene, colonyStage } from '../shared/landscapes.ts';
 import { artworkUrl } from './artwork.ts';
@@ -237,17 +238,19 @@ export function colonyHtml(clientGameState: ClientGameState): string {
 export function defenseHtml(clientGameState: ClientGameState, interactive?: boolean): string {
   const playerPayload = clientGameState.you!,
     stationState = playerPayload.station;
-  if (stationState.ops < DEFENSE.minOps) return '';
+  if (!stationState.claimed || stationState.ops < 1) return '';
+  if (stationState.ops < DEFENSE.minOps)
+    return `<div class="sect">DEFENSE</div><div class="dim small">Your Triad Sentinel protects nearby ships from hostile NPCs. Destroyed platforms rebuild after two minutes. Raise your station to Tier ${DEFENSE.minOps} to upgrade the turrets and start Holdouts.</div>`;
   const level = stationState.defense || 0,
     next = DEFENSE.levels[level + 1];
-  let height = `<div class="sect">DEFENSE</div><div class="kv"><span>Defense rating</span><span><b>${playerPayload.defense}</b> <span class="dim small">(turrets level ${level})</span></span></div><div class="dim small">Raiders hit Personal Stations every ${DEFENSE.everyH} hours. If you are in the system they attack live and you can fight them off; otherwise the turrets decide it. A lost raid loots the Workshop and some low-grade crates.</div>`;
+  let height = `<div class="sect">DEFENSE</div><div class="kv"><span>Defense rating</span><span><b>${playerPayload.defense}</b> <span class="dim small">(turrets level ${level})</span></span></div><div class="kv"><span>Triad Sentinels</span><span>${stationPlatformCount(level)} permanent</span></div><div class="dim small">Your platforms protect the station and nearby ships from hostile NPCs. Destroyed platforms rebuild after two minutes. Raiders hit Personal Stations every ${DEFENSE.everyH} hours. If you are in the system they attack live and you can fight them off; otherwise the turrets decide it. A lost raid loots the Workshop and some low-grade crates.</div>`;
   const height2: { best: number; lastT: number; active?: boolean; wave?: number } =
       playerPayload.holdout || {
         best: 0,
         lastT: 0,
       },
     wait = (height2.lastT || 0) + 2 * 3600000 - Date.now();
-  height += `<div class="sect">STATION HOLDOUT</div><div class="dim small">Defend your Personal Station through ten escalating waves, with your ship, your wingmates and ${1 + Math.min(5, level)} defense platforms (more with turret levels). The rewards grow with every wave: credits, crates, Bulwark blueprints, and a grade V crate for beating all ten. You can start one every 2 hours.${clientGameState.solo ? '' : ' Your Armada is called when it starts: every member who flies in adds hostiles to each wave and shares the rewards.'}</div>
+  height += `<div class="sect">STATION HOLDOUT</div><div class="dim small">Defend your Personal Station through ten escalating waves, with your ship, your wingmates and ${stationPlatformCount(level)} permanent defense platforms (more with turret levels). The rewards grow with every wave: credits, crates, Bulwark blueprints, and a grade V crate for beating all ten. You can start one every 2 hours.${clientGameState.solo ? '' : ' Your Armada is called when it starts: every member who flies in adds hostiles to each wave and shares the rewards.'}</div>
     <div class="kv"><span>Best: wave ${height2.best || 0} of 10</span><span>${height2.active ? `<b style="color:#ff8a70">in progress: wave ${height2.wave}</b>` : wait > 0 ? `<span class="dim">ready in ${Math.ceil(wait / 60000)} min</span>` : interactive ? '<button class="btn sm" data-act="holdout">START HOLDOUT</button>' : '<span class="dim">land at your station to start</span>'}</span></div>`;
   if (next)
     height += `<div class="kv"><span>Turrets level ${level + 1} (+${next.rating - DEFENSE.levels[level].rating})</span><span>${credits(next.cost!)} + ${mats(playerPayload, next.mats!)}${interactive ? ' <button class="btn sm" data-act="st" data-op="defense">UPGRADE</button>' : ''}</span></div>`;

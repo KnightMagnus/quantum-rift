@@ -27,8 +27,11 @@ Object.assign(game, {
   A: assets,
   O: outfits2,
   db: { touch() {} },
+  sessions: new Map(),
+  live: {},
   features: {
-    docks: { leadChanged() {} },
+    docks: { leadChanged() {}, activeWings: () => [], wingBonus: () => ({}) },
+    bonuses: { bonus: () => ({}) },
     shipStats: {
       stats: (playerData: { ship: ShipStatsLoadout }) => shipStats(assets, playerData.ship),
     },

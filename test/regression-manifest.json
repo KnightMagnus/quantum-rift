@@ -163,7 +163,10 @@
     "quest-directions.ts",
     "performance-growth.ts",
     "fuzz-seeds.ts",
-    "qcs-fleet.ts"
+    "qcs-fleet.ts",
+    "flight-heading.ts",
+    "fleet-capacity.ts",
+    "station-defenses.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -231,7 +234,8 @@
     "landed-colony-responsive-browser.ts",
     "landed-zoom-browser.ts",
     "touch-controls-browser.ts",
-    "combat-browser.ts"
+    "combat-browser.ts",
+    "station-defenses-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -900,7 +904,20 @@
     "helpers/landed-zoom.ts": ["helpers/browser-fixture.ts"],
     "touch-controls-browser.ts": ["helpers/landed-responsive.ts"],
     "helpers/touch-controls.ts": ["helpers/chromium.ts", "helpers/browser-fixture.ts"],
-    "combat-browser.ts": ["helpers/chromium.ts", "fixtures/preload-combat-browser.ts"]
+    "combat-browser.ts": ["helpers/chromium.ts", "fixtures/preload-combat-browser.ts"],
+    "flight-heading.ts": ["helpers/required.ts"],
+    "fleet-capacity.ts": [
+      "helpers/temp-data.ts",
+      "helpers/legacy-fixture.ts",
+      "helpers/mocks.ts",
+      "helpers/cargo-fixture.ts"
+    ],
+    "station-defenses.ts": ["helpers/temp-data.ts", "helpers/legacy-fixture.ts"],
+    "station-defenses-browser.ts": [
+      "helpers/temp-data.ts",
+      "helpers/chromium.ts",
+      "helpers/browser-fixture.ts"
+    ]
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1240,7 +1257,13 @@
     },
     {
       "id": "landing-gateway",
-      "owners": ["client/landing_autopilot.ts", "client/gateway_autopilot.ts", "server/game.ts"],
+      "owners": [
+        "client/landing_autopilot.ts",
+        "client/gateway_autopilot.ts",
+        "server/game.ts",
+        "server/game-message-handlers.ts",
+        "server/nakama-world.ts"
+      ],
       "services": [],
       "tests": [
         "landing-autopilot.ts",
@@ -1248,9 +1271,11 @@
         "gateway-browser.ts",
         "wormhole-loop.ts",
         "landing-autopilot-browser.ts",
-        "recovery-safety.ts"
+        "recovery-safety.ts",
+        "flight-heading.ts",
+        "nakama-world-lease.ts"
       ],
-      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading with sustained ordinary thrust and no afterburner, wormhole steering-noise deadband, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input. L lands on a clicked nav point, then the pinned objective, then the nearest mission destination, before the nearest landable body."
+      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading with sustained ordinary thrust and no afterburner, wormhole steering-noise deadband, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input. L lands on a clicked nav point, then the pinned objective, then the nearest mission destination, before the nearest landable body. Fractional landing and Gateway steering matches client prediction in queued and match scheduling; native ingress accepts bounded fractional turns and rejects invalid controls without advancing acknowledgements."
     },
     {
       "id": "ships-catalog-art",
@@ -2190,6 +2215,39 @@
       "services": [],
       "tests": ["touch-controls-browser.ts"],
       "asserts": "Trusted Chromium touch events hit MAP/FIRE/LAND above the cockpit; map/dock dialogs retain input precedence and the map has a native touch-close control. Primary fire holds, releases, cancels and drags without latching; joystick cancellation and modal entry release input; hiding without blur synchronously sends neutral before RAF; LAND completes through the authoritative game handler. Two tablet sizes and UI scales 1/1.4; no physical-device claim."
+    },
+    {
+      "id": "fleet-transport-capacity",
+      "owners": [
+        "server/game.ts",
+        "server/docks.ts",
+        "server/port-services.ts",
+        "server/jobs.ts",
+        "server/syndicate.ts",
+        "client/ui.ts"
+      ],
+      "services": [],
+      "tests": [
+        "fleet-capacity.ts",
+        "cargo-ui-browser.ts",
+        "passengers.ts",
+        "passenger-quests.ts",
+        "v21.ts"
+      ],
+      "asserts": "Ready assigned wingmates contribute fitted cargo holds and passenger seats to Trade and transport missions without changing lead physical stats. Shared manifests persist, exclude repairing and unassigned ships, deny loaded carrier removal or sale, and drive the actual landed footer and MAX purchase controls."
+    },
+    {
+      "id": "permanent-station-defenses",
+      "owners": [
+        "server/station-defense.ts",
+        "shared/station-defense.ts",
+        "tools/rift_station_defenses.py",
+        "server/space.ts",
+        "server/hostile.ts"
+      ],
+      "services": [],
+      "tests": ["station-defenses.ts", "station-defenses-browser.ts"],
+      "asserts": "Claimed operating Personal Stations deploy anchored native Triad Sentinel sprites, never unclaimed or Tier 0 abandoned hulls. Turrets damage nearby hostile NPCs, respect friendly reputation and player safety, remain anchored, rebuild after a delay, retain identity on upgrades, reuse the permanent roster during Holdouts and clean up after relocation or abandonment."
     }
   ],
   "routes": {

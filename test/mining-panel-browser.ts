@@ -62,7 +62,13 @@ try {
   // UI-only fixtures isolate transient state transitions; server gameplay is exercised by other registered suites.
   await page.evaluate(() => {
     window.savedYou = structuredClone(G.you);
-    G.you!.cargoUsed = G.you!.shipStats!.cargo;
+    const player = structuredClone(G.you);
+    Object.defineProperty(G, 'you', {
+      configurable: true,
+      get: () => player,
+      set: () => {},
+    });
+    G.you!.cargoUsed = G.you!.transportCapacity?.cargo ?? G.you!.shipStats!.cargo;
   });
   await page.waitForFunction(() =>
     document.querySelector('#miningcargo')!.textContent.includes('Hold full'),
@@ -71,13 +77,14 @@ try {
   await page.screenshot({ path: path.join(feature.out, 'after-full-hold.png') });
   await page.evaluate(() => {
     G.you!.shipStats!.cargo = 0;
+    if (G.you!.transportCapacity) G.you!.transportCapacity.cargo = 0;
   });
   await page.waitForFunction(
     () => (document.querySelector('#miningindicator')! as HTMLButtonElement).disabled,
   );
   assert.equal(await page.locator('#miningcontrols').isVisible(), false);
   await page.evaluate(() => {
-    G.you = structuredClone(savedYou);
+    Object.assign(G.you!, structuredClone(savedYou));
     const hull = Object.values(G.A!.ships).find(
       (interceptorHull) => interceptorHull.role === 'interceptor',
     );
@@ -88,7 +95,7 @@ try {
   assert.equal(await page.locator('#miningindicator').isDisabled(), true);
   await page.screenshot({ path: path.join(feature.out, 'after-ineligible.png') });
   await page.evaluate(() => {
-    G.you = structuredClone(savedYou);
+    Object.assign(G.you!, structuredClone(savedYou));
   });
   await page.waitForFunction(
     () => !(document.querySelector('#miningindicator')! as HTMLButtonElement).disabled,

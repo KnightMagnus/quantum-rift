@@ -1,3 +1,4 @@
+import { stationDefenseHull, STATION_DEFENSE_HULL } from './station-defense.ts';
 import { QCS_HULLS } from './qcs-fleet.ts';
 import { INDEX_FLEET_HULLS } from './index-fleet.ts';
 import { NHAL_HULLS, NHAL_WEAPONS } from './nhal.ts';
@@ -708,6 +709,8 @@ export function augmentAssets(assets: GameAssets): GameAssets {
     ...NHAL_HULLS,
   ])
     if (!assets.ships[ship23Hull.id]) assets.ships[ship23Hull.id] = { ...ship23Hull }; // new common Quantum hulls
+  if (!assets.ships[STATION_DEFENSE_HULL])
+    assets.ships[STATION_DEFENSE_HULL] = stationDefenseHull(assets.ships[711]);
   for (const shipHullAsset of Object.values(assets.ships))
     shipHullAsset.role = roleOf(shipHullAsset, assets.weapons) as RoleId; // class triangle roles
   for (const message of [MK2_OF, MK3_OF])

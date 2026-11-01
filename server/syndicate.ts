@@ -70,7 +70,6 @@ import {
   loanRate,
   maxLoan,
   loanPayment,
-  bunks,
   RUSH_BONUS,
 } from '../shared/syndicate.ts';
 import { credits } from '../shared/rules.ts';
@@ -583,7 +582,7 @@ export const SyndicateOperations = {
   acceptCheck(this: SyndicateCapabilities, session: Session, mission: Mission) {
     const playerData = session.data;
     if (mission.type === 'passenger') {
-      const bunks2 = bunks(this.A.ships[playerData.ship.hull], playerData.ship),
+      const bunks2 = this.transportCapacity(playerData).passengerSeats,
         used = occupiedPassengerSeats(playerData.missions);
       if (used + mission.pax! > bunks2) {
         this.toast(

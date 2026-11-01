@@ -220,11 +220,12 @@ const ingressState = {
 const ingressPorts: Pick<nkruntime.Nakama, 'binaryToString'> = {
   binaryToString: (data) => new TextDecoder().decode(data),
 };
-function inputMessage(sessionId: string, userId: string, sequence: number) {
+function inputMessage(sessionId: string, userId: string, sequence: number, turn?: unknown) {
   return {
     sender: { sessionId, userId },
     opCode: 1,
-    data: new TextEncoder().encode(JSON.stringify({ t: 'input', seq: sequence, th: 0 })).buffer,
+    data: new TextEncoder().encode(JSON.stringify({ t: 'input', seq: sequence, th: 0, tu: turn }))
+      .buffer,
   };
 }
 const ingressHandle = { world: () => ingressState };
@@ -610,3 +611,15 @@ assert.equal(capacitySessions.size, 30);
 console.log(
   'Native checkpoints follow wall time; rejected/uncertain authority retires without an unsafe write retry.',
 );
+
+// Fractional navigation turns must survive native admission; malformed controls must not.
+for (const turn of [-0.75, 0.25]) {
+  const sequence = peer.lastSequence + 1;
+  advanceBatch([inputMessage('peer-session', 'peer-user', sequence, turn)], 20);
+  assert.equal(peer.lastSequence, sequence, 'native admits fractional autopilot steering');
+}
+for (const turn of [-1.01, 1.01, '0.5', null]) {
+  const sequence = peer.lastSequence + 1;
+  advanceBatch([inputMessage('peer-session', 'peer-user', sequence, turn)], 21);
+  assert.equal(peer.lastSequence, sequence - 1, 'invalid turn cannot advance acknowledgement');
+}
