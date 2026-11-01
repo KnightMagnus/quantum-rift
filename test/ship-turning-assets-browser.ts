@@ -166,14 +166,14 @@ try {
       contact: contact.toDataURL('image/png'),
     };
   });
-  assert.equal(result.hulls, 150);
+  assert.equal(result.hulls, 151);
   assert.equal(
     result.proof.filter((hull) => hull.id < 900 && (hull.id < 850 || hull.id > 853)).length,
     122,
     'all original hulls retain strict banking coverage',
   );
   assert.equal(
-    result.proof.filter((hull) => hull.id >= 900).length,
+    result.proof.filter((hull) => hull.id >= 900 && hull.id !== 940).length,
     24,
     'every new combat form decodes its declared frames',
   );
@@ -185,6 +185,11 @@ try {
     [850, 851, 852, 853],
     'all four security hulls retain strict banking coverage',
   );
+  assert.deepEqual(
+    result.proof.filter((hull) => hull.id === 940).map((hull) => hull.name),
+    ['Triad Sentinel'],
+    'the station defense platform decodes its declared frames',
+  );
   assert.equal(result.repaired, 17);
   fileSystem.writeFileSync(
     path.join(output, 'fleet-banks.png'),
@@ -193,7 +198,7 @@ try {
   Reflect.deleteProperty(result, 'contact');
   fileSystem.writeFileSync(path.join(output, 'RESULTS.json'), JSON.stringify(result, null, 2));
   console.log(
-    'Ship turning assets: 122 original and four security hulls retain 108-frame banking;24 faction forms decode declared level/bank frames and glow;17 repaired hull contact sheet.',
+    'Ship turning assets: 122 original and four security hulls retain 108-frame banking;24 faction forms decode declared level/bank frames and glow;one station defense platform;17 repaired hull contact sheet.',
   );
 } catch (error) {
   await failureEvidence(browser, output, error);
