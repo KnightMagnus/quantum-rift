@@ -2590,6 +2590,15 @@ export class Space {
             ? entity2
             : null;
       if (weapon.bay || weapon.homing) {
+        // Assist conserves finite guided ammo until its target is within travel range.
+        // Manual launches retain their existing freedom to anticipate a closing target.
+        if (
+          automated &&
+          weapon.homing &&
+          entity5 &&
+          Math.hypot(entity5.x - entity.x, entity5.y - entity.y) > weapon.range
+        )
+          continue;
         if (entity5 || !weapon.homing) this.fire(entity, weaponMount, entity5, entity.a);
         continue;
       }
