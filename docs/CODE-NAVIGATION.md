@@ -495,3 +495,15 @@ slot-limit and reward authorities are unchanged.
 `shared/qcs-fleet.ts` defines its finite roster and NPC hulls. The carrier launches
 eight Watch drones from its runway centre, using ordinary fighter ownership and
 escort AI. `test/qcs-fleet.ts` covers routing, attrition, restore and runway geometry.
+
+### Temporary support and retry insurance
+
+`hailopt` with `k: mercenary` routes through `server/hail.ts` to the authoritative `HailService.hire` in `server/hail-service.ts`. Eligibility, fixed payment and flight-scoped expiry are server-owned. `recovery-safety.ts` includes the registered `mercenary-contracts.ts` child. `Game.onPlayerDeath` caps insurance at the lower of 5% hull value and 10% available credits; it does not grant credits or preserve lost cargo.
+
+### Encounter HUD
+
+`server/encounter-feedback.ts` builds recipient-only health and active ability data from already-visible snapshot actor IDs. `nhalTelegraph` reads existing Nhal windup deadlines; it neither predicts the next attack nor changes AI timing. `client/main.ts` replaces encounter state with each snapshot; `client/encounter-feedback.ts`, called by `client/render.ts`, draws health cards and world-scaled range boundaries. `recovery-safety.ts` includes the registered `encounter-feedback.ts` child.
+
+## Shared story assistance and Captain log
+
+`server/shared-story.ts` owns transient two-sided consent and frozen helper sessions. Space hit/hostility and recipient visibility gates consult it; `server/story.ts` remains the only chapter-progress owner. `shared/story-pacing.ts` defines alternate non-choice combat report ports and transport-premium eligibility; ordinary job acceptance still freezes authoritative rewards. `client/captain-log.ts` projects disclosed mission targets and saved event history into the Captain window.

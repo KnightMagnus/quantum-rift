@@ -75,6 +75,11 @@ try {
   await page.fill('#lpass', 'fixture');
   await page.click('#lbtn');
   await page.waitForFunction(() => G.you && G.landed);
+  assert.equal(
+    await page.evaluate(() => G.pinnedObjective),
+    'story',
+    'Fresh cockpit pins the disclosed main objective',
+  );
   for (let index = 0; index < 8 && (await page.locator('#storybox').isVisible()); index++)
     await page.locator('#storyb button').first().click();
   for (const [width, height] of largeSizes) {
@@ -121,7 +126,27 @@ try {
       'Captain profile renders',
     );
     await page.screenshot({ path: path.join(output, 'captain-' + width + 'x' + height + '.png') });
+    await page.click('[data-it="log"]');
+    assert.match(await page.locator('#infobody').innerText(), /CURRENT OBJECTIVE/);
+    assert.match(await page.locator('#infobody').innerText(), /PREPARATION/);
+    await page.locator('#infobody').evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+    assert.ok(
+      await page
+        .locator('#infobody')
+        .evaluate(
+          (element) => element.scrollHeight <= element.clientHeight || element.scrollTop > 0,
+        ),
+      'Captain log content is scrollable',
+    );
+    await page.screenshot({
+      path: path.join(output, 'captain-log-' + width + 'x' + height + '.png'),
+    });
+    await page.click('[data-it="profile"]');
+
     await page.keyboard.press('Escape');
+    await page.locator('#infobox').waitFor({ state: 'hidden' });
     await page.keyboard.press('i');
     await page.locator('#infobox').waitFor({ state: 'visible' });
     await page.keyboard.press('Escape');

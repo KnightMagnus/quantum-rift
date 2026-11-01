@@ -2025,3 +2025,13 @@ every combat matchup or long-running server population.
 ## Mission recovery and capital maneuvering
 
 `quest-recovery.ts` checks owner-only mission-wreck boarding, missing-wreck recovery without duplication, completed-rescue exclusion, NPC hit denial, faction objective credit after patrol kills, abandoned-target recovery without healing, contract-target recovery and patrol completion, and insurance when no able rescuer remains. It also runs actual Assist and weapon physics for both affected capital hulls against a moving target after finite ammunition is exhausted, requiring damage in each 30-second window. `combat-maneuver.ts` covers mixed forward/turret batteries and pursuit of moving targets. These deterministic checks do not establish combat balance or human completion times.
+
+## Captain objective log
+
+`captain-log.ts` covers current disclosed objective guidance, saved insurance history, HTML escaping, no future-story lookup, and stable eligible-first job ordering without mutating offers. Mission filters remain authoritative display filters, not acceptance permission.
+
+`recovery-safety.ts` runs `mercenary-contracts.ts`: production hail-option hiring without a station, one-contract ownership, finite wallet validation, range/story/disabled denial, timed release, Solo-pause extension and flight-end cancellation. Insurance tests exercise zero, low and high balances against the lower of 5% hull value or 10% current credits. Destroyed mercenaries and flight transitions retain the existing escort removal path; these fixtures do not measure combat balance.
+
+`recovery-safety.ts` also runs `encounter-feedback.ts`. Actual Dreamer, Watcher and Kraken AI windups supply range/countdown data; cancellation and resolution remove it. Recipient-visible IDs and live story-helper consent gate all encounter metadata. Tests cover generic boss health without invented timers and narrow-canvas health labels and world-scaled danger circles. Canvas fixtures verify draw commands, not browser screenshot placement.
+
+`shared-story.ts` and `story-pacing.ts` cover two-sided assistance consent, frozen helper sessions, owner-only progress, failed-closed departure/disconnect/expiry, insurance history, alternate public report ports, one-time rewards and ordinary transport preparation premiums. `combat-assist.ts` distinguishes range, alignment and ammo failure from normal cooldown. `responsive-hud-browser.ts` checks the Captain log at five desktop sizes, scroll reachability and Escape dismissal.

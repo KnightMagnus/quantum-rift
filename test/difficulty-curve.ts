@@ -247,23 +247,23 @@ for (const [power, danger] of [
   } as unknown as ClientGameState;
   assert.equal(
     missionDetails(state, { type: 'patrol', sys: 'emberlight', reward: 1 }).risk,
-    '● Low (estimated raid 47 vs your 72)',
+    '● Low (estimated raid strength 47 vs your fleet strength 72)',
   );
   assert.equal(
     missionDetails(state, { type: 'patrol', sys: 'gloam', reward: 1 }).risk,
-    '◆ Moderate (estimated raid 68 vs your 72)',
+    '◆ Moderate (estimated raid strength 68 vs your fleet strength 72)',
   );
   assert.equal(
     missionDetails(state, { type: 'bounty', hull: 711, sys: 'gloam', reward: 1 }).risk,
-    '▲ High (threat 150 vs your 72)',
+    '▲ High (estimated hostile strength 150 vs your fleet strength 72)',
   );
   assert.equal(
     missionDetails(state, { type: 'bounty', hull: 716, sys: 'emberlight', reward: 1 }).risk,
-    '☠ Deadly (threat 320 vs your 72)',
+    '☠ Deadly (estimated hostile strength 320 vs your fleet strength 72)',
   );
   assert.equal(
     missionDetails(state, { type: 'bounty', hull: 705, sys: 'gloam', reward: 1 }).risk,
-    '● Low (threat 25 vs your 72)',
+    '● Low (estimated hostile strength 25 vs your fleet strength 72)',
     'a weak target is Low even in a dangerous system',
   );
   assert.equal(
@@ -279,13 +279,13 @@ for (const [power, danger] of [
   assert.equal(
     missionDetails(state, { type: 'assassinate', hull: 708, guard: 711, sys: 'gloam', reward: 1 })
       .risk,
-    '☠ Deadly (threat 369 vs your 72)',
+    '☠ Deadly (estimated hostile strength 369 vs your fleet strength 72)',
     'assassination danger includes both bodyguards',
   );
   state.you!.power = 4;
   assert.equal(
     missionDetails(state, { type: 'patrol', sys: 'emberlight', reward: 1 }).risk,
-    '● Low (estimated raid 0 vs your 4)',
+    '● Low (estimated raid strength 0 vs your fleet strength 4)',
     'patrols do not promise unbudgeted minimum raiders',
   );
   const unscaledSystem = Object.values(systemsById).find((system) => system.farside)!;

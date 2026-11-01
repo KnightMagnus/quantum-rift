@@ -167,7 +167,10 @@
     "qcs-fleet.ts",
     "flight-heading.ts",
     "fleet-capacity.ts",
-    "station-defenses.ts"
+    "station-defenses.ts",
+    "captain-log.ts",
+    "shared-story.ts",
+    "story-pacing.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -896,7 +899,11 @@
     "landed-responsive-browser.ts": ["helpers/landed-responsive.ts"],
     "landed-colony-responsive-browser.ts": ["helpers/landed-responsive.ts"],
     "gameplay-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"],
-    "recovery-safety.ts": ["helpers/refinery-fixture.ts"],
+    "recovery-safety.ts": [
+      "helpers/refinery-fixture.ts",
+      "mercenary-contracts.ts",
+      "encounter-feedback.ts"
+    ],
     "story-order-safety.ts": ["helpers/refinery-fixture.ts"],
     "quest-recovery.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
     "story-encounters.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
@@ -1689,7 +1696,8 @@
         "client/mission-details.ts",
         "client/missions.ts",
         "client/ui.ts",
-        "server/jobs.ts"
+        "server/jobs.ts",
+        "client/captain-log.ts"
       ],
       "services": [],
       "tests": [
@@ -1698,9 +1706,10 @@
         "v26.ts",
         "qol-browser.ts",
         "story-order-safety.ts",
-        "quest-directions.ts"
+        "quest-directions.ts",
+        "captain-log.ts"
       ],
-      "asserts": "Plain travel/capacity/risk/turn-in/personal-payout details and remembered optional type/feasible/nearby filters retain inaccessible offers with reasons. Expired team-offer IDs are rejected across the ten-minute boundary without changing jobs or credits; a current replacement creates a plan but cannot bypass consent. Real Ready/Start consent assigns only the frozen roster; exact pool conservation, stale/duplicate/full/refused/disconnected denial, offline completion and saved accepted rewards survive reconnect without automatic late enrollment. Uncharted distant work remains listed with a disabled plot action and visible explanation; rendering never changes discovery or charts."
+      "asserts": "Plain travel/capacity/risk/turn-in/personal-payout details and remembered optional type/feasible/nearby filters retain inaccessible offers with reasons. Expired team-offer IDs are rejected across the ten-minute boundary without changing jobs or credits; a current replacement creates a plan but cannot bypass consent. Real Ready/Start consent assigns only the frozen roster; exact pool conservation, stale/duplicate/full/refused/disconnected denial, offline completion and saved accepted rewards survive reconnect without automatic late enrollment. Uncharted distant work remains listed with a disabled plot action and visible explanation; rendering never changes discovery or charts. Captain log shows only disclosed current objectives and saved insurance history; job sorting is stable and eligible-first."
     },
     {
       "id": "cargo-courier-progression",
@@ -1926,7 +1935,9 @@
         "server/nhal.ts",
         "shared/nhal.ts",
         "server/index-fleet.ts",
-        "shared/index-fleet.ts"
+        "shared/index-fleet.ts",
+        "server/shared-story.ts",
+        "shared/story-pacing.ts"
       ],
       "services": ["story", "quests", "nhal", "indexFleet"],
       "tests": [
@@ -1936,9 +1947,11 @@
         "eventide.ts",
         "story-realities-browser.ts",
         "index-presentation.ts",
-        "ui-polish-browser.ts"
+        "ui-polish-browser.ts",
+        "shared-story.ts",
+        "story-pacing.ts"
       ],
-      "asserts": "Docked chapter choices and landing completions refresh port offers without autoaccepting; bounded same-port quest deliveries settle once; explicitly authored surveys and salvage advance in flight while physical deliveries and final scenes remain docked. Owner-scoped encounter destruction credit independent of bounty and final hitter, exact-step and once-only guards, absent-owner denial, surviving-target death/reentry and bounded disengaged-target recovery; captain-scoped decisions, finale availability branches, denial and persistence; declared child helpers/story-clarity.ts covers faction/count arrival grammar, zero/nonzero rewards, unfinished investigation hints and optional officer finale text; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups. Mixed large Index hull envelopes retain separated saved-roster berths under actual neutral movement without reissuing health or replacement budgets. Table departure preserves the player ship at a resumable safe Rift standoff, denies unavailable hulls, freezes only the viewing captain and wing with bounded protection, rejects early completion and releases once after a validated acknowledgment. The automatically accepted preparation objective projects actual completed components, fitting and crossing without occupying quest slots or granting items."
+      "asserts": "Docked chapter choices and landing completions refresh port offers without autoaccepting; bounded same-port quest deliveries settle once; explicitly authored surveys and salvage advance in flight while physical deliveries and final scenes remain docked. Owner-scoped encounter destruction credit independent of bounty and final hitter, exact-step and once-only guards, absent-owner denial, surviving-target death/reentry and bounded disengaged-target recovery; captain-scoped decisions, finale availability branches, denial and persistence; declared child helpers/story-clarity.ts covers faction/count arrival grammar, zero/nonzero rewards, unfinished investigation hints and optional officer finale text; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups. Mixed large Index hull envelopes retain separated saved-roster berths under actual neutral movement without reissuing health or replacement budgets. Table departure preserves the player ship at a resumable safe Rift standoff, denies unavailable hulls, freezes only the viewing captain and wing with bounded protection, rejects early completion and releases once after a validated acknowledgment. The automatically accepted preparation objective projects actual completed components, fitting and crossing without occupying quest slots or granting items. Shared fights freeze explicit opt-in helpers; only owner progresses; disconnect, departure, expiry and late opt-in deny access. Non-choice completed combat reports accept same-faction public landings; ordinary transport on the active route receives a listed preparation premium."
     },
     {
       "id": "release-platform-gates",
@@ -2412,7 +2425,8 @@
       "armada-follow-two-clients.ts",
       "mission-consent.ts",
       "mission-ui-browser.ts",
-      "message-routing.ts"
+      "message-routing.ts",
+      "shared-story.ts"
     ],
     "holdout": ["v09.ts", "v26.ts", "message-routing.ts"],
     "storyacc": ["v10.ts", "message-routing.ts"],
