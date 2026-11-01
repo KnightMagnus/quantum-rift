@@ -81,7 +81,7 @@ When updating, close the old game server window first. Preserve your `data/`, `s
 
 **Meridian system scenery**
 
-The Meridian Yards and its surrounding sky, captured from the game renderer.
+Meridian Yards, nearby ship frames and its binary sky, captured from the game renderer.
 
 ![Meridian Yards under a binary sky](docs/screenshots/system-diversity-meridian.png)
 
