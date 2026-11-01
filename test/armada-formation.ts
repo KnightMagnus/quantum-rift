@@ -1,5 +1,7 @@
 import { mockArmadaState } from './helpers/mocks.ts';
-import type { FixtureMessage } from './helpers/refinery-fixture.ts';
+import type { FixtureMessage as BaseFixtureMessage } from './helpers/refinery-fixture.ts';
+/** Observed formation packet, including an optional jump destination. */
+type FixtureMessage = BaseFixtureMessage & { to?: string };
 const observedMessage = (message: string | object): FixtureMessage =>
   (typeof message === 'string' ? JSON.parse(message) : message) as FixtureMessage;
 import { requiredFixtureValue } from './helpers/required.ts';
@@ -50,6 +52,10 @@ const leader = requiredFixtureValue(maybeLeader);
 game.features.coop.armadaOp(leader, { op: 'form', name: 'V Fixture' });
 const identifier = requiredFixtureValue(leader).data.armada;
 assert.ok(typeof identifier === 'string');
+game.features.coop.armadaOp(leader, { op: 'follow', on: true });
+assert.equal(!!leader.data.armadaFollow, false, 'leader cannot follow itself');
+game.features.coop.armadaOp(followers[0], { op: 'follow', on: true });
+assert.equal(!!followers[0].data.armadaFollow, false, 'nonmember cannot grant follow consent');
 for (const session of followers) {
   game.features.coop.armadaOp(leader, {
     op: 'invite',
@@ -269,6 +275,69 @@ assert.equal(
   4,
   'opted-in leader jump routing preserved',
 );
+// A slower follower misses the leader's second departure while still jumping.
+// On arrival, the ordinary co-op tick delivers the latest target, even after
+// the leader has stopped. No request replaces an in-progress jump.
+const delayedFollower = followers[0];
+const delayedMessages: FixtureMessage[] = [];
+delayedFollower.sock.send = (message) => delayedMessages.push(observedMessage(message));
+const catchUpDestination = requiredFixtureValue(
+  systemsById.meridian.links.find((id) => id !== 'sol'),
+);
+delayedFollower.ent.state = 'jumpout';
+leader.data.sys = 'meridian';
+game.features.coop.armadaLeaderJump(leader, catchUpDestination);
+assert.equal(delayedMessages.filter((message) => message.t === 'follow').length, 0);
+leader.data.sys = catchUpDestination;
+delayedFollower.data.sys = 'meridian';
+delayedFollower.ent.state = 'fly';
+game.features.coop.coopTick();
+assert.ok(
+  delayedMessages.some((message) => message.t === 'follow' && message.to === catchUpDestination),
+  'delayed arrival catches up to the stopped leader',
+);
+const delivered = delayedMessages.filter((message) => message.t === 'follow').length;
+game.features.coop.coopTick();
+assert.equal(
+  delayedMessages.filter((message) => message.t === 'follow').length,
+  delivered,
+  'unchanged catch-up target is not spammed or retried after a fuel denial',
+);
+// Temporary suspension must not consume delivery: Combat Assist and disabling
+// give control back before any catch-up route is offered.
+game.features.coop.armadaOp(delayedFollower, { op: 'follow', on: false });
+game.features.coop.armadaOp(delayedFollower, { op: 'follow', on: true });
+delayedMessages.length = 0;
+delayedFollower.ent.autoCombat = true;
+game.features.coop.coopTick();
+assert.equal(delayedMessages.filter((message) => message.t === 'follow').length, 0);
+delayedFollower.ent.autoCombat = false;
+delayedFollower.ent.disabled = true;
+game.features.coop.coopTick();
+assert.equal(delayedMessages.filter((message) => message.t === 'follow').length, 0);
+delayedFollower.ent.disabled = false;
+game.features.coop.coopTick();
+assert.equal(delayedMessages.filter((message) => message.t === 'follow').length, 1);
+game.features.coop.armadaOp(delayedFollower, { op: 'follow', on: false });
+delayedMessages.length = 0;
+game.features.coop.coopTick();
+assert.equal(delayedMessages.filter((message) => message.t === 'follow').length, 0);
+game.features.coop.armadaOp(delayedFollower, { op: 'follow', on: true });
+delayedMessages.length = 0;
+game.features.coop.coopLogin(delayedFollower);
+assert.equal(delayedFollower.data.armadaFollow, false, 'reconnect never restores flight consent');
+assert.ok(
+  delayedMessages.some(
+    (message) => message.t === 'toast' && /Follow paused.*ALLIES/.test(message.msg),
+  ),
+  'reconnect explains how to resume explicitly',
+);
+game.features.coop.coopTick();
+assert.equal(delayedMessages.filter((message) => message.t === 'follow').length, 0);
+delayedFollower.data.sys = 'sol';
+leader.data.sys = 'sol';
+game.features.coop.armadaOp(delayedFollower, { op: 'follow', on: true });
+
 // Follow routes a request, not jump permission. The ordinary server jump gates
 // remain authoritative for every human follower; no fuel or transit bypass.
 const jumpFollower = followers[0],
