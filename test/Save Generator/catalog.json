@@ -1650,6 +1650,7 @@
     { "id": "luna", "system": "sol", "label": "Sol Minor / Luna Station" },
     { "id": "coldharbor", "system": "coldharbor", "label": "Coldharbor / Coldharbor" },
     { "id": "coldharbor-yards", "system": "coldharbor", "label": "Coldharbor / Coldharbor Yards" },
+    { "id": "farside-span", "system": "coldharbor", "label": "Coldharbor / Farside Foothold" },
     { "id": "greyline-moon", "system": "greyline", "label": "Greyline / Greyline Moon" },
     { "id": "greyline-moon-1", "system": "greyline", "label": "Greyline / Greyline Moon" },
     { "id": "sable-outpost", "system": "sable-reach", "label": "Sable Reach / Sable Outpost" },

@@ -146,7 +146,7 @@ export const EVENTIDE: EventideDefinition[] = [
       color: '#879dbb',
       svc: 'LB',
       tech: 2,
-      desc: 'A staffed emergency beacon. Refuge crews coordinate searches and take survey reports here.',
+      desc: 'A forest-filled refuge dome beside the emergency beacon. Crews rest among its trees, coordinate searches and take survey reports here.',
     },
   },
   {

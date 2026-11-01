@@ -1,8 +1,9 @@
 """Quantum Rift: rendered space stations for the 78 station worlds.
 Twelve designs built from the hull pipeline's primitives (tools/rift_render3d.py) and rendered in the same lit, panelled
-3D style as the ships. Output: client/assets/stations/s_<design>.webp
+3D style as the ships. Output: client/assets/stations/s_<design>.webp and player tiers 0.png–5.png
 usage: python3 tools/rift_stations.py client/assets/stations [only]      (needs numpy and Pillow)"""
-import sys, os, math
+import sys, os, math, copy
+import rift_render3d as renderer
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
 from PIL import Image
@@ -138,11 +139,89 @@ def junk():
     return M
 DESIGNS = dict(ring=ring_station, spindle=spindle, cross=cross_dock, rock=asteroid_base, twin=twin_ring, yard=shipyard, disc=disc, hive=hive, crystal=crystal, reef=reef, forge=forge, junk=junk)
 
+def upgrade(meshes, design):
+    """Apply satin hull materials without changing the shared renderer's source materials."""
+    mapped_materials = {}
+    for mesh in meshes:
+        original_material = mesh.m
+        if original_material not in mapped_materials:
+            material = copy.deepcopy(renderer.MATS[original_material])
+            if material['emissive'] is None:
+                material['panel'] *= .2
+                material['grime'] *= .25
+                material['metal'] *= .5
+                material['rough'] = max(.65, material['rough'])
+                if material['glass']:
+                    material.update(glass=False, color=np.array([.24, .43, .5]),
+                                    rough=.85, metal=.16, panel=0)
+            renderer.MATS.append(material)
+            mapped_materials[original_material] = len(renderer.MATS) - 1
+        mesh.m = mapped_materials[original_material]
+    trim = mat((.22, .27, .31), metal=.25, rough=.75, panel=0, grime=0)
+    hull = mat((.64, .69, .73), metal=.25, rough=.75, panel=.12, grime=.1)
+    if design == 'ring':
+        for index in range(6):
+            meshes += [arm(index * math.pi / 3, .19, .68, .035, trim)]
+        meshes += [flat_torus(.72, .018, trim, z=.075)]
+    if design == 'spindle':
+        for offset in (-.55, .55):
+            meshes += [block((0, offset, -.035), (.24, .045, .025), trim)]
+    if design == 'yard':
+        for sign in (-1, 1):
+            meshes += [block((0, sign * .32, .18), (.80, .025, .025), hull),
+                       block((0, sign * .42, 0), (.23, .025, .11), trim)]
+    if design == 'rock':
+        for x, y, z, radius in [(.15, .1, .42, .16), (-.25, -.2, .35, .11)]:
+            meshes += [flat_torus(radius, .023, trim, z=z - .025).tf(
+                lambda vertices, x=x, y=y: vertices + np.array([x, y, 0]))]
+    if design == 'crystal':
+        meshes += [zcyl((0, 0, -.025), .27, .07, trim)]
+    return meshes
+
+def player_station(tier=5):
+    """Operations tiers add habitat, docks, service pods, solar arrays and a deck."""
+    meshes = [zcyl((0, 0, 0), .14, .24, HULLB),
+              zcyl((0, 0, .29), .07, .05, DARK),
+              sphere((0, 0, .37), .045, GVIOLET)]
+    if tier >= 1:
+        meshes += [flat_torus(.70, .055, HAB), flat_torus(.88, .025, DARK)]
+        for index in range(6):
+            meshes += [arm(index * math.pi / 3, .12, .88, .025, DARK)]
+    if tier >= 2:
+        for index in range(6):
+            angle = index * math.pi / 3
+            meshes += [rot_z(block((.86, 0, .07), (.065, .085, .06), HULL), angle),
+                       light(angle, .88, .15, LRED if index % 2 else LGREEN, .012)]
+    if tier >= 3:
+        for index in range(6):
+            meshes += [rot_z(block((.64, 0, -.10), (.12, .06, .045), HULLB), index * math.pi / 3)]
+    if tier >= 4:
+        for sign in (-1, 1):
+            meshes += [block((0, sign * .62, -.12), (.19, .015, .015), DARK),
+                       panel(-.22, sign * .62 - .11, .22, sign * .62 + .11, -.13, SOLAR)]
+    if tier >= 5:
+        meshes += [block((.74, 0, .09), (.24, .10, .018), DARK)]
+    return meshes
+
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
     for nm, fn in DESIGNS.items():
         if ONLY and nm != ONLY: continue
-        M = fn(); V = np.concatenate([m.V for m in M]); r = np.sqrt(V[:, 0] ** 2 + V[:, 1] ** 2 + (V[:, 2] * 0.8) ** 2).max()
+        M = fn()
+        if nm in ('ring', 'spindle', 'yard', 'rock', 'crystal'):
+            M = upgrade(M, nm)
+        V = np.concatenate([m.V for m in M]); r = np.sqrt(V[:, 0] ** 2 + V[:, 1] ** 2 + (V[:, 2] * 0.8) ** 2).max()
         size = 360; o = render(M, size, 25, size * 0.46 / r, tilt=50, density=10, ss=3); rgb, a = o[0]
         img = np.dstack([np.clip(rgb, 0, 1) * 255, a * 255]).round().astype(np.uint8)
         Image.fromarray(img, 'RGBA').save(os.path.join(OUT, f's_{nm}.webp'), 'WEBP', quality=88, method=6); print(nm, flush=True)
+
+    if ONLY in (None, 'player'):
+        # Keep a common frame scale so construction adds structure rather than resizing the core.
+        developed = player_station(5)
+        extent = np.linalg.norm(np.concatenate([mesh.V for mesh in developed]), axis=1).max()
+        for tier in range(6):
+            meshes = upgrade(player_station(tier), 'player')
+            rgb, alpha = render(meshes, 360, 25, 360 * .43 / extent, tilt=50, density=10, ss=3)[0]
+            pixels = np.dstack([np.clip(rgb, 0, 1) * 255, np.clip(alpha, 0, 1) * 255]).round().astype(np.uint8)
+            Image.fromarray(pixels, 'RGBA').save(os.path.join(OUT, f'{tier}.png'))
+            print(f'player tier {tier}', flush=True)

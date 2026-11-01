@@ -95,7 +95,15 @@ One slow patrol moves through Concord territory: a Concordance flagship, a carri
 
 ![Concord security patrol in Concordia, with the redesigned Concordance, carrier and escorts](docs/screenshots/qcs-patrol.png)
 
-![Permanent Triad Sentinel platforms guarding an operating Personal Station](docs/screenshots/triad-sentinels-flight.png)
+![Satin-hulled Personal Station with a habitat ring, docking pods and three permanent Triad Sentinel guards](docs/screenshots/triad-sentinels-flight.png)
+
+**Station docks**
+
+Stations include forest domes, colony cylinders, cargo exchanges, armored outposts, refineries and deep-space relays.
+
+![Docked at Waystation Hub, with the crescent exchange visible in its landing view](docs/screenshots/station-exchange-landed.png)
+
+![Docked at Farside Foothold, a bridge-city between two asteroids](docs/screenshots/station-span-landed.png)
 
 **Flight controls**
 

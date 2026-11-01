@@ -784,7 +784,7 @@ export const SYSTEMS: StarSystem[] = [
         tech: 4,
         outlaw: true,
         prices: position({ ore: 0, shards: 1, equipment: -1, metal: -1, luxury: 1 }),
-        desc: "A gutted battleship grown over with salvage scaffolds: the Hollow's fortress and black market.",
+        desc: 'A towering armored stronghold with recessed docking bays. The Hollow runs its fortress and black market from here.',
       },
     ],
   },
@@ -1308,6 +1308,20 @@ for (const stellarBody of SITES)
   SYSTEMS.find((starSystem) => starSystem.id === stellarBody.system)!.stellars.push(stellarBody);
 addSolGateway(SYSTEMS); // Sol (with Earth and the Gateway wormhole) and the ten Farside systems
 addMoonsAndFields(SYSTEMS); // more moons and asteroid fields (a separate seeded pass: no existing ids change)
+SYSTEMS.find((system) => system.id === 'coldharbor')!.stellars.push({
+  id: 'farside-span',
+  name: 'Farside Foothold',
+  kind: 'station',
+  color: '#b99b77',
+  x: -1150,
+  y: 650,
+  r: 115,
+  svc: 'LTOB',
+  tech: 4,
+  prices: { ore: -1, metal: -1, food: 1 },
+  desc: 'A bridge-city built between two captured asteroids. Stacked habitation decks overlook the landing piers and salvage markets.',
+});
+
 // more markets buy what captains mine. Worlds near asteroid fields, and mining and alien peoples, take ore, gas and
 // crystal shards (a deterministic pass over the generated markets; existing prices are untouched).
 {

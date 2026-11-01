@@ -1,7 +1,6 @@
 import type { StarSystem, StellarBody } from '../shared/galaxy.ts';
 type StationSite = { ops?: number } | null | undefined;
 // Authored distant vistas. Decorative only: no moving orbits, collision or gravity changes.
-import { stationWheel } from './station_wheel.ts';
 import { drawStar } from './stars.ts';
 import { artworkUrl } from './artwork.ts';
 import { eventidePulse } from '../shared/eventide.ts';
@@ -311,14 +310,26 @@ export function stationLandingSource(
   design: string | number,
   site?: StationSite,
 ) {
-  if (stellarBody.id === 'luna') return stationWheel(stellarBody)!.toDataURL('image/png');
   if (stellarBody.hub) return artworkUrl('hub.png');
   if (stellarBody.site)
     return artworkUrl(`stations/${Math.max(0, Math.min(5, site?.ops || 0))}.png`);
-  return artworkUrl(`stations/s_${design}.webp`);
+  const landedDesigns = [
+    'biodome',
+    'cylinder',
+    'crescent',
+    'bastion',
+    'refinery',
+    'relay',
+    'luna',
+    'stronghold',
+    'farside',
+  ];
+  return artworkUrl(
+    `stations/s_${design}${landedDesigns.includes(String(design)) ? '_landed' : ''}.webp`,
+  );
 }
 
-// Use the very same station silhouette as flight, avoiding unrelated stock landscapes.
+// Landing variants render the same mesh and camera at higher resolution.
 export function stationLanding(
   stellarBody: StellarBody,
   system: StarSystem,

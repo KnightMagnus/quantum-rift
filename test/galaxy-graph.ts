@@ -97,6 +97,15 @@ const legacySystems = Object.fromEntries(
   legacyStorySystems(Object.values(systemsById)).map((system) => [system.id, system]),
 );
 const galaxy = new GalaxyGraph(legacySystems);
+const footholdBuyer = Game.prototype.nearestBuyer.call({}, 'coldharbor', 'metal');
+assert.equal(footholdBuyer?.p.id, 'farside-span');
+assert.equal(footholdBuyer?.j, 0, 'The new local metal market participates in cargo advice');
+// Keep the original buyer/freight goldens scoped to original ports, not the
+// intentionally added market. Restore the live catalog even when a golden fails.
+const currentColdharborPorts = systemsById.coldharbor.stellars;
+systemsById.coldharbor.stellars = currentColdharborPorts.filter(
+  (port) => port.id !== 'farside-span',
+);
 const originalClock = Date.now;
 Date.now = () => baseline.time;
 try {
@@ -141,6 +150,7 @@ try {
     assert.equal(sha256(offers), expected, `Freight offers window ${window}`);
   }
 } finally {
+  systemsById.coldharbor.stellars = currentColdharborPorts;
   Date.now = originalClock;
 }
 console.log(

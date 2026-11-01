@@ -1,7 +1,6 @@
 import { launchChromium } from './helpers/chromium.ts';
 import type { StellarBody, StarSystem } from '../shared/galaxy.ts';
 type StationSite = Parameters<typeof import('../client/exotic_scenery.ts').stationLanding>[3];
-import { createHash } from 'node:crypto';
 import {
   availablePort,
   evidenceDir,
@@ -43,7 +42,16 @@ const ports = [
   'palinode-observatory',
   'meridian-yards',
   'luna',
+  'waystation-hub',
+  'longhaul-depot',
+  'cinder-hold',
+  'farside-span',
+  'nightjar-beacon',
 ];
+assert.equal(systemsById[STELLARS['cinder-hold'].system].faction, 'hollow');
+assert.equal(systemsById[STELLARS['farside-span'].system].farside, true);
+assert.ok(STELLARS['farside-span'].svc?.includes('L'));
+assert.equal(Object.values(STELLARS).filter((body) => body.id === 'farside-span').length, 1);
 const captain = (identifier: string) => 'Art ' + ports.indexOf(identifier);
 for (const identifier of ports) {
   const player = STELLARS[identifier],
@@ -138,42 +146,6 @@ try {
       landingImages.length && landingImages.every((imageProbe) => imageProbe.ok),
       identifier + ' landed pictures decode',
     );
-    if (identifier === 'luna') {
-      const identity = await page.evaluate(async () => {
-        const { STELLARS } = await import('/shared/galaxy.js');
-        const { stationWheel } = await import('/station_wheel.js');
-        const { stationLandingSource } = await import('/exotic_scenery.js');
-        const { stationSprite } =
-          (await import('/regression-render.js')) as typeof import('./helpers/render-probe.d.ts');
-        const player = STELLARS.luna;
-        const wheel = stationWheel(player)!.toDataURL('image/png');
-        return {
-          original: (stationSprite(player) as HTMLCanvasElement).toDataURL('image/png') === wheel,
-          pixels: Array.from(
-            stationWheel(player)!
-              .getContext('2d')!
-              .getImageData(0, 0, stationWheel(player)!.width, stationWheel(player)!.height).data,
-          ),
-          landing: stationLandingSource(player, 'yard') === wheel,
-        };
-      });
-      // Frozen original seeded wheel pixels: independent of Git history and module equality.
-      assert.equal(
-        createHash('sha256').update(Buffer.from(identity.pixels)).digest('hex'),
-        'e76e4babe5212bc963b2d7bb1e1ffc7d6b1371c40774d00fb29138e29ece57ad',
-        'original purple Luna wheel/core pixel fingerprint',
-      );
-      Reflect.deleteProperty(identity, 'pixels');
-      assert.deepEqual(
-        identity,
-        { original: true, landing: true },
-        'Luna uses original exterior pixels in flight and landing',
-      );
-      fileSystem.writeFileSync(
-        path.join(evidence, 'luna-original-identity.json'),
-        JSON.stringify(identity, null, 2),
-      );
-    }
     await page.screenshot({ path: path.join(evidence, identifier + '-landed.png') });
     const state = await page.evaluate(() => ({
       solo: G.solo,
@@ -186,6 +158,7 @@ try {
     }));
     assert.equal(state.solo, true);
     assert.equal(state.stellar, identifier);
+    if (identifier === 'farside-span') assert.match(state.name || '', /Farside Foothold/);
     if (
       STELLARS[identifier].kind === 'station' ||
       STELLARS[identifier].hub ||
@@ -198,6 +171,24 @@ try {
     await page.screenshot({ path: path.join(evidence, identifier + '-flight.png') });
     assert.deepEqual(errors, []);
     results.push({ ...state, landingImages, errors });
+    const expectedDesigns: Record<string, string> = {
+      luna: 'luna',
+      'waystation-hub': 'crescent',
+      'longhaul-depot': 'refinery',
+      'cinder-hold': 'stronghold',
+      'farside-span': 'farside',
+      threshold: 'relay',
+      'twins-exchange': 'cylinder',
+      'nightjar-beacon': 'biodome',
+    };
+    if (expectedDesigns[identifier]) {
+      const design = await page.evaluate(async (id) => {
+        const { STELLARS } = await import('/shared/galaxy.js');
+        const { stationDesign } = await import('/render.js');
+        return stationDesign(STELLARS[id]);
+      }, identifier);
+      assert.equal(design, expectedDesigns[identifier], identifier + ' authored station model');
+    }
     if (identifier === 'qstation') {
       let failed = false;
       await page.route('**/s_cross.webp?v=station-retry', (route) => {
@@ -254,7 +245,27 @@ try {
             const flightMatches =
               sprite instanceof HTMLCanvasElement
                 ? sprite.toDataURL('image/png') === source
-                : new URL(sprite.src).pathname === new URL(source, location.href).pathname;
+                : new URL(sprite.src).pathname ===
+                  new URL(source, location.href).pathname.replace('_landed.webp', '.webp');
+            if (
+              [
+                'biodome',
+                'cylinder',
+                'crescent',
+                'bastion',
+                'refinery',
+                'relay',
+                'luna',
+                'stronghold',
+                'farside',
+              ].includes(design)
+            ) {
+              const landingAsset = new Image();
+              landingAsset.src = source;
+              await landingAsset.decode();
+              if (landingAsset.naturalWidth !== 800 || !source.includes('_landed.webp'))
+                throw Error('Missing high-resolution landing variant: ' + player.id);
+            }
             if (!flightMatches)
               throw Error('Flight/landed identity mismatch: ' + player.id + ' tier ' + tier);
             const address = await stationLanding(
@@ -316,8 +327,8 @@ try {
         path.join(evidence, 'all-designs.png'),
         Buffer.from(audit.contact.split(',')[1], 'base64'),
       );
-      assert.equal(audit.stations, 111);
-      assert.equal(audit.rows.length, 246);
+      assert.equal(audit.stations, 112);
+      assert.equal(audit.rows.length, 247);
       assert.equal(
         audit.rows.filter((row) => row.id === 'table-station').length,
         1,

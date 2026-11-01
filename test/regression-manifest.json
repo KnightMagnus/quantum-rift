@@ -1317,10 +1317,15 @@
     },
     {
       "id": "station-art-identity",
-      "owners": ["client/station_wheel.ts", "client/exotic_scenery.ts", "client/render.ts"],
+      "owners": [
+        "tools/rift_station_variants.py",
+        "client/exotic_scenery.ts",
+        "client/render.ts",
+        "shared/galaxy.ts"
+      ],
       "services": [],
-      "tests": ["station-landing-browser.ts"],
-      "asserts": "14 real landing/departure sessions, 110 stations/245 tier variants, actual flight-source identity, transient load recovery and frozen original Luna wheel pixels."
+      "tests": ["station-landing-browser.ts", "galaxy-graph.ts"],
+      "asserts": "19 real landing/departure sessions, full station/tier artwork audit, authored design routing, dedicated 800px landing variants for six new models, Luna, the unique Hollow stronghold and the Farside asteroid span, and transient load recovery."
     },
     {
       "id": "login-scene",

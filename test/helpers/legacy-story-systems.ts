@@ -8,6 +8,27 @@ export function legacyStorySystems(systems: StarSystem[]): StarSystem[] {
     systems.filter((system) => !additions.has(system.id)),
   );
   for (const system of legacy) {
+    // Exclude the authored port and reverse its companion artwork description;
+    // the station landing regression covers their current identities and artwork.
+    system.stellars = system.stellars.filter((body) => body.id !== 'farside-span');
+    for (const body of system.stellars)
+      if (body.id === 'nightjar-beacon') {
+        assert.equal(
+          body.desc,
+          'A forest-filled refuge dome beside the emergency beacon. Crews rest among its trees, coordinate searches and take survey reports here.',
+        );
+        body.desc =
+          'A staffed emergency beacon. Refuge crews coordinate searches and take survey reports here.';
+      }
+    for (const body of system.stellars)
+      if (body.id === 'cinder-hold') {
+        assert.equal(
+          body.desc,
+          'A towering armored stronghold with recessed docking bays. The Hollow runs its fortress and black market from here.',
+        );
+        body.desc =
+          "A gutted battleship grown over with salvage scaffolds: the Hollow's fortress and black market.";
+      }
     system.links = system.links.filter((link) => !additions.has(link));
     for (const stellar of system.stellars)
       if (stellar.prices)
