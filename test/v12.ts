@@ -1,5 +1,5 @@
 import type { OfficerRecord } from '../shared/rules.ts';
-import { mockMission, mockPlayerReference } from './helpers/mocks.ts';
+import { mockMission } from './helpers/mocks.ts';
 import type { Entity as FixtureEntity } from '../server/space.ts';
 import type { GameAssets } from '../shared/rules.ts';
 import { requiredFixtureValue } from './helpers/required.ts';
@@ -318,8 +318,7 @@ const message = game.spaces[factionArc.steps[1].sys],
     (shipEntity) => shipEntity.arcOf && shipEntity.arcOf.fac === 'korrund',
   );
 assertCondition(entitys.length === factionArc.steps[1].count, 'arriving spawns the claim jumpers');
-for (const shipEntity of entitys)
-  game.onKill(mockPlayerReference({ s: secondEntry.s }), shipEntity, message);
+for (const shipEntity of entitys) message.kill(shipEntity, requiredFixtureValue(secondEntry.s).ent);
 assertCondition(
   requiredFixtureValue(playerData2.arcs.korrund.active).ready,
   'destroying them all completes the objective',
@@ -334,10 +333,9 @@ assertCondition(
   boss && boss.name === factionArc.steps[2].bossName,
   'the arc boss waits in its system',
 );
-game.onKill(
-  mockPlayerReference({ s: secondEntry.s }),
+game.spaces[factionArc.steps[2].sys].kill(
   requiredFixtureValue(boss),
-  game.spaces[factionArc.steps[2].sys],
+  requiredFixtureValue(secondEntry.s).ent,
 );
 land(secondEntry, factionArc.places.at);
 assertCondition(

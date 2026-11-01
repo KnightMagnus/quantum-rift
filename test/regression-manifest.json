@@ -159,6 +159,7 @@
     "recovery-safety.ts",
     "story-order-safety.ts",
     "story-encounters.ts",
+    "quest-recovery.ts",
     "syndicate-safety.ts",
     "quest-directions.ts",
     "performance-growth.ts",
@@ -897,6 +898,7 @@
     "gameplay-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"],
     "recovery-safety.ts": ["helpers/refinery-fixture.ts"],
     "story-order-safety.ts": ["helpers/refinery-fixture.ts"],
+    "quest-recovery.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
     "story-encounters.ts": ["helpers/refinery-fixture.ts", "helpers/temp-data.ts"],
     "syndicate-safety.ts": ["helpers/refinery-fixture.ts", "helpers/mocks.ts"],
     "quest-directions.ts": ["helpers/refinery-fixture.ts"],
@@ -1011,7 +1013,7 @@
       "id": "fronts",
       "owners": ["server/fronts.ts"],
       "services": ["fronts"],
-      "tests": ["v06.ts", "v09.ts", "faction-standing.ts"],
+      "tests": ["v06.ts", "v09.ts", "faction-standing.ts", "quest-recovery.ts"],
       "asserts": "Invasion start/damage/win, anomalies/events/goals, faction store standing and convoy/rescue/survey/smuggling jobs."
     },
     {
@@ -1089,7 +1091,7 @@
       "id": "faction-arcs",
       "owners": ["server/arcs.ts"],
       "services": ["arcs"],
-      "tests": ["v12.ts"],
+      "tests": ["v12.ts", "quest-recovery.ts"],
       "asserts": "Faction story acceptance/progression/rewards and Farside expedition stages."
     },
     {
@@ -1219,7 +1221,8 @@
         "v03.ts",
         "v21.ts",
         "original-weapons.ts",
-        "v08.ts"
+        "v08.ts",
+        "quest-recovery.ts"
       ],
       "asserts": "Movement/fire/hit events, weapon damage/types, missiles/point defense/drone controls, ship-role interactions, disabled cleanup and respawn."
     },
@@ -1924,6 +1927,7 @@
       "tests": [
         "story-continuation.ts",
         "story-encounters.ts",
+        "quest-recovery.ts",
         "eventide.ts",
         "story-realities-browser.ts",
         "index-presentation.ts",
@@ -2385,7 +2389,15 @@
     "officer": ["v05.ts", "v21.ts", "message-routing.ts"],
     "shuttle": ["v05.ts", "message-routing.ts"],
     "dock": ["v05.ts", "v101.ts", "v203.ts", "v21.ts", "message-routing.ts"],
-    "board": ["cargo-flows.ts", "v05.ts", "v06.ts", "v10.ts", "v26.ts", "message-routing.ts"],
+    "board": [
+      "quest-recovery.ts",
+      "cargo-flows.ts",
+      "v05.ts",
+      "v06.ts",
+      "v10.ts",
+      "v26.ts",
+      "message-routing.ts"
+    ],
     "spec": ["v08.ts", "message-routing.ts"],
     "armada": [
       "armada-formation-network.ts",

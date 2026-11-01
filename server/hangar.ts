@@ -1031,6 +1031,8 @@ export const HangarOperations = {
       return this.rescueBoard(session, entity2); // patch up a downed Armada captain
     if (!entity2 || !entity2.disabled || entity2.player || entity2.boarded)
       return this.toast(session, 'Only disabled ships can be boarded.');
+    if (entity2.rescueOf && (entity2.rescueOf.owner !== session.id || message.act !== 'rescue'))
+      return this.toast(session, 'This mission wreck is reserved for its captain to rescue.');
     const fleetOwner = space.root(entity2).player?.s;
     const protectedWingmate =
       entity2.wingOf === session.id ||
