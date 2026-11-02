@@ -1,4 +1,4 @@
-# Quantum Rift 0.5.2
+# Quantum Rift 0.5.2 MP Beta 1
 
 ## Flight and fleets
 
