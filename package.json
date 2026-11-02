@@ -1,6 +1,6 @@
 {
   "name": "quantum-rift",
-  "version": "0.5.2",
+  "version": "0.5.2-mp-beta.1",
   "publicVersion": "0.5.2 MP Beta 1",
   "description": "Quantum Rift: an online multiplayer space trading and combat game.",
   "type": "module",
