@@ -42,11 +42,9 @@ for (const faction of new Set([...storeFactions, ...localIdentities])) {
     assert.equal(outfits.length, 0, `${faction} has no authored specialised outfits`);
     assert.deepEqual(
       factionStoreListings(faction).map((listing) => listing.id),
-      [
-        ...factionStoreListings('quantum')
-          .filter((listing) => !listing.give.outfit)
-          .map((listing) => listing.id),
-      ],
+      factionStoreListings('quantum')
+        .filter((listing) => !listing.give.outfit)
+        .map((listing) => listing.id),
       `${faction} lists shared goods and a chart, not invented specialty stock`,
     );
   } else {
