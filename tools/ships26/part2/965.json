@@ -1,0 +1,10 @@
+{
+  "id": 965,
+  "key": "conf_anvil",
+  "name": "Anvil",
+  "fs": 200,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

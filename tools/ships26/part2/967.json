@@ -1,0 +1,10 @@
+{
+  "id": 967,
+  "key": "conf_dominion",
+  "name": "Dominion",
+  "fs": 220,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

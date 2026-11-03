@@ -1,0 +1,10 @@
+{
+  "id": 954,
+  "key": "conf_hatchet",
+  "name": "Hatchet",
+  "fs": 104,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

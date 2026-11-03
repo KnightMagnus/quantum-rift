@@ -1,0 +1,10 @@
+{
+  "id": 957,
+  "key": "conf_ingot",
+  "name": "Ingot",
+  "fs": 200,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

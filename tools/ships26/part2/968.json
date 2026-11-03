@@ -1,0 +1,10 @@
+{
+  "id": 968,
+  "key": "conf_citadel",
+  "name": "Citadel",
+  "fs": 220,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

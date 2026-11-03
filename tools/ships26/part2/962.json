@@ -1,0 +1,10 @@
+{
+  "id": 962,
+  "key": "conf_picket",
+  "name": "Picket",
+  "fs": 200,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

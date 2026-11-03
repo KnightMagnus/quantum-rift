@@ -11,6 +11,13 @@ import hulls2, hulls3, hulls5, hulls52, hulls08, hulls22, artgen_mk2, hulls_qcs 
 from artgen3 import build
 from render2 import render
 HERE = os.path.dirname(os.path.abspath(__file__))
+# Part II hulls use the supplied Confederation and Index war designs.
+os.environ.setdefault('RIFT_SHIPS26', HERE)
+sys.path.insert(0, os.path.join(HERE, 'part2'))
+import hulls_terran, hulls_index_war
+from hulls2 import DESIGNS
+for entry in hulls_terran.TERRAN + hulls_index_war.INDEX_WAR:
+    DESIGNS[entry[0]] = entry[-1]
 KEYS = {int(k): v[1] for k, v in json.load(open(os.path.join(HERE, 'ship_keys.json'))).items()}
 KEYS.update({735: 'surveyor', 736: 'constitution', 746: 'halberd_mk3', 748: 'hive_mk3', 749: 'tempest_mk3', 763: 'umbral_dread'})   # sprites the EV sheets shared
 KEYS.update({805: 'sp_lodestar', 806: 'sp_swarmbreaker', 807: 'sp_nightglass', 808: 'sp_corsair', 809: 'sp_herald', 810: 'sp_tidecaller', 811: 'sp_pathfinder', 812: 'sp_bulwark', 813: 'sp_wraith', 814: 'sp_vanguard'})
@@ -29,7 +36,7 @@ def layers(o):
     return base, glow
 def one(hid):
     key = KEYS[hid]; M, G, L, size, sc, dens, ymax = build(key)
-    fs = out_size(size, hid); k = fs / size; banks = True
+    fs = out_size(size, hid); k = fs / size; banks = hid != 961
     rolls = ROLLS if banks else ROLLS[:1]; n = 36 * len(rolls); rows = n // COLS
     base = Image.new('RGBA', (fs * COLS, fs * rows)); glow = Image.new('RGBA', (fs * COLS, fs * rows)); anyglow = False
     for r, roll in enumerate(rolls):

@@ -1,0 +1,10 @@
+{
+  "id": 964,
+  "key": "conf_bulwark",
+  "name": "Bulwark",
+  "fs": 200,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

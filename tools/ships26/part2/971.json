@@ -1,0 +1,10 @@
+{
+  "id": 971,
+  "key": "idx_wasp",
+  "name": "Wasp",
+  "fs": 80,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

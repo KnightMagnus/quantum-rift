@@ -1,0 +1,10 @@
+{
+  "id": 960,
+  "key": "conf_rampart",
+  "name": "Rampart",
+  "fs": 200,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}
