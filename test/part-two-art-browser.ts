@@ -91,9 +91,12 @@ try {
       const sky = new Image();
       sky.src = `assets/milky-way/${system.backdrop}`;
       await sky.decode();
-      for (const body of system.stellars.filter((body) => body.kind === 'station' && body.art)) {
+      for (const body of system.stellars.filter((body) => body.art)) {
         const image = new Image();
-        image.src = `assets/stations/s_${body.art}.webp`;
+        image.src =
+          body.kind === 'station'
+            ? `assets/stations/s_${body.art}.webp`
+            : `assets/planets/${body.art}.webp`;
         await image.decode();
       }
     }
