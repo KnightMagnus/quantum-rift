@@ -454,6 +454,15 @@ function drawQuantumRift(
   context.restore();
 }
 type StorySequence = { kind: 'ark-departure' | 'rift-crossing'; began: number };
+export function storyInputLocked(state: ClientGameState, now = performance.now()): boolean {
+  const sequence = storySequences.get(state);
+  return sequence?.kind === 'rift-crossing' && now - sequence.began < 6400;
+}
+export function skipStorySequence(state: ClientGameState, now = performance.now()): void {
+  const sequence = storySequences.get(state);
+  if (sequence?.kind === 'rift-crossing' && now - sequence.began < 5600)
+    sequence.began = now - 5600;
+}
 const storySequences = new WeakMap<ClientGameState, StorySequence>();
 const previousStorySystem = new WeakMap<ClientGameState, string | null>();
 /** Presentation hook; it cannot move the ship, fit equipment or commit story progress. */
@@ -1891,7 +1900,7 @@ export function stationDesign(stellarBody: StellarBody): string {
  * @returns Loaded image or null if loading
  */
 function stationSprite(stellarBody: StellarBody): HTMLImageElement | HTMLCanvasElement | null {
-  const stationDesign2 = stationDesign(stellarBody);
+  const stationDesign2 = stellarBody.art || stationDesign(stellarBody);
   const htmlImageElement = assetImage(`stations/s_${stationDesign2}.webp`);
   return htmlImageElement.complete && htmlImageElement.naturalWidth ? htmlImageElement : null;
 }
@@ -2731,6 +2740,69 @@ export function setWorldProjection(
 ): void {
   worldProjection = project;
 }
+/** Fixed attachment coordinates in the supplied Luna Prime 512px artwork. */
+export const LUNA_RECEIVER = { x: 29, y: 245, size: 512, diskFraction: 0.4196 };
+/** Convert the static ring receiver pixel to world coordinates, independent of camera zoom. */
+export function heliosReceiver(body: { x: number; y: number; r: number }): {
+  x: number;
+  y: number;
+} {
+  const scale = (2 * body.r) / (LUNA_RECEIVER.size * LUNA_RECEIVER.diskFraction);
+  return {
+    x: body.x + (LUNA_RECEIVER.x - 256) * scale,
+    y: body.y + (LUNA_RECEIVER.y - 256) * scale,
+  };
+}
+function drawHeliosBeam(
+  context: CanvasRenderingContext2D,
+  screenX: (x: number) => number,
+  screenY: (y: number) => number,
+  zoom: number,
+): void {
+  const luna = STELLARS['vigils-rest'],
+    helios = STELLARS['helios-array'];
+  if (!luna || !helios) return;
+  const receiver = heliosReceiver(luna);
+  context.save();
+  context.globalCompositeOperation = 'lighter';
+  context.lineCap = 'round';
+  for (const [width, color] of [
+    [10, 'rgba(255,68,24,.14)'],
+    [3, 'rgba(255,88,35,.7)'],
+    [1, '#ffe4b5'],
+  ] as const) {
+    context.strokeStyle = color;
+    context.lineWidth = Math.max(0.6, width * zoom);
+    context.beginPath();
+    context.moveTo(screenX(helios.x), screenY(helios.y));
+    context.lineTo(screenX(receiver.x), screenY(receiver.y));
+    context.stroke();
+  }
+  context.restore();
+}
+function drawMilkyWaySun(
+  context: CanvasRenderingContext2D,
+  system: GalaxySystem,
+  width: number,
+  height: number,
+  centerX: number,
+  centerY: number,
+  zoom: number,
+  currentTime: number,
+): void {
+  const distantZoom = Math.pow(zoom, 0.25);
+  const radius = (system.id === 'mw-sol' ? 110 : 85) * distantZoom;
+  const [x, y] = farXY(
+    { x: -420, y: -230, depth: 0.002 },
+    width,
+    height,
+    centerX,
+    centerY,
+    distantZoom,
+  );
+  drawStar(context, system, { core: '255,244,220', halo: '255,190,90' }, x, y, radius, currentTime);
+}
+
 /**
  * Master rendering pipeline: backdrop, stellar bodies, mining fields, loot, shots, beams, ships, effects, and HUD overlays.
  * @param clientGameState Game state object
@@ -2774,7 +2846,9 @@ export function draw(
     canvasRenderingContext2D.fillRect(0, 0, width2, height2);
     if (!starSystem) return;
     const arrivalBackdrop =
-      starSystem.id === 'beyond-rift' ? assetImage('milky_way_arrival_backdrop.jpg') : null;
+      starSystem.region === 'milky-way'
+        ? assetImage(`milky-way/${starSystem.backdrop || 'mw_sol.jpg'}`)
+        : null;
     if (arrivalBackdrop && ready(arrivalBackdrop)) {
       const cover = Math.max(
         width2 / arrivalBackdrop.naturalWidth,
@@ -2790,9 +2864,22 @@ export function draw(
         imageHeight,
       );
     }
+    if (starSystem.region === 'milky-way')
+      drawMilkyWaySun(
+        canvasRenderingContext2D,
+        starSystem,
+        width2,
+        height2,
+        centerX,
+        centerY,
+        zoom2,
+        currentTime,
+      );
     const stars2 = stars(starSystem.id),
       hexToRgb2 = hexToRgb(FACTIONS[starSystem.faction].color);
-    for (const [nextX, nextY, nextRadius, entryKey] of stars2.neb) {
+    for (const [nextX, nextY, nextRadius, entryKey] of starSystem.region === 'milky-way'
+      ? []
+      : stars2.neb) {
       // faint nebulae in the faction's colour
       const positionX = screenX(nextX * 0.4 + centerX * 0.6),
         positionY = screenY(nextY * 0.4 + centerY * 0.6),
@@ -2818,7 +2905,7 @@ export function draw(
         radius * 2,
       );
     }
-    if (!['beyond-rift', 'founding-vigil'].includes(starSystem.id))
+    if (starSystem.region !== 'milky-way' && starSystem.id !== 'founding-vigil')
       drawDecorFar(
         canvasRenderingContext2D,
         starSystem,
@@ -2858,7 +2945,7 @@ export function draw(
       canvasRenderingContext2D.fillRect(0, 0, width2, height2);
       canvasRenderingContext2D.restore();
     }
-    if (!['beyond-rift', 'founding-vigil'].includes(starSystem.id))
+    if (starSystem.region !== 'milky-way' && starSystem.id !== 'founding-vigil')
       drawDecorMid(
         canvasRenderingContext2D,
         starSystem,
@@ -2869,7 +2956,7 @@ export function draw(
         centerY,
         currentTime,
       );
-    if (!['beyond-rift', 'founding-vigil'].includes(starSystem.id))
+    if (starSystem.region !== 'milky-way' && starSystem.id !== 'founding-vigil')
       drawDecorNear(
         canvasRenderingContext2D,
         starSystem,
@@ -2880,7 +2967,7 @@ export function draw(
         screenY,
         currentTime,
       ); // 2.2 scenery in the system itself
-    if (!['beyond-rift', 'founding-vigil'].includes(starSystem.id))
+    if (starSystem.region !== 'milky-way' && starSystem.id !== 'founding-vigil')
       drawPulseBoundary(canvasRenderingContext2D, starSystem, screenX, screenY, zoom2);
     const reality = storyScenery(clientGameState.you?.story?.flags as RealityFlags | undefined);
     if (starSystem.id === EXPEDITION_HULK.system && reality.dormantArk) {
@@ -2962,6 +3049,8 @@ export function draw(
         );
       }
     }
+    if (starSystem.id === 'mw-sol')
+      drawHeliosBeam(canvasRenderingContext2D, screenX, screenY, zoom2);
     // stellars
     let position;
     for (const rawStellarBody of starSystem.stellars) {
@@ -2976,7 +3065,10 @@ export function draw(
         continue;
       let label = rawStellarBody.name;
       if (rawStellarBody.wormhole) {
-        const quantum = starSystem.id === 'quantum-rift' || starSystem.id === 'beyond-rift';
+        const quantum =
+          starSystem.id === 'quantum-rift' ||
+          starSystem.id === 'beyond-rift' ||
+          rawStellarBody.id === 'mw-sol-rift-mouth';
         const portalImage = assetImage(quantum ? 'quantum_rift.png' : 'wormhole.png');
         // Original periodic Gateway frames; interpolate only to smooth display cadence.
         if (quantum) {
@@ -4174,28 +4266,94 @@ function hudOverlay(
     );
   const storySequence = storySequences.get(clientGameState);
   if (storySequence?.kind === 'rift-crossing') {
-    const progress = Math.min(1, Math.max(0, (currentTime - storySequence.began) / 2800));
+    const elapsed = currentTime - storySequence.began;
+    const fall = Math.max(0, Math.min(1, (elapsed - 600) / 5000));
+    const arrival = Math.max(0, Math.min(1, (elapsed - 5600) / 800));
     const reduced = reducedStoryEffects(clientGameState);
-    canvasRenderingContext2D.save();
-    canvasRenderingContext2D.globalAlpha = reduced
-      ? 0.12 * (1 - progress)
-      : (0.16 + 0.18 * Math.sin(progress * Math.PI * 7) ** 2) * (1 - progress);
-    canvasRenderingContext2D.fillStyle = '#a372fa';
-    canvasRenderingContext2D.fillRect(0, 0, width, height);
-    if (!reduced) {
-      canvasRenderingContext2D.strokeStyle = '#e4c4ff';
-      canvasRenderingContext2D.lineWidth = 3;
-      for (let index = 0; index < 5; index++) {
-        const x = (width * (index + 0.5)) / 5;
-        canvasRenderingContext2D.beginPath();
-        canvasRenderingContext2D.moveTo(x, 0);
-        canvasRenderingContext2D.lineTo(x + Math.sin(currentTime / 95 + index) * 90, height * 0.35);
-        canvasRenderingContext2D.lineTo(x - 60, height * 0.65);
-        canvasRenderingContext2D.lineTo(x + 40, height);
-        canvasRenderingContext2D.stroke();
+    const context = canvasRenderingContext2D;
+    context.save();
+    if (elapsed < 5600) {
+      context.fillStyle = '#090217';
+      context.fillRect(0, 0, width, height);
+      const returning = clientGameState.sys === 'quantum-rift';
+      if (returning) {
+        drawQuantumRift(
+          context,
+          width / 2,
+          height / 2,
+          height * (0.25 + 0.8 * fall * fall),
+          currentTime,
+        );
+      } else {
+        const galaxy = assetImage('milky_way_arrival_backdrop.jpg');
+        if (ready(galaxy)) {
+          const imageHeight = height * (0.25 + 0.85 * fall * fall);
+          const imageWidth = (imageHeight * galaxy.naturalWidth) / galaxy.naturalHeight;
+          context.globalAlpha = 0.3 + 0.7 * fall;
+          context.drawImage(
+            galaxy,
+            (width - imageWidth) / 2,
+            (height - imageHeight) / 2,
+            imageWidth,
+            imageHeight,
+          );
+          context.globalAlpha = 1;
+        }
       }
+      context.fillStyle = `rgba(92,20,150,${0.7 - 0.5 * fall})`;
+      context.fillRect(0, 0, width, height);
+      if (!reduced) {
+        context.globalCompositeOperation = 'lighter';
+        for (let index = 0; index < 110; index++) {
+          const angle = index * 2.399963;
+          const travel = (elapsed / 950 + index * 0.618033) % 1;
+          const distance = travel * travel * Math.hypot(width, height) * 0.75;
+          const length = 10 + travel * travel * 150;
+          context.strokeStyle = index % 9 ? 'rgba(185,58,255,.5)' : 'rgba(245,217,255,.8)';
+          context.lineWidth = 1 + travel * 2;
+          context.beginPath();
+          context.moveTo(
+            width / 2 + Math.cos(angle) * distance,
+            height / 2 + Math.sin(angle) * distance,
+          );
+          context.lineTo(
+            width / 2 + Math.cos(angle) * (distance + length),
+            height / 2 + Math.sin(angle) * (distance + length),
+          );
+          context.stroke();
+        }
+        context.globalCompositeOperation = 'source-over';
+      }
+      context.save();
+      context.translate(width / 2, height / 2);
+      context.rotate(reduced ? 0 : Math.sin(elapsed / 380) * 0.065);
+      const crossingShip = clientGameState.ents.get(clientGameState.myId!);
+      if (crossingShip)
+        drawShip(
+          clientGameState,
+          context,
+          { ...crossingShip, a: 0 },
+          0,
+          0,
+          Math.min(1.2, clientGameState.zoom),
+          currentTime,
+        );
+      context.restore();
+      context.font = '16px "Pixelify Sans", sans-serif';
+      context.textAlign = 'center';
+      context.fillStyle = '#e8d6ff';
+      context.fillText('Space / Escape to skip', width / 2, height - 40);
     }
-    canvasRenderingContext2D.restore();
+    if (elapsed < 600 || elapsed >= 5600) {
+      context.globalAlpha = reduced
+        ? 0.15
+        : elapsed < 600
+          ? 0.5 * (1 - elapsed / 600)
+          : 1 - arrival;
+      context.fillStyle = '#f2deff';
+      context.fillRect(0, 0, width, height);
+    }
+    context.restore();
   }
   // damage: a red flash when your hull is hit, and a slow pulse when armour is low
   const computedShipStats = clientGameState.you && clientGameState.you.shipStats,
@@ -4282,22 +4440,22 @@ export function updateEffects(
 ): void {
   const previousSystem = previousStorySystem.get(clientGameState);
   if (
-    (previousSystem === 'quantum-rift' && clientGameState.sys === 'beyond-rift') ||
-    (previousSystem === 'beyond-rift' && clientGameState.sys === 'quantum-rift')
+    (previousSystem === 'quantum-rift' && clientGameState.sys === 'mw-sol') ||
+    (previousSystem === 'mw-sol' && clientGameState.sys === 'quantum-rift')
   )
     startStorySequence(clientGameState, 'rift-crossing', currentTime);
   previousStorySystem.set(clientGameState, clientGameState.sys);
   const sequence = storySequences.get(clientGameState);
   if (sequence) {
     const elapsed = currentTime - sequence.began;
-    if (elapsed > (sequence.kind === 'rift-crossing' ? 2800 : 12000))
+    if (elapsed > (sequence.kind === 'rift-crossing' ? 6400 : 12000))
       storySequences.delete(clientGameState);
     else if (
       sequence.kind === 'rift-crossing' &&
       clientGameState.opts.shake &&
       !reducedStoryEffects(clientGameState)
     )
-      shake = Math.max(shake, 16 * (1 - elapsed / 2800));
+      shake = Math.max(shake, 16 * Math.max(0, 1 - elapsed / 600));
   }
   updateShipChat(clientGameState, currentTime);
   for (const [identifier, hit] of shieldHits) {
@@ -4824,9 +4982,13 @@ export function mapFit(
   height: number,
   flags?: RealityFlags,
   visible?: ReadonlySet<string>,
+  currentSystem?: string | null,
 ): MapFit & { cx: number; cy: number; fit: number } {
   const visibleSystems = SYS_LIST.filter(
-    (system) => storySystemVisible(flags || {}, system.id) && (!visible || visible.has(system.id)),
+    (system) =>
+      system.region === systemsById[currentSystem || 'qgate']?.region &&
+      storySystemVisible(flags || {}, system.id) &&
+      (!visible || visible.has(system.id)),
   );
   // Under fog of war, fit the space the captain knows, never closer than a small region.
   const knownSpan = 900;
@@ -4936,6 +5098,7 @@ export function galaxy(
   const knowledge = captainMap(clientGameState);
   const visibleSystems = SYS_LIST.filter(
     (system) =>
+      system.region === systemsById[clientGameState.sys || 'qgate']?.region &&
       storySystemVisible(flags || {}, system.id) &&
       (!knowledge || knowledge.visible.has(system.id) || system.id === clientGameState.sys),
   );
@@ -4953,6 +5116,16 @@ export function galaxy(
   };
   canvasRenderingContext2D.fillStyle = ink.space;
   canvasRenderingContext2D.fillRect(0, 0, width2, height2);
+  canvasRenderingContext2D.fillStyle = '#8fc5df';
+  canvasRenderingContext2D.font = '12px sans-serif';
+  canvasRenderingContext2D.textAlign = 'left';
+  canvasRenderingContext2D.fillText(
+    systemsById[clientGameState.sys || 'qgate']?.region === 'milky-way'
+      ? 'MILKY WAY · SOLAR NEIGHBOURHOOD'
+      : 'THE QUANTUM RIFT',
+    14,
+    24,
+  );
   let mapFit2: MapFit;
   if (large) {
     const fogKey = knowledge ? knowledge.visible.size : 0;
@@ -4961,7 +5134,7 @@ export function galaxy(
       clientGameState.mapView.W !== width2 ||
       clientGameState.mapView.H !== height2
     ) {
-      const mapFit3 = mapFit(width2, height2, flags, knowledge?.visible),
+      const mapFit3 = mapFit(width2, height2, flags, knowledge?.visible, clientGameState.sys),
         mapView2 = clientGameState.mapView;
       clientGameState.mapView = Object.assign(mapView2 || {}, {
         W: width2,
@@ -4979,7 +5152,7 @@ export function galaxy(
       clientGameState.mapView.prevFit = mapFit3.fit;
     } else if (clientGameState.mapView.fogKey !== fogKey) {
       // Newly revealed space widens the zoom range; the current view stays where it is.
-      const mapFit3 = mapFit(width2, height2, flags, knowledge?.visible);
+      const mapFit3 = mapFit(width2, height2, flags, knowledge?.visible, clientGameState.sys);
       clientGameState.mapView.fit = clientGameState.mapView.prevFit = mapFit3.fit;
       clientGameState.mapView.fogKey = fogKey;
     }
@@ -5512,6 +5685,7 @@ export function mapHit(
     body = 14;
   const knowledge = captainMap(clientGameState);
   for (const starSystem of SYS_LIST) {
+    if (starSystem.region !== systemsById[clientGameState.sys || 'qgate']?.region) continue;
     if (!storySystemVisible(clientGameState.you?.story?.flags || {}, starSystem.id)) continue;
     if (knowledge && !knowledge.visible.has(starSystem.id) && starSystem.id !== clientGameState.sys)
       continue;

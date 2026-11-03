@@ -901,7 +901,8 @@ function chooseRendered(planetDef: PlanetDef) {
   )
     type = 'city';
   const pool = Object.entries(renderManifest).filter(
-    ([, message]) =>
+    ([artId, message]) =>
+      !artId.startsWith('sol_') &&
       (type === 'city'
         ? message.type === 'city'
         : (TYPE_POOL[type] || [type]).includes(message.type)) &&
@@ -919,7 +920,8 @@ function chooseRendered(planetDef: PlanetDef) {
     slice2 = pool.slice(0, Math.min(pool.length, planetDef.id.startsWith('bg:') ? 4 : 2));
   const want =
     /ring/.test(toLowerCase2) && type === 'gas'
-      ? slice2.find(([, message]) => message.rings) || slice2[hashStr2 % slice2.length]
+      ? slice2.find(([artId, message]) => !artId.startsWith('sol_') && message.rings) ||
+        slice2[hashStr2 % slice2.length]
       : slice2[hashStr2 % slice2.length];
   const options = { id: want[0], ...want[1] };
   pick.set(planetDef.id, options);

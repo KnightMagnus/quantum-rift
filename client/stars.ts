@@ -27,7 +27,7 @@ export function starProfile(system: StarSystem, sunPalette: SunPalette) {
   const seed = hash(String(system.id));
   // Retain the existing authored palettes, including Crucible and Farside decor.
   // Sol is intentionally recognizable rather than a random blue/orange star.
-  const solution = system.id === 'sol';
+  const solution = system.id === 'sol' || system.id === 'mw-sol';
   return {
     seed,
     core: colorChannels(solution ? '255,244,220' : sunPalette.core),
