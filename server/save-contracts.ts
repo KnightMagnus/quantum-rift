@@ -26,6 +26,20 @@ export interface StoredShip {
 }
 /** Per-captain choices never mutate shared faction or market state. */
 export interface StoryFlags {
+  p2_entry?: 'hearing' | 'salvage' | 'refugees';
+  p2_route?: 'private' | 'vey' | 'command';
+  p2_supply?: 'grain' | 'battery';
+  p2_prisoners?: 'free' | 'transfer' | 'sentence' | 'unsworn';
+  p2_records?: 'publish' | 'delegates' | 'official';
+  p2_witness?: 'reject' | 'disclose' | 'rebuild';
+  p2_relay?: 'independent' | 'custody' | 'destroy';
+  p2_contact?: 'family' | 'scholarly' | 'disclosure';
+  p2_expedition?: 'joint' | 'military' | 'private';
+  p2_makers?: 'talks' | 'stand_down' | 'maps' | 'border';
+  p2_campaign?: 'border' | 'armistice' | 'dormancy' | 'ascendant' | 'ashfall';
+  p2_ending?: StoryFlags['p2_campaign'];
+  p2_objectives?: Record<string, boolean>;
+
   /** Manifest recipient chosen at the berth. */
   d1?: 'concord' | 'hollow' | 'index';
   /** The fate of the captured Umbral crew. */
@@ -63,7 +77,14 @@ export interface SavedStory {
   /** Persistent decisions and personal presentation gates. */
   flags?: StoryFlags;
   step: number;
-  active: { id: string; got: number; spawned: boolean; ready: boolean; allies?: number[] } | null;
+  active: {
+    id: string;
+    got: number;
+    spawned: boolean;
+    ready: boolean;
+    stage?: number;
+    allies?: number[];
+  } | null;
   done: string[];
   pass?: boolean;
 }

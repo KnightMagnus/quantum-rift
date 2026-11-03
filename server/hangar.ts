@@ -1050,7 +1050,11 @@ export const HangarOperations = {
     if (distance > Math.max(120, (entity2.st.size + entity.st.size) * 0.5))
       return this.toast(session, 'Move alongside to board.');
     if (relative > 90) return this.toast(session, 'Match speed to board.');
-    if ((entity2.faction === 'nhal' || entity2.faction === 'index') && message.act !== 'rescue')
+    if (
+      (entity2.faction === 'nhal' || entity2.faction === 'index') &&
+      message.act !== 'rescue' &&
+      !entity2.storyCapture
+    )
       return this.toast(session, 'These hulls cannot be captured or plundered.');
     const shipHullAsset = this.A.ships[entity2.hull],
       factionDef = FACTIONS[entity2.faction],
@@ -1118,6 +1122,14 @@ export const HangarOperations = {
         return done();
       }
       case 'capture': {
+        if (entity2.storyCapture && entity2.story === session.id) {
+          if (this.storyProgress) this.storyProgress(session, entity2);
+          this.toast(
+            session,
+            'The prize crew takes physical control of the campaign installation. Its custody is recorded; it is not a personal ship prize.',
+          );
+          return done();
+        }
         const length2 = BRIDGE_SLOTS.filter((entryKey) => playerData.bridge[entryKey]).length;
         if (!length2)
           return this.toast(
@@ -1190,6 +1202,11 @@ export const HangarOperations = {
             return done();
           }
         }
+        if (entity2.storyCapture)
+          return this.toast(
+            session,
+            'This objective requires Capture: take physical control of the installation.',
+          );
         if (entity2.storyBoard && this.storyProgress) this.storyProgress(session, entity2);
         if (entity2.arcOf && this.arcProgress) this.arcProgress(session, entity2);
         if (entity2.rescueOf) {

@@ -1,3 +1,9 @@
+import {
+  PART_TWO_OBJECTIVES,
+  partTwoBattle,
+  partTwoEndings,
+  partTwoEndingText,
+} from '../shared/part-two-story.ts';
 import { storyReportPort, storyReportGuidance } from '../shared/story-pacing.ts';
 export interface StoryPayload {
   flags: StoryFlags;
@@ -89,9 +95,9 @@ export const StoryOperations = {
       active: savedStory.active
         ? {
             ...savedStory.active,
-            title: STORY.find((storyMission) => storyMission.id === savedStory.active!.id)!.title,
+            title: effectiveMission(playerData, savedStory.active!.id)!.title,
             brief:
-              STORY.find((storyMission) => storyMission.id === savedStory.active!.id)!.brief +
+              effectiveMission(playerData, savedStory.active!.id)!.brief +
               storyGuidance(playerData, savedStory.active.id),
           }
         : null,
@@ -130,6 +136,11 @@ export const StoryOperations = {
       storyMission = STORY[savedStory.step];
     if (!storyMission || savedStory.active || !position || storyMission.at !== position.id)
       return null;
+    if (
+      storyMission.id.startsWith('p2-') &&
+      (!savedStory.flags?.crossed_quantum_rift || savedStory.flags.main_ending !== 'table')
+    )
+      return null;
     if (storyMission.minRep && (playerData.rep.quevari || 0) < storyMission.minRep)
       return {
         ...storyMission,
@@ -153,15 +164,34 @@ export const StoryOperations = {
     const playerData = session.data,
       savedStory = this.storyInit(playerData),
       active2 = savedStory.active;
+    if (
+      active2?.id === 'p2-fleet' &&
+      ['ascendant', 'ashfall'].includes(savedStory.flags?.p2_campaign || '')
+    )
+      this.send(session, {
+        t: 'story',
+        id: 'p2-abandon',
+        title: 'Leave the offensive',
+        text: 'You can still stop participating. Recorded losses remain. The civilian border plan starts with replacement transports and a reopened corridor.',
+        choices: [
+          { value: 'border', label: 'Abandon this offensive and protect the civilian border' },
+        ],
+        acc: 'Withdraw',
+        ref: 'Continue current mission',
+      });
     const sideDecision = pendingSideDecision(playerData, position.id);
     if (sideDecision) this.send(session, sideDecision);
     if (active2) {
-      const storyMission = STORY.find((storyMission) => storyMission.id === active2.id)!;
+      const storyMission = effectiveMission(playerData, active2.id)!;
       if (
         (storyMission.type === 'carry' && position.id === storyMission.dest) ||
         (active2.ready && storyReportPort(storyMission, position.id))
       ) {
-        if (storyMission.decision && !savedStory.flags?.[storyMission.decision]) {
+        if (
+          storyMission.decision &&
+          isLastStage(playerData, storyMission.id) &&
+          !savedStory.flags?.[storyMission.decision]
+        ) {
           active2.ready = true;
           this.send(session, {
             t: 'story',
@@ -274,7 +304,7 @@ export const StoryOperations = {
       this.landed(session);
       return;
     }
-    const current = STORY.find((step) => step.id === message.id);
+    const current = effectiveMission(playerData, message.id);
     if (current?.decision && message.choice) {
       const active = savedStory.active;
       const canResolve =
@@ -298,6 +328,8 @@ export const StoryOperations = {
       }
       const flags = (savedStory.flags ||= {});
       Object.assign(flags, { [current.decision]: message.choice });
+      if (current.decision === 'p2_prisoners' && message.choice === 'sentence')
+        delete flags.p2_objectives?.signatory;
       this.questReconcile(session);
       if (current.decision === 'main_ending' && message.choice === 'unsettling') {
         // A second, landed choice records the people whose reality the captain joins.
@@ -363,8 +395,43 @@ export const StoryOperations = {
       this.storyComplete(session, storyStep);
       return;
     }
+    if (
+      message.id === 'p2-fleet' &&
+      storyStep?.id === 'p2-fleet' &&
+      !savedStory.flags?.p2_campaign
+    ) {
+      const flags = (savedStory.flags ||= {});
+      if (!message.choice || !partTwoEndings(flags).includes(message.choice)) {
+        this.send(session, {
+          t: 'story',
+          id: 'p2-fleet',
+          title: 'The Homeward Fleet',
+          text: storyStep.text,
+          choices: battleChoices(flags),
+          acc: 'Choose campaign',
+          ref: 'Not yet',
+        });
+        return;
+      }
+      flags.p2_campaign = message.choice as StoryFlags['p2_campaign'];
+    }
+    if (
+      message.id === 'p2-abandon' &&
+      savedStory.active?.id === 'p2-fleet' &&
+      !savedStory.flags?.p2_ending &&
+      message.choice === 'border'
+    ) {
+      (savedStory.flags ||= {}).p2_campaign = 'border';
+      savedStory.active = { id: 'p2-fleet', got: 0, spawned: false, ready: false, stage: 0 };
+      this.db.touch();
+      this.you(session);
+      this.landed(session);
+      return;
+    }
     if (!storyStep || storyStep.locked || storyStep.id !== message.id) return;
     if (storyStep.type === 'decision') return;
+    if (storyStep.id === 'p2-road')
+      ((savedStory.flags ||= {}).p2_objectives ||= {}).black_road = true;
     if (storyStep.id === 'breach') (savedStory.flags ||= {}).breach_started = true;
     if (storyStep.type === 'gift') return this.storyGift(session, storyStep);
     savedStory.active = {
@@ -388,6 +455,40 @@ export const StoryOperations = {
     const playerData = session.data,
       savedStory = this.storyInit(playerData);
     if (savedStory.done.includes(storyStep.id)) return;
+    if (storyStep.id.startsWith('p2-')) {
+      const stages = stagesFor(playerData, storyStep.id);
+      const stage = savedStory.active?.stage || 0;
+      const objective = stages[stage];
+      const flags = (savedStory.flags ||= {});
+      if (objective?.mark && !(objective.mark === 'signatory' && flags.p2_prisoners === 'sentence'))
+        (flags.p2_objectives ||= {})[objective.mark] = true;
+      if (stage + 1 < stages.length) {
+        savedStory.active = {
+          id: storyStep.id,
+          got: 0,
+          spawned: false,
+          ready: false,
+          stage: stage + 1,
+        };
+        this.db.touch();
+        this.you(session);
+        this.toast(session, `Next objective: ${stages[stage + 1].brief}`);
+        this.landed(session);
+        return;
+      }
+      if (storyStep.id === 'p2-fleet') {
+        const o = flags.p2_objectives || {};
+        if (!flags.p2_campaign || !o.corridor || !o.final_strike) return;
+        if (flags.p2_campaign === 'ascendant' && (!o.captured_relay || !o.captured_yard)) return;
+        if (flags.p2_campaign === 'ashfall' && !o.archive_strikes) return;
+        if (
+          ['armistice', 'dormancy'].includes(flags.p2_campaign) &&
+          (!o.independent_records || !o.negotiated)
+        )
+          return;
+        flags.p2_ending = flags.p2_campaign;
+      }
+    }
     savedStory.active = null;
     savedStory.done.push(storyStep.id);
     savedStory.step++;
@@ -427,7 +528,14 @@ export const StoryOperations = {
               savedStory.flags || {},
               !!playerData.officers?.some((officer) => officer.name === 'Seren Of-The-Veil'),
             )
-          : storyStep.done) +
+          : ['p2-fleet', 'p2-names'].includes(storyStep.id)
+            ? partTwoEndingText(savedStory.flags || {}) +
+              (storyStep.id === 'p2-names'
+                ? savedStory.flags?.p2_supply === 'grain'
+                  ? ' Saint Orra’s grain line was restored; the frontier battery went short.'
+                  : ' The frontier battery received machinery; Saint Orra endured delayed grain deliveries.'
+                : '')
+            : storyStep.done) +
         crewBeat(playerData, storyStep.id) +
         (received.some(Boolean) ? `\n\nRewards: ${received.filter(Boolean).join(', ')}.` : ''),
       done: true,
@@ -608,13 +716,46 @@ export const StoryOperations = {
     if (flags.nhal_ending === 'kill' && space.sys.faction === 'deep')
       this.nhal.storyCreature(space, 904, session.id, 1300, -900, 11);
     if (!active2 || active2.ready) return;
-    const storyMission = STORY.find((storyMission) => storyMission.id === active2.id)!;
+    const storyMission = effectiveMission(playerData, active2.id)!;
     if (storyMission.sys !== playerData.sys) return;
+    if (active2.id === 'p2-fleet' && !active2.spawned && session.ent) {
+      const allies: Array<{ hull: number; faction: string; name: string }> = [];
+      if (flags.p2_prisoners !== 'sentence')
+        allies.push({
+          hull: 963,
+          faction: 'confederation',
+          name: 'Remembrance · Marshal Iona Vey',
+        });
+      if (['free', 'transfer', 'unsworn'].includes(flags.p2_prisoners || ''))
+        allies.push({ hull: 955, faction: 'confederation', name: 'Captain Tomas Rooke' });
+      if (
+        ['armistice', 'dormancy', 'border'].includes(flags.p2_campaign || '') &&
+        flags.p2_relay === 'independent'
+      )
+        allies.push({ hull: 970, faction: 'index', name: 'Independent Index defender' });
+      if (['ascendant', 'ashfall'].includes(flags.p2_campaign || ''))
+        allies.push({ hull: 963, faction: 'confederation', name: 'Ash Mandate offensive cruiser' });
+      for (const [slot, ally] of allies.entries()) {
+        const escort = space.makeShip({
+          ...ally,
+          ai: 'escort',
+          owner: session.ent.id,
+          x: session.ent.x + 200 + slot * 160,
+          y: session.ent.y + 200,
+        });
+        escort.story = session.id;
+        escort.storyAlly = true;
+        escort.noDisable = true;
+        escort.life = 1e9;
+      }
+      active2.spawned = true;
+    }
     const existing = [...space.ships.values()].filter(
       (entity) =>
         entity.story === session.id &&
         entity.storyMission === active2.id &&
-        (entity.storyKill || entity.storyBoard),
+        (entity.storyKill || entity.storyBoard) &&
+        (entity.storyStage || 0) === (active2.stage || 0),
     );
     if (existing.length) {
       // Recover abandoned targets without healing them or interrupting another captain's fight.
@@ -647,20 +788,36 @@ export const StoryOperations = {
       for (let index = 0; index < left; index++) {
         const angle = Math.random() * 6.283,
           entity = space.makeShip({
-            hull: storyMission.hull,
-            faction: storyMission.faction,
-            x: Math.cos(angle) * (800 + index * 300),
-            y: Math.sin(angle) * (800 + index * 300),
-            name: 'Becalmed Sloop',
+            hull: storyMission.id === 'p2-observation' && index === 1 ? 704 : storyMission.hull,
+            faction:
+              storyMission.id === 'p2-observation' && index === 1
+                ? 'freefolk'
+                : storyMission.faction,
+            x:
+              (storyMission.id.startsWith('p2-') ? session.ent?.x || 0 : 0) +
+              Math.cos(angle) * (800 + index * 300),
+            y:
+              (storyMission.id.startsWith('p2-') ? session.ent?.y || 0 : 0) +
+              Math.sin(angle) * (800 + index * 300),
+            name:
+              storyMission.id === 'p2-observation' && index === 1
+                ? 'Freefolk civilian rescue crew'
+                : storyMission.capture
+                  ? 'Installation control tender · Capture'
+                  : storyMission.id.startsWith('p2-')
+                    ? 'Disabled civilian transport · Rescue'
+                    : 'Becalmed Sloop',
           });
         entity.disabled = true;
         entity.armor = entity.st.armor * 0.1;
         entity.story = session.id;
         entity.storyBoard = true;
+        entity.storyCapture = !!storyMission.capture;
         entity.storyMission = storyMission.id;
+        entity.storyStage = active2.stage || 0;
         entity.life = 1e9;
         entity.wreckT = 1e9;
-        entity.rescueOf = { id: 'story', owner: session.id };
+        if (!storyMission.capture) entity.rescueOf = { id: 'story', owner: session.id };
       }
     if (storyMission.type === 'kill')
       for (let index = 0; index < left; index++) {
@@ -678,14 +835,21 @@ export const StoryOperations = {
               : space.makeShip({
                   hull: storyMission.hull,
                   faction: storyMission.faction,
-                  x: Math.cos(angle) * 1400,
-                  y: Math.sin(angle) * 1400,
+                  x:
+                    (storyMission.id.startsWith('p2-') ? session.ent?.x || 0 : 0) +
+                    Math.cos(angle) * 1400,
+                  y:
+                    (storyMission.id.startsWith('p2-') ? session.ent?.y || 0 : 0) +
+                    Math.sin(angle) * 1400,
                   ai: 'raid',
-                  name: 'Umbral Hunter',
+                  name: storyMission.id.startsWith('p2-')
+                    ? 'Armed hardliner escort'
+                    : 'Umbral Hunter',
                 });
         entity3.story = session.id;
         entity3.storyKill = true;
         entity3.storyMission = storyMission.id;
+        entity3.storyStage = active2.stage || 0;
         entity3.life = 1e9;
         entity3.target = entity;
       }
@@ -771,17 +935,18 @@ export const StoryOperations = {
       active2.ready ||
       entity.story !== session.id ||
       entity.storyMission !== active2.id ||
-      entity.storyCredited
+      entity.storyCredited ||
+      (entity.storyStage || 0) !== (active2.stage || 0)
     )
       return;
-    const storyMission = STORY.find((storyMission) => storyMission.id === active2.id)!;
+    const storyMission = effectiveMission(playerData, active2.id)!;
     if (storyMission.sys !== playerData.sys || !(entity.storyKill || entity.storyBoard)) return;
     entity.storyCredited = true;
     if (storyMission.id === 'dreamer') (savedStory.flags ||= {}).dreamer_defeated = true;
     active2.got++;
     this.toast(
       session,
-      storyMission.progress +
+      (storyMission.progress || 'Objective recovered.') +
         (storyMission.count && active2.got < storyMission.count
           ? ` (${active2.got}/${storyMission.count})`
           : ''),
@@ -934,4 +1099,29 @@ function storyGuidance(player: PlayerData, chapter: string): string {
     );
   }
   return hints.length ? `\n\n${hints.join(' ')}` : '';
+}
+
+function stagesFor(playerData: PlayerData, id: string) {
+  return id === 'p2-fleet'
+    ? partTwoBattle(playerData.story.flags || {})
+    : PART_TWO_OBJECTIVES[id] || [];
+}
+function isLastStage(playerData: PlayerData, id: string): boolean {
+  return (playerData.story.active?.stage || 0) >= stagesFor(playerData, id).length - 1;
+}
+function effectiveMission(playerData: PlayerData, id: string): StoryStep | undefined {
+  const base = STORY.find((mission) => mission.id === id);
+  if (!base || !id.startsWith('p2-')) return base;
+  const objective = stagesFor(playerData, id)[playerData.story.active?.stage || 0];
+  return objective ? { ...base, ...objective } : base;
+}
+function battleChoices(flags: StoryFlags) {
+  const labels: Record<string, string> = {
+    border: 'The Border That Holds — protect evacuations and separate fleets',
+    armistice: 'Negotiate the Armistice of Two Skies and stop the last strike',
+    dormancy: 'Negotiate voluntary Index dormancy with protected handovers',
+    ascendant: 'Sol Ascendant — capture relay and yards; Freefolk face forced service',
+    ashfall: 'I understand: destroy archive refuges, including their Freefolk civilians',
+  };
+  return partTwoEndings(flags).map((value) => ({ value, label: labels[value] }));
 }

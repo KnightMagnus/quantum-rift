@@ -208,7 +208,7 @@ try {
   player.expd = { n: 3, lore: [2] };
   assert.equal(sideStoryAvailable(ring, player), true, 'exact Fragment III read unlocks the ring');
   // A standalone native workgroup and dormant bosses cannot leak into reward-free story places.
-  for (const system of ['table', 'quantum-rift', 'beyond-rift']) {
+  for (const system of ['table', 'quantum-rift']) {
     const space = game.spaces[system];
     space.tick();
     assert.equal(
@@ -231,12 +231,17 @@ try {
   assert.ok(Math.hypot(session.ent!.x, session.ent!.y) > mouth.r, 'unfitted ship turned away');
   player.ship.outfits[9021] = 1;
   game.wormholeTransit(session.ent!, rift, mouth);
-  assert.equal(player.sys, 'beyond-rift');
+  assert.equal(player.sys, 'mw-sol');
   assert.equal(player.story.flags.crossed_quantum_rift, true);
   assert.equal(player.credits, before, 'crossing grants no credits');
-  assert.deepEqual(SYS['beyond-rift'].links, []);
-  const arrival = game.spaces['beyond-rift'];
-  game.wormholeTransit(session.ent!, arrival, arrival.sys.stellars[0]);
+  assert.ok(SYS['mw-sol'].links.includes('mw-cinder-anchorage'));
+  assert.equal(active()?.id, 'p2-voice', 'first arrival starts the civilian rescue');
+  const arrival = game.spaces['mw-sol'];
+  game.wormholeTransit(
+    session.ent!,
+    arrival,
+    arrival.sys.stellars.find((body) => body.id === 'mw-sol-rift-mouth')!,
+  );
   assert.equal(player.sys, 'quantum-rift', 'manual return is playable');
   assert.equal(player.credits, before);
   const installed = player.ship.outfits[9021];
