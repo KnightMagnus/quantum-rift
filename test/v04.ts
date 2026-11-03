@@ -57,8 +57,10 @@ assertCondition(
 );
 assertCondition(
   SYSTEMS.filter((starSystem3) => starSystem3.anchor || starSystem3.gen).length === 200 &&
-    SYSTEMS.length === 217,
-  `200 generated systems, plus Sol and the 16 Farside systems (${SYSTEMS.length})`,
+    SYSTEMS.filter((system) => system.region !== 'milky-way').length === 217 &&
+    SYSTEMS.filter((system) => system.region === 'milky-way').length === 32 &&
+    SYSTEMS.length === 249,
+  `200 generated Rift systems, Sol Minor, 16 Farside systems and 32 Milky Way systems (${SYSTEMS.length})`,
 );
 const seen = new Set(['qgate']),
   pendingSystemIds = ['qgate'];
@@ -88,13 +90,18 @@ for (const starSystem3 of SYSTEMS)
   source[starSystem3.faction] = (source[starSystem3.faction] || 0) + 1;
 assertCondition(
   source.farside === 16 &&
+    source.confederation === 29 &&
+    source.index === 3 &&
+    !source.freefolk &&
+    !source.unsworn &&
     source.frontier >= 25 &&
     source.frontier <= 70 &&
     source.deep >= 6 &&
     Object.keys(FACTIONS)
-      .filter((faction) => !FACTIONS[faction].hidden)
+      .filter((faction) => !FACTIONS[faction].hidden && !['freefolk', 'unsworn'].includes(faction))
       .every((feature) => source[feature]),
-  'every power has territory, plus Frontier and the Deep: ' + JSON.stringify(source),
+  'territorial powers retain worlds; Freefolk and Unsworn have no territory: ' +
+    JSON.stringify(source),
 );
 assertCondition(
   systemsById.qgate.stellars.some((player) => player.hub) &&

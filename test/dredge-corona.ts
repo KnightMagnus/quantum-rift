@@ -285,6 +285,8 @@ assert.ok(source2.units >= 0 && source2.units < INDUSTRIAL.sourceUnits);
     const sent: { t: string; nav?: boolean }[] = [],
       warnings: string[] = [];
     const context = virtualMachine.createContext({
+      // This fixture has no active story sequence; crossing locks have part-two-art-browser coverage.
+      storyInputLocked: () => false,
       // This navigation fixture has no open browser dialog; modal denial has browser coverage.
       overlays: { blocksFlight: () => false },
       flightEngine: { recovering: false },

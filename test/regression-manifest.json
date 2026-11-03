@@ -172,7 +172,10 @@
     "system-diversity.ts",
     "captain-log.ts",
     "shared-story.ts",
-    "story-pacing.ts"
+    "story-pacing.ts",
+    "milky-way-world.ts",
+    "part-two-fleets.ts",
+    "part-two-story.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -242,7 +245,8 @@
     "touch-controls-browser.ts",
     "combat-browser.ts",
     "station-defenses-browser.ts",
-    "system-diversity-browser.ts"
+    "system-diversity-browser.ts",
+    "part-two-art-browser.ts"
   ],
   "children": {
     "network-systems.ts": [
@@ -1049,10 +1053,21 @@
     },
     {
       "id": "story",
-      "owners": ["server/story.ts"],
+      "owners": [
+        "server/story.ts",
+        "shared/milky-way.ts",
+        "shared/part-two-story.ts",
+        "shared/part-two-ships.ts"
+      ],
       "services": ["story"],
-      "tests": ["v10.ts"],
-      "asserts": "Story offers/acceptance, board/travel/kill progression, gifts and Deep unlock."
+      "tests": [
+        "v10.ts",
+        "milky-way-world.ts",
+        "part-two-story.ts",
+        "part-two-fleets.ts",
+        "part-two-art-browser.ts"
+      ],
+      "asserts": "Story offers/acceptance, board/travel/kill progression, gifts and Deep unlock. Regional continuation covers graph isolation, authored Sol, mission objectives, fleet eligibility and runtime artwork."
     },
     {
       "id": "rivals",
@@ -2452,7 +2467,7 @@
       "shared-story.ts"
     ],
     "holdout": ["v09.ts", "v26.ts", "message-routing.ts"],
-    "storyacc": ["v10.ts", "message-routing.ts"],
+    "storyacc": ["v10.ts", "message-routing.ts", "part-two-story.ts"],
     "social": ["hailing-network.ts", "v26.ts", "message-routing.ts"],
     "trade2": ["cargo-flows.ts", "v26.ts", "message-routing.ts"],
     "duel": ["v26.ts", "message-routing.ts"],

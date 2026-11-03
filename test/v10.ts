@@ -10,6 +10,7 @@ import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { SYS as systemsById, STELLARS, SYSTEMS } from '../shared/galaxy.ts';
 import { STORY } from '../shared/story.ts';
+import { PART_TWO } from '../shared/part-two-story.ts';
 const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
 );
@@ -102,10 +103,12 @@ assertCondition(
   'the Deep is locked until the story opens it',
 );
 assertCondition(
-  STORY.length === 13 &&
-    STORY.slice(0, 5).length === 5 &&
+  STORY.length === 29 &&
+    PART_TWO.length === 16 &&
+    STORY.slice(0, 13).every((mission) => !mission.id.startsWith('p2-')) &&
+    STORY.slice(13).every((mission, index) => mission === PART_TWO[index]) &&
     STORY.every((session) => STELLARS[session.at]),
-  'five original story missions and eight continuation missions, all offered at real worlds',
+  'five original missions, eight continuation missions and sixteen Part II missions, all offered at real worlds',
 );
 land(firstEntry, 'threshold');
 const legacyPacket = firstEntry.last('story');

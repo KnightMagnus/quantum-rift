@@ -1,3 +1,4 @@
+import { PART_TWO_HULLS } from '../shared/part-two-ships.ts';
 import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -156,6 +157,10 @@ assert.equal(sources.get('703'), 'shared/assets.json');
 assert.equal(sources.get('940'), 'shared/station-defense.ts');
 const authoredHull = [...sources].find(([, source]) => source === 'shared/ships23.ts')?.[0];
 assert.ok(authoredHull && assets.ships[authoredHull], 'composed catalog includes ships23 hulls');
+for (const hull of PART_TWO_HULLS) {
+  assert.ok(assets.ships[hull.id], `Part II hull ${hull.id} is composed`);
+  assert.equal(sources.get(String(hull.id)), 'shared/part-two-ships.ts');
+}
 assert.equal(sources.size, Object.keys(assets.ships).length, 'every composed hull has a source');
 const sourced = fixture();
 sourced.ships[authoredHull] = structuredClone(assets.ships[authoredHull]);

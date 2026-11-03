@@ -18,7 +18,10 @@ import { DT as simulationStepSeconds } from '../shared/rules.ts';
 import { DB as Database } from '../server/db.ts';
 
 const identifiers = new Set(EVENTIDE.map((session) => session.id));
-assert.equal(SYSTEMS.length, 217);
+const riftSystems = SYSTEMS.filter((system) => system.region !== 'milky-way');
+assert.equal(riftSystems.length, 217);
+assert.equal(SYSTEMS.filter((system) => system.region === 'milky-way').length, 32);
+assert.equal(SYSTEMS.length, 249);
 assert.equal(identifiers.size, 6);
 assert.equal(new Set(SYSTEMS.map((starSystem) => starSystem.id)).size, SYSTEMS.length);
 assert.equal(
@@ -27,7 +30,7 @@ assert.equal(
 );
 // Golden source: untouched v2.8.3 generation, normalized ONLY for intentional Terra display text.
 // Scenes and the one new Vesper branch are additions; every legacy generated property stays exact.
-const legacy = legacyStorySystems(SYSTEMS.filter((starSystem) => !starSystem.eventide));
+const legacy = legacyStorySystems(riftSystems.filter((starSystem) => !starSystem.eventide));
 for (const starSystem of legacy) {
   // v3.0.4 changes only this display name; retain the strict legacy-world golden.
   if (starSystem.id === 'qgate') {
