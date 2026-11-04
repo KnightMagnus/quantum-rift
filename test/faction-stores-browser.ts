@@ -28,8 +28,14 @@ const facs = Object.keys(FACTIONS).filter(
 );
 const ports = Object.values(STELLARS).filter((p) => !p.site && p.svc.includes('L'));
 const site = Object.values(STELLARS).find((p) => p.site);
-const cases: { name: string; port: StellarBody | undefined; fac?: string; own?: boolean }[] =
-  facs.map((fac) => {
+assert.deepEqual(
+  facs.filter((fac) => !ports.some((port) => SYS[port.system].faction === fac)).sort(),
+  ['freefolk', 'unsworn'],
+  'nonterritorial factions are accessed through an owned station',
+);
+const cases: { name: string; port: StellarBody | undefined; fac?: string; own?: boolean }[] = facs
+  .filter((fac) => ports.some((port) => SYS[port.system].faction === fac))
+  .map((fac) => {
     const local = ports.filter((p) => SYS[p.system].faction === fac);
     return { name: `Store ${fac}`, port: local.find((p) => !p.svc.includes('T')) || local[0], fac };
   });
@@ -147,13 +153,13 @@ try {
             .evaluateAll((els) => [...new Set(els.map((e) => e.dataset.f))]),
           [fac],
         );
+        await page.locator('#storein [data-id="writ"]').click();
+        await page.waitForFunction(
+          (faction) => G.you!.rep[faction!] === 110 && G.you!.tokens[faction!] === 88,
+          fac,
+        );
       }
       const chosen = c.own ? facs.at(-1) : c.fac;
-      await page.locator('#storein [data-id="writ"]').click();
-      await page.waitForFunction(
-        (fac) => G.you!.rep[fac!] === 110 && G.you!.tokens[fac!] === 88,
-        chosen,
-      );
       await page.waitForFunction(
         () => document.querySelector('#store-standing')?.getAttribute('data-standing') === '110',
       );

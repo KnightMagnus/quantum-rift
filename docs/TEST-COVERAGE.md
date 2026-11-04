@@ -958,7 +958,9 @@ which forces the procedural fallback. Each pair compares unbounded caches with t
 shipped budgets: unbounded retention must outgrow the budget, bounded retention may
 exceed it only by the live system's worlds, the worlds on screen must keep the same
 cached sprite objects for 20 further frames, and an evicted system must rebuild when
-revisited. The JSON evidence records per-system retention and the rebuild time.
+revisited. The busiest system includes the regional Sol worlds, exercising live
+texture retention beyond the idle-cache count and stable still-image sprites.
+The JSON evidence records per-system retention and the rebuild time.
 
 Sizes are estimates of typed-array and canvas backing stores. They exclude decoded
 image elements, GPU copies and browser overhead, so they are not process memory. The
@@ -967,12 +969,13 @@ timings depend on the host.
 
 ## `faction-store-locations`: local stores and standing
 
-`faction-stores-browser.ts` loads real saved captains at all 11 eligible faction
-landings, including non-trade ports where available. It checks one local store
-button, no button in the DOM at neutral or visitor landings, local-only selectors,
+`faction-stores-browser.ts` loads real saved captains at every eligible territorial
+faction landing, including non-trade ports where available. Freefolk and Unsworn
+stores are exercised at an owned station because those factions have no public ports.
+It checks one local store button, no button in the DOM at neutral or visitor landings, local-only selectors,
 all stores at the captain’s own Personal Station, decoded insignia and actual
-purchases. The selected faction’s standing appears above the store on open and
-updates from the server’s player payload after buying a standing writ.
+purchases for each available faction. The selected faction’s standing appears above
+the store on open and updates from the server’s player payload after buying a standing writ.
 `faction-standing.ts` checks every landable public port and resource-preserving
 foreign-faction, unclaimed station and flight denials through store messages.
 `faction-store-catalog.ts` checks that every store sells three store-only outfits

@@ -166,14 +166,14 @@ try {
       contact: contact.toDataURL('image/png'),
     };
   });
-  assert.equal(result.hulls, 151);
+  assert.equal(result.hulls, 179);
   assert.equal(
     result.proof.filter((hull) => hull.id < 900 && (hull.id < 850 || hull.id > 853)).length,
     122,
     'all original hulls retain strict banking coverage',
   );
   assert.equal(
-    result.proof.filter((hull) => hull.id >= 900 && hull.id !== 940).length,
+    result.proof.filter((hull) => hull.id >= 900 && hull.id < 950 && hull.id !== 940).length,
     24,
     'every new combat form decodes its declared frames',
   );
@@ -189,6 +189,11 @@ try {
     result.proof.filter((hull) => hull.id === 940).map((hull) => hull.name),
     ['Triad Sentinel'],
     'the station defense platform decodes its declared frames',
+  );
+  assert.equal(
+    result.proof.filter((hull) => hull.id >= 950).length,
+    28,
+    'all Part II hulls decode their declared frames',
   );
   assert.equal(result.repaired, 17);
   fileSystem.writeFileSync(

@@ -847,6 +847,7 @@ let renderManifest: Record<string, Omit<RenderedDefinition, 'id'>> | null = null
 const images = new Map<string, HTMLImageElement>(),
   pick = new Map<string, RenderedDefinition | null>();
 const irregularSprites = new Map<string, PlanetSprite>();
+const stillSprites = new WeakMap<PlanetDef, PlanetSprite>();
 // A transient failed response must not permanently strand the renderer in its fallback.
 // Retry only twice, with a cache-busting URL, then leave the procedural world usable.
 const ASSET_RETRY_DELAYS = [1000, 4000];
@@ -1085,6 +1086,7 @@ function texFor(renderedDefinition: RenderedDefinition): RenderedTexture | null 
       for (const [entryKey, renderedTextureBase2] of textureCache)
         if (
           renderedTextureBase2 !== renderedTextureBase &&
+          performance.now() - renderedTextureBase2.used > LIVE_PLANET_MS &&
           (!previousValue || renderedTextureBase2.used < previousValue.used)
         )
           previousValue = renderedTextureBase2 && { k: entryKey, used: renderedTextureBase2.used };
@@ -1460,12 +1462,21 @@ export function planetSprite(planetDef: PlanetDef, currentTime: number): PlanetS
         if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
           const naturalWidth2 = htmlImageElement.naturalWidth,
             distance = renderedDefinition.r * naturalWidth2;
-          return {
-            canvas: htmlImageElement,
-            S: naturalWidth2,
-            D: distance,
-            scale: (2 * planetDef.r) / distance,
-          };
+          let sprite = stillSprites.get(planetDef);
+          if (
+            !sprite ||
+            sprite.canvas !== htmlImageElement ||
+            sprite.scale !== (2 * planetDef.r) / distance
+          ) {
+            sprite = {
+              canvas: htmlImageElement,
+              S: naturalWidth2,
+              D: distance,
+              scale: (2 * planetDef.r) / distance,
+            };
+            stillSprites.set(planetDef, sprite);
+          }
+          return sprite;
         }
         return procSprite(planetDef, currentTime);
       }

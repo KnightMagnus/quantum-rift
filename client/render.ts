@@ -1844,6 +1844,7 @@ let stationRevision = -1;
  * @returns Station design archetype name
  */
 export function stationDesign(stellarBody: StellarBody): string {
+  if (stellarBody.art) return stellarBody.art;
   if (stationRevision !== sceneryRevision()) {
     stPick.clear();
     stationRevision = sceneryRevision();

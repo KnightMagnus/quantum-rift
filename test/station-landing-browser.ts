@@ -331,8 +331,19 @@ try {
       const newStations = sceneAdditions.filter(
         (entry) => entry.body.kind === 'station' && entry.body.svc.includes('L'),
       );
-      assert.equal(audit.stations, 112 + newStations.length);
-      assert.equal(audit.rows.length, 247 + newStations.length);
+      const milkyWayStations = Object.values(STELLARS).filter(
+        (body) =>
+          body.system.startsWith('mw-') &&
+          (body.kind === 'station' || body.site) &&
+          body.svc.includes('L'),
+      );
+      assert.equal(audit.stations, 112 + newStations.length + milkyWayStations.length);
+      assert.equal(
+        audit.rows.length,
+        247 +
+          newStations.length +
+          milkyWayStations.reduce((rows, body) => rows + (body.site ? 6 : 1), 0),
+      );
       for (const entry of newStations)
         assert.equal(
           audit.rows.filter((row) => row.id === entry.body.id).length,

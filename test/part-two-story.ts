@@ -103,7 +103,7 @@ assert.deepEqual(partTwoEndings({}), ['border']);
 // The prison decision must survive completion's objective-mark settlement.
 data.story = {
   step: STORY.findIndex((mission) => mission.id === 'p2-regiment'),
-  active: { id: 'p2-regiment', got: 3, ready: true, stage: 0 },
+  active: { id: 'p2-regiment', got: 3, spawned: false, ready: true, stage: 0 },
   done: [],
   flags: {
     main_ending: 'table',
