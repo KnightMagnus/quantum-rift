@@ -36,11 +36,15 @@ const actual = JSON.parse(
 const expected = JSON.parse(
   fileSystem.readFileSync(new URL('./fixtures/features-v26.json', import.meta.url), 'utf8'),
 );
-// The Index has no standing ladder; its hidden zero entry is the only new captain field.
+// New faction standings start at zero; retain the original captain baseline.
 assert.equal(actual.saved.rep.nhal, 0);
 delete actual.saved.rep.nhal;
 assert.equal(actual.saved.rep.index, 0);
 delete actual.saved.rep.index;
+for (const faction of ['confederation', 'freefolk', 'unsworn']) {
+  assert.equal(actual.saved.rep[faction], 0);
+  delete actual.saved.rep[faction];
+}
 // Docked story/arc settlement now precedes the port projection on login.
 // Keep the original fixture and all other initialization evidence unchanged.
 assert.deepEqual(expected.login.slice(30, 32), ['storyInit', 'storyInit']);
