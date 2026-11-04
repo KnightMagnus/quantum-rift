@@ -1,0 +1,10 @@
+{
+  "id": 978,
+  "key": "idx_ledger",
+  "name": "Ledger",
+  "fs": 240,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

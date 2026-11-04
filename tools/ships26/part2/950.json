@@ -1,0 +1,10 @@
+{
+  "id": 950,
+  "key": "conf_flint",
+  "name": "Flint",
+  "fs": 96,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

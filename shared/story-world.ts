@@ -4,7 +4,13 @@ import type { StoryFlags } from '../server/save-contracts.ts';
 export function storySystemVisible(flags: StoryFlags | undefined, system: string): boolean {
   if (system === 'founding-vigil') return !!flags?.founding_vigil && flags.main_ending !== 'table';
   if (system === 'table' || system === 'quantum-rift') return flags?.main_ending === 'table';
-  if (system === 'beyond-rift')
+  if (system === 'mw-black-anchorage')
+    return (
+      flags?.main_ending === 'table' &&
+      !!flags.crossed_quantum_rift &&
+      !!flags.p2_objectives?.black_road
+    );
+  if (system.startsWith('mw-'))
     return flags?.main_ending === 'table' && !!flags.crossed_quantum_rift;
   return true;
 }

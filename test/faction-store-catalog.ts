@@ -17,7 +17,7 @@ import { requiredFixtureValue } from './helpers/required.ts';
 import { DB as Database } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 
-// ---- catalogue: three store-only outfits for every faction that runs a store
+// ---- catalogue: original factions retain specialised outfits; local identities use shared listings
 process.env.SEEDS_FILE = '/nonexistent';
 const directory = filesystem.mkdtempSync(path.join(operatingSystem.tmpdir(), 'rift-store-'));
 const assets: GameAssets = JSON.parse(
@@ -34,13 +34,26 @@ const storeFactions = [
   ),
 ].sort();
 assert.ok(storeFactions.length >= 10, 'every public faction store is covered');
-for (const faction of storeFactions) {
+const localIdentities = ['confederation', 'freefolk', 'unsworn'];
+assert.ok(storeFactions.includes('confederation'), 'Confederation has public store ports');
+for (const faction of new Set([...storeFactions, ...localIdentities])) {
   const outfits = FACTION_STORE_OUTFITS.filter((outfit) => outfit.faction === faction);
-  assert.equal(outfits.length, 3, `${faction} store sells three specialised outfits`);
-  assert.ok(
-    outfits.some((outfit) => outfit.eff?.weapon),
-    `${faction} store has a signature weapon`,
-  );
+  if (localIdentities.includes(faction)) {
+    assert.equal(outfits.length, 0, `${faction} has no authored specialised outfits`);
+    assert.deepEqual(
+      factionStoreListings(faction).map((listing) => listing.id),
+      factionStoreListings('quantum')
+        .filter((listing) => !listing.give.outfit)
+        .map((listing) => listing.id),
+      `${faction} lists shared goods and a chart, not invented specialty stock`,
+    );
+  } else {
+    assert.equal(outfits.length, 3, `${faction} store sells three specialised outfits`);
+    assert.ok(
+      outfits.some((outfit) => outfit.eff?.weapon),
+      `${faction} store has a signature weapon`,
+    );
+  }
   for (const outfit of outfits) {
     assert.ok(game.O[outfit.id], `${outfit.name} is a real outfit`);
     if (outfit.eff?.weapon) assert.ok(game.A.weapons[outfit.eff.weapon], `${outfit.name} fires`);

@@ -1,0 +1,10 @@
+{
+  "id": 977,
+  "key": "idx_rocketeer",
+  "name": "Rocketeer",
+  "fs": 140,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

@@ -1,0 +1,10 @@
+{
+  "id": 963,
+  "key": "conf_sickle",
+  "name": "Sickle",
+  "fs": 200,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

@@ -1249,7 +1249,7 @@ export class Game<Storage extends Database = Database> {
             Math.hypot(rightStellarBody.x - entity.x, rightStellarBody.y - entity.y),
         )[0];
       if (
-        ['quantum-rift', 'beyond-rift'].includes(playerData.sys) &&
+        (playerData.sys === 'quantum-rift' || playerData.sys.startsWith('mw-')) &&
         playerData.story.flags?.main_ending === 'table'
       ) {
         playerData.story.flight = { sys: playerData.sys, x: entity.x, y: entity.y, a: entity.a };
@@ -1939,12 +1939,15 @@ export class Game<Storage extends Database = Database> {
         (starSystem) => starSystem.id,
       ); // captains from before 0.4 know the old 30 systems
     session.rep = playerAccount.rep;
+    if (playerAccount.sys === 'beyond-rift') playerAccount.sys = 'mw-sol';
+    if (playerAccount.story.flight?.sys === 'beyond-rift')
+      playerAccount.story.flight.sys = 'mw-sol';
     const savedStoryFlight = playerAccount.story.flight;
     const resumeStoryFlight = !!(
       savedStoryFlight &&
-      ['quantum-rift', 'beyond-rift'].includes(savedStoryFlight.sys) &&
+      (savedStoryFlight.sys === 'quantum-rift' || savedStoryFlight.sys.startsWith('mw-')) &&
       playerAccount.story.flags?.main_ending === 'table' &&
-      (savedStoryFlight.sys !== 'beyond-rift' || playerAccount.story.flags.crossed_quantum_rift)
+      (savedStoryFlight.sys !== 'mw-sol' || playerAccount.story.flags.crossed_quantum_rift)
     );
     if (resumeStoryFlight) {
       playerAccount.sys = savedStoryFlight!.sys;
@@ -2020,7 +2023,7 @@ export class Game<Storage extends Database = Database> {
   ): void {
     this.features.towing.detach(session);
     if (
-      ['quantum-rift', 'beyond-rift'].includes(session.data.sys) &&
+      (session.data.sys === 'quantum-rift' || session.data.sys.startsWith('mw-')) &&
       session.data.story?.flags?.main_ending === 'table'
     )
       session.data.story.flight = {
@@ -2482,7 +2485,10 @@ export class Game<Storage extends Database = Database> {
     stellarBody: import('../shared/galaxy.ts').RawStellarBody,
   ): void {
     const crossingCaptain = entity.player?.s;
-    if (crossingCaptain && ['quantum-rift', 'beyond-rift'].includes(space.id)) {
+    if (
+      crossingCaptain &&
+      (space.id === 'quantum-rift' || stellarBody.id === 'mw-sol-rift-mouth')
+    ) {
       if (
         crossingCaptain.data.story?.flags?.main_ending !== 'table' ||
         (space.id === 'quantum-rift' && !(crossingCaptain.data.ship.outfits[9021] > 0))
@@ -2509,7 +2515,7 @@ export class Game<Storage extends Database = Database> {
             id: 'beyond-arrival',
             title: 'Beyond the Rift',
             done: true,
-            text: 'New galaxy detected. Stellar match against the Concord Archive’s pre-Rift sky charts: the Milky Way.\n\nAhead lies humanity’s home galaxy, lost since the night the stars changed. The Index survey core adds: these are its makers’ stars too. The Riftweavers came from the Milky Way. The way onward is uncharted. For now, the only route home is back through the rift.',
+            text: 'New galaxy detected. Stellar match against the Concord Archive’s pre-Rift sky charts: the Milky Way.\n\nAhead lies humanity’s home galaxy, lost since the night the stars changed. The Index survey core adds: these are its makers’ stars too. The Riftweavers came from the Milky Way. The Sun and the old planets remain, but Earth’s orbit is empty. The original Moon carries Vigil’s Rest. Human and Index ships are fighting beyond Neptune; an evacuation tug is calling for help. Cinder Anchorage is a short jump away. The return mouth stays open behind you.',
           });
         }
       }
@@ -2563,11 +2569,21 @@ export class Game<Storage extends Database = Database> {
       Math.round(session.ent!.x),
       Math.round(session.ent!.y),
     ]);
+    if (
+      starSystem.id === 'mw-sol' &&
+      playerData.story.flags?.crossed_quantum_rift &&
+      !playerData.story.active &&
+      !playerData.story.done.includes('p2-voice')
+    ) {
+      playerData.story.active = { id: 'p2-voice', got: 0, ready: false, spawned: false, stage: 0 };
+      this.features.story.storyArrive(session, this.spaces[playerData.sys]);
+      this.db.touch();
+    }
     this.toast(
       session,
       starSystem.farside
         ? `Through the Gateway: ${starSystem.name}.${first ? ' Nothing out here is on any chart.' : ''}`
-        : ['quantum-rift', 'beyond-rift'].includes(starSystem.id)
+        : ['quantum-rift', 'mw-sol'].includes(starSystem.id)
           ? `Through the Quantum Rift: ${starSystem.name}.`
           : 'Back through the Gateway: Concordia.',
     );

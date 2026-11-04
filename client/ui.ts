@@ -486,6 +486,7 @@ export function initUI(
       htmlCanvasElement.height,
       clientGameState.you?.story?.flags as Parameters<typeof mapFit>[2],
       captainMap(clientGameState)?.visible,
+      clientGameState.sys,
     );
     Object.assign(clientGameState.mapView!, mapFit2);
     drawGMap();
@@ -1396,7 +1397,8 @@ function stationHtml(interactive?: boolean): string {
         const free = SITES.filter(
             (stellarBody) =>
               !(clientGameState.sites && clientGameState.sites[stellarBody.id]) &&
-              stellarBody.id !== stationState.site,
+              stellarBody.id !== stationState.site &&
+              storySystemVisible(clientGameState.you?.story?.flags, stellarBody.system),
           ),
           cost = relocateCost(stationState.ops),
           wait = (stationState.relocT || 0) + RELOCATE.cooldownH * 3600000 - currentTime;
@@ -2715,11 +2717,18 @@ function onAct(mouseEvent: MouseEvent): void {
 }
 
 // ------------------------------------------------------------------ galaxy map overlay and routes
+let mapRegion: string | undefined;
 /**
  * Opens the full-screen galaxy map overlay, optionally centering on a given system.
  * @param focus Star system ID to center view on
  */
 export function openMap(focus?: number | string): void {
+  const region = systemsById[clientGameState.sys || 'qgate']?.region;
+  if (region !== mapRegion) {
+    delete clientGameState.mapView;
+    delete clientGameState.hoverSys;
+    mapRegion = region;
+  }
   window.dispatchEvent(new CustomEvent('rift-toast-sound', { detail: 'open' }));
   overlays.open('gmap');
   const htmlCanvasElement = elementById2('gcanvas');
@@ -2732,6 +2741,7 @@ export function openMap(focus?: number | string): void {
         htmlCanvasElement.height,
         clientGameState.you?.story?.flags as Parameters<typeof mapFit>[2],
         captainMap(clientGameState)?.visible,
+        clientGameState.sys,
       ),
       W: htmlCanvasElement.width,
       H: htmlCanvasElement.height,
@@ -2786,6 +2796,7 @@ function searchMap(): void {
   const hits = [];
   const knowledge = captainMap(clientGameState);
   for (const starSystem of Object.values(systemsById)) {
+    if (starSystem.region !== systemsById[clientGameState.sys || 'qgate']?.region) continue;
     if (!storySystemVisible(clientGameState.you?.story?.flags, starSystem.id)) continue;
     if (knowledge && !knowledge.visible.has(starSystem.id)) continue;
     if (starSystem.name.toLowerCase().includes(toLowerCase2))

@@ -13,6 +13,7 @@ import {
   RELOCATE,
   relocateCost,
 } from '../shared/galaxy.ts';
+import { storySystemVisible } from '../shared/story-world.ts';
 import { credits, researchBonus } from '../shared/rules.ts';
 import { TIER3_TRUCE } from '../shared/hostile.ts';
 import { planTake, applyTake } from '../shared/cargo-lots.ts';
@@ -287,6 +288,8 @@ export function createStationService(capabilities: StationServiceCapabilities): 
             wait = (stationState.relocT || 0) + RELOCATE.cooldownH * 3600000 - Date.now();
           if (!stellarBody || !stellarBody.site || stellarBody.id === stationState.site)
             return capabilities.toast(session, 'Choose an unclaimed station hull.');
+          if (!storySystemVisible(playerData.story?.flags, stellarBody.system))
+            return capabilities.toast(session, 'You have not charted a passage to that region.');
           if (capabilities.siteOwner(stellarBody.id))
             return capabilities.toast(session, 'Another captain has claimed that hull.');
           if (wait > 0)

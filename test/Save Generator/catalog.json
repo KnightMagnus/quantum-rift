@@ -36,7 +36,10 @@
       "deep": 0,
       "swarm": 0,
       "nhal": 0,
-      "eclipse": 0
+      "eclipse": 0,
+      "confederation": 0,
+      "freefolk": 0,
+      "unsworn": 0
     },
     "missions": [],
     "escorts": [],
@@ -1327,6 +1330,240 @@
         "name": "Vigil Heavy Cruiser",
         "stockOutfits": { "600": 2, "9005": 4 }
       }
+    },
+    {
+      "id": 950,
+      "name": "Flint",
+      "loadout": {
+        "hull": 950,
+        "outfits": { "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Flint",
+        "stockOutfits": { "9001": 1 }
+      }
+    },
+    {
+      "id": 951,
+      "name": "Rivet",
+      "loadout": {
+        "hull": 951,
+        "outfits": { "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Rivet",
+        "stockOutfits": { "9001": 1 }
+      }
+    },
+    {
+      "id": 952,
+      "name": "Writ",
+      "loadout": {
+        "hull": 952,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Writ",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 953,
+      "name": "Gauge",
+      "loadout": {
+        "hull": 953,
+        "outfits": { "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Gauge",
+        "stockOutfits": { "9001": 1 }
+      }
+    },
+    {
+      "id": 954,
+      "name": "Hatchet",
+      "loadout": {
+        "hull": 954,
+        "outfits": { "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Hatchet",
+        "stockOutfits": { "9001": 1 }
+      }
+    },
+    {
+      "id": 955,
+      "name": "Hound",
+      "loadout": {
+        "hull": 955,
+        "outfits": { "9001": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Hound",
+        "stockOutfits": { "9001": 2 }
+      }
+    },
+    {
+      "id": 956,
+      "name": "Ox",
+      "loadout": {
+        "hull": 956,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Ox",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 957,
+      "name": "Ingot",
+      "loadout": {
+        "hull": 957,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Ingot",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 958,
+      "name": "Homeward",
+      "loadout": {
+        "hull": 958,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Homeward",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 959,
+      "name": "Pennant",
+      "loadout": {
+        "hull": 959,
+        "outfits": { "9001": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Pennant",
+        "stockOutfits": { "9001": 2 }
+      }
+    },
+    {
+      "id": 960,
+      "name": "Rampart",
+      "loadout": {
+        "hull": 960,
+        "outfits": { "9001": 4 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Rampart",
+        "stockOutfits": { "9001": 4 }
+      }
+    },
+    {
+      "id": 962,
+      "name": "Picket",
+      "loadout": {
+        "hull": 962,
+        "outfits": { "9001": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Picket",
+        "stockOutfits": { "9001": 2 }
+      }
+    },
+    {
+      "id": 963,
+      "name": "Sickle",
+      "loadout": {
+        "hull": 963,
+        "outfits": { "9001": 4 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Sickle",
+        "stockOutfits": { "9001": 4 }
+      }
+    },
+    {
+      "id": 964,
+      "name": "Bulwark",
+      "loadout": {
+        "hull": 964,
+        "outfits": { "9001": 4 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Bulwark",
+        "stockOutfits": { "9001": 4 }
+      }
+    },
+    {
+      "id": 965,
+      "name": "Anvil",
+      "loadout": {
+        "hull": 965,
+        "outfits": { "9001": 4 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Anvil",
+        "stockOutfits": { "9001": 4 }
+      }
+    },
+    {
+      "id": 966,
+      "name": "Spearhead",
+      "loadout": {
+        "hull": 966,
+        "outfits": { "9001": 4 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Spearhead",
+        "stockOutfits": { "9001": 4 }
+      }
+    },
+    {
+      "id": 967,
+      "name": "Dominion",
+      "loadout": {
+        "hull": 967,
+        "outfits": { "9001": 4 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Dominion",
+        "stockOutfits": { "9001": 4 }
+      }
+    },
+    {
+      "id": 968,
+      "name": "Citadel",
+      "loadout": {
+        "hull": 968,
+        "outfits": { "9001": 4 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Citadel",
+        "stockOutfits": { "9001": 4 }
+      }
     }
   ],
   "locations": [
@@ -1724,7 +1961,252 @@
       "id": "palinode-observatory",
       "system": "palinode",
       "label": "Palinode / Palinode Observatory"
-    }
+    },
+    { "id": "mw-mercury", "system": "mw-sol", "label": "Sol · Milky Way / Mercury" },
+    { "id": "mw-venus", "system": "mw-sol", "label": "Sol · Milky Way / Venus" },
+    { "id": "mw-mars", "system": "mw-sol", "label": "Sol · Milky Way / Mars" },
+    { "id": "mw-ceres", "system": "mw-sol", "label": "Sol · Milky Way / Ceres" },
+    { "id": "mw-jupiter", "system": "mw-sol", "label": "Sol · Milky Way / Jupiter" },
+    { "id": "mw-saturn", "system": "mw-sol", "label": "Sol · Milky Way / Saturn" },
+    { "id": "mw-uranus", "system": "mw-sol", "label": "Sol · Milky Way / Uranus" },
+    { "id": "mw-neptune", "system": "mw-sol", "label": "Sol · Milky Way / Neptune" },
+    { "id": "mw-pluto", "system": "mw-sol", "label": "Sol · Milky Way / Pluto" },
+    {
+      "id": "vigils-rest",
+      "system": "mw-sol",
+      "label": "Sol · Milky Way / Vigil's Rest · Luna Prime"
+    },
+    { "id": "mw-phobos", "system": "mw-sol", "label": "Sol · Milky Way / Phobos" },
+    { "id": "mw-deimos", "system": "mw-sol", "label": "Sol · Milky Way / Deimos" },
+    { "id": "mw-io", "system": "mw-sol", "label": "Sol · Milky Way / Io" },
+    { "id": "mw-europa", "system": "mw-sol", "label": "Sol · Milky Way / Europa" },
+    { "id": "mw-ganymede", "system": "mw-sol", "label": "Sol · Milky Way / Ganymede" },
+    { "id": "mw-callisto", "system": "mw-sol", "label": "Sol · Milky Way / Callisto" },
+    { "id": "mw-mimas", "system": "mw-sol", "label": "Sol · Milky Way / Mimas" },
+    { "id": "mw-enceladus", "system": "mw-sol", "label": "Sol · Milky Way / Enceladus" },
+    { "id": "mw-tethys", "system": "mw-sol", "label": "Sol · Milky Way / Tethys" },
+    { "id": "mw-dione", "system": "mw-sol", "label": "Sol · Milky Way / Dione" },
+    { "id": "mw-rhea", "system": "mw-sol", "label": "Sol · Milky Way / Rhea" },
+    { "id": "mw-titan", "system": "mw-sol", "label": "Sol · Milky Way / Titan" },
+    { "id": "mw-iapetus", "system": "mw-sol", "label": "Sol · Milky Way / Iapetus" },
+    { "id": "mw-miranda", "system": "mw-sol", "label": "Sol · Milky Way / Miranda" },
+    { "id": "mw-ariel", "system": "mw-sol", "label": "Sol · Milky Way / Ariel" },
+    { "id": "mw-umbriel", "system": "mw-sol", "label": "Sol · Milky Way / Umbriel" },
+    { "id": "mw-titania", "system": "mw-sol", "label": "Sol · Milky Way / Titania" },
+    { "id": "mw-oberon", "system": "mw-sol", "label": "Sol · Milky Way / Oberon" },
+    { "id": "mw-triton", "system": "mw-sol", "label": "Sol · Milky Way / Triton" },
+    { "id": "mw-charon", "system": "mw-sol", "label": "Sol · Milky Way / Charon" },
+    { "id": "caloris-works", "system": "mw-sol", "label": "Sol · Milky Way / Caloris Works" },
+    { "id": "cytherea-spire", "system": "mw-sol", "label": "Sol · Milky Way / Cytherea Spire" },
+    { "id": "ares-bastion", "system": "mw-sol", "label": "Sol · Milky Way / Ares Bastion" },
+    { "id": "jove-refinery", "system": "mw-sol", "label": "Sol · Milky Way / Jove Refinery" },
+    { "id": "cassini-hold", "system": "mw-sol", "label": "Sol · Milky Way / Cassini Hold" },
+    { "id": "herschel-relay", "system": "mw-sol", "label": "Sol · Milky Way / Herschel Relay" },
+    { "id": "triton-watch", "system": "mw-sol", "label": "Sol · Milky Way / Triton Watch" },
+    { "id": "last-light", "system": "mw-sol", "label": "Sol · Milky Way / Last Light" },
+    { "id": "helios-array", "system": "mw-sol", "label": "Sol · Milky Way / Helios Array" },
+    {
+      "id": "mw-ferrum-world",
+      "system": "mw-ferrum",
+      "label": "Ferrum · Alpha Centauri / Alpha Centauri"
+    },
+    { "id": "ferrum", "system": "mw-ferrum", "label": "Ferrum · Alpha Centauri / Ferrum" },
+    {
+      "id": "mw-proxima-centauri-world",
+      "system": "mw-proxima-centauri",
+      "label": "Proxima Centauri / Proxima Centauri"
+    },
+    {
+      "id": "proxima-centauri",
+      "system": "mw-proxima-centauri",
+      "label": "Proxima Centauri / Proxima Centauri Anchorage"
+    },
+    {
+      "id": "mw-hearthline-world",
+      "system": "mw-hearthline",
+      "label": "Hearthline · Barnard's Star / Barnard's Star"
+    },
+    {
+      "id": "hearthline",
+      "system": "mw-hearthline",
+      "label": "Hearthline · Barnard's Star / Hearthline"
+    },
+    { "id": "mw-luhman-16-world", "system": "mw-luhman-16", "label": "Luhman 16 / Luhman 16" },
+    { "id": "luhman-16", "system": "mw-luhman-16", "label": "Luhman 16 / Luhman 16 Anchorage" },
+    { "id": "mw-wolf-359-world", "system": "mw-wolf-359", "label": "Wolf 359 / Wolf 359" },
+    { "id": "wolf-359", "system": "mw-wolf-359", "label": "Wolf 359 / Wolf 359 Anchorage" },
+    {
+      "id": "mw-lalande-21185-world",
+      "system": "mw-lalande-21185",
+      "label": "Lalande 21185 / Lalande 21185"
+    },
+    {
+      "id": "lalande-21185",
+      "system": "mw-lalande-21185",
+      "label": "Lalande 21185 / Lalande 21185 Anchorage"
+    },
+    {
+      "id": "mw-sirius-bastion-world",
+      "system": "mw-sirius-bastion",
+      "label": "Sirius Bastion · Sirius / Sirius"
+    },
+    {
+      "id": "sirius-bastion",
+      "system": "mw-sirius-bastion",
+      "label": "Sirius Bastion · Sirius / Sirius Bastion"
+    },
+    {
+      "id": "mw-luyten-726-8-world",
+      "system": "mw-luyten-726-8",
+      "label": "Luyten 726-8 / Luyten 726-8"
+    },
+    {
+      "id": "luyten-726-8",
+      "system": "mw-luyten-726-8",
+      "label": "Luyten 726-8 / Luyten 726-8 Anchorage"
+    },
+    { "id": "mw-ross-154-world", "system": "mw-ross-154", "label": "Ross 154 / Ross 154" },
+    { "id": "ross-154", "system": "mw-ross-154", "label": "Ross 154 / Ross 154 Anchorage" },
+    { "id": "mw-ross-248-world", "system": "mw-ross-248", "label": "Ross 248 / Ross 248" },
+    { "id": "ross-248", "system": "mw-ross-248", "label": "Ross 248 / Ross 248 Anchorage" },
+    {
+      "id": "mw-pale-meridian-world",
+      "system": "mw-pale-meridian",
+      "label": "Pale Meridian · Epsilon Eridani / Epsilon Eridani"
+    },
+    {
+      "id": "pale-meridian",
+      "system": "mw-pale-meridian",
+      "label": "Pale Meridian · Epsilon Eridani / Pale Meridian"
+    },
+    {
+      "id": "mw-lacaille-9352-world",
+      "system": "mw-lacaille-9352",
+      "label": "Lacaille 9352 / Lacaille 9352"
+    },
+    {
+      "id": "lacaille-9352",
+      "system": "mw-lacaille-9352",
+      "label": "Lacaille 9352 / Lacaille 9352 Anchorage"
+    },
+    {
+      "id": "mw-ledger-nine-world",
+      "system": "mw-ledger-nine",
+      "label": "Ledger Nine · Ross 128 / Ross 128"
+    },
+    {
+      "id": "ledger-nine",
+      "system": "mw-ledger-nine",
+      "label": "Ledger Nine · Ross 128 / Ledger Nine"
+    },
+    { "id": "mw-ez-aquarii-world", "system": "mw-ez-aquarii", "label": "EZ Aquarii / EZ Aquarii" },
+    { "id": "ez-aquarii", "system": "mw-ez-aquarii", "label": "EZ Aquarii / EZ Aquarii Anchorage" },
+    { "id": "mw-61-cygni-world", "system": "mw-61-cygni", "label": "61 Cygni / 61 Cygni" },
+    { "id": "61-cygni", "system": "mw-61-cygni", "label": "61 Cygni / 61 Cygni Anchorage" },
+    { "id": "mw-procyon-world", "system": "mw-procyon", "label": "Procyon / Procyon" },
+    { "id": "procyon", "system": "mw-procyon", "label": "Procyon / Procyon Anchorage" },
+    {
+      "id": "mw-struve-2398-world",
+      "system": "mw-struve-2398",
+      "label": "Struve 2398 / Struve 2398"
+    },
+    {
+      "id": "struve-2398",
+      "system": "mw-struve-2398",
+      "label": "Struve 2398 / Struve 2398 Anchorage"
+    },
+    {
+      "id": "mw-groombridge-34-world",
+      "system": "mw-groombridge-34",
+      "label": "Groombridge 34 / Groombridge 34"
+    },
+    {
+      "id": "groombridge-34",
+      "system": "mw-groombridge-34",
+      "label": "Groombridge 34 / Groombridge 34 Anchorage"
+    },
+    { "id": "mw-dx-cancri-world", "system": "mw-dx-cancri", "label": "DX Cancri / DX Cancri" },
+    { "id": "dx-cancri", "system": "mw-dx-cancri", "label": "DX Cancri / DX Cancri Anchorage" },
+    {
+      "id": "mw-epsilon-indi-world",
+      "system": "mw-epsilon-indi",
+      "label": "Epsilon Indi / Epsilon Indi"
+    },
+    {
+      "id": "epsilon-indi",
+      "system": "mw-epsilon-indi",
+      "label": "Epsilon Indi / Epsilon Indi Anchorage"
+    },
+    {
+      "id": "mw-saint-orra-world",
+      "system": "mw-saint-orra",
+      "label": "Saint Orra · Tau Ceti / Tau Ceti"
+    },
+    {
+      "id": "saint-orra",
+      "system": "mw-saint-orra",
+      "label": "Saint Orra · Tau Ceti / Saint Orra"
+    },
+    { "id": "mw-gj-1061-world", "system": "mw-gj-1061", "label": "GJ 1061 / GJ 1061" },
+    { "id": "gj-1061", "system": "mw-gj-1061", "label": "GJ 1061 / GJ 1061 Anchorage" },
+    {
+      "id": "mw-luytens-star-world",
+      "system": "mw-luytens-star",
+      "label": "Luyten's Star / Luyten's Star"
+    },
+    {
+      "id": "luytens-star",
+      "system": "mw-luytens-star",
+      "label": "Luyten's Star / Luyten's Star Anchorage"
+    },
+    {
+      "id": "mw-teegardens-star-world",
+      "system": "mw-teegardens-star",
+      "label": "Teegarden's Star / Teegarden's Star"
+    },
+    {
+      "id": "teegardens-star",
+      "system": "mw-teegardens-star",
+      "label": "Teegarden's Star / Teegarden's Star Anchorage"
+    },
+    {
+      "id": "mw-cinder-anchorage-world",
+      "system": "mw-cinder-anchorage",
+      "label": "Cinder Anchorage · Kapteyn's Star / Kapteyn's Star"
+    },
+    {
+      "id": "cinder-anchorage",
+      "system": "mw-cinder-anchorage",
+      "label": "Cinder Anchorage · Kapteyn's Star / Cinder Anchorage"
+    },
+    {
+      "id": "mw-lacaille-8760-world",
+      "system": "mw-lacaille-8760",
+      "label": "Lacaille 8760 / Lacaille 8760"
+    },
+    {
+      "id": "lacaille-8760",
+      "system": "mw-lacaille-8760",
+      "label": "Lacaille 8760 / Lacaille 8760 Anchorage"
+    },
+    { "id": "mw-kruger-60-world", "system": "mw-kruger-60", "label": "Kruger 60 / Kruger 60" },
+    { "id": "kruger-60", "system": "mw-kruger-60", "label": "Kruger 60 / Kruger 60 Anchorage" },
+    { "id": "mw-wolf-1061-world", "system": "mw-wolf-1061", "label": "Wolf 1061 / Wolf 1061" },
+    { "id": "wolf-1061", "system": "mw-wolf-1061", "label": "Wolf 1061 / Wolf 1061 Anchorage" },
+    {
+      "id": "mw-van-maanens-star-world",
+      "system": "mw-van-maanens-star",
+      "label": "Van Maanen's Star / Van Maanen's Star"
+    },
+    {
+      "id": "van-maanens-star",
+      "system": "mw-van-maanens-star",
+      "label": "Van Maanen's Star / Van Maanen's Star Anchorage"
+    },
+    { "id": "mw-gliese-876-world", "system": "mw-gliese-876", "label": "Gliese 876 / Gliese 876" },
+    { "id": "gliese-876", "system": "mw-gliese-876", "label": "Gliese 876 / Gliese 876 Anchorage" },
+    { "id": "mw-altair-world", "system": "mw-altair", "label": "Altair / Altair" },
+    { "id": "altair", "system": "mw-altair", "label": "Altair / Altair Anchorage" }
   ],
   "sites": [
     { "id": "site-qgate", "system": "qgate", "label": "Concordia / Derelict Station Hull" },
@@ -1813,6 +2295,26 @@
       "id": "site-second-light",
       "system": "second-light",
       "label": "Second Light / Derelict Station Hull"
+    },
+    {
+      "id": "site-mw-ferrum",
+      "system": "mw-ferrum",
+      "label": "Ferrum · Alpha Centauri / Derelict Station Hull"
+    },
+    {
+      "id": "site-mw-hearthline",
+      "system": "mw-hearthline",
+      "label": "Hearthline · Barnard's Star / Derelict Station Hull"
+    },
+    {
+      "id": "site-mw-saint-orra",
+      "system": "mw-saint-orra",
+      "label": "Saint Orra · Tau Ceti / Derelict Station Hull"
+    },
+    {
+      "id": "site-mw-cinder-anchorage",
+      "system": "mw-cinder-anchorage",
+      "label": "Cinder Anchorage · Kapteyn's Star / Derelict Station Hull"
     }
   ],
   "research": [

@@ -1,0 +1,10 @@
+{
+  "id": 959,
+  "key": "conf_pennant",
+  "name": "Pennant",
+  "fs": 144,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

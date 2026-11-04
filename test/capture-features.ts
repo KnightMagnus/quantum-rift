@@ -63,6 +63,10 @@ if (fileSystem.existsSync(additionsPath)) {
   }[];
   const additionIds = new Set(additions.map((addition) => addition.body.id));
   const { SYSTEMS } = await load('shared/galaxy.ts');
+  // Keep the original Rift selection pool for baseline characterization.
+  // The live regional graph and market pool are checked independently.
+  for (let index = SYSTEMS.length - 1; index >= 0; index--)
+    if (SYSTEMS[index].region === 'milky-way') SYSTEMS.splice(index, 1);
   for (const system of SYSTEMS)
     system.stellars = system.stellars.filter((body: { id: string }) => !additionIds.has(body.id));
 }

@@ -847,6 +847,7 @@ let renderManifest: Record<string, Omit<RenderedDefinition, 'id'>> | null = null
 const images = new Map<string, HTMLImageElement>(),
   pick = new Map<string, RenderedDefinition | null>();
 const irregularSprites = new Map<string, PlanetSprite>();
+const stillSprites = new WeakMap<PlanetDef, PlanetSprite>();
 // A transient failed response must not permanently strand the renderer in its fallback.
 // Retry only twice, with a cache-busting URL, then leave the procedural world usable.
 const ASSET_RETRY_DELAYS = [1000, 4000];
@@ -901,7 +902,8 @@ function chooseRendered(planetDef: PlanetDef) {
   )
     type = 'city';
   const pool = Object.entries(renderManifest).filter(
-    ([, message]) =>
+    ([artId, message]) =>
+      !artId.startsWith('sol_') &&
       (type === 'city'
         ? message.type === 'city'
         : (TYPE_POOL[type] || [type]).includes(message.type)) &&
@@ -919,7 +921,8 @@ function chooseRendered(planetDef: PlanetDef) {
     slice2 = pool.slice(0, Math.min(pool.length, planetDef.id.startsWith('bg:') ? 4 : 2));
   const want =
     /ring/.test(toLowerCase2) && type === 'gas'
-      ? slice2.find(([, message]) => message.rings) || slice2[hashStr2 % slice2.length]
+      ? slice2.find(([artId, message]) => !artId.startsWith('sol_') && message.rings) ||
+        slice2[hashStr2 % slice2.length]
       : slice2[hashStr2 % slice2.length];
   const options = { id: want[0], ...want[1] };
   pick.set(planetDef.id, options);
@@ -1083,6 +1086,7 @@ function texFor(renderedDefinition: RenderedDefinition): RenderedTexture | null 
       for (const [entryKey, renderedTextureBase2] of textureCache)
         if (
           renderedTextureBase2 !== renderedTextureBase &&
+          performance.now() - renderedTextureBase2.used > LIVE_PLANET_MS &&
           (!previousValue || renderedTextureBase2.used < previousValue.used)
         )
           previousValue = renderedTextureBase2 && { k: entryKey, used: renderedTextureBase2.used };
@@ -1458,12 +1462,21 @@ export function planetSprite(planetDef: PlanetDef, currentTime: number): PlanetS
         if (htmlImageElement.complete && htmlImageElement.naturalWidth) {
           const naturalWidth2 = htmlImageElement.naturalWidth,
             distance = renderedDefinition.r * naturalWidth2;
-          return {
-            canvas: htmlImageElement,
-            S: naturalWidth2,
-            D: distance,
-            scale: (2 * planetDef.r) / distance,
-          };
+          let sprite = stillSprites.get(planetDef);
+          if (
+            !sprite ||
+            sprite.canvas !== htmlImageElement ||
+            sprite.scale !== (2 * planetDef.r) / distance
+          ) {
+            sprite = {
+              canvas: htmlImageElement,
+              S: naturalWidth2,
+              D: distance,
+              scale: (2 * planetDef.r) / distance,
+            };
+            stillSprites.set(planetDef, sprite);
+          }
+          return sprite;
         }
         return procSprite(planetDef, currentTime);
       }

@@ -38,7 +38,11 @@ for (const [name, system] of [
   const player = database.create(name, '', game.fresh());
   player.sys = 'qgate';
   player.stellar = 'qstation';
-  if (system === 'beyond-rift') player.ship.outfits[9021] = 1;
+  if (system === 'beyond-rift') {
+    player.ship.outfits[9021] = 1;
+    player.sys = 'mw-sol';
+    player.stellar = 'vigils-rest';
+  }
   player.tut = 999;
   player.story = {
     step: 0,
@@ -51,7 +55,7 @@ for (const [name, system] of [
           ? { breach_started: true }
           : system === 'founding-vigil'
             ? { founding_vigil: true }
-            : { main_ending: 'table' },
+            : { main_ending: 'table', crossed_quantum_rift: true },
   };
 }
 const choiceCaptain = database.create('Reality Choice', '', game.fresh());
@@ -780,7 +784,7 @@ try {
   for (let index = 0; index < 8 && (await arrival.locator('#storybox').isVisible()); index++)
     await arrival.locator('#storyb button').first().click();
   await arrival.click('#depart');
-  await arrival.waitForFunction(() => G.sys === 'beyond-rift' && G.view && !G.landed);
+  await arrival.waitForFunction(() => G.sys === 'mw-sol' && G.view && !G.landed);
   for (let index = 0; index < 8 && (await arrival.locator('#storybox').isVisible()); index++)
     await arrival.locator('#storyb button').first().click();
   await arrival.evaluate(() =>

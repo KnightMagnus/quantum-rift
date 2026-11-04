@@ -958,7 +958,9 @@ which forces the procedural fallback. Each pair compares unbounded caches with t
 shipped budgets: unbounded retention must outgrow the budget, bounded retention may
 exceed it only by the live system's worlds, the worlds on screen must keep the same
 cached sprite objects for 20 further frames, and an evicted system must rebuild when
-revisited. The JSON evidence records per-system retention and the rebuild time.
+revisited. The busiest system includes the regional Sol worlds, exercising live
+texture retention beyond the idle-cache count and stable still-image sprites.
+The JSON evidence records per-system retention and the rebuild time.
 
 Sizes are estimates of typed-array and canvas backing stores. They exclude decoded
 image elements, GPU copies and browser overhead, so they are not process memory. The
@@ -967,12 +969,13 @@ timings depend on the host.
 
 ## `faction-store-locations`: local stores and standing
 
-`faction-stores-browser.ts` loads real saved captains at all 11 eligible faction
-landings, including non-trade ports where available. It checks one local store
-button, no button in the DOM at neutral or visitor landings, local-only selectors,
+`faction-stores-browser.ts` loads real saved captains at every eligible territorial
+faction landing, including non-trade ports where available. Freefolk and Unsworn
+stores are exercised at an owned station because those factions have no public ports.
+It checks one local store button, no button in the DOM at neutral or visitor landings, local-only selectors,
 all stores at the captain’s own Personal Station, decoded insignia and actual
-purchases. The selected faction’s standing appears above the store on open and
-updates from the server’s player payload after buying a standing writ.
+purchases for each available faction. The selected faction’s standing appears above
+the store on open and updates from the server’s player payload after buying a standing writ.
 `faction-standing.ts` checks every landable public port and resource-preserving
 foreign-faction, unclaimed station and flight denials through store messages.
 `faction-store-catalog.ts` checks that every store sells three store-only outfits
@@ -2043,3 +2046,7 @@ every combat matchup or long-running server population.
 ## System scenery diversity (`system-diversity`)
 
 `system-diversity.ts` checks all 217 authored scenes, body/station/sky/rock references, neutral commodity prices on new trading ports, mining-field clearance, moving-orbiter configuration, bounded clutter, repeatable placement, unknown-system fallback and unchanged gameplay bodies and radii. `system-diversity-browser.ts` decodes every used scene sprite, checks production station/rock selection and orbital movement, and verifies a decoded irregular moon rotates without allocating a new canvas each frame. It captures ordinary Meridian scenery through the production renderer. `planet-portrait-art.ts` retains existing colony-stage images while checking dedicated landing overrides. These checks do not prove every camera position, GPU or image combination.
+
+## Regional story continuation
+
+`milky-way-world.ts` checks the separate regional graph, reciprocal local lanes, story-gated station sites, authored planetary bodies, outer-orbit distance ratios, Luna size and return-mouth clearance. `part-two-fleets.ts` checks regional traffic and civilian/combat hull eligibility. `part-two-story.ts` exercises mission progression, navigation rejection, battle objectives, ending gates, withdrawal and earned fleet spawning. `part-two-art-browser.ts` decodes station and ship sheets, captures the complete Sol layout, checks crossing input locks and verifies the return mouth draws the Quantum Rift atlas rather than the ordinary wormhole atlas. These renderer captures are private verification evidence, not public story screenshots.

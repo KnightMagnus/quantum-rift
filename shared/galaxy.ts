@@ -70,6 +70,7 @@ export type RawStellarBody = {
 
   /** Destination stellar ID for wormhole transit. */
   exit?: string;
+  art?: string;
   gen?: boolean;
 
   /**
@@ -184,6 +185,8 @@ export type StellarBody = RawStellarBody & {
 
 /** Star system record defining coordinates, hyperlane links, and celestial bodies. */
 export type StarSystem = {
+  region?: 'milky-way';
+  backdrop?: string;
   gen?: boolean;
   sol?: boolean;
 
@@ -304,6 +307,7 @@ export type OpsLevelDef = {
   /** Feature unlock summary. */
   unlock: string;
 };
+import { createMilkyWay } from './milky-way.ts';
 import { fnv1a } from './deterministic-random.ts';
 import { addEventide } from './eventide.ts';
 import { expandGalaxy, frontierSites, addSolGateway, addMoonsAndFields } from './gen.ts';
@@ -1422,7 +1426,7 @@ export const PERSONAL_SYSTEMS: StarSystem[] = [];
     links: [edge.id],
     danger: 0,
     farside: true,
-    gate: 'beyond-rift',
+    gate: 'mw-sol',
     stellars: [
       {
         id: 'quantum-rift-mouth',
@@ -1433,39 +1437,13 @@ export const PERSONAL_SYSTEMS: StarSystem[] = [];
         r: 600,
         svc: '',
         tech: 0,
-        wormhole: 'beyond-rift',
-        exit: 'beyond-rift-mouth',
+        wormhole: 'mw-sol',
+        exit: 'mw-sol-rift-mouth',
         desc: 'The Second Door. No ordinary ship survives its crossing.',
       },
     ],
   };
   edge.links.push('quantum-rift');
-  const beyond: StarSystem = {
-    id: 'beyond-rift',
-    farside: true,
-    name: 'Beyond the Rift',
-    faction: 'farside',
-    x: edge.x - 25,
-    y: edge.y - 230,
-    links: [],
-    danger: 0,
-    gate: 'quantum-rift',
-    stellars: [
-      {
-        id: 'beyond-rift-mouth',
-        name: 'The Far Side',
-        kind: 'wormhole',
-        x: 0,
-        y: 0,
-        r: 600,
-        svc: '',
-        tech: 0,
-        wormhole: 'quantum-rift',
-        exit: 'quantum-rift-mouth',
-        desc: 'The only way home. Beyond it, the Rift waits unchanged.',
-      },
-    ],
-  };
   const vigil: StarSystem = {
     id: 'founding-vigil',
     farside: true,
@@ -1480,7 +1458,74 @@ export const PERSONAL_SYSTEMS: StarSystem[] = [];
     scene: { kind: 'founding-vigil' },
   };
   nearest.links.push('founding-vigil');
-  PERSONAL_SYSTEMS.push(table, rift, beyond, vigil);
+  PERSONAL_SYSTEMS.push(table, rift, vigil);
+}
+
+// Add local political identities only after seeded Rift generation; old systems retain their layout.
+Object.assign(FACTIONS, {
+  confederation: {
+    name: 'Confederation of Sol',
+    short: 'Confederation',
+    color: '#9cb6ce',
+    hostile: ['index'],
+  },
+  freefolk: { name: 'The Freefolk', short: 'Freefolk', color: '#c4bb86', hostile: [] },
+  unsworn: { name: 'The Unsworn', short: 'Unsworn', color: '#c5a98f', hostile: [] },
+});
+
+// Authored Milky Way is appended after all seeded Rift generation, preserving old saves.
+const milkyWay = createMilkyWay();
+SYSTEMS.push(...milkyWay);
+// This bearing is discovered by the captain, outside the ordinary local atlas.
+const blackAnchorage: StarSystem = {
+  id: 'mw-black-anchorage',
+  name: 'The Black Anchorage',
+  region: 'milky-way',
+  faction: 'farside',
+  farside: true,
+  x: -680,
+  y: -680,
+  danger: 0,
+  backdrop: 'mw_vigils_rest.jpg',
+  links: ['mw-hearthline'],
+  desc: 'An engineered passage into a refuge at the galactic centre. The throat admits a retuned Harness, not a fleet.',
+  stellars: [
+    {
+      id: 'black-anchorage',
+      name: 'Gargantua Prime · Refuge',
+      kind: 'station',
+      x: 0,
+      y: 0,
+      r: 400,
+      svc: 'LTORB',
+      tech: 4,
+      prices: { food: 0, equipment: 0, medicine: 0 },
+      desc: 'The makers’ ark arrived whole. The refuge supports translation and archival analysis. Opening its throat to a fleet would endanger everyone aboard.',
+    },
+  ],
+};
+PERSONAL_SYSTEMS.push(blackAnchorage);
+milkyWay.find((system) => system.id === 'mw-hearthline')!.links.push(blackAnchorage.id);
+
+for (const system of milkyWay) {
+  if (!['mw-hearthline', 'mw-cinder-anchorage', 'mw-ferrum', 'mw-saint-orra'].includes(system.id))
+    continue;
+  const site: StellarBody = {
+    id: `site-${system.id}`,
+    system: system.id,
+    name: 'Derelict Station Hull',
+    kind: 'site',
+    x: -2200,
+    y: 1400,
+    r: 60,
+    color: '#887',
+    svc: 'L',
+    tech: 0,
+    site: true,
+    desc: 'An empty station berth with a sound hull. An existing Personal Station can warp here with all its facilities.',
+  };
+  SITES.push(site);
+  system.stellars.push(site);
 }
 
 // Preserve generated bodies, fields and IDs before moving the authored Gateway.
@@ -1588,6 +1633,11 @@ export const COMMON_HULLS: number[] = [
  * Hull catalog available to each faction in shipyards and defense fleets.
  */
 export const FACTION_HULLS: Record<string, number[]> = {
+  confederation: [
+    950, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960, 962, 963, 964, 965, 966, 967, 968,
+  ],
+  freefolk: [703, 704, 706, 712, 714],
+  unsworn: [703, 704, 706, 708, 711, 712],
   quantum: COMMON_HULLS,
   spacer: [703, 704, 706, 707, 709, 710, 712, 714],
   lamp: [705, 706, 707, 711, 713, 715],
@@ -1607,6 +1657,9 @@ export const FACTION_HULLS: Record<string, number[]> = {
  */
 // NPC roles per faction: trader ships and warships (for traffic generation)
 export const TRAFFIC: Record<string, { traders: number[]; war: number[] }> = {
+  confederation: { traders: [952, 956, 957, 958], war: [950, 951, 954, 955, 959, 962, 963] },
+  freefolk: { traders: [703, 704, 706, 712, 714], war: [] },
+  unsworn: { traders: [703, 704, 706, 712], war: [708, 711] },
   quantum: {
     traders: [704, 706, 712, 714, 703, 821, 824, 824, 822, 827],
     war: [708, 711, 713, 716, 717, 823, 825, 828, 829],

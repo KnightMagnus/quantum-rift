@@ -61,6 +61,8 @@ export interface EntityFeatureState {
   /** Set after this entity has advanced its owner’s story once. */
   storyCredited?: boolean;
   storyBoard?: boolean;
+  storyStage?: number;
+  storyCapture?: boolean;
   storyAlly?: boolean;
   /** A personal convoy cannot be found until a Thalassi contact gives its bearing. */
   storySight?: 'thalassi';
@@ -622,6 +624,7 @@ import { formationTargets, steerFormation, cancelFormation } from './armada-form
 import { eventideDrain } from '../shared/eventide.ts';
 
 // One star system's live simulation: ships (players, their escorts, NPC traffic), shots, beams, loot.
+import { milkyWayTraffic } from '../shared/part-two-ships.ts';
 import { SYS as systemsById, TRAFFIC, FACTIONS, MATERIALS } from '../shared/galaxy.ts';
 import { roleMult } from '../shared/roles.ts';
 import {
@@ -1332,8 +1335,23 @@ export class Space {
    */
   spawnTraffic(initial?: boolean): Entity | null | void {
     const starSystem = this.sys;
-    if (['table', 'quantum-rift', 'beyond-rift', 'founding-vigil'].includes(starSystem.id))
-      return null;
+    if (['table', 'quantum-rift', 'founding-vigil'].includes(starSystem.id)) return null;
+    if (starSystem.region === 'milky-way') {
+      if (starSystem.id === 'mw-black-anchorage') return null;
+      const traffic = milkyWayTraffic(starSystem.faction, Math.random());
+      const lead = this.spawnGroup(traffic.kind, traffic.faction, traffic.pool, initial);
+      // Sol is much larger than the Rift: stage regional traffic near an actual port.
+      if (lead && starSystem.id === 'mw-sol') {
+        const port = pick(this.ports());
+        if (port)
+          for (const entity of this.ships.values())
+            if (entity === lead || entity.owner === lead.id) {
+              entity.x += port.x;
+              entity.y += port.y;
+            }
+      }
+      return lead;
+    }
     if (starSystem.faction === 'deep') {
       // An occasional, explicitly tagged Eclipse cell is an encounter exception,
       // not a return to the Deep's former Umbral/Hollow population mix.

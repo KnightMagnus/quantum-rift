@@ -1,0 +1,490 @@
+import type { StoryMission } from './story.ts';
+import type { StoryFlags } from '../server/save-contracts.ts';
+
+export type PartTwoObjective = {
+  type: 'carry' | 'board' | 'kill';
+  sys?: string;
+  dest?: string;
+  back?: string;
+  count?: number;
+  hull?: number;
+  faction?: string;
+  brief: string;
+  capture?: boolean;
+  mark?: string;
+};
+const port = (id: string) => `mw-${id}`;
+const haul = (dest: string, brief: string, mark?: string): PartTwoObjective => ({
+  type: 'carry',
+  dest,
+  brief,
+  mark,
+});
+const rescue = (
+  sys: string,
+  back: string,
+  count: number,
+  brief: string,
+  mark?: string,
+): PartTwoObjective => ({
+  type: 'board',
+  sys: port(sys),
+  back,
+  count,
+  hull: 956,
+  faction: 'confederation',
+  brief,
+  mark,
+});
+const fight = (
+  sys: string,
+  back: string,
+  count: number,
+  brief: string,
+  mark?: string,
+): PartTwoObjective => ({
+  type: 'kill',
+  sys: port(sys),
+  back,
+  count,
+  hull: 955,
+  faction: 'confederation',
+  brief,
+  mark,
+});
+
+const indexFight = (...args: Parameters<typeof fight>): PartTwoObjective => ({
+  ...fight(...args),
+  hull: 970,
+  faction: 'index',
+});
+export const PART_TWO_OBJECTIVES: Record<string, PartTwoObjective[]> = {
+  'p2-voice': [
+    rescue(
+      'sol',
+      'cinder-anchorage',
+      2,
+      'Rescue the disabled evacuation tug crews beyond Neptune; report at Cinder Anchorage.',
+      'evacuations',
+    ),
+  ],
+  'p2-papers': [haul('vigils-rest', 'Carry Terran records to the hearing at Vigil’s Rest.')],
+  'p2-seat': [
+    haul('ferrum', 'Have Saye authenticate the records; carry Vey’s requisition to Ferrum.'),
+  ],
+  'p2-flag': [
+    rescue(
+      'saint-orra',
+      'saint-orra',
+      2,
+      'Recover aid crews at the contested relay and report at Saint Orra.',
+      'corridor',
+    ),
+  ],
+  'p2-bread': [
+    haul('ferrum', 'Collect machinery and the hospital manifests at Ferrum.'),
+    haul('saint-orra', 'Deliver the allocated machinery and return the casualty manifests.'),
+  ],
+  'p2-ashes': [
+    rescue(
+      'pale-meridian',
+      'pale-meridian',
+      2,
+      'Recover both record capsules at Pale Meridian: human testimony and Index telemetry.',
+      'records',
+    ),
+  ],
+  'p2-regiment': [
+    rescue(
+      'ferrum',
+      'hearthline',
+      3,
+      'Recover the missing conscripts’ prison transports and take their crews to Hearthline.',
+      'signatory',
+    ),
+  ],
+  'p2-broadcast': [
+    haul(
+      'vigils-rest',
+      'Bring both Pale Meridian records to the broadcast office at Vigil’s Rest.',
+    ),
+  ],
+  'p2-observation': [
+    rescue(
+      'ledger-nine',
+      'ledger-nine',
+      2,
+      'Under the local ceasefire rescue the human and Freefolk civilian crews. Report to Maren Tell.',
+      'independent_backup',
+    ),
+  ],
+  'p2-mind': [
+    rescue(
+      'sirius-bastion',
+      'ledger-nine',
+      1,
+      'Recover the disabled relay’s archive crew before deciding the relay’s fate.',
+    ),
+  ],
+  'p2-moon': [
+    haul('vigils-rest', 'Compare the lunar observatory logs with Earthlight measurements.'),
+    haul('threshold', 'Ask Terra to appoint its own delegates, including nonhuman witnesses.'),
+    haul(
+      'ledger-nine',
+      'Deliver Terra’s independently accredited delegation. No mandate transfers its sovereignty.',
+      'terra_delegation',
+    ),
+  ],
+  'p2-report': [
+    haul('ledger-nine', 'Compare the original disappearance report with both casualty records.'),
+  ],
+  'p2-road': [
+    rescue(
+      'sirius-bastion',
+      'ledger-nine',
+      1,
+      'Rescue the courier carrying one part of the deep-survey route.',
+    ),
+    haul('hearthline', 'Collect the human deep-survey bearing.'),
+    haul(
+      'black-anchorage',
+      'Retune the Harness and take the narrow passage into the makers’ refuge.',
+    ),
+  ],
+  'p2-makers': [
+    haul(
+      'black-anchorage',
+      'Hear the Keeper of Departures and the Measure aboard Gargantua Prime.',
+    ),
+  ],
+  'p2-names': [haul('saint-orra', 'Visit Saint Orra’s memorial and the people who survived.')],
+};
+
+export function partTwoBattle(flags: StoryFlags): PartTwoObjective[] {
+  const ending = flags.p2_campaign;
+  const evacuation = rescue(
+    'saint-orra',
+    'saint-orra',
+    3,
+    'Recover replacement civilian transports and reopen the protected evacuation corridor.',
+    'corridor',
+  );
+  if (ending === 'ascendant')
+    return [
+      evacuation,
+      {
+        ...rescue(
+          'sirius-bastion',
+          'sirius-bastion',
+          2,
+          'Board the disabled relay control platforms (Capture) and place them in human custody.',
+          'captured_relay',
+        ),
+        capture: true,
+      },
+      {
+        ...rescue(
+          'ferrum',
+          'ferrum',
+          2,
+          'Board the contested repair-yard control tenders (Capture); secure the yard physically.',
+          'captured_yard',
+        ),
+        capture: true,
+      },
+      fight(
+        'sol',
+        'vigils-rest',
+        3,
+        'Defeat the remaining armed command escorts. You can abandon the offensive for the civilian border plan before reporting.',
+        'final_strike',
+      ),
+    ];
+  if (ending === 'ashfall')
+    return [
+      evacuation,
+      indexFight(
+        'sirius-bastion',
+        'sirius-bastion',
+        3,
+        'Strike the archive-refuge defence line. Freefolk civilians live behind it. The losses cannot be undone.',
+        'archive_strikes',
+      ),
+      indexFight(
+        'ledger-nine',
+        'ledger-nine',
+        3,
+        'Complete the final archive strikes, or abandon the extermination campaign before reporting.',
+        'final_strike',
+      ),
+    ];
+  if (ending === 'armistice' || ending === 'dormancy')
+    return [
+      evacuation,
+      rescue(
+        'ledger-nine',
+        'ledger-nine',
+        2,
+        'Recover the inspection teams and deliver independent copies of both records.',
+        'independent_records',
+      ),
+      fight(
+        'sol',
+        'vigils-rest',
+        3,
+        'Stop the hardliner command escorts before the last strike can launch.',
+        'final_strike',
+      ),
+      haul(
+        'ledger-nine',
+        ending === 'dormancy'
+          ? 'Deliver signed withdrawal terms, staged protected handovers and agreed reactivation conditions. The Index choose whether to sleep.'
+          : 'Deliver the signed withdrawal orders to the independent relay.',
+        'negotiated',
+      ),
+    ];
+  return [
+    evacuation,
+    fight(
+      'sol',
+      'vigils-rest',
+      3,
+      'Break the armed pursuers and hold the civilian corridor while the fleets separate.',
+      'final_strike',
+    ),
+  ];
+}
+export function partTwoEndings(flags: StoryFlags): string[] {
+  const result = ['border'];
+  if (
+    ['publish', 'delegates'].includes(flags.p2_records || '') &&
+    flags.p2_relay === 'independent' &&
+    ['talks', 'stand_down'].includes(flags.p2_makers || '') &&
+    flags.p2_objectives?.signatory &&
+    flags.p2_objectives?.records
+  )
+    result.push(flags.p2_makers === 'stand_down' ? 'dormancy' : 'armistice');
+  if (
+    flags.p2_makers === 'maps' &&
+    flags.p2_relay === 'custody' &&
+    (flags.p2_route === 'command' || flags.p2_expedition === 'military')
+  )
+    result.push('ascendant');
+  if (flags.p2_makers === 'maps' && flags.p2_relay === 'destroy') result.push('ashfall');
+  return result;
+}
+export function partTwoEndingText(flags: StoryFlags): string {
+  switch (flags.p2_ending) {
+    case 'armistice':
+      return 'The Armistice of Two Skies: the final strike was stopped. Human borders and independent Index survey corridors are recognised. Freefolk join the inspections; the Unsworn can return without the oath. Holdouts remain. The makers answer as witnesses, not rulers.';
+    case 'dormancy':
+      return 'The Armistice of Two Skies: the Index accepted voluntary dormancy after staged protected handovers. The treaty records when they may wake. No control key changed hands. Rauth’s holdouts can still break the peace.';
+    case 'ascendant':
+      return 'Sol Ascendant: human fleets hold the relay and repair yards. Independent Index cells survive elsewhere. Captured Freefolk are pressed into service and the Unsworn are hunted. The emergency government keeps its powers. Forced service is not equality.';
+    case 'ashfall':
+      return 'Ashfall: the archive refuges have been destroyed. Freefolk civilians died with them; unique minds and records are lost. Distant Index copies survive. Rauth claims victory while civilian infrastructure fails and military rule continues.';
+    default:
+      return 'The Border That Holds: the evacuation corridor stayed open long enough for civilians to leave. The fleets are separated across a watched ceasefire line, and the Rift crossing remains protected. Families can meet through controlled crossings. The war continues elsewhere.';
+  }
+}
+const choices = (entries: string[][]) => entries.map(([value, label]) => ({ value, label }));
+function mission(
+  id: string,
+  title: string,
+  at: string,
+  text: string,
+  done: string,
+  decision?: StoryMission['decision'],
+  options?: string[][],
+): StoryMission {
+  const first = PART_TWO_OBJECTIVES[id]?.[0] || partTwoBattle({})[0];
+  return {
+    id,
+    title,
+    at,
+    ...first,
+    pay: 40000,
+    rep: 0,
+    text,
+    done,
+    acc: 'Accept the assignment',
+    ref: 'Not yet',
+    decision,
+    choices: options && choices(options),
+  };
+}
+export const PART_TWO: StoryMission[] = [
+  mission(
+    'p2-voice',
+    'A Human Voice',
+    'cinder-anchorage',
+    'A human tug calls from the outskirts of Sol. Index and human salvos cross its escape lane. Captain Tomas Rooke asks you to recover its disabled evacuation crews.',
+    'Rooke logs the rescued crews by name. Cinder Anchorage grants them berths.',
+  ),
+  mission(
+    'p2-papers',
+    'Papers from Earth',
+    'cinder-anchorage',
+    'The patrol finds Terran records beside your Index survey core. Choose how to reach Saye’s hearing; this is a first reputation, not an oath.',
+    'Your records reach the hearing intact.',
+    'p2_entry',
+    [
+      ['hearing', 'Submit to the hearing'],
+      ['salvage', 'Use the salvage lanes'],
+      ['refugees', 'Travel under refugee protection'],
+    ],
+  ),
+  mission(
+    'p2-seat',
+    'The Empty Seat',
+    'vigils-rest',
+    'Dr. Elian Saye matches your records to Earth three hundred years ago. The government announces a homecoming before you can explain. Vey offers protection; Rauth offers a place in his fleet. Neither has your consent to enter the Rift.',
+    'Vey’s requisition reaches Quartermaster Nera Holt. The empty seat at Vigil’s Rest remains Terra’s to fill.',
+  ),
+  mission(
+    'p2-flag',
+    'No Safe Flag',
+    'ferrum',
+    'An aid convoy needs a route past the relay. Decide who may use the Harness calibration and authenticated transit procedure. Coordinates alone cannot make the crossing safe.',
+    'The convoy crews reach Saint Orra. Choose access to the crossing.',
+    'p2_route',
+    [
+      ['private', 'Keep the safe transit procedure private'],
+      ['vey', 'Give Vey escorted, restricted access'],
+      ['command', 'Give fleet command the complete procedure; invasion becomes possible'],
+    ],
+  ),
+  mission(
+    'p2-bread',
+    'Bread Before Shells',
+    'saint-orra',
+    'Holt has machinery for one spare berth. Saint Orra’s grain line and a frontier battery both need it.',
+    'Holt records where the machinery went. The other request remains unmet.',
+    'p2_supply',
+    [
+      ['grain', 'Restore the grain line; the battery goes short'],
+      ['battery', 'Supply the battery; grain deliveries stay delayed'],
+    ],
+  ),
+  mission(
+    'p2-ashes',
+    'Ashes in the Ledger',
+    'saint-orra',
+    'Pale Meridian holds two records: a human recorder and Index telemetry. Recover both, including evidence neither side wants read.',
+    'Both copies are secured. Index attacks killed civilians here. Earlier human attacks on survey ships are on the same record. Neither cancels the other.',
+  ),
+  mission(
+    'p2-regiment',
+    'The Empty Regiment',
+    'pale-meridian',
+    'The missing Ferrum conscripts refused a reprisal against civilians. Their prison transports are disabled. The Unsworn offer passage through a Freefolk lane.',
+    'Rooke and Amara Dene record your decision about the prisoners.',
+    'p2_prisoners',
+    [
+      ['free', 'Free the conscripts'],
+      ['transfer', 'Arrange lawful transfer with Vey'],
+      ['sentence', 'Let the sentence stand'],
+      ['unsworn', 'Take the Freefolk escape lane'],
+    ],
+  ),
+  mission(
+    'p2-broadcast',
+    'A Victory Broadcast',
+    'hearthline',
+    'Rauth wants your endorsement. Both Pale Meridian records are still in your hold. Decide who receives independent copies.',
+    'The broadcast office records your instructions.',
+    'p2_records',
+    [
+      ['publish', 'Publish both records independently'],
+      ['delegates', 'Give both records to independent civilian delegates'],
+      ['official', 'Endorse the official account'],
+    ],
+  ),
+  mission(
+    'p2-observation',
+    'Terms of Observation',
+    'vigils-rest',
+    'Maren Tell arranges a local ceasefire for a joint rescue. Human and Freefolk crews are stranded at Ledger Nine. War Ledger supplies telemetry identifying earlier Index civilian casualties. The rescue is evidence of cooperation, not absolution.',
+    'War Ledger recognises your Harness core. It admits knowing about the war throughout your journey. An independent navigation backup is recorded before you answer.',
+    'p2_witness',
+    [
+      ['reject', 'Reject its companionship; keep the independent navigation backup'],
+      ['disclose', 'Demand full disclosure before further cooperation'],
+      ['rebuild', 'Try rebuilding trust without granting forgiveness'],
+    ],
+  ),
+  mission(
+    'p2-mind',
+    'A Mind in Pieces',
+    'ledger-nine',
+    'A relay archive is caught between the fleets. Recover its crew, then decide what happens to this relay. It cannot switch off the Index across the galaxy.',
+    'The rescued crew witnesses your decision about the relay.',
+    'p2_relay',
+    [
+      ['independent', 'Preserve its independent channel'],
+      ['custody', 'Put the relay in human custody'],
+      ['destroy', 'Destroy the relay'],
+    ],
+  ),
+  mission(
+    'p2-moon',
+    'What the Moon Saw',
+    'ledger-nine',
+    'The lunar instruments still catch Earthlight: the discarded outcome where Earth stayed, showing through the Deep. The living Earth is in the Rift. Terra must choose its own delegation and the terms of contact.',
+    'Terra’s delegates include nonhuman witnesses. They authorise contact themselves; no one has ceded their sovereignty.',
+    'p2_contact',
+    [
+      ['family', 'Protect family contact'],
+      ['scholarly', 'Protect scholarly exchange'],
+      ['disclosure', 'Support the delegates’ wider disclosure'],
+    ],
+  ),
+  mission(
+    'p2-report',
+    'A Report Never Answered',
+    'ledger-nine',
+    'The original Index report shows surveyors watched Earth leave, then reported to makers who never answered. It does not excuse later atrocities. A trace points toward the galactic centre.',
+    'The trace is authenticated. Decide who travels with you.',
+    'p2_expedition',
+    [
+      ['joint', 'A small joint delegation'],
+      ['military', 'A human military expedition'],
+      ['private', 'Private contact'],
+    ],
+  ),
+  mission(
+    'p2-road',
+    'The Black Road',
+    'ledger-nine',
+    'Three bearings are needed: an archive record, a courier’s log and a human deep-survey fix. Retune the Harness for the narrow passage. No fleet can safely follow it.',
+    'Gargantua Prime lies whole inside the refuge. Its crystals are lit. The makers have chosen silence until now.',
+  ),
+  mission(
+    'p2-makers',
+    'The People Who Left',
+    'black-anchorage',
+    'The Keeper admits taking Earth and abandoning the surveyors. The Measure admits hiding after the war fleets refused recall. Moving Earth back risks both populations. Their old maps and translations are neither omniscience nor control keys. Projecting a fleet through this throat could destroy the refuge.',
+    'The makers record the help you requested. They cannot enforce any agreement.',
+    'p2_makers',
+    [
+      ['talks', 'Bring the makers as accountable witnesses to talks'],
+      ['stand_down', 'Negotiate voluntary dormancy with staged handovers and reactivation terms'],
+      ['maps', 'Give the Confederation the makers’ old maps'],
+      ['border', 'Refuse the all-out campaigns; hold a civilian line'],
+    ],
+  ),
+  mission(
+    'p2-fleet',
+    'The Homeward Fleet',
+    'black-anchorage',
+    'Rauth launches his offensive. Choose a campaign from the options your decisions permit. Every plan requires real civilian recovery and battle objectives. Conquest and extermination can still be abandoned for the border plan.',
+    'The battle is over.',
+  ),
+  mission(
+    'p2-names',
+    'Names for the Living',
+    'vigils-rest',
+    'Go to Saint Orra. Read the memorial and meet the survivors before returning to flight.',
+    'The memorial records the saved outcome, not the outcome anyone promised.',
+  ),
+];

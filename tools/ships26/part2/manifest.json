@@ -1,0 +1,282 @@
+[
+  {
+    "id": 950,
+    "key": "conf_flint",
+    "name": "Flint",
+    "fs": 96,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 951,
+    "key": "conf_rivet",
+    "name": "Rivet",
+    "fs": 96,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 952,
+    "key": "conf_writ",
+    "name": "Writ",
+    "fs": 112,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 953,
+    "key": "conf_gauge",
+    "name": "Gauge",
+    "fs": 112,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 954,
+    "key": "conf_hatchet",
+    "name": "Hatchet",
+    "fs": 104,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 955,
+    "key": "conf_hound",
+    "name": "Hound",
+    "fs": 104,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 956,
+    "key": "conf_ox",
+    "name": "Ox",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 957,
+    "key": "conf_ingot",
+    "name": "Ingot",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 958,
+    "key": "conf_homeward",
+    "name": "Homeward",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 959,
+    "key": "conf_pennant",
+    "name": "Pennant",
+    "fs": 144,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 960,
+    "key": "conf_rampart",
+    "name": "Rampart",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 961,
+    "key": "conf_rampart_siege",
+    "name": "Rampart (siege)",
+    "fs": 200,
+    "cols": 12,
+    "banks": false,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 962,
+    "key": "conf_picket",
+    "name": "Picket",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 963,
+    "key": "conf_sickle",
+    "name": "Sickle",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 964,
+    "key": "conf_bulwark",
+    "name": "Bulwark",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 965,
+    "key": "conf_anvil",
+    "name": "Anvil",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 966,
+    "key": "conf_spearhead",
+    "name": "Spearhead",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 967,
+    "key": "conf_dominion",
+    "name": "Dominion",
+    "fs": 220,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 968,
+    "key": "conf_citadel",
+    "name": "Citadel",
+    "fs": 220,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 970,
+    "key": "idx_warden",
+    "name": "Warden",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 971,
+    "key": "idx_wasp",
+    "name": "Wasp",
+    "fs": 80,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 972,
+    "key": "idx_splinter_0",
+    "name": "Splinter \u2014 joined",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 973,
+    "key": "idx_splinter_1",
+    "name": "Splinter \u2014 split",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 974,
+    "key": "idx_courier",
+    "name": "Courier",
+    "fs": 120,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 975,
+    "key": "idx_quietus",
+    "name": "Quietus",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 976,
+    "key": "idx_reclaimer",
+    "name": "Reclaimer",
+    "fs": 260,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 977,
+    "key": "idx_rocketeer",
+    "name": "Rocketeer",
+    "fs": 140,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  {
+    "id": 978,
+    "key": "idx_ledger",
+    "name": "Ledger",
+    "fs": 240,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  }
+]

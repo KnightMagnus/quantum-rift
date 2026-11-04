@@ -1,0 +1,10 @@
+{
+  "id": 952,
+  "key": "conf_writ",
+  "name": "Writ",
+  "fs": 112,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

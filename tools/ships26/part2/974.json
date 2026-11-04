@@ -1,0 +1,10 @@
+{
+  "id": 974,
+  "key": "idx_courier",
+  "name": "Courier",
+  "fs": 120,
+  "cols": 12,
+  "banks": true,
+  "glow": true,
+  "packed": true
+}

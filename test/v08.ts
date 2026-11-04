@@ -53,13 +53,14 @@ function fake(name: string) {
   return captain;
 }
 // --- Sol Gateway
+const riftSystems = SYSTEMS.filter((system) => system.region !== 'milky-way');
 const starSystem = systemsById.sol,
-  xScale = SYSTEMS.filter((starSystem2) => !starSystem2.farside).map(
-    (starSystem2) => starSystem2.x,
-  ),
-  yScale = SYSTEMS.filter((starSystem2) => !starSystem2.farside).map(
-    (starSystem2) => starSystem2.y,
-  );
+  xScale = riftSystems
+    .filter((starSystem2) => !starSystem2.farside)
+    .map((starSystem2) => starSystem2.x),
+  yScale = riftSystems
+    .filter((starSystem2) => !starSystem2.farside)
+    .map((starSystem2) => starSystem2.y);
 const centerX = (Math.min(...xScale) + Math.max(...xScale)) / 2,
   centerY = (Math.min(...yScale) + Math.max(...yScale)) / 2;
 assertCondition(
@@ -78,7 +79,7 @@ assertCondition(
     starSystem.links.every((linkedSystemId) => systemsById[linkedSystemId].links.includes('sol')),
   `Sol is on the hyperspace network (${starSystem.links.join(', ')})`,
 );
-const starSystems = SYSTEMS.filter((starSystem2) => starSystem2.farside);
+const starSystems = riftSystems.filter((starSystem2) => starSystem2.farside);
 assertCondition(
   starSystems.length === 16 &&
     starSystems.every(
@@ -91,9 +92,11 @@ assertCondition(
   starSystems.every((starSystem2) =>
     starSystem2.links.every((linkedSystemId2) => systemsById[linkedSystemId2].farside),
   ) &&
-    SYSTEMS.filter((starSystem2) => !starSystem2.farside).every((starSystem2) =>
-      starSystem2.links.every((linkedSystemId3) => !systemsById[linkedSystemId3].farside),
-    ),
+    riftSystems
+      .filter((starSystem2) => !starSystem2.farside)
+      .every((starSystem2) =>
+        starSystem2.links.every((linkedSystemId3) => !systemsById[linkedSystemId3].farside),
+      ),
   'no hyperspace route connects Farside to the main galaxy',
 );
 const fseen = new Set(['coldharbor']),
@@ -135,7 +138,8 @@ assertCondition(
 const racial = new Set(
   Object.entries(FACTION_HULLS)
     .filter(([feature]) => !['quantum', 'spacer', 'lamp', 'hollow', 'farside'].includes(feature))
-    .flatMap(([, hull3]) => hull3),
+    .flatMap(([, hull3]) => hull3)
+    .filter((hull) => !COMMON_HULLS.includes(hull)),
 );
 let hulls = [];
 for (const starSystem2 of starSystems) {

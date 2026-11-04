@@ -149,6 +149,7 @@ try {
     'shared/scenery-allocation.json',
     'shared/diversity-worlds.json',
     'shared/system-scenes.json',
+    'shared/milky-way-catalog.json',
     'server/seeds.json',
     'client/index.html',
     'client/style.css',
@@ -277,6 +278,7 @@ try {
     'dist/shared/scenery-allocation.json',
     'dist/shared/diversity-worlds.json',
     'dist/shared/system-scenes.json',
+    'dist/shared/milky-way-catalog.json',
     'dist/shared/portrait-catalog.json',
   ])
     assert(manifest.files.some(({ path: filename }) => filename === required));
@@ -314,6 +316,13 @@ try {
     assert.equal(module.status, 200);
     assert.match(await module.text(), /export function escapeHtml/);
     assert.equal((await fetch(origin + '/shared/assets.json')).status, 200);
+    const milkyWayCatalog = await fetch(origin + '/shared/milky-way-catalog.json');
+    assert.equal(milkyWayCatalog.status, 200);
+    assert.deepEqual(
+      await milkyWayCatalog.json(),
+      JSON.parse(fileSystem.readFileSync(path.join(root, 'shared/milky-way-catalog.json'), 'utf8')),
+      'Extracted archive serves the complete Milky Way catalog',
+    );
   } finally {
     await cleanup(server, null, serverLog, data);
   }

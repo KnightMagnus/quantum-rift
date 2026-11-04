@@ -232,8 +232,15 @@ for (const fac of storeFacs) {
   const ports = Object.values(STELLARS).filter(
     (p) => !p.site && p.svc.includes('L') && SYS[p.system].faction === fac,
   );
-  const port = ports.find((p) => !p.svc.includes('T')) || ports[0];
-  assert.ok(port, `Landable port for ${fac}`);
+  const authoredPort = ports.find((p) => !p.svc.includes('T')) || ports[0];
+  // Registered identities need store coverage even before they own public territory.
+  const fixtureId = `standing-fixture-${fac}`;
+  const port = authoredPort || { ...STELLARS.qstation, id: fixtureId, system: fixtureId };
+  if (!authoredPort) {
+    SYS[fixtureId] = { ...SYS.qgate, id: fixtureId, faction: fac, stellars: [port] };
+    STELLARS[fixtureId] = port;
+  }
+  assert.equal(game.features.fronts.storeFor(port), fac);
   playerData.sys = port.system;
   playerData.stellar = port.id;
   playerData.rep[fac] = 100;
@@ -249,6 +256,10 @@ for (const fac of storeFacs) {
   send({ t: 'store', fac, id: 'writ' });
   assert.equal(playerData.rep[fac], 110, `Local ${fac} store works`);
   assert.equal(playerData.tokens[fac], 88);
+  if (!authoredPort) {
+    delete SYS[fixtureId];
+    delete STELLARS[fixtureId];
+  }
 }
 const site = requiredFixtureValue(Object.values(STELLARS).find((p) => p.site));
 playerData.sys = site.system;

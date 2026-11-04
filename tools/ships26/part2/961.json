@@ -1,0 +1,10 @@
+{
+  "id": 961,
+  "key": "conf_rampart_siege",
+  "name": "Rampart (siege)",
+  "fs": 200,
+  "cols": 12,
+  "banks": false,
+  "glow": true,
+  "packed": true
+}

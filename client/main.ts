@@ -17,7 +17,7 @@ import type {
   HailConversation,
 } from './protocol.ts';
 import type { AutopilotState } from './landing_autopilot.ts';
-import { startStorySequence } from './render.ts';
+import { startStorySequence, storyInputLocked, skipStorySequence } from './render.ts';
 import {
   playEndingCinematic,
   preloadEndingCinematic,
@@ -3350,6 +3350,18 @@ function clearManualFlightInput(): void {
   if (clientGameState.view && !clientGameState.landed)
     send({ t: 'input', seq: prediction.nextSequence(), th: 0, tu: 0, ab: 0, rv: 0, f1: 0, f2: 0 });
 }
+// Consume crossing controls before ordinary shortcuts (including quit and weapons).
+window.addEventListener(
+  'keydown',
+  (event) => {
+    if (!storyInputLocked(clientGameState, performance.now()) || editingText()) return;
+    if (event.code === 'Space' || event.code === 'Escape')
+      skipStorySequence(clientGameState, performance.now());
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  },
+  true,
+);
 let account = 0,
   last = performance.now();
 /**
@@ -3364,6 +3376,11 @@ function fixedTick(): void {
     clientGameState.quitting
   )
     return;
+  if (storyInputLocked(clientGameState, performance.now())) {
+    clearManualFlightInput();
+    audio.engine(0);
+    return;
+  }
   if (overlays.blocksFlight()) {
     flightEngine.input.clear();
     mouse.down = false;

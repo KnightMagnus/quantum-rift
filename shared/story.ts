@@ -11,6 +11,7 @@ export type StoryMission = {
 
   /** Mission objective archetype. */
   type: string;
+  capture?: boolean;
 
   /** Destination station ID for courier/transport missions. */
   dest?: string;
@@ -46,7 +47,21 @@ export type StoryMission = {
   crate?: [string, number];
 
   /** Decision field and legal labelled values, resolved only while landed. */
-  decision?: 'd1' | 'd2' | 'nhal_ending' | 'main_ending';
+  decision?:
+    | 'd1'
+    | 'd2'
+    | 'nhal_ending'
+    | 'main_ending'
+    | 'p2_entry'
+    | 'p2_route'
+    | 'p2_supply'
+    | 'p2_prisoners'
+    | 'p2_records'
+    | 'p2_witness'
+    | 'p2_relay'
+    | 'p2_contact'
+    | 'p2_expedition'
+    | 'p2_makers';
   choices?: Array<{ value: string; label: string }>;
 
   /** Narrative dialog text presented when offered. */
@@ -73,6 +88,7 @@ export type StoryMission = {
 /**
  * Main Que'vari golden story mission chain progression.
  */
+import { PART_TWO } from './part-two-story.ts';
 import { CONTINUATION } from './story-continuation.ts';
 
 export const STORY: StoryMission[] = [
@@ -170,6 +186,7 @@ export const STORY: StoryMission[] = [
     done: "The Ina Que'var is yours. Your old ship is waiting in your drydock (or was sold for you, if every berth was full).",
   },
   ...CONTINUATION,
+  ...PART_TWO,
 ];
 
 /**

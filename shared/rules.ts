@@ -1,4 +1,5 @@
 import { stationDefenseHull, STATION_DEFENSE_HULL } from './station-defense.ts';
+import { PART_TWO_HULLS } from './part-two-ships.ts';
 import { QCS_HULLS } from './qcs-fleet.ts';
 import { INDEX_FLEET_HULLS } from './index-fleet.ts';
 import { NHAL_HULLS, NHAL_WEAPONS } from './nhal.ts';
@@ -704,6 +705,7 @@ export function augmentAssets(assets: GameAssets): GameAssets {
   for (const ship23Hull of [
     ...SHIPS23,
     ...QCS_HULLS,
+    ...PART_TWO_HULLS,
     ...INDEX_HULLS,
     ...INDEX_FLEET_HULLS,
     ...NHAL_HULLS,

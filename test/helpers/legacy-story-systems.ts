@@ -6,7 +6,7 @@ import type { StarSystem } from '../../shared/galaxy.ts';
 export function legacyStorySystems(systems: StarSystem[]): StarSystem[] {
   const additions = new Set(['table', 'quantum-rift', 'beyond-rift', 'founding-vigil']);
   const legacy: StarSystem[] = structuredClone(
-    systems.filter((system) => !additions.has(system.id)),
+    systems.filter((system) => system.region !== 'milky-way' && !additions.has(system.id)),
   );
   for (const system of legacy) {
     // Authored additions are independently checked by system-diversity.ts. Preserve every

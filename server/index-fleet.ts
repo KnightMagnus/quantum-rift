@@ -636,7 +636,8 @@ export const IndexFleetOperations = {
   open(this: IndexFleetCapabilities, space: Space): void {
     if (
       !space.sys.farside ||
-      ['table', 'quantum-rift', 'beyond-rift', 'founding-vigil'].includes(space.id) ||
+      ['table', 'quantum-rift', 'founding-vigil'].includes(space.id) ||
+      space.id.startsWith('mw-') ||
       local(space).entities.size
     )
       return;
