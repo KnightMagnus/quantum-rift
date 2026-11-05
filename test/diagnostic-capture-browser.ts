@@ -238,12 +238,16 @@ try {
     const labels = [
       '0.5 MP Beta 1',
       '0.5.1 MP Beta 1',
+      '0.6 Unstable Beta',
+      '0.6.1 Unstable Beta',
       '0.4.2.1',
       '0.5.0-mp-beta.1',
       'Private Captain',
       '0.5 MP Beta 0',
       '0.5 MP Beta 1 Private Captain',
       '0.5 MP Beta 1\n',
+      '0.6 Unstable Beta Private Captain',
+      '0.6 Unstable Beta\n',
     ];
     const observed = labels.map((label) => {
       module.setPerformanceBuild(label);
@@ -255,8 +259,12 @@ try {
   assert.deepEqual(buildLabels, [
     '0.5 MP Beta 1',
     '0.5.1 MP Beta 1',
+    '0.6 Unstable Beta',
+    '0.6.1 Unstable Beta',
     '0.4.2.1',
     '0.5.0-mp-beta.1',
+    null,
+    null,
     null,
     null,
     null,
