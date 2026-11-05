@@ -15170,7 +15170,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_29",
+          "img": "nebula_70",
           "x": -369,
           "y": -735,
           "size": 1724,
@@ -15179,7 +15179,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_48",
+          "img": "nebula_73",
           "x": -278,
           "y": -363,
           "size": 1235,
@@ -15198,24 +15198,14 @@
           "rot": 6.138,
           "squash": 0.7,
           "depth": 0.03
-        },
-        {
-          "img": "galaxy_7",
-          "x": -112,
-          "y": 190,
-          "size": 175.4827,
-          "a": 0.35,
-          "rot": 1.064,
-          "squash": 0.7,
-          "depth": 0.03
         }
       ],
       "far": [
         {
-          "img": "far_pulsar",
-          "x": -296,
-          "y": 148,
-          "size": 300,
+          "img": "far_eye",
+          "x": -280,
+          "y": -148,
+          "size": 379.3632,
           "a": 0.9,
           "rot": 0,
           "squash": 1,
@@ -15249,6 +15239,14 @@
         "size": 140,
         "rot": 3.859,
         "spin": 0.003
+      },
+      {
+        "img": "deep_tendrils_0",
+        "x": 1075,
+        "y": -886,
+        "size": 520,
+        "rot": 1.338,
+        "spin": 0.0008
       }
     ],
     "belt": null,
@@ -16832,7 +16830,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_50",
+          "img": "nebula_71",
           "x": 218,
           "y": -555,
           "size": 796,
@@ -16841,7 +16839,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_26",
+          "img": "nebula_72",
           "x": 459,
           "y": -577,
           "size": 1317,
@@ -16862,7 +16860,18 @@
           "depth": 0.03
         }
       ],
-      "far": [],
+      "far": [
+        {
+          "img": "far_tendril_star",
+          "x": 256,
+          "y": -159,
+          "size": 309.9664,
+          "a": 0.9,
+          "rot": 0,
+          "squash": 1,
+          "depth": 0.04
+        }
+      ],
       "background": []
     },
     "near": [
@@ -16873,6 +16882,14 @@
         "size": 192,
         "rot": 0.718,
         "spin": 0.003
+      },
+      {
+        "img": "deep_tendrils_1",
+        "x": 1378,
+        "y": -91,
+        "size": 420,
+        "rot": 4.933,
+        "spin": 0.0008
       }
     ],
     "belt": null,
@@ -16903,7 +16920,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_43",
+          "img": "nebula_68",
           "x": -650,
           "y": 113,
           "size": 791,
@@ -16912,7 +16929,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_26",
+          "img": "nebula_67",
           "x": -758,
           "y": 83,
           "size": 1398,
@@ -16921,7 +16938,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_42",
+          "img": "nebula_66",
           "x": -849,
           "y": 282,
           "size": 1959,
@@ -16940,24 +16957,14 @@
           "rot": 2.394,
           "squash": 0.7,
           "depth": 0.03
-        },
-        {
-          "img": "galaxy_11",
-          "x": -49,
-          "y": -223,
-          "size": 222.3574,
-          "a": 0.35,
-          "rot": 4.358,
-          "squash": 0.7,
-          "depth": 0.03
         }
       ],
       "far": [
         {
-          "img": "far_supernova",
-          "x": -229,
-          "y": -173,
-          "size": 300,
+          "img": "far_maw",
+          "x": -217,
+          "y": 173,
+          "size": 368.3888,
           "a": 0.9,
           "rot": 0,
           "squash": 1,
@@ -16991,6 +16998,22 @@
         "size": 134,
         "rot": 4.904,
         "spin": 0.003
+      },
+      {
+        "img": "deep_carcass_0",
+        "x": -1221,
+        "y": 11,
+        "size": 460,
+        "rot": 0.983,
+        "spin": 0.0008
+      },
+      {
+        "img": "deep_fleshrock_0",
+        "x": 877,
+        "y": 1389,
+        "size": 360,
+        "rot": 3.935,
+        "spin": 0.0008
       }
     ],
     "belt": {
@@ -17031,7 +17054,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_27",
+          "img": "nebula_69",
           "x": 961,
           "y": 13,
           "size": 2038,
@@ -17040,7 +17063,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_47",
+          "img": "nebula_71",
           "x": 1068,
           "y": -236,
           "size": 1950,
@@ -17050,7 +17073,18 @@
         }
       ],
       "galaxies": [],
-      "far": [],
+      "far": [
+        {
+          "img": "far_tendril_star",
+          "x": 378,
+          "y": -72,
+          "size": 307.536,
+          "a": 0.9,
+          "rot": 0,
+          "squash": 1,
+          "depth": 0.04
+        }
+      ],
       "background": [
         {
           "art": "gas_saturn",
@@ -17078,6 +17112,14 @@
         "size": 192,
         "rot": 1.092,
         "spin": 0.003
+      },
+      {
+        "img": "deep_carcass_0",
+        "x": -894,
+        "y": 328,
+        "size": 460,
+        "rot": 3.894,
+        "spin": 0.0008
       }
     ],
     "belt": null,
@@ -17113,7 +17155,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_46",
+          "img": "nebula_72",
           "x": 79,
           "y": -669,
           "size": 2062,
@@ -17122,7 +17164,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_40",
+          "img": "nebula_69",
           "x": 970,
           "y": -80,
           "size": 1630,
@@ -17131,7 +17173,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_3",
+          "img": "nebula_70",
           "x": 535,
           "y": -684,
           "size": 2106,
@@ -17142,7 +17184,7 @@
       ],
       "galaxies": [
         {
-          "img": "galaxy_14",
+          "img": "galaxy_29",
           "x": 133,
           "y": -176,
           "size": 195.4942,
@@ -17150,24 +17192,14 @@
           "rot": 2.064,
           "squash": 0.7,
           "depth": 0.03
-        },
-        {
-          "img": "galaxy_3",
-          "x": 469,
-          "y": 176,
-          "size": 196.8739,
-          "a": 0.35,
-          "rot": 4.485,
-          "squash": 0.7,
-          "depth": 0.03
         }
       ],
       "far": [
         {
-          "img": "far_dyson_3",
-          "x": 317,
-          "y": 137,
-          "size": 300,
+          "img": "far_black_sun",
+          "x": 301,
+          "y": -137,
+          "size": 349.1096,
           "a": 0.9,
           "rot": 0,
           "squash": 1,
@@ -17201,6 +17233,22 @@
         "size": 210,
         "rot": 0.449,
         "spin": 0.003
+      },
+      {
+        "img": "deep_ribcage_0",
+        "x": -884,
+        "y": -880,
+        "size": 900,
+        "rot": 2.118,
+        "spin": 0.0008
+      },
+      {
+        "img": "deep_jaw_0",
+        "x": 198,
+        "y": 1104,
+        "size": 400,
+        "rot": 4.86,
+        "spin": 0.0008
       }
     ],
     "belt": {
@@ -17236,7 +17284,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_4",
+          "img": "nebula_66",
           "x": 291,
           "y": -46,
           "size": 1206,
@@ -17245,7 +17293,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_37",
+          "img": "nebula_68",
           "x": 973,
           "y": -102,
           "size": 1194,
@@ -17256,7 +17304,7 @@
       ],
       "galaxies": [
         {
-          "img": "galaxy_17",
+          "img": "galaxy_11",
           "x": 235,
           "y": 7,
           "size": 202.2892,
@@ -17268,10 +17316,10 @@
       ],
       "far": [
         {
-          "img": "far_pulsar",
-          "x": 425,
-          "y": -6,
-          "size": 300,
+          "img": "far_tendril_star",
+          "x": 403,
+          "y": 6,
+          "size": 318.5656,
           "a": 0.9,
           "rot": 0,
           "squash": 1,
@@ -17304,6 +17352,14 @@
         "size": 142,
         "rot": 5.845,
         "spin": 0.003
+      },
+      {
+        "img": "deep_eyestalks_0",
+        "x": 883,
+        "y": -829,
+        "size": 330,
+        "rot": 5.314,
+        "spin": 0.0008
       }
     ],
     "belt": null,
@@ -17317,26 +17373,7 @@
     "storm": null,
     "comet": false,
     "scripted": true,
-    "orbit": [
-      {
-        "img": "satellite_3",
-        "cx": 0,
-        "cy": 0,
-        "R": 280,
-        "a": 1.613,
-        "sp": -0.0252,
-        "size": 36
-      },
-      {
-        "img": "satellite_3",
-        "cx": 0,
-        "cy": 0,
-        "R": 350,
-        "a": 0.662,
-        "sp": 0.0427,
-        "size": 36
-      }
-    ]
+    "orbit": []
   },
   "the-last-shore": {
     "id": "the-last-shore",
@@ -17353,7 +17390,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_1",
+          "img": "nebula_73",
           "x": -824,
           "y": -341,
           "size": 1378,
@@ -17362,7 +17399,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_30",
+          "img": "nebula_67",
           "x": -1099,
           "y": -290,
           "size": 974,
@@ -17374,10 +17411,10 @@
       "galaxies": [],
       "far": [
         {
-          "img": "far_binary_dwarf",
-          "x": -327,
-          "y": 132,
-          "size": 300,
+          "img": "far_eye",
+          "x": -310,
+          "y": -132,
+          "size": 312.2624,
           "a": 0.9,
           "rot": 0,
           "squash": 1,
@@ -17394,6 +17431,14 @@
         "size": 142,
         "rot": 1.834,
         "spin": 0.003
+      },
+      {
+        "img": "deep_eggs_0",
+        "x": 756,
+        "y": -366,
+        "size": 300,
+        "rot": 3.304,
+        "spin": 0.0008
       }
     ],
     "belt": null,
@@ -17424,7 +17469,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_28",
+          "img": "nebula_69",
           "x": -711,
           "y": -387,
           "size": 2088,
@@ -17433,7 +17478,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_0",
+          "img": "nebula_66",
           "x": -271,
           "y": -513,
           "size": 1546,
@@ -17443,7 +17488,18 @@
         }
       ],
       "galaxies": [],
-      "far": [],
+      "far": [
+        {
+          "img": "far_black_sun",
+          "x": -180,
+          "y": -184,
+          "size": 341.424,
+          "a": 0.9,
+          "rot": 0,
+          "squash": 1,
+          "depth": 0.04
+        }
+      ],
       "background": []
     },
     "near": [
@@ -17470,6 +17526,14 @@
         "size": 195,
         "rot": 3.096,
         "spin": 0.003
+      },
+      {
+        "img": "deep_fleshrock_0",
+        "x": 1019,
+        "y": -518,
+        "size": 360,
+        "rot": 2.788,
+        "spin": 0.0008
       }
     ],
     "belt": null,
@@ -17505,7 +17569,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_42",
+          "img": "nebula_72",
           "x": -942,
           "y": -240,
           "size": 1883,
@@ -17514,7 +17578,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_36",
+          "img": "nebula_71",
           "x": -413,
           "y": -605,
           "size": 1229,
@@ -17535,7 +17599,18 @@
           "depth": 0.03
         }
       ],
-      "far": [],
+      "far": [
+        {
+          "img": "far_maw",
+          "x": -301,
+          "y": -137,
+          "size": 373.2536,
+          "a": 0.9,
+          "rot": 0,
+          "squash": 1,
+          "depth": 0.04
+        }
+      ],
       "background": [
         {
           "art": "gas_uranus",
@@ -17563,6 +17638,22 @@
         "size": 208,
         "rot": 4.548,
         "spin": 0.003
+      },
+      {
+        "img": "deep_eggs_0",
+        "x": 1086,
+        "y": 2185,
+        "size": 300,
+        "rot": 5.538,
+        "spin": 0.0008
+      },
+      {
+        "img": "deep_polyp_0",
+        "x": -1194,
+        "y": -537,
+        "size": 440,
+        "rot": 1.938,
+        "spin": 0.0008
       }
     ],
     "belt": null,
@@ -17593,7 +17684,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_47",
+          "img": "nebula_73",
           "x": -782,
           "y": 671,
           "size": 2281,
@@ -17602,7 +17693,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_48",
+          "img": "nebula_70",
           "x": -673,
           "y": 691,
           "size": 1912,
@@ -17611,7 +17702,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_49",
+          "img": "nebula_68",
           "x": -261,
           "y": 663,
           "size": 1544,
@@ -17632,7 +17723,18 @@
           "depth": 0.03
         }
       ],
-      "far": [],
+      "far": [
+        {
+          "img": "far_maw",
+          "x": -193,
+          "y": 181,
+          "size": 317.7848,
+          "a": 0.9,
+          "rot": 0,
+          "squash": 1,
+          "depth": 0.04
+        }
+      ],
       "background": [
         {
           "art": "gas_jovian",
@@ -17660,6 +17762,14 @@
         "size": 185,
         "rot": 3.929,
         "spin": 0.003
+      },
+      {
+        "img": "deep_membrane_0",
+        "x": 1047,
+        "y": -596,
+        "size": 380,
+        "rot": 5.521,
+        "spin": 0.0008
       }
     ],
     "belt": null,
@@ -17695,7 +17805,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_5",
+          "img": "nebula_67",
           "x": 168,
           "y": 418,
           "size": 1598,
@@ -17704,7 +17814,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_50",
+          "img": "nebula_68",
           "x": -284,
           "y": 456,
           "size": 1191,
@@ -17723,24 +17833,14 @@
           "rot": 3.615,
           "squash": 0.7,
           "depth": 0.03
-        },
-        {
-          "img": "galaxy_15",
-          "x": 212,
-          "y": -263,
-          "size": 211.6492,
-          "a": 0.35,
-          "rot": 5.074,
-          "squash": 0.7,
-          "depth": 0.03
         }
       ],
       "far": [
         {
-          "img": "far_blackhole_blue_3",
-          "x": 46,
-          "y": -205,
-          "size": 300,
+          "img": "far_heart",
+          "x": 44,
+          "y": 205,
+          "size": 320.1768,
           "a": 0.9,
           "rot": 0,
           "squash": 1,
@@ -17757,6 +17857,14 @@
         "size": 168,
         "rot": 5.736,
         "spin": 0.003
+      },
+      {
+        "img": "deep_tendrils_1",
+        "x": -453,
+        "y": 175,
+        "size": 420,
+        "rot": 6.001,
+        "spin": 0.0008
       }
     ],
     "belt": {
@@ -17792,7 +17900,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_41",
+          "img": "nebula_71",
           "x": 535,
           "y": -62,
           "size": 1337,
@@ -17801,7 +17909,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_43",
+          "img": "nebula_72",
           "x": 866,
           "y": 271,
           "size": 1094,
@@ -17820,19 +17928,20 @@
           "rot": 3.833,
           "squash": 0.7,
           "depth": 0.03
-        },
-        {
-          "img": "galaxy_20",
-          "x": 528,
-          "y": -119,
-          "size": 168.5851,
-          "a": 0.35,
-          "rot": 5.11,
-          "squash": 0.7,
-          "depth": 0.03
         }
       ],
-      "far": [],
+      "far": [
+        {
+          "img": "far_eye",
+          "x": 360,
+          "y": 92,
+          "size": 346.6912,
+          "a": 0.9,
+          "rot": 0,
+          "squash": 1,
+          "depth": 0.04
+        }
+      ],
       "background": [
         {
           "art": "gas_jovian",
@@ -17852,6 +17961,22 @@
         "size": 147,
         "rot": 5.055,
         "spin": 0.003
+      },
+      {
+        "img": "deep_jaw_0",
+        "x": 671,
+        "y": -1692,
+        "size": 400,
+        "rot": 3.727,
+        "spin": 0.0008
+      },
+      {
+        "img": "deep_tendrils_0",
+        "x": 1504,
+        "y": -785,
+        "size": 520,
+        "rot": 0.245,
+        "spin": 0.0008
       }
     ],
     "belt": null,
@@ -17882,7 +18007,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_44",
+          "img": "nebula_66",
           "x": 380,
           "y": 313,
           "size": 1795,
@@ -17891,7 +18016,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_55",
+          "img": "nebula_69",
           "x": 616,
           "y": 352,
           "size": 1839,
@@ -17910,24 +18035,14 @@
           "rot": 2.035,
           "squash": 0.7,
           "depth": 0.03
-        },
-        {
-          "img": "galaxy_34",
-          "x": 508,
-          "y": -142,
-          "size": 223.1809,
-          "a": 0.35,
-          "rot": 1.485,
-          "squash": 0.7,
-          "depth": 0.03
         }
       ],
       "far": [
         {
-          "img": "far_binary_dwarf_1",
-          "x": 359,
-          "y": -111,
-          "size": 300,
+          "img": "far_heart",
+          "x": 340,
+          "y": 111,
+          "size": 310.292,
           "a": 0.9,
           "rot": 0,
           "squash": 1,
@@ -17955,20 +18070,20 @@
         "spin": 0.003
       },
       {
-        "img": "pod_5",
-        "x": 312,
-        "y": -19,
-        "size": 36,
-        "rot": 2.768,
-        "spin": -0.004
+        "img": "deep_eyestalks_0",
+        "x": 1069,
+        "y": -553,
+        "size": 330,
+        "rot": 3.094,
+        "spin": 0.0008
       },
       {
-        "img": "pod_5",
-        "x": -51,
-        "y": 130,
-        "size": 35,
-        "rot": 1.199,
-        "spin": -0.004
+        "img": "deep_ribcage_0",
+        "x": 628,
+        "y": 1515,
+        "size": 900,
+        "rot": 1.12,
+        "spin": 0.0008
       }
     ],
     "belt": {
@@ -17987,17 +18102,7 @@
     "storm": null,
     "comet": false,
     "scripted": true,
-    "orbit": [
-      {
-        "img": "satellite_6",
-        "cx": 0,
-        "cy": 0,
-        "R": 280,
-        "a": 1.745,
-        "sp": 0.0482,
-        "size": 36
-      }
-    ]
+    "orbit": []
   },
   "the-unlight": {
     "id": "the-unlight",
@@ -18018,7 +18123,7 @@
     "sky": {
       "nebulae": [
         {
-          "img": "nebula_49",
+          "img": "nebula_70",
           "x": -527,
           "y": 515,
           "size": 1979,
@@ -18027,7 +18132,7 @@
           "depth": 0.25
         },
         {
-          "img": "nebula_13",
+          "img": "nebula_67",
           "x": -126,
           "y": 51,
           "size": 1526,
@@ -18037,7 +18142,18 @@
         }
       ],
       "galaxies": [],
-      "far": [],
+      "far": [
+        {
+          "img": "far_black_sun",
+          "x": -144,
+          "y": 192,
+          "size": 352.264,
+          "a": 0.9,
+          "rot": 0,
+          "squash": 1,
+          "depth": 0.04
+        }
+      ],
       "background": [
         {
           "art": "gas_lilac",
@@ -18065,6 +18181,22 @@
         "size": 131,
         "rot": 5.493,
         "spin": 0.003
+      },
+      {
+        "img": "deep_polyp_0",
+        "x": 204,
+        "y": 643,
+        "size": 440,
+        "rot": 2.519,
+        "spin": 0.0008
+      },
+      {
+        "img": "deep_membrane_0",
+        "x": -2,
+        "y": 843,
+        "size": 380,
+        "rot": 4.734,
+        "spin": 0.0008
       }
     ],
     "belt": null,

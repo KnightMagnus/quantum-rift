@@ -129,6 +129,51 @@ assert.equal(
   originalSystems,
   'Rendering never changes gameplay radii or worlds/fields',
 );
+// The Deep uses its own horror sky and organic set pieces, with no human traffic props.
+const deepNebulae = new Set(
+  ['66', '67', '68', '69', '70', '71', '72', '73'].map((n) => `nebula_${n}`),
+);
+const deepFarHorrors = new Set([
+  'far_eye',
+  'far_maw',
+  'far_black_sun',
+  'far_heart',
+  'far_tendril_star',
+]);
+const deepSetPieceUse = new Map<string, number>();
+const deepSystems = Object.values(SYS).filter((system) => system.faction === 'deep');
+assert.equal(deepSystems.length, 14);
+for (const system of deepSystems) {
+  const scene = scenes[system.id as keyof typeof scenes];
+  assert.ok(scene, system.id + ': Deep system has an authored scene');
+  assert.ok(scene.sky.nebulae.length > 0, system.id + ': Deep sky has gas');
+  for (const nebula of scene.sky.nebulae)
+    assert.ok(deepNebulae.has(nebula.img), `${system.id}: ${nebula.img} is a Deep nebula`);
+  assert.ok(scene.sky.galaxies.length <= 1, system.id + ': at most one galaxy');
+  assert.equal(scene.sky.far.length, 1, system.id + ': one far horror');
+  assert.ok(deepFarHorrors.has(scene.sky.far[0].img), system.id + ': far layer is a Deep horror');
+  assert.deepEqual(scene.orbit, [], system.id + ': no satellites in the Deep');
+  const setPieces = scene.near.filter((sprite) => sprite.img.startsWith('deep_'));
+  assert.ok(setPieces.length >= 1 && setPieces.length <= 2, system.id + ': one or two set pieces');
+  for (const sprite of scene.near)
+    assert.ok(
+      !/^(pod|beacon|satellite)_/.test(sprite.img),
+      `${system.id}: ${sprite.img} is not a human traffic prop`,
+    );
+  for (const sprite of setPieces)
+    deepSetPieceUse.set(sprite.img, (deepSetPieceUse.get(sprite.img) || 0) + 1);
+}
+for (const [image, count] of deepSetPieceUse)
+  assert.ok(count <= 2, `${image} appears in at most two Deep systems`);
+assert.ok(
+  Object.values(scenes).every(
+    (scene) =>
+      SYS[scene.id]?.faction === 'deep' ||
+      scene.near.every((sprite) => !sprite.img.startsWith('deep_')),
+  ),
+  'Deep set pieces stay in the Deep',
+);
+
 const unknown = { ...SYS.meridian, id: 'unknown-player-system' };
 const untouched = {} as DecorModel;
 applySystemScene(unknown, untouched);
