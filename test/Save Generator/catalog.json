@@ -1564,6 +1564,331 @@
         "name": "Citadel",
         "stockOutfits": { "9001": 4 }
       }
+    },
+    {
+      "id": 1010,
+      "name": "Gnat Type 0",
+      "loadout": {
+        "hull": 1010,
+        "outfits": { "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Gnat Type 0",
+        "stockOutfits": { "9001": 1 }
+      }
+    },
+    {
+      "id": 1011,
+      "name": "Dory Type 0",
+      "loadout": {
+        "hull": 1011,
+        "outfits": { "9003": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Dory Type 0",
+        "stockOutfits": { "9003": 1 }
+      }
+    },
+    {
+      "id": 1012,
+      "name": "Kestrel Type 0",
+      "loadout": {
+        "hull": 1012,
+        "outfits": { "9001": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Kestrel Type 0",
+        "stockOutfits": { "9001": 2 }
+      }
+    },
+    {
+      "id": 1013,
+      "name": "Mule Type 0",
+      "loadout": {
+        "hull": 1013,
+        "outfits": { "9003": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Mule Type 0",
+        "stockOutfits": { "9003": 2 }
+      }
+    },
+    {
+      "id": 1014,
+      "name": "Wayfarer Type 0",
+      "loadout": {
+        "hull": 1014,
+        "outfits": { "598": 1, "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 7,
+        "name": "Wayfarer Type 0",
+        "stockOutfits": { "598": 1, "9001": 1 }
+      }
+    },
+    {
+      "id": 1015,
+      "name": "Cutlass Type 0",
+      "loadout": {
+        "hull": 1015,
+        "outfits": { "600": 1, "9002": 2 },
+        "ammo": { "332": 8 },
+        "fixed": [],
+        "bonusSpace": 12,
+        "name": "Cutlass Type 0",
+        "stockOutfits": { "600": 1, "9002": 2 }
+      }
+    },
+    {
+      "id": 1016,
+      "name": "Lacewing Type 0",
+      "loadout": {
+        "hull": 1016,
+        "outfits": { "9006": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Lacewing Type 0",
+        "stockOutfits": { "9006": 2 }
+      }
+    },
+    {
+      "id": 1017,
+      "name": "Crawler Type 0",
+      "loadout": {
+        "hull": 1017,
+        "outfits": { "9003": 1, "9017": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 6,
+        "name": "Crawler Type 0",
+        "stockOutfits": { "9003": 1, "9017": 1 }
+      }
+    },
+    {
+      "id": 1018,
+      "name": "Bramble Type 0",
+      "loadout": {
+        "hull": 1018,
+        "outfits": { "598": 2, "9004": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 22,
+        "name": "Bramble Type 0",
+        "stockOutfits": { "598": 2, "9004": 2 }
+      }
+    },
+    {
+      "id": 1019,
+      "name": "Barge Type 0",
+      "loadout": {
+        "hull": 1019,
+        "outfits": { "9003": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 8,
+        "name": "Barge Type 0",
+        "stockOutfits": { "9003": 2 }
+      }
+    },
+    {
+      "id": 1020,
+      "name": "Halberd Type 0",
+      "loadout": {
+        "hull": 1020,
+        "outfits": { "600": 2, "9002": 2, "9004": 1 },
+        "ammo": { "332": 24 },
+        "fixed": [],
+        "bonusSpace": 24,
+        "name": "Halberd Type 0",
+        "stockOutfits": { "600": 2, "9002": 2, "9004": 1 }
+      }
+    },
+    {
+      "id": 1021,
+      "name": "Pilgrim Type 0",
+      "loadout": {
+        "hull": 1021,
+        "outfits": { "598": 2, "9003": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 14,
+        "name": "Pilgrim Type 0",
+        "stockOutfits": { "598": 2, "9003": 1 }
+      }
+    },
+    {
+      "id": 1022,
+      "name": "Hive Type 0",
+      "loadout": {
+        "hull": 1022,
+        "outfits": { "598": 2, "602": 1 },
+        "ammo": { "333": 4 },
+        "fixed": [],
+        "bonusSpace": 30,
+        "name": "Hive Type 0",
+        "stockOutfits": { "598": 2, "602": 1 }
+      }
+    },
+    {
+      "id": 1023,
+      "name": "Tempest Type 0",
+      "loadout": {
+        "hull": 1023,
+        "outfits": { "600": 2, "9005": 2 },
+        "ammo": { "332": 30 },
+        "fixed": [[143, 2, 0]],
+        "bonusSpace": 36,
+        "name": "Tempest Type 0",
+        "stockOutfits": { "600": 2, "9005": 2 }
+      }
+    },
+    {
+      "id": 1024,
+      "name": "Bastion Type 0",
+      "loadout": {
+        "hull": 1024,
+        "outfits": { "599": 1, "600": 2, "9005": 4 },
+        "ammo": { "332": 40 },
+        "fixed": [],
+        "bonusSpace": 68,
+        "name": "Bastion Type 0",
+        "stockOutfits": { "599": 1, "600": 2, "9005": 4 }
+      }
+    },
+    {
+      "id": 1025,
+      "name": "Wasp Type 0",
+      "loadout": {
+        "hull": 1025,
+        "outfits": { "9001": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Wasp Type 0",
+        "stockOutfits": { "9001": 2 }
+      }
+    },
+    {
+      "id": 1026,
+      "name": "Swift Type 0",
+      "loadout": {
+        "hull": 1026,
+        "outfits": { "9001": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 2,
+        "name": "Swift Type 0",
+        "stockOutfits": { "9001": 1 }
+      }
+    },
+    {
+      "id": 1027,
+      "name": "Pelican Type 0",
+      "loadout": {
+        "hull": 1027,
+        "outfits": { "9003": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Pelican Type 0",
+        "stockOutfits": { "9003": 1 }
+      }
+    },
+    {
+      "id": 1028,
+      "name": "Sabre Type 0",
+      "loadout": {
+        "hull": 1028,
+        "outfits": { "9002": 2, "9003": 1 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 10,
+        "name": "Sabre Type 0",
+        "stockOutfits": { "9002": 2, "9003": 1 }
+      }
+    },
+    {
+      "id": 1029,
+      "name": "Caravel Type 0",
+      "loadout": {
+        "hull": 1029,
+        "outfits": { "9002": 1, "9003": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 11,
+        "name": "Caravel Type 0",
+        "stockOutfits": { "9002": 1, "9003": 2 }
+      }
+    },
+    {
+      "id": 1030,
+      "name": "Talon Type 0",
+      "loadout": {
+        "hull": 1030,
+        "outfits": { "600": 2, "9002": 2 },
+        "ammo": { "332": 16 },
+        "fixed": [],
+        "bonusSpace": 18,
+        "name": "Talon Type 0",
+        "stockOutfits": { "600": 2, "9002": 2 }
+      }
+    },
+    {
+      "id": 1031,
+      "name": "Lighthouse Type 0",
+      "loadout": {
+        "hull": 1031,
+        "outfits": { "9002": 1, "9003": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 11,
+        "name": "Lighthouse Type 0",
+        "stockOutfits": { "9002": 1, "9003": 2 }
+      }
+    },
+    {
+      "id": 1032,
+      "name": "Monarch Type 0",
+      "loadout": {
+        "hull": 1032,
+        "outfits": { "9003": 1, "9006": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 12,
+        "name": "Monarch Type 0",
+        "stockOutfits": { "9003": 1, "9006": 2 }
+      }
+    },
+    {
+      "id": 1033,
+      "name": "Aegis Type 0",
+      "loadout": {
+        "hull": 1033,
+        "outfits": { "598": 4, "9004": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 32,
+        "name": "Aegis Type 0",
+        "stockOutfits": { "598": 4, "9004": 2 }
+      }
+    },
+    {
+      "id": 1034,
+      "name": "Vigil Type 0",
+      "loadout": {
+        "hull": 1034,
+        "outfits": { "600": 2, "9005": 4 },
+        "ammo": { "332": 30 },
+        "fixed": [[143, 2, 0]],
+        "bonusSpace": 60,
+        "name": "Vigil Type 0",
+        "stockOutfits": { "600": 2, "9005": 4 }
+      }
     }
   ],
   "locations": [

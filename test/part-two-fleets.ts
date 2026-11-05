@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { PART_TWO_HULLS, milkyWayTraffic } from '../shared/part-two-ships.ts';
 import { augmentAssets, hostileFactions, type GameAssets } from '../shared/rules.ts';
-import { COMMON_HULLS, SYS } from '../shared/galaxy.ts';
+import { SYS } from '../shared/galaxy.ts';
+import { TYPE0_IDS } from '../shared/ships-type0.ts';
 const assets = augmentAssets(
   JSON.parse(
     fs.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
@@ -29,7 +30,7 @@ for (const faction of ['confederation', 'index'])
     if (['freefolk', 'unsworn'].includes(traffic.faction)) {
       assert.equal(traffic.kind, 'trade');
       for (const id of traffic.pool)
-        assert.ok(COMMON_HULLS.includes(id), 'Shared pre-Rift human design');
+        assert.ok(TYPE0_IDS.includes(id), 'Civilian traffic flies Type 0 pre-Rift designs');
     } else
       for (const id of traffic.pool) assert.ok(id >= 950 && id <= 978, 'Only Part II fleet models');
   }

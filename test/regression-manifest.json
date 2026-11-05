@@ -175,6 +175,7 @@
     "story-pacing.ts",
     "milky-way-world.ts",
     "part-two-fleets.ts",
+    "type0-hulls.ts",
     "part-two-story.ts"
   ],
   "browser": [
@@ -339,6 +340,7 @@
       "helpers/temp-data.ts"
     ],
     "v23.ts": ["helpers/mocks.ts", "helpers/required.ts", "helpers/temp-data.ts"],
+    "type0-hulls.ts": ["helpers/mocks.ts", "helpers/temp-data.ts"],
     "v24.ts": [
       "helpers/legacy-fixture.ts",
       "helpers/mocks.ts",
@@ -1057,7 +1059,8 @@
         "server/story.ts",
         "shared/milky-way.ts",
         "shared/part-two-story.ts",
-        "shared/part-two-ships.ts"
+        "shared/part-two-ships.ts",
+        "shared/ships-type0.ts"
       ],
       "services": ["story"],
       "tests": [
@@ -1065,9 +1068,10 @@
         "milky-way-world.ts",
         "part-two-story.ts",
         "part-two-fleets.ts",
+        "type0-hulls.ts",
         "part-two-art-browser.ts"
       ],
-      "asserts": "Story offers/acceptance, board/travel/kill progression, gifts and Deep unlock. Regional continuation covers graph isolation, authored Sol, mission objectives, fleet eligibility and runtime artwork."
+      "asserts": "Story offers/acceptance, board/travel/kill progression, gifts and Deep unlock. Regional continuation covers graph isolation, authored Sol, mission objectives, fleet eligibility, Type 0 Milky Way traffic and shipyards, and runtime artwork."
     },
     {
       "id": "rivals",
@@ -1221,6 +1225,7 @@
         "v25.ts",
         "v203.ts",
         "ship-economy.ts",
+        "type0-hulls.ts",
         "core-actions.ts",
         "network-systems.ts",
         "wire-contracts.ts",

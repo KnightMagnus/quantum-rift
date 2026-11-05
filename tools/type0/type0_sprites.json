@@ -1,0 +1,202 @@
+{
+  "1010": {
+    "key": "proto_gnat",
+    "fs": 60,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1012": {
+    "key": "proto_kestrel",
+    "fs": 76,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1011": {
+    "key": "proto_dory",
+    "fs": 108,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1014": {
+    "key": "proto_wayfarer",
+    "fs": 144,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1013": {
+    "key": "proto_mule",
+    "fs": 148,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1016": {
+    "key": "proto_lacewing",
+    "fs": 128,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1015": {
+    "key": "proto_cutlass",
+    "fs": 92,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1017": {
+    "key": "proto_crawler",
+    "fs": 160,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1018": {
+    "key": "proto_bramble",
+    "fs": 176,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1019": {
+    "key": "proto_barge",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1020": {
+    "key": "proto_halberd",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1021": {
+    "key": "proto_pilgrim",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1022": {
+    "key": "proto_hive",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1023": {
+    "key": "proto_tempest",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1025": {
+    "key": "proto_wasp",
+    "fs": 68,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1026": {
+    "key": "proto_swift",
+    "fs": 96,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1024": {
+    "key": "proto_bastion",
+    "fs": 220,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1027": {
+    "key": "proto_pelican",
+    "fs": 120,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1028": {
+    "key": "proto_sabre",
+    "fs": 124,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1029": {
+    "key": "proto_caravel",
+    "fs": 192,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1030": {
+    "key": "proto_talon",
+    "fs": 116,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1032": {
+    "key": "proto_monarch",
+    "fs": 140,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1031": {
+    "key": "proto_lighthouse",
+    "fs": 184,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1033": {
+    "key": "proto_aegis",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1034": {
+    "key": "proto_vigil",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  }
+}

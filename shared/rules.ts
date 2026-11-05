@@ -649,6 +649,7 @@ import {
   WINGMATES,
 } from './galaxy.ts';
 import { SHIPS23 } from './ships23.ts';
+import { TYPE0_HULLS } from './ships-type0.ts';
 import { passengerSeats } from './passengers.ts';
 import { ROLES, RARITY, STAT_BASE, SYNERGY, BRIDGE_SLOTS } from './hangar.ts';
 import { roleOf } from './roles.ts';
@@ -706,6 +707,7 @@ export function augmentAssets(assets: GameAssets): GameAssets {
     ...SHIPS23,
     ...QCS_HULLS,
     ...PART_TWO_HULLS,
+    ...TYPE0_HULLS,
     ...INDEX_HULLS,
     ...INDEX_FLEET_HULLS,
     ...NHAL_HULLS,

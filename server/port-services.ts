@@ -110,6 +110,7 @@ import { purchaseValue, saleValue, realizedTradeProfit } from './trade-pricing.t
 import { assertLots, addLots, commonLots, planTake, applyTake } from '../shared/cargo-lots.ts';
 import { recordEconomy } from '../shared/economy-receipt.ts';
 import { WING_ONLY } from '../shared/docks.ts';
+import { TYPE0_OF } from '../shared/ships-type0.ts';
 
 /**
  * Ordinary port commerce owns commodity/material transactions, shipyard and
@@ -124,6 +125,17 @@ export function createPortService(capabilities: PortCapabilities): PortService {
 }
 
 const MAT_PRICE = [6000, 18000, 45000, 110000, 260000];
+
+/**
+ * Swaps a Concord common hull for its Type 0 at Milky Way ports, which sell no Rift-built Quantum ships.
+ * @param stellarBody Port whose system decides the region.
+ * @param hullId Concord common hull ID.
+ * @returns The Type 0 hull ID in the Milky Way, otherwise the hull ID unchanged.
+ */
+function milkyWayHull(stellarBody: StellarBody, hullId: number): number {
+  if (systemsById[stellarBody.system]?.region !== 'milky-way') return hullId;
+  return TYPE0_OF[hullId] ?? hullId;
+}
 
 const PortOperations: PortOperations = {
   /**
@@ -401,7 +413,7 @@ const PortOperations: PortOperations = {
         if (playerData!.station.ops >= +stationTier)
           unlockedHullIds.forEach((hullId) => hullIds.add(hullId));
       for (const hullId of [703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713])
-        hullIds.add(hullId);
+        hullIds.add(milkyWayHull(stellarBody, hullId));
       if (playerData!.station.ops >= 4) WINGMATES.forEach((hullId) => hullIds.add(hullId)); // wingmate ships (2.6: the Armada escort hulls are retired)
       return [...hullIds].sort(
         (leftHullId, rightHullId) => this.A.ships[leftHullId].cost - this.A.ships[rightHullId].cost,
@@ -419,8 +431,10 @@ const PortOperations: PortOperations = {
         list.add(hullId);
     }
     if (factionId !== 'quevari' && factionId !== 'umbral')
-      for (const hullId of [703, 704, 705, 706, 707, 708, 709, 710, 820, 821, 822])
+      for (const commonHullId of [703, 704, 705, 706, 707, 708, 709, 710, 820, 821, 822]) {
+        const hullId = milkyWayHull(stellarBody, commonHullId);
         if (this.A.ships[hullId].tech! <= stellarBody.tech!) list.add(hullId); // the Wasp, Swift and Pelican are sold everywhere
+      }
     return [...list].sort(
       (leftHullId, rightHullId) => this.A.ships[leftHullId].cost - this.A.ships[rightHullId].cost,
     );

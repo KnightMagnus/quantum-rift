@@ -1635,9 +1635,11 @@ export const COMMON_HULLS: number[] = [
 export const FACTION_HULLS: Record<string, number[]> = {
   confederation: [
     950, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960, 962, 963, 964, 965, 966, 967, 968,
+    // civilian Type 0s (shared/ships-type0.ts), the common ships of the Milky Way
+    1010, 1011, 1012, 1013, 1014, 1016, 1017, 1019, 1021, 1022, 1026, 1027, 1029, 1031, 1032,
   ],
-  freefolk: [703, 704, 706, 712, 714],
-  unsworn: [703, 704, 706, 708, 711, 712],
+  freefolk: [1010, 1011, 1013, 1019, 1021],
+  unsworn: [1010, 1011, 1013, 1015, 1018, 1019],
   quantum: COMMON_HULLS,
   spacer: [703, 704, 706, 707, 709, 710, 712, 714],
   lamp: [705, 706, 707, 711, 713, 715],
@@ -1658,8 +1660,8 @@ export const FACTION_HULLS: Record<string, number[]> = {
 // NPC roles per faction: trader ships and warships (for traffic generation)
 export const TRAFFIC: Record<string, { traders: number[]; war: number[] }> = {
   confederation: { traders: [952, 956, 957, 958], war: [950, 951, 954, 955, 959, 962, 963] },
-  freefolk: { traders: [703, 704, 706, 712, 714], war: [] },
-  unsworn: { traders: [703, 704, 706, 712], war: [708, 711] },
+  freefolk: { traders: [1010, 1011, 1013, 1019, 1021], war: [] },
+  unsworn: { traders: [1010, 1011, 1013, 1019], war: [1015, 1018] },
   quantum: {
     traders: [704, 706, 712, 714, 703, 821, 824, 824, 822, 827],
     war: [708, 711, 713, 716, 717, 823, 825, 828, 829],
