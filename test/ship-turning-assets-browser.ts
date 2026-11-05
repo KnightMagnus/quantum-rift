@@ -166,7 +166,7 @@ try {
       contact: contact.toDataURL('image/png'),
     };
   });
-  assert.equal(result.hulls, 204);
+  assert.equal(result.hulls, 219);
   assert.equal(
     result.proof.filter((hull) => hull.id >= 1010 && hull.id <= 1034).length,
     25,
@@ -199,6 +199,22 @@ try {
     result.proof.filter((hull) => hull.id >= 950 && hull.id < 1000).length,
     28,
     'all Part II hulls decode their declared frames',
+  );
+  assert.deepEqual(
+    result.proof
+      .filter((hull) => hull.id >= 1040 && hull.id <= 1048)
+      .map((hull) => hull.id)
+      .sort((left, right) => left - right),
+    [1040, 1041, 1042, 1043, 1044, 1045, 1046, 1047, 1048],
+    'all nine Freefolk hulls decode every heading and both bank angles',
+  );
+  assert.deepEqual(
+    result.proof
+      .filter((hull) => hull.id >= 1050 && hull.id <= 1055)
+      .map((hull) => hull.id)
+      .sort((left, right) => left - right),
+    [1050, 1051, 1052, 1053, 1054, 1055],
+    'all six Unsworn hulls decode every heading and both bank angles',
   );
   assert.equal(result.repaired, 17);
   fileSystem.writeFileSync(
