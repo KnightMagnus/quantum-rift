@@ -430,7 +430,8 @@ const PortOperations: PortOperations = {
       )
         list.add(hullId);
     }
-    if (factionId !== 'quevari' && factionId !== 'umbral')
+    // Index yards sell only their Freefolk residents' ships; Type 0s are Confederation-only in the Milky Way.
+    if (factionId !== 'quevari' && factionId !== 'umbral' && factionId !== 'index')
       for (const commonHullId of [703, 704, 705, 706, 707, 708, 709, 710, 820, 821, 822]) {
         const hullId = milkyWayHull(stellarBody, commonHullId);
         if (this.A.ships[hullId].tech! <= stellarBody.tech!) list.add(hullId); // the Wasp, Swift and Pelican are sold everywhere

@@ -81,7 +81,7 @@ for (const systemFaction of ['confederation', 'index'])
         `${systemFaction} roll ${step} has no Concord hull`,
       );
 
-// Milky Way shipyards sell Type 0s and no Concord hulls.
+// Milky Way shipyards sell no Concord hulls. Only Confederation yards sell Type 0s.
 const playerData = mockPlayerData(game.fresh());
 const milkyWayYards = Object.values(STELLARS).filter(
   (stellarBody) => isMilkyWay(stellarBody) && !stellarBody.site && stellarBody.svc.includes('Y'),
@@ -96,6 +96,10 @@ for (const port of milkyWayYards) {
     !hullIds.some((hullId) => COMMON_HULLS.includes(hullId)),
     `${port.id} sells no Concord hull`,
   );
+  if (systemsById[port.system].faction === 'index') {
+    assert.ok(!hullIds.some((hullId) => TYPE0_IDS.includes(hullId)), `${port.id} sells no Type 0`);
+    continue;
+  }
   for (const concordId of [703, 704, 820, 821, 822])
     if (game.A.ships[TYPE0_OF[concordId]].tech! <= port.tech!)
       assert.ok(

@@ -60,9 +60,10 @@ for (const port of indexYards) {
   const yard = game.yard(port, mockPlayerData(game.fresh())) || [];
   for (const hullId of FREEFOLK_IDS)
     assert.ok(yard.includes(hullId), `${port.name} sells ${game.A.ships[hullId].name}`);
-  assert.ok(
-    yard.every((hullId) => !(hullId >= 970 && hullId <= 977)),
-    `${port.name} sells no Index warships`,
+  assert.deepEqual(
+    [...yard].sort((left, right) => left - right),
+    FREEFOLK_IDS,
+    `${port.name} sells only Freefolk hulls: no Index warships, Type 0s or Concord hulls`,
   );
 }
 
