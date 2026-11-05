@@ -150,6 +150,18 @@ const SEATS_BY_HULL: Record<string, number> = {
   1032: 48,
   1033: 19,
   1034: 35,
+  // Freefolk civilians: the Ferryman's hidden hold takes forty; others keep their crew-based capacity.
+  1041: 3,
+  1043: 3,
+  1044: 5,
+  1045: 40,
+  1046: 6,
+  1047: 12,
+  1048: 31,
+  // Unsworn: the Sparrow carries twelve passengers.
+  1053: 12,
+  1054: 3,
+  1055: 40,
 };
 
 export function passengerSeats(
