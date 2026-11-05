@@ -1684,7 +1684,7 @@ requires a reload; the world does not pause while graphics are unavailable.
 `combat-playability` covers fixed-seed arrivals and eight-minute fights in the real
 Game simulation, with normal traffic, damage and Combat Assist. The recorded
 early-game, Hollow and Umbral fleets exercise the same production rules as other
-ships. Each system uses seeds 1701, 1702 and 1703. At least two of its three runs
+ships. Each system uses seeds 1701, 1702 and 1704 (1704 replaced 1703 when ambient traffic hull picks became varied, which shifts the shared random stream). At least two of its three runs
 must survive all 480 seconds, take positive damage and earn a production kill or
 cause a hostile ship to become disabled. Disable credit requires positive damage
 from the player or their wing to cross the production armor threshold, followed
