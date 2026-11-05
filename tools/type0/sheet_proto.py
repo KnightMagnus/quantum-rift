@@ -1,7 +1,7 @@
 """Lineage sheet: each Type 0 prototype beside the Concord hull it became. Usage: sheet_proto.py <render dir> <out png>"""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-os.environ.setdefault('RIFT_SHIPS26', os.path.join(os.path.dirname(os.path.abspath(__file__)), '../pkgtest/ships26'))
+os.environ.setdefault('RIFT_SHIPS26', os.path.join(os.path.dirname(os.path.abspath(__file__)), '../ships26'))
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import hulls_proto as H
 R, OUTP = sys.argv[1], sys.argv[2]

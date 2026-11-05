@@ -1,12 +1,8 @@
 """Render each Nhal concept: a large 3/4 hero view and an in-game-size top-down sprite. Usage: render_nhal.py <ships26 dir> <out dir> [keys...]"""
 import sys, os
-REPO, OUT = sys.argv[1], sys.argv[2]
-os.environ['RIFT_SHIPS26'] = REPO
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
 from PIL import Image
-import importlib; H = importlib.import_module(os.environ.get('HULLMOD', 'hulls_nhal')); LIST = getattr(H, os.environ.get('HULLLIST', 'NHAL'))
-from render2 import render
 
 def comp(o):
     rgb, a = o[0]
@@ -31,6 +27,13 @@ def one(entry):
     return key
 
 if __name__ == '__main__':
+    REPO, OUT = sys.argv[1], sys.argv[2]
+    os.environ['RIFT_SHIPS26'] = REPO
+    sys.path.insert(0, REPO)
+    import importlib
+    H = importlib.import_module(os.environ.get('HULLMOD', 'hulls_nhal'))
+    LIST = getattr(H, os.environ.get('HULLLIST', 'NHAL'))
+    from render2 import render
     from multiprocessing import Pool
     keys = sys.argv[3:]
     todo = [e for e in LIST if not keys or e[0] in keys]
