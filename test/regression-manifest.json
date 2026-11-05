@@ -176,6 +176,7 @@
     "milky-way-world.ts",
     "part-two-fleets.ts",
     "type0-hulls.ts",
+    "freefolk-hulls.ts",
     "part-two-story.ts"
   ],
   "browser": [
@@ -1069,6 +1070,7 @@
         "part-two-story.ts",
         "part-two-fleets.ts",
         "type0-hulls.ts",
+        "freefolk-hulls.ts",
         "part-two-art-browser.ts"
       ],
       "asserts": "Story offers/acceptance, board/travel/kill progression, gifts and Deep unlock. Regional continuation covers graph isolation, authored Sol, mission objectives, fleet eligibility, Type 0 Milky Way traffic and shipyards, and runtime artwork."

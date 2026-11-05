@@ -2,6 +2,8 @@
  * Rendering configuration for a re-rendered 2.6 ship sprite sheet.
  * Each roll set has 36 headings; cols is the number of frames per packed row.
  */
+import { FREEFOLK_SPRITES } from './ships-freefolk.ts';
+
 export type SpriteSheetConfig = {
   /** Frame size in pixels (both width and height of each sprite frame). */
   fs: number;
@@ -212,4 +214,5 @@ export const SPRITES: Record<number, SpriteSheetConfig> = {
   852: { fs: 180, cols: 12, banks: true, glow: true, packed: true },
   853: { fs: 88, cols: 12, banks: true, glow: true, packed: true },
   ...TYPE0_SPRITES,
+  ...FREEFOLK_SPRITES,
 };

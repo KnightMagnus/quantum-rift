@@ -1,0 +1,122 @@
+{
+  "1040": {
+    "key": "ff_tallow",
+    "fs": 68,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1041": {
+    "key": "ff_hawser",
+    "fs": 112,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1042": {
+    "key": "ff_interpreter",
+    "fs": 140,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1045": {
+    "key": "ff_ferryman",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1044": {
+    "key": "ff_gleaner",
+    "fs": 192,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1043": {
+    "key": "ff_mender",
+    "fs": 168,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1046": {
+    "key": "ff_drumbarge",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1047": {
+    "key": "ff_mercy",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1048": {
+    "key": "ff_steading",
+    "fs": 200,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1050": {
+    "key": "un_needle",
+    "fs": 80,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1051": {
+    "key": "un_hush",
+    "fs": 104,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1052": {
+    "key": "un_shrike",
+    "fs": 96,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1053": {
+    "key": "un_sparrow",
+    "fs": 140,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1054": {
+    "key": "un_smokejack",
+    "fs": 172,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  },
+  "1055": {
+    "key": "un_commonhold",
+    "fs": 260,
+    "cols": 12,
+    "banks": true,
+    "glow": true,
+    "packed": true
+  }
+}
