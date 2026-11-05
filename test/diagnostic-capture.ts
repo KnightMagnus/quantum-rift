@@ -202,7 +202,13 @@ assert.equal(recorder.size, 0);
 // Build labels have restricted syntax and length.
 assert.equal(captureBuild('3.4.2'), '3.4.2');
 assert.equal(captureBuild('27.0.0-nightly+abc'), '27.0.0-nightly+abc');
-for (const betaLabel of ['0.5 MP Beta 1', '0.5.1 MP Beta 1', '0.12 MP Beta 10']) {
+for (const betaLabel of [
+  '0.5 MP Beta 1',
+  '0.5.1 MP Beta 1',
+  '0.12 MP Beta 10',
+  '0.6 Unstable Beta',
+  '0.6.1 Unstable Beta',
+]) {
   assert.equal(captureBuild(betaLabel), betaLabel);
   const betaRecorder = new DiagnosticRecorder(now);
   betaRecorder.setBuild(betaLabel);
@@ -213,6 +219,10 @@ for (const betaLabel of ['0.5 MP Beta 1', '0.5.1 MP Beta 1', '0.12 MP Beta 10'])
   if (parsedBeta.ok) assert.equal(parsedBeta.capture.build.game, betaLabel);
 }
 for (const unsafeBeta of [
+  '0.6 Unstable Beta Private Captain',
+  '0.6 Unstable Beta\n',
+  '0.6 Unstable Beta ',
+  '0.6 Unstable Beta 1',
   '0.5.1 MP Beta 0',
   '0.5.1 MP Beta 1 Private Captain',
   '0.5.1 MP Beta 1\n',
