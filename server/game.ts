@@ -624,6 +624,7 @@ import {
 } from '../shared/rules.ts';
 import { Space } from './space.ts';
 import { hyperspaceArrivalRadius } from '../shared/hyperspace-arrival.ts';
+import { solRiftArrival } from '../shared/milky-way.ts';
 import { synTier } from '../shared/syndicate.ts';
 import { STATES } from '../shared/living.ts';
 import { ARCS } from '../shared/arcs.ts';
@@ -2485,6 +2486,8 @@ export class Game<Storage extends Database = Database> {
     stellarBody: import('../shared/galaxy.ts').RawStellarBody,
   ): void {
     const crossingCaptain = entity.player?.s;
+    let crossingIntoSol = false,
+      announceBeyond = false;
     if (
       crossingCaptain &&
       (space.id === 'quantum-rift' || stellarBody.id === 'mw-sol-rift-mouth')
@@ -2504,24 +2507,16 @@ export class Game<Storage extends Database = Database> {
           'The Quantum Rift will tear this ship apart. Fit the Rift Harness before approaching.',
         );
       }
-      if (space.id === 'quantum-rift') {
-        const flags = (crossingCaptain.data.story.flags ||= {});
-        const firstCrossing = !flags.crossed_quantum_rift;
-        flags.crossed_quantum_rift = true;
-        this.db.touch();
-        if (firstCrossing) {
-          this.send(crossingCaptain, {
-            t: 'story',
-            id: 'beyond-arrival',
-            title: 'Beyond the Rift',
-            done: true,
-            text: 'New galaxy detected. Stellar match against the Concord Archive’s pre-Rift sky charts: the Milky Way.\n\nAhead lies humanity’s home galaxy, lost since the night the stars changed. The Index survey core adds: these are its makers’ stars too. The Riftweavers came from the Milky Way. The Sun and the old planets remain, but Earth’s orbit is empty. The original Moon carries Vigil’s Rest. Human and Index ships are fighting beyond Neptune; an evacuation tug is calling for help. Cinder Anchorage is a short jump away. The return mouth stays open behind you.',
-          });
-        }
-      }
+      crossingIntoSol = space.id === 'quantum-rift';
     }
     if (entity.player && this.features.towing.attached(entity.player.s))
       return this.toast(entity.player.s, 'Detach the motherlode before Gateway transit.');
+    if (crossingCaptain && crossingIntoSol) {
+      const flags = (crossingCaptain.data.story.flags ||= {});
+      announceBeyond = !flags.crossed_quantum_rift;
+      flags.crossed_quantum_rift = true;
+      this.db.touch();
+    }
     const session = entity.player!.s,
       playerData = session.data,
       starSystem = systemsById[stellarBody.wormhole!],
@@ -2551,14 +2546,20 @@ export class Game<Storage extends Database = Database> {
           : 'Came home through the Gateway to Concordia.',
       );
     }
-    const firstValue = Math.random() * Math.PI * 2;
-    this.spawnPlayer(
-      session,
-      exit.x + Math.sin(firstValue) * (exit.r * 0.15),
-      exit.y - Math.cos(firstValue) * (exit.r * 0.15),
-      firstValue,
-      140,
-    );
+    if (stellarBody.id === 'quantum-rift-mouth') {
+      // Rift crossings come to rest beside the mouth near Uranus, facing Vigil's Rest.
+      const arrival = solRiftArrival(starSystem.stellars);
+      this.spawnPlayer(session, arrival.x, arrival.y, arrival.heading, 0);
+    } else {
+      const firstValue = Math.random() * Math.PI * 2;
+      this.spawnPlayer(
+        session,
+        exit.x + Math.sin(firstValue) * (exit.r * 0.15),
+        exit.y - Math.cos(firstValue) * (exit.r * 0.15),
+        firstValue,
+        140,
+      );
+    }
     playerData.shieldNow = playerData.armorNow = undefined;
     session.ent!.wormT = this.spaces[playerData.sys].t + 4;
     session.ent!.wormExit = exit.id; // Rearm only after leaving the arrival aperture.
@@ -2588,6 +2589,16 @@ export class Game<Storage extends Database = Database> {
           : 'Back through the Gateway: Concordia.',
     );
     this.you(session);
+    // Sent after the arrival so the browser holds it until the crossing animation ends.
+    if (announceBeyond) {
+      this.send(session, {
+        t: 'story',
+        id: 'beyond-arrival',
+        title: 'Beyond the Rift',
+        done: true,
+        text: 'New galaxy detected. Stellar match against the Concord Archive’s pre-Rift sky charts: the Milky Way.\n\nAhead lies humanity’s home galaxy, lost since the night the stars changed. The Index survey core adds: these are its makers’ stars too. The Riftweavers came from the Milky Way. The Sun and the old planets remain, but Earth’s orbit is empty. The original Moon carries Vigil’s Rest. Human and Index ships are fighting beyond Neptune; an evacuation tug is calling for help. Cinder Anchorage is a short jump away. The return mouth stays open behind you.',
+      });
+    }
   }
   // ------------------------------------------------------------------ combat outcomes
   /**

@@ -29,18 +29,75 @@ function body(
   };
 }
 
+/** Distance of the Rift's Sol mouth from the Sun: just beyond Uranus (22,000). */
+const SOL_RIFT_MOUTH_ORBIT = 24400;
+/** Bearing of the Rift's Sol mouth, alongside Uranus. */
+const SOL_RIFT_MOUTH_ANGLE = 2.7;
+/**
+ * Sol moons by parent planet: [name, radius]. Radii follow real relative sizes on a compressed scale,
+ * so Titan and the large Uranian moons read bigger than Mimas or Miranda.
+ */
+const SOL_MOONS: Record<string, [string, number][]> = {
+  mars: [
+    ['phobos', 40],
+    ['deimos', 32],
+  ],
+  jupiter: [
+    ['io', 42],
+    ['europa', 42],
+    ['ganymede', 42],
+    ['callisto', 42],
+  ],
+  saturn: [
+    ['mimas', 40],
+    ['enceladus', 44],
+    ['tethys', 54],
+    ['dione', 55],
+    ['rhea', 62],
+    ['titan', 85],
+    ['iapetus', 60],
+    ['prometheus', 30],
+    ['hyperion', 40],
+    ['phoebe', 34],
+  ],
+  uranus: [
+    ['miranda', 42],
+    ['ariel', 56],
+    ['umbriel', 56],
+    ['titania', 63],
+    ['oberon', 61],
+    ['puck', 32],
+  ],
+  neptune: [['triton', 42]],
+  pluto: [['charon', 42]],
+};
+/** Ring outer edge in planet radii, measured from the supplied Saturn and Uranus artwork. */
+const SOL_RING_EXTENT: Record<string, number> = { saturn: 2.22, uranus: 1.8 };
+/** Non-spherical Sol moons drawn with the shared irregular moon sprites. */
+export const SOL_IRREGULAR_MOONS: Record<string, string> = {
+  'mw-phobos': 'irr_0',
+  'mw-deimos': 'irr_7',
+  'mw-prometheus': 'irr_2',
+  'mw-hyperion': 'irr_3',
+  'mw-phoebe': 'irr_4',
+  'mw-puck': 'irr_5',
+};
+/** Irregular moons that were already landable keep their port and authored art ID. */
+const SOL_LANDABLE_IRREGULAR = new Set(['phobos', 'deimos']);
+
 /** Hand-authored heliocentric positions, not a procedural scattering of the supplied Sol art. */
 export function solBodies(): RawStellarBody[] {
   const bodies: RawStellarBody[] = [];
   const planets: [string, string, number, number, number][] = [
-    ['mercury', 'Mercury', 1000, -0.8, 75],
-    ['venus', 'Venus', 1700, 2.6, 120],
-    ['mars', 'Mars', 3600, -2.1, 105],
+    // Compressed sizes keep the real order: Luna Prime (180) < Mercury < Mars < Venus < ice giants.
+    ['mercury', 'Mercury', 1000, -0.8, 205],
+    ['venus', 'Venus', 1700, 2.6, 260],
+    ['mars', 'Mars', 3600, -2.1, 235],
     ['ceres', 'Ceres', 5000, 1.2, 65],
     ['jupiter', 'Jupiter', 8000, 0.65, 330],
     ['saturn', 'Saturn', 11000, -1.05, 290],
-    ['uranus', 'Uranus', 22000, 2.7, 220],
-    ['neptune', 'Neptune', 34500, -0.4, 220],
+    ['uranus', 'Uranus', 22000, 2.7, 270],
+    ['neptune', 'Neptune', 34500, -0.4, 270],
     ['pluto', 'Pluto', 45300, 1.7, 70],
   ];
   for (const [id, name, distance, angle, radius] of planets)
@@ -59,29 +116,26 @@ export function solBodies(): RawStellarBody[] {
     svc: 'LTORBY',
     desc: 'The original Moon circles the Sun where Earth once travelled. The Hall of the Absent faces the empty sky. Earth is not here.',
   });
-  const moons: Record<string, string[]> = {
-    mars: ['phobos', 'deimos'],
-    jupiter: ['io', 'europa', 'ganymede', 'callisto'],
-    saturn: ['mimas', 'enceladus', 'tethys', 'dione', 'rhea', 'titan', 'iapetus'],
-    uranus: ['miranda', 'ariel', 'umbriel', 'titania', 'oberon'],
-    neptune: ['triton'],
-    pluto: ['charon'],
-  };
-  for (const [planet, names] of Object.entries(moons)) {
+  for (const [planet, moons] of Object.entries(SOL_MOONS)) {
     const parent = bodies.find((entry) => entry.id === `mw-${planet}`)!;
-    names.forEach((name, index) => {
+    // Orbits start outside the drawn rings of Saturn and Uranus.
+    const firstOrbit = Math.max(450, Math.round(parent.r * (SOL_RING_EXTENT[planet] || 0)) + 160);
+    moons.forEach(([name, radius], index) => {
       const angle = index * 2.4 + 0.4;
-      const distance = 450 + index * 90;
-      bodies.push(
-        body(
+      const distance = firstOrbit + index * 90;
+      const irregular = SOL_IRREGULAR_MOONS[`mw-${name}`];
+      bodies.push({
+        ...body(
           `mw-${name}`,
           name[0].toUpperCase() + name.slice(1),
           Math.round(parent.x + Math.cos(angle) * distance),
           Math.round(parent.y + Math.sin(angle) * distance),
-          name === 'titan' ? 85 : 42,
-          `sol_${name}`,
+          radius,
+          irregular && !SOL_LANDABLE_IRREGULAR.has(name) ? undefined : `sol_${name}`,
         ),
-      );
+        // Small shepherd and captured moons are scenery, not ports.
+        ...(irregular && !SOL_LANDABLE_IRREGULAR.has(name) ? { svc: '' } : {}),
+      });
     });
   }
   const stations: [string, string, string, string][] = [
@@ -101,12 +155,13 @@ export function solBodies(): RawStellarBody[] {
     );
   }
   bodies.push(body('helios-array', 'Helios Array', 600, 0, 115, 'helios_array', 'station'));
+  // The passage opens just outside Uranus's orbit, so arrivals start near a landmark.
   bodies.push({
     id: 'mw-sol-rift-mouth',
     name: 'The Quantum Rift · Return Passage',
     kind: 'wormhole',
-    x: 49000,
-    y: 0,
+    x: Math.round(SOL_RIFT_MOUTH_ORBIT * Math.cos(SOL_RIFT_MOUTH_ANGLE)),
+    y: Math.round(SOL_RIFT_MOUTH_ORBIT * Math.sin(SOL_RIFT_MOUTH_ANGLE)),
     r: 600,
     svc: '',
     tech: 0,
@@ -115,6 +170,46 @@ export function solBodies(): RawStellarBody[] {
     desc: 'The passage home remains open.',
   });
   return bodies;
+}
+
+/** The port the arrival indicator leads to after crossing the Rift. */
+export const SOL_ARRIVAL_PORT = 'vigils-rest';
+
+/** Where a ship crossing from the Rift comes to rest in Sol, and the heading that faces Luna Prime. */
+export interface SolRiftArrival {
+  /** World X, beside the mouth on the Uranus side. */
+  x: number;
+  /** World Y, beside the mouth on the Uranus side. */
+  y: number;
+  /** Ship heading (0 points up the screen, clockwise) toward Vigil's Rest. */
+  heading: number;
+}
+
+/**
+ * Rest point for a Rift crossing into Sol: outside the mouth's aperture, between it and Uranus,
+ * facing Vigil's Rest so the indicator and the ship agree.
+ * @param stellars Sol's bodies.
+ * @returns Arrival point and heading.
+ */
+export function solRiftArrival(stellars: RawStellarBody[]): SolRiftArrival {
+  const mouth = stellars.find((stellar) => stellar.id === 'mw-sol-rift-mouth')!;
+  const uranus = stellars.find((stellar) => stellar.id === 'mw-uranus')!;
+  const port = stellars.find((stellar) => stellar.id === SOL_ARRIVAL_PORT)!;
+  const towardUranus = Math.atan2(uranus.y - mouth.y, uranus.x - mouth.x);
+  const clearance = mouth.r + 260;
+  const x = Math.round(mouth.x + Math.cos(towardUranus) * clearance);
+  const y = Math.round(mouth.y + Math.sin(towardUranus) * clearance);
+  return { x, y, heading: Math.atan2(port.x - x, -(port.y - y)) };
+}
+
+/**
+ * Body selected as the nav point on entering a system: Vigil's Rest in Sol, otherwise the first port.
+ * @param system The system being entered.
+ * @returns Stellar ID, or null where nothing can be landed on.
+ */
+export function defaultNavStellar(system: StarSystem): string | null {
+  if (system.id === 'mw-sol') return SOL_ARRIVAL_PORT;
+  return system.stellars.find((stellar) => stellar.svc?.includes('L'))?.id ?? null;
 }
 
 export function createMilkyWay(): StarSystem[] {

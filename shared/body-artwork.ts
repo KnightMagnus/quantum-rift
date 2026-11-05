@@ -1,4 +1,5 @@
 import allocation from './scenery-allocation.json' with { type: 'json' };
+import { SOL_IRREGULAR_MOONS } from './milky-way.ts';
 
 /** Authored artwork does not change a body's services, faction or landing permissions. */
 export interface BodyArtwork {
@@ -12,6 +13,8 @@ export interface BodyArtwork {
 const bodies = new Map<string, BodyArtwork>();
 for (const system of Object.values(allocation))
   for (const [id, artwork] of Object.entries(system.bodies)) bodies.set(id, artwork);
+for (const [id, art] of Object.entries(SOL_IRREGULAR_MOONS))
+  bodies.set(id, { art, shape: 'irregular' });
 
 /** Return the authored choice, leaving unknown and player-created bodies on their fallback. */
 export function bodyArtwork(id: string): BodyArtwork | undefined {

@@ -1285,3 +1285,56 @@ export function addMoonsAndFields(SYSTEMS: SpaceSystem[]): void {
     }
   }
 }
+
+/**
+ * Scale for script-generated Rift system layouts. Generation places worlds, stations and
+ * fields within about 1,300 units of the star; spreading them afterwards gives each system
+ * room to fly in, closer to the hand-placed systems. Seeded generation is unchanged.
+ */
+export const GENERATED_SPREAD = 1.9;
+
+/**
+ * Spreads every script-generated system outward from its star. Worlds, stations, authored
+ * additions and fields move out by GENERATED_SPREAD; generated moons keep their offset from
+ * the world they circle. Rounding is reversible, so the original layout can be recovered.
+ * @param systems Star systems, modified in place.
+ */
+export function spreadGeneratedSystems(systems: SpaceSystem[]): void {
+  for (const system of systems) {
+    if (!system.gen) continue;
+    const original = new Map(system.stellars.map((body) => [body.id, { x: body.x, y: body.y }]));
+    const spread = (value: number) => Math.round(value * GENERATED_SPREAD);
+    for (const body of system.stellars) {
+      const parent = generatedMoonParent(system, body);
+      if (parent) continue;
+      body.x = spread(body.x);
+      body.y = spread(body.y);
+    }
+    for (const body of system.stellars) {
+      const parent = generatedMoonParent(system, body);
+      if (!parent) continue;
+      const parentWas = original.get(parent.id)!;
+      body.x += parent.x - parentWas.x;
+      body.y += parent.y - parentWas.y;
+    }
+    for (const field of system.fields || []) {
+      field.x = spread(field.x);
+      field.y = spread(field.y);
+    }
+  }
+}
+
+/**
+ * The world a generated moon circles, found from its "<world>-m<n>" identity.
+ * @param system System holding both bodies.
+ * @param body Candidate moon.
+ * @returns The parent world, or undefined for anything that is not a generated moon.
+ */
+export function generatedMoonParent(
+  system: SpaceSystem,
+  body: StellarBody,
+): StellarBody | undefined {
+  if (body.kind !== 'moon') return undefined;
+  const match = /^(.*)-m\d+$/.exec(body.id);
+  return match ? system.stellars.find((entry) => entry.id === match[1]) : undefined;
+}

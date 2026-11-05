@@ -98,6 +98,8 @@ function notify(capabilities: NhalCapabilities, space: Space, target: Entity, te
   const session = space.root(target).player?.s;
   if (session) capabilities.toast(session, text);
 }
+/** Creatures present when a Deep system wakes; later waves still arrive every 25 seconds up to 8. */
+const NHAL_INITIAL_BROODS = 4;
 /** Border distance is computed from real links, not from danger (all Deep systems share it). */
 export function nhalDepth(system: string): number {
   let frontier = [system];
@@ -180,10 +182,13 @@ function applyStatus(
 }
 export const NhalOperations = {
   /** Deep dispatch must run before eclipse, war and regional traffic branches. */
-  spawnTraffic(this: NhalCapabilities, space: Space, _initial?: boolean): Entity | null {
+  spawnTraffic(this: NhalCapabilities, space: Space, initial?: boolean): Entity | null {
     if (space.sys.faction !== 'deep') return null;
     const budget = population(this, space);
-    if (budget.nextWave > this.clock() || living(space).length >= 8) return null;
+    if (initial) {
+      // A system waking up is seeded like other regions, instead of one creature per wave.
+      if (living(space).length >= NHAL_INITIAL_BROODS) return null;
+    } else if (budget.nextWave > this.clock() || living(space).length >= 8) return null;
     budget.nextWave = this.clock() + 25;
     this.touch();
     const depth = nhalDepth(space.id);

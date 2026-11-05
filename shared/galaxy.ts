@@ -310,7 +310,13 @@ export type OpsLevelDef = {
 import { createMilkyWay } from './milky-way.ts';
 import { fnv1a } from './deterministic-random.ts';
 import { addEventide } from './eventide.ts';
-import { expandGalaxy, frontierSites, addSolGateway, addMoonsAndFields } from './gen.ts';
+import {
+  expandGalaxy,
+  frontierSites,
+  addSolGateway,
+  addMoonsAndFields,
+  spreadGeneratedSystems,
+} from './gen.ts';
 
 // Quantum Rift: the galaxy. 30 hand-made anchor systems, grown to ~200 by shared/gen.js (deterministic).
 // Shared by the server (authoritative) and the browser client (map, landing screens).
@@ -1317,8 +1323,9 @@ addMoonsAndFields(SYSTEMS); // more moons and asteroid fields (a separate seeded
 for (const addition of diversityWorlds) {
   const system = SYSTEMS.find((entry) => entry.id === addition.system);
   if (system && !system.stellars.some((body) => body.id === addition.body.id))
-    system.stellars.push(addition.body);
+    system.stellars.push({ ...addition.body }); // a copy: spreading must not move the authored data
 }
+spreadGeneratedSystems(SYSTEMS); // after authored additions, so they move with their system
 SYSTEMS.find((system) => system.id === 'coldharbor')!.stellars.push({
   id: 'farside-span',
   name: 'Farside Foothold',

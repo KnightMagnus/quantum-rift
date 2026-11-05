@@ -11,6 +11,7 @@ import additions from '../shared/diversity-worlds.json' with { type: 'json' };
 import { bodyArtwork } from '../shared/body-artwork.ts';
 import { landscapeScene } from '../shared/landscapes.ts';
 import { SYS, STELLARS } from '../shared/galaxy.ts';
+import { GENERATED_SPREAD } from '../shared/gen.ts';
 
 const exists = (file: string) =>
   assert.ok(fs.existsSync(new URL('../client/assets/' + file, import.meta.url)), file);
@@ -90,10 +91,15 @@ for (const [systemId, scene] of Object.entries(scenes)) {
   } as DecorModel;
   applySystemScene(system, decor);
   assert.deepEqual(decor.sats, scene.orbit);
-  assert.deepEqual(decor.derelict, scene.near);
+  const spread = system.gen ? GENERATED_SPREAD : 1;
+  assert.deepEqual(
+    decor.derelict,
+    scene.near.map((sprite) => ({ ...sprite, x: sprite.x * spread, y: sprite.y * spread })),
+    systemId + ': set pieces spread with generated bodies',
+  );
   assert.deepEqual(decor.pods, []);
   assert.ok(scene.near.length <= 8, systemId + ': bounded clutter');
-  for (const sprite of scene.near) {
+  for (const sprite of decor.derelict) {
     if (sprite.img.startsWith('mirror_ring')) continue;
     for (const body of system.stellars)
       assert.ok(

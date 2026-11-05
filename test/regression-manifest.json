@@ -1,6 +1,8 @@
 {
   "schema": 1,
   "unit": [
+    "traffic-variety.ts",
+    "generated-system-layout.ts",
     "coverage-inventory.ts",
     "regression-runner-contracts.ts",
     "excalibur-contracts.ts",
@@ -1175,8 +1177,8 @@
       "id": "galaxy-navigation",
       "owners": ["shared/galaxy.ts", "shared/gen.ts", "shared/rules.ts"],
       "services": [],
-      "tests": ["v04.ts", "v08.ts", "v23.ts", "eventide.ts"],
-      "asserts": "Seeded galaxy generation, reachable routes, Sol Minor/Farside gates with stable sol/earth/luna IDs, consistent gateway names and authored Eventide landmarks."
+      "tests": ["v04.ts", "v08.ts", "v23.ts", "eventide.ts", "generated-system-layout.ts"],
+      "asserts": "Seeded galaxy generation, reachable routes, Sol Minor/Farside gates with stable sol/earth/luna IDs, consistent gateway names and authored Eventide landmarks. Script-generated Rift systems spread bodies apart and keep open arrival space on every bearing."
     },
     {
       "id": "map-fog-of-war",
@@ -1193,10 +1195,18 @@
     },
     {
       "id": "sleep-traffic-ai",
-      "owners": ["server/space.ts"],
+      "owners": ["server/space.ts", "shared/traffic-variety.ts"],
       "services": [],
-      "tests": ["v04.ts", "v201.ts", "v23.ts", "v24.ts", "sim.ts", "hyperspace-arrival.ts"],
-      "asserts": "Sleeping/waking systems, faction traffic/landing, wing steering, flee/broadside/friend assistance and combat/death/respawn. NPC planet/station landing cruise remains target-facing at the speed ceiling, with real landing events, settled arrival, unchanged fuel and escort formation. Landing approaches do not coast side-on, wing headings do not shimmy, and hyperspace arrivals land clear of every body's jump radius."
+      "tests": [
+        "v04.ts",
+        "v201.ts",
+        "v23.ts",
+        "v24.ts",
+        "sim.ts",
+        "hyperspace-arrival.ts",
+        "traffic-variety.ts"
+      ],
+      "asserts": "Sleeping/waking systems, faction traffic/landing, wing steering, flee/broadside/friend assistance and combat/death/respawn. NPC planet/station landing cruise remains target-facing at the speed ceiling, with real landing events, settled arrival, unchanged fuel and escort formation. Landing approaches do not coast side-on, wing headings do not shimmy, and hyperspace arrivals land clear of every body's jump radius. Ambient hull picks down-weight hulls shared by many pools and hulls already flying, lowering starter-hull share without editing pools."
     },
     {
       "id": "mining-existing",
