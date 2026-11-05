@@ -131,6 +131,25 @@ const SEATS_BY_HULL: Record<string, number> = {
   851: 40,
   852: 2,
   853: 2,
+  // Type 0 prototypes keep their Concord descendant's cabins, or the crew-based legacy seats if larger.
+  1011: 3,
+  1013: 4,
+  1016: 24,
+  1017: 5,
+  1018: 4,
+  1019: 6,
+  1020: 9,
+  1021: 96,
+  1022: 15,
+  1023: 16,
+  1024: 40,
+  1027: 4,
+  1028: 3,
+  1029: 6,
+  1031: 6,
+  1032: 48,
+  1033: 19,
+  1034: 35,
 };
 
 export function passengerSeats(
