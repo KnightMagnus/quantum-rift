@@ -67,14 +67,11 @@ for (const hull of TYPE0_HULLS) {
   assert.equal(registered.size, descendant.size, `${hull.id} keeps its descendant's size`);
 }
 
-// Milky Way traffic and faction pools fly Type 0s, never Concord hulls.
+// Milky Way traffic and faction pools never fly Concord hulls. Freefolk and Unsworn fly their own community hulls.
 for (const faction of ['freefolk', 'unsworn']) {
-  assert.ok(
-    FACTION_HULLS[faction].every((hullId) => TYPE0_IDS.includes(hullId)),
-    faction,
-  );
+  assert.ok(!FACTION_HULLS[faction].some((hullId) => COMMON_HULLS.includes(hullId)), faction);
   for (const hullId of [...TRAFFIC[faction].traders, ...TRAFFIC[faction].war])
-    assert.ok(TYPE0_IDS.includes(hullId), `${faction} traffic ${hullId}`);
+    assert.ok(!COMMON_HULLS.includes(hullId), `${faction} traffic ${hullId}`);
 }
 for (const systemFaction of ['confederation', 'index'])
   for (let step = 0; step < 100; step++)
