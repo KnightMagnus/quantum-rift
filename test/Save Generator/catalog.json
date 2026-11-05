@@ -1889,6 +1889,71 @@
         "name": "Vigil Type 0",
         "stockOutfits": { "600": 2, "9005": 4 }
       }
+    },
+    {
+      "id": 1050,
+      "name": "Needle",
+      "loadout": {
+        "hull": 1050,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Needle",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1051,
+      "name": "Hush",
+      "loadout": {
+        "hull": 1051,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Hush",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1052,
+      "name": "Shrike",
+      "loadout": {
+        "hull": 1052,
+        "outfits": { "9001": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Shrike",
+        "stockOutfits": { "9001": 2 }
+      }
+    },
+    {
+      "id": 1053,
+      "name": "Sparrow",
+      "loadout": {
+        "hull": 1053,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Sparrow",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1054,
+      "name": "Smokejack",
+      "loadout": {
+        "hull": 1054,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Smokejack",
+        "stockOutfits": {}
+      }
     }
   ],
   "locations": [

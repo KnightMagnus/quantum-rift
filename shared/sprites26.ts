@@ -1,3 +1,5 @@
+import { UNSWORN_SPRITES } from './ships-unsworn.ts';
+
 /**
  * Rendering configuration for a re-rendered 2.6 ship sprite sheet.
  * Each roll set has 36 headings; cols is the number of frames per packed row.
@@ -215,4 +217,5 @@ export const SPRITES: Record<number, SpriteSheetConfig> = {
   853: { fs: 88, cols: 12, banks: true, glow: true, packed: true },
   ...TYPE0_SPRITES,
   ...FREEFOLK_SPRITES,
+  ...UNSWORN_SPRITES,
 };

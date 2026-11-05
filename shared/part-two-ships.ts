@@ -78,7 +78,7 @@ export function milkyWayTraffic(systemFaction: string, roll: number): RegionalTr
     if (roll < 0.55) return { kind: 'trade', faction: 'index', pool: [974, 976] };
     return { kind: 'patrol', faction: 'index', pool: [970, 971, 972, 973, 975, 977] };
   }
-  if (roll < 0.12) return { kind: 'trade', faction: 'unsworn', pool: [1010, 1011, 1013, 1019] };
+  if (roll < 0.12) return { kind: 'trade', faction: 'unsworn', pool: [1050, 1051, 1053, 1054] };
   if (roll < 0.25) return { kind: 'trade', faction: 'freefolk', pool: FREEFOLK_IDS };
   if (roll < 0.65) return { kind: 'trade', faction: 'confederation', pool: [952, 956, 957, 958] };
   return { kind: 'patrol', faction: 'confederation', pool: [950, 951, 954, 955, 959, 962, 963] };
