@@ -14,6 +14,7 @@ Rendered like the Nhal previews (3/4 view) to a decor sprite with the glow layer
 usage: PYTHONHASHSEED=0 python3 rift_deep5.py <path to tools/ships26> <decor dir> [names...]"""
 import sys, os, math
 SHIPS, OUT = sys.argv[1], sys.argv[2]; ONLY = sys.argv[3:]
+os.makedirs(OUT, exist_ok=True)
 os.environ['RIFT_SHIPS26'] = SHIPS; sys.path.insert(0, SHIPS); sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 _a = sys.argv; sys.argv = [_a[0]]
 import hulls_nhal as N

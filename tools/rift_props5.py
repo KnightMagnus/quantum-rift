@@ -13,6 +13,7 @@ usage: python3 rift_props5.py <decor dir> [name ...]"""
 import sys, os, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 DECOR = sys.argv[1]; ONLY = sys.argv[2:]
+os.makedirs(DECOR, exist_ok=True)
 _a = sys.argv; sys.argv = sys.argv[:1]
 import rift_stations as S
 sys.argv = _a
