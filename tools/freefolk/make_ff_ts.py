@@ -31,7 +31,7 @@ SPEC = {
     'un_sparrow': ('Sparrow', 'Passage Boat', 1026, RUN, {'crew': 14, 'cargo': 10}, 'A long can for twelve passengers on a cluster of four bells. Most of the Unsworn left the Confederation in one.'),
     'un_smokejack': ('Smokejack', 'Smuggling Runner', 1011, RUN, {'weapons': []}, 'Cargo cans on a quick-release spine and a drive bigger than the ship. If it is boarded, the cans are already drifting.'),
     'un_commonhold': ('Commonhold', 'Command Centre', 1024, dict(shield=1.0, shieldRe=1.0, armor=1.4, speed=0.35, accel=0.4, turn=0.5, mass=1.4, cost=1.6),
-                      {'weapons': [], 'guns': 0, 'turrets': 0, 'crew': 300, 'cargo': 400},
+                      {'weapons': [], 'guns': 0, 'turrets': 0, 'crew': 300, 'cargo': 400, 'npcOnly': True},
                       'A hollowed ore rock with habitat cans dug in, antenna masts and docking booms full of runners. From outside it looks like dead mining spoil. This is where the Unsworn decide things.'),
 }
 
@@ -69,13 +69,14 @@ for fac, (title, blurb, P) in HEAD.items():
     spr = '\n'.join(f"  {e['id']}: {{ fs: {m['fs']}, cols: {m['cols']}, banks: true, glow: true, packed: true }}," for m, e in mine)
     extra = ("export const UNSWORN_SOLD_IDS: number[] = UNSWORN_HULLS.filter((h) => h.id !== 1055).map((h) => h.id);\n"
              "export const UNSWORN_COMMAND_ID = 1055;\n") if fac == 'unsworn' else ''
-    open(os.path.join(out, f'ships-{fac}.ts'), 'w').write(f"""// Quantum Rift Part II: {title} hulls (art: tools/{fac}/hulls_freefolk.py).
+    npc_field = '\n\n  /** Hides the hull from shipyards, the codex and the save generator; set only on Commonhold. */\n  npcOnly?: boolean;' if fac == 'unsworn' else ''
+    open(os.path.join(out, f'ships-{fac}.ts'), 'w').write(f"""// Quantum Rift Part II: {title} hulls (art: tools/freefolk/hulls_freefolk.py).
 // {blurb}
 import type {{ Ship23Hull }} from './ships23.ts';
 import type {{ SpriteSheetConfig }} from './sprites26.ts';
 
 type HullInput = Omit<Ship23Hull, 'cat' | 'faction' | 'kind' | 'armorRe' | 'fuelRe' | 'buy' | 'ai' | 'fastJump' | 'glow' | 'pilot' | 'img'> & {{
-  faction: '{fac}';
+  faction: '{fac}';{npc_field}
 }};
 
 const hull = (input: HullInput) => ({{
@@ -98,7 +99,7 @@ export const {P}_HULLS = [
 
 export const {P}_IDS: number[] = {P}_HULLS.map((h) => h.id);
 {extra}
-/** Sprite sheets rendered by tools/{fac}/rift_ff_sheets.py. Merge into SPRITES in shared/sprites26.ts. */
+/** Sprite sheets rendered by tools/freefolk/rift_ff_sheets.py. Merge into SPRITES in shared/sprites26.ts. */
 export const {P}_SPRITES: Record<number, SpriteSheetConfig> = {{
 {spr}
 }};
