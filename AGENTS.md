@@ -80,6 +80,13 @@ then rewrite only where needed. Preserve facts, caveats, examples, links, comman
 JSDoc types and tags, tool directives, and license or attribution notices. Do not
 change executable code or quoted third-party material merely to alter its voice.
 
+## Commit messages, pull requests and reports
+
+Write commit messages terse and exact. Conventional Commits format. No fluff.
+
+Run the unslop skill on commit messages, pull request bodies and reports before
+posting them.
+
 ## README and screenshot maintenance
 
 Open the README with an evergreen, player-facing game overview: the core game,
