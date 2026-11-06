@@ -12,7 +12,7 @@ const scenarios = full
     ]
   : [{ system: 'emberlight', fleet: [708], upgraded: false }];
 const results = scenarios.flatMap((scenario) =>
-  (full ? [1701, 1702, 1704] : [1701]).map((seed) => {
+  (full ? [1701, 1702, 1703] : [1701]).map((seed) => {
     const result = simulateCombatPlayability({ ...scenario, seed, seconds: full ? 480 : 30 });
     assert.ok(Number.isFinite(result.power) && result.power > 0, 'finite fitted fleet power');
     assert.ok(Number.isFinite(result.damageTaken) && result.damageTaken >= 0);

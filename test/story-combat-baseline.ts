@@ -26,7 +26,7 @@ const override = bonusIndex < 0 ? undefined : Number(process.argv[bonusIndex + 1
 if (override !== undefined)
   assert.ok(Number.isFinite(override) && override >= 0 && override <= 120);
 const results = scenarios.flatMap((scenario) =>
-  [1701, 1702, 1704].map((seed) => {
+  [1701, 1702, 1703].map((seed) => {
     const result = simulateCombatPlayability({
       system: 'umbra',
       fleet: scenario.fleet,

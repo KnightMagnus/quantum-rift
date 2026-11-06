@@ -10,7 +10,7 @@ import type { StorageBackend } from '../../shared/nakama-contracts.ts';
 import { SYS, STELLARS, RESEARCH } from '../../shared/galaxy.ts';
 import { STORY } from '../../shared/story.ts';
 import { TICK } from '../../shared/rules.ts';
-import type { Entity } from '../../server/space.ts';
+import { Space, type Entity } from '../../server/space.ts';
 
 /** One fixed-seed, stock-loadout fleet exercising real arrival, traffic, AI and damage. */
 export interface CombatPlayabilityScenario {
@@ -150,6 +150,7 @@ export function simulateCombatPlayability(
   assert.ok(options.fleet.length > 0 && options.fleet.length <= 3);
   const originalRandom = Math.random;
   const originalNow = Date.now;
+  const originalTrafficHull = Space.prototype.pickTrafficHull;
   let randomState = options.seed >>> 0;
   let now = 1800000000000;
   let uuid = 0;
@@ -158,6 +159,13 @@ export function simulateCombatPlayability(
     return randomState / 4294967296;
   };
   Date.now = () => now;
+  // Keep these combat baselines on their original ambient hull distribution, so
+  // civilian variety changes do not shift encounter initialization or combat RNG.
+  // Real spawning, hostile hull selection and combat remain active; traffic-variety.ts
+  // independently exercises production civilian weighting and its live hull mix.
+  Space.prototype.pickTrafficHull = function (pool) {
+    return originalTrafficHull.call(this, pool, false);
+  };
   try {
     const rows = new Map<string, { value: object; version: string }>();
     let writes = 0;
@@ -584,6 +592,7 @@ export function simulateCombatPlayability(
       power,
     };
   } finally {
+    Space.prototype.pickTrafficHull = originalTrafficHull;
     Math.random = originalRandom;
     Date.now = originalNow;
   }

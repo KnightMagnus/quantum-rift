@@ -1792,6 +1792,12 @@ and real-device qualification remain tracked in issue #82.
 
 ## Shared combat maneuvering
 
+Combat fixtures retain uniform ambient hull picks, keeping civilian variety changes
+out of their encounter initialization and combat RNG. Hostile spawning and combat
+remain active; the isolated story fixture removes ambient ships after arrival.
+`traffic-variety.ts` independently checks production civilian weighting and its live
+hull mix.
+
 `story-combat-baseline.ts` runs eight declared fleet/preparation policies across
 three seeds against the production Act I story spawn. Real Game ticks retain
 boss escorts and choir allies; ambient traffic is explicitly excluded. The test
