@@ -6,7 +6,17 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
 import hulls_freefolk as F
 from render2 import render
-from render_nhal import comp
+from PIL import Image
+
+def comp(output):
+    rgb, alpha = output[0]
+    light_rgb, light_alpha = output[2]
+    rgb = np.where(light_alpha[..., None] > 0.2, light_rgb, rgb)
+    alpha = np.maximum(alpha, (light_alpha > 0.2) * 1.0)
+    glow_rgb, glow_alpha = output[1]
+    glow = np.clip(glow_rgb.max(axis=2) * 2, 0, 1) * np.clip(glow_alpha * 1.3, 0, 1)
+    color = np.clip(np.clip(rgb, 0, 1) * alpha[..., None] + glow_rgb * glow[..., None] * 0.9, 0, 1)
+    return Image.fromarray(np.dstack([color * 255, np.clip(np.maximum(alpha, glow), 0, 1) * 255]).astype(np.uint8), 'RGBA')
 FN = {k: fn for k, _, _, fn in F.ALL}
 def rad(M):
     V = np.concatenate([m.V for m in M]); return np.sqrt(V[:, 0] ** 2 + V[:, 1] ** 2 + (V[:, 2] * 0.8) ** 2).max()

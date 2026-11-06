@@ -1,7 +1,7 @@
 """Lineup sheet for the Freefolk and/or Unsworn hulls. Usage: sheet_ff.py <render dir> <out jpg> [freefolk|unsworn]"""
 import os, sys, json
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
-os.environ.setdefault('RIFT_SHIPS26', os.path.join(HERE, '../pkgtest/ships26'))
+os.environ.setdefault('RIFT_SHIPS26', os.path.join(HERE, '../ships26'))
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import hulls_freefolk as F
 R, OUTP = sys.argv[1], sys.argv[2]; ONLY = sys.argv[3] if len(sys.argv) > 3 else None
