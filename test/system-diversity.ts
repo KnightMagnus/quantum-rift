@@ -135,7 +135,97 @@ assert.equal(
   originalSystems,
   'Rendering never changes gameplay radii or worlds/fields',
 );
+// The Deep uses its own horror sky and organic set pieces, with no human traffic props.
+const deepNebulae = new Set(
+  ['66', '67', '68', '69', '70', '71', '72', '73'].map((n) => `nebula_${n}`),
+);
+const deepFarHorrors = new Set([
+  'far_eye',
+  'far_maw',
+  'far_black_sun',
+  'far_heart',
+  'far_tendril_star',
+]);
+const deepSetPieceUse = new Map<string, number>();
+const deepSystems = Object.values(SYS).filter((system) => system.faction === 'deep');
+assert.equal(deepSystems.length, 14);
+for (const system of deepSystems) {
+  const scene = scenes[system.id as keyof typeof scenes];
+  assert.ok(scene, system.id + ': Deep system has an authored scene');
+  assert.ok(scene.sky.nebulae.length > 0, system.id + ': Deep sky has gas');
+  for (const nebula of scene.sky.nebulae)
+    assert.ok(deepNebulae.has(nebula.img), `${system.id}: ${nebula.img} is a Deep nebula`);
+  assert.ok(scene.sky.galaxies.length <= 1, system.id + ': at most one galaxy');
+  assert.equal(scene.sky.far.length, 1, system.id + ': one far horror');
+  assert.ok(deepFarHorrors.has(scene.sky.far[0].img), system.id + ': far layer is a Deep horror');
+  assert.deepEqual(scene.orbit, [], system.id + ': no satellites in the Deep');
+  const setPieces = scene.near.filter((sprite) => sprite.img.startsWith('deep_'));
+  assert.ok(setPieces.length >= 1 && setPieces.length <= 2, system.id + ': one or two set pieces');
+  for (const sprite of scene.near)
+    assert.ok(
+      !/^(pod|beacon|satellite)_/.test(sprite.img),
+      `${system.id}: ${sprite.img} is not a human traffic prop`,
+    );
+  for (const sprite of setPieces)
+    deepSetPieceUse.set(sprite.img, (deepSetPieceUse.get(sprite.img) || 0) + 1);
+}
+for (const [image, count] of deepSetPieceUse)
+  assert.ok(count <= 2, `${image} appears in at most two Deep systems`);
+assert.ok(
+  Object.values(scenes).every(
+    (scene) =>
+      SYS[scene.id]?.faction === 'deep' ||
+      scene.near.every((sprite) => !sprite.img.startsWith('deep_')),
+  ),
+  'Deep set pieces stay in the Deep',
+);
+
 const unknown = { ...SYS.meridian, id: 'unknown-player-system' };
 const untouched = {} as DecorModel;
 applySystemScene(unknown, untouched);
 assert.deepEqual(untouched, {}, 'Unknown systems retain generated scenery');
+
+// Frontier exotic scenery: every sprite in the set is placed, reuse stays rare and
+// void jellies drift in orbit instead of sitting still.
+const frontierExotics = [
+  'far_einstein_ring',
+  'far_magnetar',
+  'far_wolf_rayet',
+  'far_globular',
+  'far_tidal_stream',
+  'far_hypergiant',
+  'far_eclipsing_binary',
+  'far_light_echo',
+  ...Array.from({ length: 10 }, (_, offset) => `nebula_${56 + offset}`),
+  'geyser_0',
+  'comet_nucleus_0',
+  'filament_0',
+  'mega_arc_0',
+  'mega_panels_0',
+  'monolith_0',
+  'wormlet_0',
+  'voidjelly_0',
+  'voidjelly_1',
+  'genship_0',
+  'spores_0',
+];
+const exoticSystems = new Map(frontierExotics.map((image) => [image, new Set<string>()]));
+for (const [systemId, scene] of Object.entries(scenes)) {
+  const layers = [...scene.sky.nebulae, ...scene.sky.far, ...scene.near, ...scene.orbit];
+  for (const layer of layers) exoticSystems.get(layer.img)?.add(systemId);
+  for (const sprite of scene.near)
+    assert.ok(!sprite.img.startsWith('voidjelly_'), `${systemId}: void jellies orbit a body`);
+}
+for (const [image, systemIds] of exoticSystems) {
+  assert.ok(systemIds.size >= 1, `${image} appears in a scene`);
+  assert.ok(systemIds.size <= (image === 'genship_0' ? 3 : 4), `${image} stays rare`);
+  for (const systemId of systemIds)
+    assert.equal(SYS[systemId].faction, 'frontier', `${image} stays in the Frontier`);
+}
+const frontierScenes = Object.values(SYS).filter((system) => system.faction === 'frontier');
+assert.equal(frontierScenes.length, 48);
+assert.ok(
+  frontierScenes.every((system) => scenes[system.id as keyof typeof scenes]),
+  'Every Frontier system has an authored scene',
+);
+console.log(`Frontier exotics: ${frontierExotics.length} sprites placed within reuse caps.`);

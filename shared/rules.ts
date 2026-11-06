@@ -1,5 +1,7 @@
 import { stationDefenseHull, STATION_DEFENSE_HULL } from './station-defense.ts';
 import { PART_TWO_HULLS } from './part-two-ships.ts';
+import { FREEFOLK_HULLS } from './ships-freefolk.ts';
+import { UNSWORN_HULLS } from './ships-unsworn.ts';
 import { QCS_HULLS } from './qcs-fleet.ts';
 import { INDEX_FLEET_HULLS } from './index-fleet.ts';
 import { NHAL_HULLS, NHAL_WEAPONS } from './nhal.ts';
@@ -708,6 +710,8 @@ export function augmentAssets(assets: GameAssets): GameAssets {
     ...QCS_HULLS,
     ...PART_TWO_HULLS,
     ...TYPE0_HULLS,
+    ...FREEFOLK_HULLS,
+    ...UNSWORN_HULLS,
     ...INDEX_HULLS,
     ...INDEX_FLEET_HULLS,
     ...NHAL_HULLS,
