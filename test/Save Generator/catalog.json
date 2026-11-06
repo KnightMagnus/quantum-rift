@@ -1889,6 +1889,188 @@
         "name": "Vigil Type 0",
         "stockOutfits": { "600": 2, "9005": 4 }
       }
+    },
+    {
+      "id": 1040,
+      "name": "Tallow",
+      "loadout": {
+        "hull": 1040,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Tallow",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1041,
+      "name": "Hawser",
+      "loadout": {
+        "hull": 1041,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Hawser",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1042,
+      "name": "Interpreter",
+      "loadout": {
+        "hull": 1042,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Interpreter",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1043,
+      "name": "Mender",
+      "loadout": {
+        "hull": 1043,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Mender",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1044,
+      "name": "Gleaner",
+      "loadout": {
+        "hull": 1044,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Gleaner",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1045,
+      "name": "Ferryman",
+      "loadout": {
+        "hull": 1045,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Ferryman",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1046,
+      "name": "Drumbarge",
+      "loadout": {
+        "hull": 1046,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Drumbarge",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1047,
+      "name": "Mercy",
+      "loadout": {
+        "hull": 1047,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Mercy",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1048,
+      "name": "Steading",
+      "loadout": {
+        "hull": 1048,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Steading",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1050,
+      "name": "Needle",
+      "loadout": {
+        "hull": 1050,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Needle",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1051,
+      "name": "Hush",
+      "loadout": {
+        "hull": 1051,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Hush",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1052,
+      "name": "Shrike",
+      "loadout": {
+        "hull": 1052,
+        "outfits": { "9001": 2 },
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 4,
+        "name": "Shrike",
+        "stockOutfits": { "9001": 2 }
+      }
+    },
+    {
+      "id": 1053,
+      "name": "Sparrow",
+      "loadout": {
+        "hull": 1053,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Sparrow",
+        "stockOutfits": {}
+      }
+    },
+    {
+      "id": 1054,
+      "name": "Smokejack",
+      "loadout": {
+        "hull": 1054,
+        "outfits": {},
+        "ammo": {},
+        "fixed": [],
+        "bonusSpace": 0,
+        "name": "Smokejack",
+        "stockOutfits": {}
+      }
     }
   ],
   "locations": [
