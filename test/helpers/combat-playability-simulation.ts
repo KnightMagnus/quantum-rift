@@ -150,6 +150,7 @@ export function simulateCombatPlayability(
   assert.ok(options.fleet.length > 0 && options.fleet.length <= 3);
   const originalRandom = Math.random;
   const originalNow = Date.now;
+  // oxlint-disable-next-line typescript/unbound-method -- Restored below and always called with its Space receiver.
   const originalTrafficHull = Space.prototype.pickTrafficHull;
   let randomState = options.seed >>> 0;
   let now = 1800000000000;
