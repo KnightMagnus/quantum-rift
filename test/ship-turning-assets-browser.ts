@@ -166,7 +166,12 @@ try {
       contact: contact.toDataURL('image/png'),
     };
   });
-  assert.equal(result.hulls, 179);
+  assert.equal(result.hulls, 204);
+  assert.equal(
+    result.proof.filter((hull) => hull.id >= 1010 && hull.id <= 1034).length,
+    25,
+    'all Type 0 hulls decode their declared frames',
+  );
   assert.equal(
     result.proof.filter((hull) => hull.id < 900 && (hull.id < 850 || hull.id > 853)).length,
     122,
@@ -191,7 +196,7 @@ try {
     'the station defense platform decodes its declared frames',
   );
   assert.equal(
-    result.proof.filter((hull) => hull.id >= 950).length,
+    result.proof.filter((hull) => hull.id >= 950 && hull.id < 1000).length,
     28,
     'all Part II hulls decode their declared frames',
   );
