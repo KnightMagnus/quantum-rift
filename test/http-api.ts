@@ -14,24 +14,29 @@ const version: string = JSON.parse(
 ).publicVersion;
 assert.match(
   version,
-  /^0\.\d+(?:(?:\.\d+){1,2}|(?:\.\d+)? MP Beta [1-9]\d*)?$/,
-  'beta labels include numeric releases and numbered MP betas',
+  /^0\.\d+(?:(?:\.\d+){1,2}|(?:\.\d+)? MP Beta [1-9]\d*|(?:\.\d+)? Unstable Beta)?$/,
+  'beta labels include numeric releases, numbered MP betas and unstable betas',
 );
 const packageVersion = JSON.parse(
   fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8'),
 ).version;
 assert.equal(
   packageVersion,
-  version.includes(' MP Beta ')
+  version.endsWith(' Unstable Beta')
     ? version.replace(
-        /^(0\.\d+)(\.\d+)? MP Beta ([1-9]\d*)$/,
-        (_, base, patch, beta) => `${base}${patch ?? '.0'}-mp-beta.${beta}`,
+        /^(0\.\d+)(\.\d+)? Unstable Beta$/,
+        (_, base, patch) => `${base}${patch ?? '.0'}-unstable-beta`,
       )
-    : version.split('.').length === 4
-      ? version.replace(/\.(\d+)$/, '-$1')
-      : version.split('.').length === 2
-        ? version + '.0'
-        : version,
+    : version.includes(' MP Beta ')
+      ? version.replace(
+          /^(0\.\d+)(\.\d+)? MP Beta ([1-9]\d*)$/,
+          (_, base, patch, beta) => `${base}${patch ?? '.0'}-mp-beta.${beta}`,
+        )
+      : version.split('.').length === 4
+        ? version.replace(/\.(\d+)$/, '-$1')
+        : version.split('.').length === 2
+          ? version + '.0'
+          : version,
   'npm metadata maps the public beta label to a valid semantic version',
 );
 for (const solo of [false, true]) {
