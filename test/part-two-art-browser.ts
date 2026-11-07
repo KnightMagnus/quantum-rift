@@ -69,17 +69,34 @@ try {
     render.skipStorySequence(state, 2000);
     const skipArrivalLocked = render.storyInputLocked(state, 2100);
     const unlocked = !render.storyInputLocked(state, 2900);
+    // Story pop-ups wait for the crossing animation, including the frame before it starts.
+    const crossing = {
+      ...state,
+      sys: 'quantum-rift',
+      shots: [],
+      beams: [],
+      loot: [],
+    } as unknown as ClientGameState;
+    render.updateEffects(crossing, 0.016, 10000);
+    const holdBeforeCrossing = render.storyPopupHoldMs(crossing, 10000);
+    crossing.sys = 'mw-sol';
+    const holdPending = render.storyPopupHoldMs(crossing, 10000);
+    render.updateEffects(crossing, 0.016, 10000);
+    const holdMidway = render.storyPopupHoldMs(crossing, 13000);
+    const holdAfter = render.storyPopupHoldMs(crossing, 16500);
     return {
       receiver,
       locked,
       skipArrivalLocked,
       unlocked,
+      holds: [holdBeforeCrossing, holdPending, holdMidway, holdAfter],
       nonBlack: context.getImageData(750, 450, 1, 1).data[0],
     };
   });
   assert.ok(Math.abs(results.receiver.x - 2071.688) < 0.01);
   assert.ok(Math.abs(results.receiver.y + 25.601) < 0.01);
   assert.ok(results.locked && results.skipArrivalLocked && results.unlocked);
+  assert.deepEqual(results.holds, [0, 6400, 3400, 0], 'story pop-ups wait for the Rift arrival');
   assert.ok(results.nonBlack > 0, 'The real Milky Way sky must render');
   assert.deepEqual(failures, []);
   await page.screenshot({ path: path.join(evidence, 'sol-helios-luna.png') });

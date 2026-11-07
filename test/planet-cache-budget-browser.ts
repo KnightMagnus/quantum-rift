@@ -8,6 +8,7 @@ import http from 'node:http';
 import path from 'node:path';
 
 import { STELLARS } from '../shared/galaxy.ts';
+import { bodyArtwork } from '../shared/body-artwork.ts';
 import type { PlanetDef, PlanetCacheUsage } from '../client/planets.ts';
 import { root, evidenceDir } from './helpers/browser-fixture.ts';
 
@@ -144,8 +145,12 @@ async function runTour(bounded: boolean, artwork: boolean): Promise<SystemVisit[
         });
     }
     if (bounded) {
-      // Returning to the first system after it was evicted rebuilds its worlds.
-      const [system, firstWorlds] = tour[0];
+      // Returning to the first system after it was evicted rebuilds its worlds. Irregular
+      // moon sprites sit outside the budgeted caches and are intentionally kept.
+      const [system, tourWorlds] = tour[0];
+      const firstWorlds = tourWorlds.filter(
+        (world) => bodyArtwork(world.id)?.shape !== 'irregular',
+      );
       const rebuildMs = await page.evaluate(async (worlds: PlanetDef[]) => {
         const probe = window.planetProbe!;
         probe.worlds = worlds;

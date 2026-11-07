@@ -626,6 +626,7 @@ import { eventideDrain } from '../shared/eventide.ts';
 // One star system's live simulation: ships (players, their escorts, NPC traffic), shots, beams, loot.
 import { milkyWayTraffic } from '../shared/part-two-ships.ts';
 import { SYS as systemsById, TRAFFIC, FACTIONS, MATERIALS } from '../shared/galaxy.ts';
+import { hullUbiquity, pickVariedHull, RECENT_TRAFFIC_HULLS } from '../shared/traffic-variety.ts';
 import { roleMult } from '../shared/roles.ts';
 import {
   fitRaidToBudget,
@@ -690,6 +691,13 @@ const pick = <ValueType>(entries: ValueType[]): ValueType =>
  * Simulates ships, physics, weapons fire, projectile trajectories, laser beams,
  * floating debris/loot, asteroid fields, and NPC combat AI.
  */
+let trafficUbiquityCache: Map<number, number> | null = null;
+/** How many faction traffic pools list each hull; built once from the shared tables. */
+function trafficUbiquity(): Map<number, number> {
+  return (trafficUbiquityCache ||= hullUbiquity(
+    Object.values(TRAFFIC).flatMap((traffic) => [traffic.traders, traffic.war]),
+  ));
+}
 export class Space {
   /** Parent game server engine instance. */
   declare game: Game;
@@ -753,6 +761,9 @@ export class Space {
 
   /** Cached list of neighboring faction IDs for frontier traffic generation. */
   declare nearFacs: string[];
+
+  /** Hulls most recently picked for ambient traffic here, newest last (created on first pick). */
+  declare recentTrafficHulls?: number[];
 
   /** Cached landing-capable spaceports in this system. */
   declare _ports: RawStellarBody[];
@@ -1470,8 +1481,8 @@ export class Space {
             ((this.A.ships[secondValue] || {}).cost || 0),
         )
         .slice(0, pool.length - 1); // no destroyers raiding inner space
-    const hull = pick(pool);
-    if (!this.A.ships[hull]) return;
+    const hull = this.pickTrafficHull(pool, kind === 'trade');
+    if (hull === undefined || !this.A.ships[hull]) return;
     const count =
       kind === 'trade'
         ? Math.random() < 0.22
@@ -1481,11 +1492,12 @@ export class Space {
     let hulls = [hull];
     for (let index = 1; index < count; index++)
       hulls.push(
-        pick(
+        this.pickTrafficHull(
           pool.filter(
             (positionX) => (this.A.ships[positionX].cost || 0) <= (this.A.ships[hull].cost || 1e9),
-          ) || pool,
-        ),
+          ),
+          kind === 'trade',
+        ) ?? hull,
       );
     if (kind === 'raid') hulls = this.fitAmbientRaid(hulls, pool);
     let lead = null;
@@ -1601,6 +1613,35 @@ export class Space {
   }
   // a group of warships of one power (a border war's attackers)
   /**
+   * Picks an ambient hull from a pool, spreading choices across the pool (see pickVariedHull).
+   * Civilian traffic is where shared starter hulls crowded out the rest; warship picks stay
+   * uniform so combat difficulty and seeded encounters are unchanged.
+   * @param pool Candidate hull IDs that exist in the asset catalog.
+   * @param civilian Whether this is a trade group, which uses the varied weighting.
+   * @returns Chosen hull ID, or undefined for an empty pool.
+   */
+  pickTrafficHull(pool: readonly number[], civilian: boolean): number | undefined {
+    if (!civilian) return pick([...pool]);
+    const flying = new Map<number, number>();
+    for (const entity of this.ships.values())
+      if (!entity.dead && !entity.player && typeof entity.hull === 'number')
+        flying.set(entity.hull, (flying.get(entity.hull) || 0) + 1);
+    const recent = (this.recentTrafficHulls ||= []);
+    const hull = pickVariedHull(
+      pool,
+      (candidate) =>
+        (flying.get(candidate) || 0) +
+        recent.filter((recentHull) => recentHull === candidate).length,
+      Math.random(),
+      trafficUbiquity(),
+    );
+    if (hull !== undefined) {
+      recent.push(hull);
+      if (recent.length > RECENT_TRAFFIC_HULLS) recent.shift();
+    }
+    return hull;
+  }
+  /**
    * Spawns a coordinated group of ships flying in formation.
    * @param kind AI behavior ('patrol', 'raid', 'trade').
    * @param factionId Faction identifier.
@@ -1614,19 +1655,23 @@ export class Space {
     pool: number[],
     initial?: boolean,
   ): Entity | null | undefined {
-    const hull = pick(pool.filter((height) => this.A.ships[height]));
+    const hull = this.pickTrafficHull(
+      pool.filter((height) => this.A.ships[height]),
+      kind === 'trade',
+    );
     if (!hull) return;
     const angle = random2(-Math.PI, Math.PI),
       count = 1 + (Math.random() < 0.5 ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0);
     let hulls = [hull];
     for (let index = 1; index < count; index++)
       hulls.push(
-        pick(
+        this.pickTrafficHull(
           pool.filter(
             (height) =>
               this.A.ships[height] &&
               (this.A.ships[height].cost || 0) <= (this.A.ships[hull].cost || 1e9),
           ),
+          kind === 'trade',
         ) || hull,
       );
     if (kind === 'raid' || kind === 'patrol') hulls = this.fitAmbientRaid(hulls, pool);

@@ -1,5 +1,6 @@
 import scenes from '../shared/system-scenes.json' with { type: 'json' };
 import type { DecorModel, GalaxySystem } from './render.ts';
+import { GENERATED_SPREAD } from '../shared/gen.ts';
 
 /** Authored placement data; gameplay bodies are registered separately by the galaxy catalog. */
 export interface SystemScene {
@@ -86,7 +87,14 @@ export function applySystemScene(system: GalaxySystem, decor: DecorModel): void 
   decor.ruin = [];
   decor.crystal = [];
   decor.pods = [];
-  decor.derelict = scene.near.map((sprite) => ({ ...sprite }));
+  // Generated systems were spread out after their scenes were authored; set pieces, debris
+  // and storms spread with them so the composition and body clearances keep their shape.
+  const spread = system.gen ? GENERATED_SPREAD : 1;
+  decor.derelict = scene.near.map((sprite) => ({
+    ...sprite,
+    x: sprite.x * spread,
+    y: sprite.y * spread,
+  }));
   decor.sats = scene.orbit.map((satellite) => ({ ...satellite }));
   const random = (key: string): number => {
     let hash = 0;
@@ -112,8 +120,8 @@ export function applySystemScene(system: GalaxySystem, decor: DecorModel): void 
       }
     : null;
   decor.debris = scene.debris.map((cloud, cloudIndex) => ({
-    x: cloud.x,
-    y: cloud.y,
+    x: cloud.x * spread,
+    y: cloud.y * spread,
     spin: 0.004,
     bits: Array.from({ length: cloud.count }, (_, index) => ({
       a: random('da' + cloudIndex + index) * 6.283,
@@ -124,6 +132,8 @@ export function applySystemScene(system: GalaxySystem, decor: DecorModel): void 
       hot: random('dh' + index) < 0.12,
     })),
   }));
-  decor.storm = scene.storm ? { ...scene.storm, depth: 0.9 } : null;
+  decor.storm = scene.storm
+    ? { ...scene.storm, x: scene.storm.x * spread, y: scene.storm.y * spread, depth: 0.9 }
+    : null;
   if (!scene.comet) decor.comet = null;
 }

@@ -1,6 +1,7 @@
 import diversityWorlds from '../../shared/diversity-worlds.json' with { type: 'json' };
 import assert from 'node:assert/strict';
 import type { StarSystem } from '../../shared/galaxy.ts';
+import { GENERATED_SPREAD, generatedMoonParent } from '../../shared/gen.ts';
 
 /** Reverse only reviewed story content changes for the original generation goldens. */
 export function legacyStorySystems(systems: StarSystem[]): StarSystem[] {
@@ -9,6 +10,27 @@ export function legacyStorySystems(systems: StarSystem[]): StarSystem[] {
     systems.filter((system) => system.region !== 'milky-way' && !additions.has(system.id)),
   );
   for (const system of legacy) {
+    // Undo the reviewed spread of generated layouts; the rounding is exactly reversible.
+    if (system.gen) {
+      const spreadPositions = new Map(
+        system.stellars.map((body) => [body.id, { x: body.x, y: body.y }]),
+      );
+      for (const body of system.stellars)
+        if (!generatedMoonParent(system, body)) {
+          body.x = Math.round(body.x / GENERATED_SPREAD);
+          body.y = Math.round(body.y / GENERATED_SPREAD);
+        }
+      for (const body of system.stellars) {
+        const parent = generatedMoonParent(system, body);
+        if (!parent) continue;
+        body.x -= spreadPositions.get(parent.id)!.x - parent.x;
+        body.y -= spreadPositions.get(parent.id)!.y - parent.y;
+      }
+      for (const field of system.fields || []) {
+        field.x = Math.round(field.x / GENERATED_SPREAD);
+        field.y = Math.round(field.y / GENERATED_SPREAD);
+      }
+    }
     // Authored additions are independently checked by system-diversity.ts. Preserve every
     // pre-existing body/field byte in these older generation goldens.
     for (const addition of diversityWorlds.filter((entry) => entry.system === system.id)) {

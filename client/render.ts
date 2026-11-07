@@ -453,10 +453,12 @@ function drawQuantumRift(
   context.drawImage(riftBlend, x - size / 2, y - size / 2, size, size);
   context.restore();
 }
+/** Length of the Rift crossing animation, including the arrival fade. */
+const RIFT_CROSSING_MS = 6400;
 type StorySequence = { kind: 'ark-departure' | 'rift-crossing'; began: number };
 export function storyInputLocked(state: ClientGameState, now = performance.now()): boolean {
   const sequence = storySequences.get(state);
-  return sequence?.kind === 'rift-crossing' && now - sequence.began < 6400;
+  return sequence?.kind === 'rift-crossing' && now - sequence.began < RIFT_CROSSING_MS;
 }
 export function skipStorySequence(state: ClientGameState, now = performance.now()): void {
   const sequence = storySequences.get(state);
@@ -465,6 +467,30 @@ export function skipStorySequence(state: ClientGameState, now = performance.now(
 }
 const storySequences = new WeakMap<ClientGameState, StorySequence>();
 const previousStorySystem = new WeakMap<ClientGameState, string | null>();
+/**
+ * Whether the system just changed across the Rift and the crossing animation has not started yet.
+ * @param state Client game state.
+ * @returns True between the system change and the next effects update.
+ */
+function riftCrossingPending(state: ClientGameState): boolean {
+  const previousSystem = previousStorySystem.get(state);
+  return (
+    (previousSystem === 'quantum-rift' && state.sys === 'mw-sol') ||
+    (previousSystem === 'mw-sol' && state.sys === 'quantum-rift')
+  );
+}
+/**
+ * How long story pop-ups should wait so they do not cover the Rift crossing animation.
+ * @param state Client game state.
+ * @param now Timestamp in milliseconds.
+ * @returns Milliseconds to wait; 0 when a pop-up may open now.
+ */
+export function storyPopupHoldMs(state: ClientGameState, now = performance.now()): number {
+  if (riftCrossingPending(state)) return RIFT_CROSSING_MS;
+  const sequence = storySequences.get(state);
+  if (sequence?.kind !== 'rift-crossing') return 0;
+  return Math.max(0, RIFT_CROSSING_MS - (now - sequence.began));
+}
 /** Presentation hook; it cannot move the ship, fit equipment or commit story progress. */
 export function startStorySequence(
   state: ClientGameState,
@@ -4439,17 +4465,13 @@ export function updateEffects(
   deltaTime: number,
   currentTime: number,
 ): void {
-  const previousSystem = previousStorySystem.get(clientGameState);
-  if (
-    (previousSystem === 'quantum-rift' && clientGameState.sys === 'mw-sol') ||
-    (previousSystem === 'mw-sol' && clientGameState.sys === 'quantum-rift')
-  )
+  if (riftCrossingPending(clientGameState))
     startStorySequence(clientGameState, 'rift-crossing', currentTime);
   previousStorySystem.set(clientGameState, clientGameState.sys);
   const sequence = storySequences.get(clientGameState);
   if (sequence) {
     const elapsed = currentTime - sequence.began;
-    if (elapsed > (sequence.kind === 'rift-crossing' ? 6400 : 12000))
+    if (elapsed > (sequence.kind === 'rift-crossing' ? RIFT_CROSSING_MS : 12000))
       storySequences.delete(clientGameState);
     else if (
       sequence.kind === 'rift-crossing' &&

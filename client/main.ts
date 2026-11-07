@@ -17,7 +17,12 @@ import type {
   HailConversation,
 } from './protocol.ts';
 import type { AutopilotState } from './landing_autopilot.ts';
-import { startStorySequence, storyInputLocked, skipStorySequence } from './render.ts';
+import {
+  startStorySequence,
+  storyInputLocked,
+  skipStorySequence,
+  storyPopupHoldMs,
+} from './render.ts';
 import {
   playEndingCinematic,
   preloadEndingCinematic,
@@ -337,6 +342,7 @@ import { initHails } from './hails_ui.ts';
 import { receiveShipChat } from './chat_bubbles.ts';
 // Quantum Rift client: connection, input, client-side prediction, render loop.
 import { SYS as systemsById, STELLARS, FACTIONS, FACTION_HULLS } from '../shared/galaxy.ts';
+import { defaultNavStellar } from '../shared/milky-way.ts';
 import { TUTORIAL } from '../shared/tutorial.ts';
 import {
   DT as tickDuration,
@@ -1097,13 +1103,7 @@ function onMessage(serverMessage: ServerMessage) {
           toast(`${ANOMALIES[angle].icon} ${ANOMALIES[angle].name}: ${ANOMALIES[angle].desc}`);
       }
       clientGameState.navPicked = false;
-      clientGameState.navStellar = systemsById[serverMessage.sys].stellars.find((rawStellarBody) =>
-        rawStellarBody.svc!.includes('L'),
-      )
-        ? systemsById[serverMessage.sys].stellars.find((rawStellarBody) =>
-            rawStellarBody.svc!.includes('L'),
-          )!.id
-        : null;
+      clientGameState.navStellar = defaultNavStellar(systemsById[serverMessage.sys]);
       break;
     case 'scene':
       if (clientGameState.landed && serverMessage.sys === clientGameState.sys)
@@ -1253,6 +1253,25 @@ overlays.register({
     elementById2('storyb').replaceChildren();
   },
 });
+/** Timer that retries held story pop-ups after the Rift crossing animation. */
+let storyHoldTimer: ReturnType<typeof setTimeout> | 0 = 0;
+/**
+ * Opens the oldest held story pop-up once the Rift crossing animation has finished.
+ * @param holdMs Milliseconds still to wait.
+ */
+function scheduleHeldStory(holdMs: number) {
+  const epoch = sessionEpoch;
+  storyHoldTimer = setTimeout(
+    () => {
+      storyHoldTimer = 0;
+      if (epoch !== sessionEpoch || !storyQ.length) return;
+      const remaining = storyPopupHoldMs(clientGameState);
+      if (remaining > 0) scheduleHeldStory(remaining);
+      else showStory(storyQ.shift());
+    },
+    Math.min(holdMs, 400),
+  );
+}
 function showStory(storyMessage: StoryMessage | undefined) {
   if (!clientGameState.you || !storyMessage) return;
   if (
@@ -1270,6 +1289,13 @@ function showStory(storyMessage: StoryMessage | undefined) {
     storyQ.push(storyMessage);
     return;
   } // one pop-up at a time: the rest wait their turn
+  const holdMs = storyPopupHoldMs(clientGameState);
+  if (holdMs > 0) {
+    // Let the Rift crossing animation play; the pop-up opens once the ship has arrived.
+    storyQ.push(storyMessage);
+    if (!storyHoldTimer) scheduleHeldStory(holdMs);
+    return;
+  }
   if (storyMessage.sequence === 'ark-departure' && storyMessage.tableEnding) {
     setAuto(null);
     clientGameState.autoRoute = false;

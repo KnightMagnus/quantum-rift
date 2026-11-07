@@ -127,6 +127,25 @@ export function verifyNhal(): void {
   );
   assert.ok(entry.ships.size <= NHAL_LIMITS.live);
   assert.ok(![...entry.ships.values()].some((entity) => Number(entity.hull) === 908));
+  {
+    // A Deep system waking up is seeded with several broods at once, like other regions,
+    // even while the persisted wave cadence is still waiting; later waves keep that cadence.
+    const waking = fixture(interior);
+    const wakingBudget = populations[interior.id];
+    if (wakingBudget) wakingBudget.nextWave = clock + 20;
+    for (let call = 0; call < 10; call++)
+      NhalOperations.spawnTraffic.call(capabilities, waking, true);
+    const seeded = waking.ships.size;
+    assert.ok(seeded >= 4, `waking Deep system starts with several creatures (${seeded})`);
+    assert.ok(seeded <= 8, 'initial seeding stays inside the ambient cap');
+    assert.equal(
+      NhalOperations.spawnTraffic.call(capabilities, waking),
+      null,
+      'ordinary waves still wait for the cadence after seeding',
+    );
+    waking.ships.clear();
+    delete populations[interior.id];
+  }
   const normal = fixture(SYS.sol);
   assert.equal(NhalOperations.spawnTraffic.call(capabilities, normal), null);
   assert.equal(normal.ships.size, 0, 'non-Deep traffic remains untouched');

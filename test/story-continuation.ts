@@ -12,6 +12,7 @@ import type { StoryFlags } from '../server/save-contracts.ts';
 import { STORY } from '../shared/story.ts';
 import { SIDE_STORIES } from '../shared/quests.ts';
 import { SYS, STELLARS } from '../shared/galaxy.ts';
+import { solRiftArrival } from '../shared/milky-way.ts';
 import { mainEndings, storySystemVisible, storyDescription } from '../shared/story-world.ts';
 import { sideStoryAvailable } from '../shared/story-quest-gates.ts';
 import { mockPlayerData, mockSession } from './helpers/mocks.ts';
@@ -230,9 +231,27 @@ try {
   assert.equal(player.sys, 'quantum-rift');
   assert.ok(Math.hypot(session.ent!.x, session.ent!.y) > mouth.r, 'unfitted ship turned away');
   player.ship.outfits[9021] = 1;
+  const crossingPackets = packets.length;
   game.wormholeTransit(session.ent!, rift, mouth);
   assert.equal(player.sys, 'mw-sol');
   assert.equal(player.story.flags.crossed_quantum_rift, true);
+  {
+    // Arrivals come to rest near Uranus, and the briefing follows the arrival packet.
+    const arrival = solRiftArrival(SYS['mw-sol'].stellars);
+    assert.equal(session.ent!.x, arrival.x);
+    assert.equal(session.ent!.y, arrival.y);
+    assert.equal(session.ent!.vx, 0, 'Rift arrival is stationary');
+    assert.equal(session.ent!.vy, 0, 'Rift arrival is stationary');
+    const uranus = STELLARS['mw-uranus'];
+    assert.ok(
+      Math.hypot(arrival.x - uranus.x, arrival.y - uranus.y) < 3000,
+      'arrival is near Uranus',
+    );
+    const sent = packets.slice(crossingPackets);
+    const spaceIndex = sent.findIndex((packet) => packet.t === 'space');
+    const briefingIndex = sent.findIndex((packet) => packet.id === 'beyond-arrival');
+    assert.ok(spaceIndex >= 0 && briefingIndex > spaceIndex, 'briefing is sent after arrival');
+  }
   assert.equal(player.credits, before, 'crossing grants no credits');
   assert.ok(SYS['mw-sol'].links.includes('mw-cinder-anchorage'));
   assert.equal(active()?.id, 'p2-voice', 'first arrival starts the civilian rescue');
