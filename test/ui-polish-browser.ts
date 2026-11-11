@@ -333,7 +333,7 @@ try {
     'stale abandonment controls cannot reopen confirmation',
   );
   await page.evaluate(async () => {
-    G.ltab = 'missions';
+    G.ltab = 'jobs';
     G.landed!.offers.unshift({
       ...G.landed!.offers[0],
       id: 'reward-summary-fixture',
