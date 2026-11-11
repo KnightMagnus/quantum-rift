@@ -1,3 +1,4 @@
+import { ensureQuevariDefender } from './quevari-defender.ts';
 import { storyParticipant } from './shared-story.ts';
 import {
   syncStationDefenses,
@@ -625,7 +626,7 @@ import { eventideDrain } from '../shared/eventide.ts';
 
 // One star system's live simulation: ships (players, their escorts, NPC traffic), shots, beams, loot.
 import { milkyWayTraffic } from '../shared/part-two-ships.ts';
-import { SYS as systemsById, TRAFFIC, FACTIONS, MATERIALS } from '../shared/galaxy.ts';
+import { SYS as systemsById, TRAFFIC, FACTIONS, MATERIALS, STELLARS } from '../shared/galaxy.ts';
 import { hullUbiquity, pickVariedHull, RECENT_TRAFFIC_HULLS } from '../shared/traffic-variety.ts';
 import { roleMult } from '../shared/roles.ts';
 import {
@@ -812,6 +813,7 @@ export class Space {
     this.rocks = [];
     this.game.features.mining.openSpace(this);
     this.game.features.index?.open(this);
+    ensureQuevariDefender(this);
   }
   /**
    * Generates compact serialized state array of asteroid field rocks for client rendering.
@@ -1000,6 +1002,8 @@ export class Space {
   remove(entity: Entity, reason?: string): void {
     if (entity.player && entity.player.s.ent === entity && this.game.db.world.towing)
       this.game.features.towing.detach(entity.player.s);
+    if (!entity.dead && entity.convoyOf && reason === 'jump')
+      this.game.features.fronts.onConvoyLost(entity);
     entity.dead = true;
     this.ships.delete(entity.id);
     if (reason) this.events.push(['flash', Math.round(entity.x), Math.round(entity.y)]);
@@ -1773,6 +1777,7 @@ export class Space {
       name: mission.targetName,
       mission: { id: mission.id, owner: mission.owner },
     });
+    entity.noDisable = true;
     entity.life = 1e9;
     this.events.push(['flash', Math.round(entity.x), Math.round(entity.y)]);
     return entity;
@@ -1990,7 +1995,7 @@ export class Space {
         } else if (entity.ai === 'patrol' || entity.ai === 'raid')
           entity.target =
             entity.target || this.findTarget(entity, entity.ai === 'raid' ? 2200 : 1500);
-        else if (entity.ai === 'trade' && entity.aggro.size) entity.ai = 'flee';
+        else if (entity.ai === 'trade' && entity.aggro.size && !entity.convoyOf) entity.ai = 'flee';
         if (
           this.t - entity.born > entity.life &&
           (entity.ai === 'patrol' || entity.ai === 'raid') &&
@@ -2890,6 +2895,10 @@ export class Space {
    */
   kill(entity: Entity, entity2?: Entity | null): void {
     if (entity.dead) return;
+    if (entity.hull === 744 && !entity.player && this.id === STELLARS.inalumen.system) {
+      this.game.db.world.quevariDefenderDestroyed = true;
+      this.game.db.touch();
+    }
     this.events.push(['boom', Math.round(entity.x), Math.round(entity.y), entity.st.size]);
     this.remove(entity);
     for (const entity3 of this.ships.values())

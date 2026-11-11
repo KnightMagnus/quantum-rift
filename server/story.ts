@@ -1,3 +1,10 @@
+import { ensureQuevariDefender, migrateLegacyFlagships } from './quevari-defender.ts';
+import {
+  sameStoryStep,
+  sharedEncounterOwner,
+  resumeStoryEncounter,
+  storyParticipant,
+} from './shared-story.ts';
 import {
   PART_TWO_OBJECTIVES,
   partTwoBattle,
@@ -54,8 +61,8 @@ import type { Entity, Space } from './space.ts';
 import { clampStanding } from '../shared/reputation.ts';
 // Quantum Rift: the Que'vari storyline as golden main-story missions (offered in landing pop-ups), and the Deep gate.
 import { SYS as systemsById, STELLARS, GRADES } from '../shared/galaxy.ts';
-import { STORY, STORY_SHIP, DEEP_UNLOCK } from '../shared/story.ts';
-import { makeLoadout, credits } from '../shared/rules.ts';
+import { STORY, DEEP_UNLOCK } from '../shared/story.ts';
+import { credits } from '../shared/rules.ts';
 
 export const StoryOperations = {
   /**
@@ -66,6 +73,20 @@ export const StoryOperations = {
   storyInit(this: StoryCapabilities, playerData: PlayerData) {
     playerData.story = playerData.story || { step: 0, active: null, done: [] };
     playerData.story.done = playerData.story.done || [];
+    if (migrateLegacyFlagships(this.A, playerData)) {
+      this.log(
+        playerData,
+        'Ina Que’var returned to capital duty. A Caravan Liner replaces each retired hull; its full assessed value was refunded. Original fittings are archived in your save.',
+      );
+      this.db.touch();
+    }
+    if (
+      (playerData.story.done.includes('qv5') || playerData.story.retiredFlagships?.length) &&
+      !this.db.world.quevariDefenderAwake
+    ) {
+      this.db.world.quevariDefenderAwake = true;
+      this.db.touch();
+    }
     return playerData.story;
   },
   /**
@@ -545,30 +566,21 @@ export const StoryOperations = {
     if (!session.ent && playerData.stellar) this.landed(session);
   },
   /**
-   * Award the unique Que'vari flagship reward as part of the storyline culmination.
+   * Awaken the capital defender without replacing the captain’s ship.
    * @param session - Player session.
    * @param storyStep - Story step definition.
    */
   storyGift(this: StoryCapabilities, session: Session, storyStep: StoryStep) {
     const playerData = session.data,
-      savedStory = this.storyInit(playerData),
-      shipLoadout = playerData.ship,
-      _shipHullAsset = this.A.ships[shipLoadout.hull];
-    if (playerData.shipless) {
-    } else if (playerData.dock.length < this.dockSlots(playerData))
-      playerData.dock.push({ ship: shipLoadout, bridge: playerData.bridge });
-    else {
-      const tradeIn2 = this.tradeIn(playerData);
-      playerData.credits += tradeIn2;
-    }
-    playerData.ship = makeLoadout(this.A, STORY_SHIP, "Ina Que'var");
-    playerData.shipless = false;
-    playerData.fuel = undefined;
-    if (this.leadChanged) this.leadChanged(playerData);
+      savedStory = this.storyInit(playerData);
+    if (savedStory.done.includes(storyStep.id) || STORY[savedStory.step]?.id !== storyStep.id)
+      return;
     savedStory.done.push(storyStep.id);
     savedStory.step++;
+    this.db.world.quevariDefenderAwake = true;
+    ensureQuevariDefender(this.spaces[STELLARS.inalumen.system]);
     playerData.rep.quevari = clampStanding((playerData.rep.quevari || 0) + storyStep.rep);
-    this.log(playerData, "Took the helm of the Ina Que'var.");
+    this.log(playerData, 'The Ina Que’var awakened to defend Ina Lumen.');
     this.broadcast({
       t: 'chat',
       from: '',
@@ -587,6 +599,8 @@ export const StoryOperations = {
   },
   /** Staying in range lets a prepared captain hear the Dreamer without killing it. */
   storyTick(this: StoryCapabilities, session: Session, space: Space, duration: number) {
+    if (!sharedEncounterOwner(this, session) && resumeStoryEncounter(session))
+      this.storyArrive(session, space);
     const active = session.data.story?.active;
     if (
       active?.id !== 'dreamer' ||
@@ -624,6 +638,7 @@ export const StoryOperations = {
    * @param space - Current space system instance.
    */
   storyArrive(this: StoryCapabilities, session: Session, space: Space) {
+    ensureQuevariDefender(space);
     const playerData = session.data,
       savedStory = this.storyInit(playerData),
       active2 = savedStory.active;
@@ -718,6 +733,7 @@ export const StoryOperations = {
     if (!active2 || active2.ready) return;
     const storyMission = effectiveMission(playerData, active2.id)!;
     if (storyMission.sys !== playerData.sys) return;
+    if (sharedEncounterOwner(this, session)) return;
     if (active2.id === 'p2-fleet' && !active2.spawned && session.ent) {
       const allies: Array<{ hull: number; faction: string; name: string }> = [];
       if (flags.p2_prisoners !== 'sentence')
@@ -848,6 +864,7 @@ export const StoryOperations = {
                 });
         entity3.story = session.id;
         entity3.storyKill = true;
+        entity3.noDisable = true;
         entity3.storyMission = storyMission.id;
         entity3.storyStage = active2.stage || 0;
         entity3.life = 1e9;
@@ -941,7 +958,16 @@ export const StoryOperations = {
       return;
     const storyMission = effectiveMission(playerData, active2.id)!;
     if (storyMission.sys !== playerData.sys || !(entity.storyKill || entity.storyBoard)) return;
+    const helpers = [...this.sessions.values()].filter(
+      (helper) =>
+        helper !== session &&
+        session.sharedStory?.progressHelpers?.includes(helper.id) &&
+        sameStoryStep(session, helper) &&
+        storyParticipant(this, entity, helper.id),
+    );
     entity.storyCredited = true;
+    for (const helper of helpers)
+      this.storyProgress(helper, { ...entity, story: helper.id, storyCredited: false });
     if (storyMission.id === 'dreamer') (savedStory.flags ||= {}).dreamer_defeated = true;
     active2.got++;
     this.toast(

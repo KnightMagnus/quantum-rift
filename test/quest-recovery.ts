@@ -32,6 +32,11 @@ const wrecks = () =>
   [...space.ships.values()].filter((entity) => entity.rescueOf?.id === 'recovery-wreck');
 assert.equal(wrecks().length, 1, 'missing wreck recovers even with persisted spawn flag');
 const wreck = wrecks()[0];
+for (const mouth of space.sys.stellars.filter((body) => body.wormhole))
+  assert.ok(
+    Math.hypot(wreck.x - mouth.x, wreck.y - mouth.y) >= mouth.r + 1199,
+    'rescue approach clears transit',
+  );
 owner.ent!.x = other.ent!.x = wreck.x;
 owner.ent!.y = other.ent!.y = wreck.y;
 for (const act of ['rescue', 'capture', 'plunder'] as const) {

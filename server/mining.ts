@@ -15,6 +15,7 @@ import {
   rollGrades,
   contactTime,
 } from '../shared/mining-rules.ts';
+import { GENERATED_SPREAD } from '../shared/gen.ts';
 import { INDUSTRIAL } from '../shared/industrial-rules.ts';
 import { splitLots } from '../shared/cargo-lots.ts';
 
@@ -531,20 +532,45 @@ export const MiningOperations = {
     if (savedField && savedField.config !== config) {
       const previous = JSON.parse(savedField.config),
         next = space.sys.fields || [];
-      // Only reviewed append-only industrial fields migrate. Old geometry, stable keys,
-      // unspent mass and outstanding original parcels are never regenerated or reminted.
+      // Only the released generated-layout change and append-only minor fields migrate.
+      // Keep an inert checkpoint and every generation ledger; moving a field must not mint ore.
+      const spreadLayout =
+        space.sys.gen &&
+        !savedField.geometryBackup &&
+        Array.isArray(previous) &&
+        previous.length <= next.length &&
+        previous.every(
+          (field, index) =>
+            JSON.stringify({
+              ...field,
+              x: Math.round(field.x * GENERATED_SPREAD),
+              y: Math.round(field.y * GENERATED_SPREAD),
+            }) === JSON.stringify(next[index]),
+        );
+      const unchangedPrefix =
+        Array.isArray(previous) &&
+        JSON.stringify(next.slice(0, previous.length)) === savedField.config;
       if (
-        !Array.isArray(previous) ||
+        (!spreadLayout && !unchangedPrefix) ||
         next.length < previous.length ||
-        JSON.stringify(next.slice(0, previous.length)) !== savedField.config ||
         !next
           .slice(previous.length)
-          .every((positionX) => positionX.industrial === true && positionX.minor === true)
+          .every((field) => field.industrial === true && field.minor === true)
       )
         throw new Error(`Mining field config changed in ${space.id}; explicit migration required`);
-      for (let length2 = previous.length; length2 < next.length; length2++)
-        for (let index = 0; index < next[length2].rocks; index++)
-          savedField.rocks.push(generate(miningWorld, space, length2, index, next[length2], 0));
+      if (spreadLayout) {
+        savedField.geometryBackup ??= structuredClone(savedField);
+        for (const generation of savedField.rocks) {
+          const fieldIndex = Number(generation.key.split(':')[1]);
+          generation.x += next[fieldIndex].x - previous[fieldIndex].x;
+          generation.y += next[fieldIndex].y - previous[fieldIndex].y;
+        }
+      }
+      for (let fieldIndex = previous.length; fieldIndex < next.length; fieldIndex++)
+        for (let index = 0; index < next[fieldIndex].rocks; index++)
+          savedField.rocks.push(
+            generate(miningWorld, space, fieldIndex, index, next[fieldIndex], 0),
+          );
       savedField.config = config;
       this.db.touch();
     }

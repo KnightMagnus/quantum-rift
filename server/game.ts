@@ -252,6 +252,10 @@ export type Session = {
   /** Owner-started frozen roster; expires on disconnect, chapter change or timeout. */
   sharedStory?: {
     mission: string;
+    /** Combat stage frozen when the roster starts. */
+    stage?: number;
+    /** Helpers eligible for objective progress when the roster starts. */
+    progressHelpers?: number[];
     sys: string;
     helpers: number[];
     ownerEntity: number;
@@ -1932,6 +1936,14 @@ export class Game<Storage extends Database = Database> {
     this.features.docks.docksInit(playerAccount);
     this.features.hostile.hostInit(playerAccount);
     this.features.story.storyInit(playerAccount);
+    if (playerAccount.story.retiredFlagshipNotice) {
+      this.toast(
+        session,
+        'The Ina Que’var has returned to capital duty. Your replacement Caravan Liner keeps your cargo and passenger capacity. The full assessed value was refunded; original fittings remain archived in your save.',
+      );
+      delete playerAccount.story.retiredFlagshipNotice;
+      this.db.touch();
+    }
     this.features.syndicate.synInit(playerAccount);
     this.features.arcs.arcsInit(playerAccount);
     this.features.quests.questReconcile(session);
@@ -1945,11 +1957,13 @@ export class Game<Storage extends Database = Database> {
       playerAccount.story.flight.sys = 'mw-sol';
     const savedStoryFlight = playerAccount.story.flight;
     const resumeStoryFlight = !!(
+      playerAccount.stellar == null &&
       savedStoryFlight &&
       (savedStoryFlight.sys === 'quantum-rift' || savedStoryFlight.sys.startsWith('mw-')) &&
       playerAccount.story.flags?.main_ending === 'table' &&
       (savedStoryFlight.sys !== 'mw-sol' || playerAccount.story.flags.crossed_quantum_rift)
     );
+    if (playerAccount.stellar != null) delete playerAccount.story.flight;
     if (resumeStoryFlight) {
       playerAccount.sys = savedStoryFlight!.sys;
       playerAccount.stellar = null;

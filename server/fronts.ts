@@ -753,6 +753,16 @@ export const FrontsOperations = {
                 : Math.sin(angle) * 1300,
           name: mission.wreckName,
         });
+        // Keep the boarding approach outside every automatic transit mouth.
+        for (const mouth of space.sys.stellars.filter((body) => body.wormhole)) {
+          const distance = Math.hypot(entity.x - mouth.x, entity.y - mouth.y);
+          const clearance = mouth.r + 1200;
+          if (distance < clearance) {
+            const bearing = Math.atan2(entity.y - mouth.y, entity.x - mouth.x);
+            entity.x = mouth.x + Math.cos(bearing) * clearance;
+            entity.y = mouth.y + Math.sin(bearing) * clearance;
+          }
+        }
         entity.disabled = true;
         entity.armor = entity.st.armor * 0.1;
         entity.rescueOf = { id: mission.id, owner: session.id };
@@ -801,8 +811,9 @@ export const FrontsOperations = {
     const session = this.sessions.get(entity.convoyOf!.owner);
     if (!session || !session.data) return;
     const mission = session.data.missions.find((mission) => mission.id === entity.convoyOf!.id);
-    if (!mission) return;
+    if (!mission || mission.done) return;
     mission.done = true;
+    this.db.touch();
     this.toast(session, `The ${mission.convoyName} landed safely. Land anywhere to be paid.`);
     this.you(session);
   },
@@ -814,10 +825,11 @@ export const FrontsOperations = {
     const session = this.sessions.get(entity.convoyOf!.owner);
     if (!session || !session.data) return;
     const mission = session.data.missions.find((mission) => mission.id === entity.convoyOf!.id);
-    if (!mission) return;
+    if (!mission || mission.done) return;
     session.data.missions = session.data.missions.filter((mission2) => mission2 !== mission);
-    this.toast(session, `The ${mission.convoyName} was destroyed. Job failed.`);
-    this.log(session.data, `Failed: ${mission.title} (convoy destroyed).`);
+    this.toast(session, `The ${mission.convoyName} was lost. Job failed.`);
+    this.log(session.data, `Failed: ${mission.title} (convoy lost).`);
+    this.db.touch();
     this.you(session);
   },
   // every two seconds for captains in space: survey points, smuggler scans
@@ -832,6 +844,22 @@ export const FrontsOperations = {
     const space = this.spaces[playerData.sys],
       starSystem = systemsById[playerData.sys];
     for (const mission of playerData.missions) {
+      if (
+        mission.type === 'convoy' &&
+        mission.sys === playerData.sys &&
+        mission.spawned &&
+        !mission.done &&
+        ![...space.ships.values()].some(
+          (ship) => ship.convoyOf?.id === mission.id && ship.convoyOf.owner === session.id,
+        )
+      ) {
+        playerData.missions = playerData.missions.filter((entry) => entry !== mission);
+        this.toast(session, `The ${mission.convoyName} is missing. Job failed.`);
+        this.log(playerData, `Failed: ${mission.title} (convoy missing).`);
+        this.db.touch();
+        this.you(session);
+        continue;
+      }
       if (mission.type === 'survey' && mission.sys === playerData.sys && !mission.done) {
         mission.seen! = mission.seen! || [];
         mission.points!.forEach((position, index) => {
