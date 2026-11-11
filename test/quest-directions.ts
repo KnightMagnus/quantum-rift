@@ -69,3 +69,64 @@ assert.ok(
 console.log(
   `Quest directions: ${stepsChecked} authored steps, copied-save presentation and current tier/menu hints passed.`,
 );
+
+// Starting a local delivery/report step must not require a launch-and-land cycle.
+const localSide = {
+  ...structuredClone(SIDE_STORIES[0]),
+  afterSides: [],
+  afterStory: [],
+  flag: undefined,
+  fragments: undefined,
+  excludedEndings: [],
+  id: 'local-report-fixture',
+  at: 'qstation',
+  steps: [
+    {
+      type: 'cargo' as const,
+      title: 'Local report',
+      brief: 'Deliver the report here.',
+      sys: STELLARS.qstation.system,
+      dest: 'qstation',
+      cid: 'medical',
+      qty: 1,
+    },
+  ],
+};
+SIDE_STORIES.push(localSide);
+try {
+  session.data.stellar = 'qstation';
+  session.data.sys = STELLARS.qstation.system;
+  session.data.missions = [];
+  session.data.quests.active = {};
+  game.features.quests.questStart(session, { side: localSide.id });
+  assert.ok(
+    session.data.quests.sides[localSide.id],
+    'local delivery completes immediately on acceptance',
+  );
+  assert.ok(!session.data.missions.some((mission) => mission.quest?.qid === 's:' + localSide.id));
+} finally {
+  SIDE_STORIES.splice(SIDE_STORIES.indexOf(localSide), 1);
+}
+
+const originalMoreOffers = game.features.fronts.moreOffers;
+try {
+  const duplicate = {
+    id: 'duplicate-board-fixture',
+    title: 'One contract',
+    text: 'Only one offer.',
+    type: 'rescue',
+    sys: session.data.sys,
+    hull: 707,
+    faction: 'spacer',
+    wreckName: 'Fixture',
+    reward: 10,
+  };
+  game.features.fronts.moreOffers = () => [duplicate, { ...duplicate }];
+  assert.equal(
+    game.offers(STELLARS.qstation, session.data).filter((offer) => offer.id === duplicate.id)
+      .length,
+    1,
+  );
+} finally {
+  game.features.fronts.moreOffers = originalMoreOffers;
+}

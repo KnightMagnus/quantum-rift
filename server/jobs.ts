@@ -286,7 +286,13 @@ const JobOperations: JobOperations = {
     const radioTour = radioTourOffer(stellarBody, playerData);
     if (radioTour) offers.unshift(radioTour);
     offers.unshift(...this.features.quests.questOffers(stellarBody, playerData)); // contacts and side stories lead the board
+    const offerIds = new Set<string>();
     return offers
+      .filter((offer) => {
+        if (offerIds.has(offer.id)) return false;
+        offerIds.add(offer.id);
+        return true;
+      })
       .filter(
         (offer) =>
           !playerData.missions.some((acceptedMission) => acceptedMission.id === offer.id) &&

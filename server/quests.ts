@@ -587,6 +587,7 @@ export const QuestOperations = {
     savedQuests.active[questRecord.qid] = questRecord;
     this.log(playerData, `Story begun: ${questRecord.name} (${questRecord.giver}).`);
     this.questPush(session, questRecord, true);
+    if (stellarBody && !session.ent) this.completeOnLanding(session, stellarBody);
     this.db.touch();
     this.you(session);
     this.landed(session);
