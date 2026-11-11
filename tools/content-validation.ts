@@ -168,6 +168,8 @@ export function validateShipContent(
     }
     // Existing NPC-only loadouts may deliberately exceed player fitting limits.
     if (!hull.npcOnly) {
+      if (typeof hull.cat !== 'string' || !hull.cat.trim())
+        report(`${path}.cat`, 'expected a Codex category for a player-visible hull');
       if (Number.isSafeInteger(hull.guns) && hull.guns >= 0 && guns > hull.guns)
         report(`${path}.weapons`, `stock guns ${guns} exceed mounts ${hull.guns}`);
       if (Number.isSafeInteger(hull.turrets) && hull.turrets >= 0 && turrets > hull.turrets)

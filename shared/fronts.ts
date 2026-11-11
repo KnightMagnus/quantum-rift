@@ -97,7 +97,7 @@ export type FactionStoreItem = {
   give: Record<string, number | string | boolean>;
 };
 import { signedXorshift32 as randomGenerator } from './deterministic-random.ts';
-import { EXALTED_STANDING } from './reputation.ts';
+import { EXALTED_STANDING, STANDING_MIN } from './reputation.ts';
 // Quantum Rift: data: invasions, anomalies, goals,
 // server events and faction stores. Shared by server and client.
 
@@ -366,7 +366,8 @@ export const STORE_ITEMS: FactionStoreItem[] = [
     name: 'Free-passage writ (+10 standing)',
     tokens: 12,
     credits: 0,
-    rep: 0,
+    // Meant for captains in bad standing, so it has no standing requirement.
+    rep: STANDING_MIN,
     give: { rep: 10 },
   },
 ];

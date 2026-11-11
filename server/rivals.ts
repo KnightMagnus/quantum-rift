@@ -51,6 +51,10 @@ import {
   MOOD,
   MOOD_LABEL,
   NEWS_TEMPLATES as newsTemplates,
+  RIVAL_KILL_CHANCE,
+  RIVAL_KILLS_PER_WINDOW,
+  RIVAL_KILL_WINDOW_MS,
+  rivalIncomeScale,
 } from '../shared/rivals.ts';
 import { credits } from '../shared/rules.ts';
 
@@ -71,6 +75,27 @@ const clamp = (value: number, firstValue: number, secondValue: number): number =
  */
 const pick = <ValueType>(firstValue: ValueType[]): ValueType =>
   firstValue[Math.floor(Math.random() * firstValue.length)];
+
+/**
+ * Count one off-screen kill for a rival, at most RIVAL_KILLS_PER_WINDOW per window.
+ * @param rivalState - Saved rival career.
+ * @param currentTime - Current time in epoch milliseconds.
+ */
+function logRivalKill(rivalState: RivalState, currentTime: number): void {
+  const windowAt = Number(rivalState.killWindowAt);
+  const windowOpen =
+    Number.isFinite(windowAt) &&
+    windowAt <= currentTime &&
+    currentTime - windowAt < RIVAL_KILL_WINDOW_MS;
+  const windowKills = windowOpen ? Math.max(0, Number(rivalState.killWindowCount) || 0) : 0;
+  if (!windowOpen) rivalState.killWindowAt = currentTime;
+  if (windowKills >= RIVAL_KILLS_PER_WINDOW) {
+    rivalState.killWindowCount = windowKills;
+    return;
+  }
+  rivalState.killWindowCount = windowKills + 1;
+  rivalState.kills++;
+}
 
 // where each career likes to fly
 /**
@@ -259,7 +284,12 @@ export const RivalsOperations = {
    */
   rivalsTick(this: RivalsCapabilities) {
     // Native matches keep ticking while empty; careers advance only during play.
-    if (![...this.sessions.values()].some((session) => session.data && session.sock.open)) return;
+    const onlineCaptains = new Set<string>();
+    for (const session of this.sessions.values())
+      if (session.data && session.sock.open) onlineCaptains.add(session.data.name);
+    if (!onlineCaptains.size) return;
+    // Hosted servers that always have someone online would otherwise pay rivals around the clock.
+    const incomeScale = rivalIncomeScale(onlineCaptains.size);
     const worldData = this.db.world,
       currentTime = Date.now();
     let hasAnyMatch = false;
@@ -275,15 +305,15 @@ export const RivalsOperations = {
         hasAnyMatch = true;
       }
       const gain = Math.round(
-        (kinds.earn * rivalDefinition.luck * (0.3 + Math.random() * 0.9)) / 12,
+        (kinds.earn * rivalDefinition.luck * (0.3 + Math.random() * 0.9) * incomeScale) / 12,
       );
       rivalState.credits += gain;
-      rivalState.earned += gain; // ~100k an hour, like a busy player
+      rivalState.earned += gain; // ~100k an hour with three or more captains online
       if (
         (rivalDefinition.kind === 'hunter' || rivalDefinition.kind === 'pirate') &&
-        Math.random() < 0.15
+        Math.random() < RIVAL_KILL_CHANCE
       )
-        rivalState.kills++;
+        logRivalKill(rivalState, currentTime);
       const better = rivalHull(
         this.A,
         rivalDefinition.fac,

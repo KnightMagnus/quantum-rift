@@ -295,6 +295,60 @@ captain.ent!.vx = captain.ent!.vy = 0;
 game.land(captain, reportPort.id);
 assert.ok(captain.ent, 'the completed report grants no permanent landing immunity');
 
+// Ashfall leaves Index standing at -100; Ledger Nine must still accept the Freefolk
+// pump delivery and the Unsworn chapter it offers next.
+const ledgerNine = STELLARS['ledger-nine'];
+const ferrum = STELLARS.ferrum;
+function launchAt(port: (typeof STELLARS)[string]) {
+  data.sys = port.system;
+  data.stellar = null;
+  game.spawnPlayer(captain, port.x, port.y, 0, 0);
+  captain.ent!.vx = captain.ent!.vy = 0;
+}
+data.story = {
+  step: STORY.findIndex((mission) => mission.id === 'p2-freefolk'),
+  active: { id: 'p2-freefolk', got: 0, ready: false, spawned: false, stage: 1 },
+  done: [],
+  flags: { p2_ending: 'ashfall', main_ending: 'table', crossed_quantum_rift: true },
+};
+data.rep.index = -100;
+data.landPass = {};
+assert.equal(
+  storyReportAccess(data, ledgerNine.id),
+  false,
+  'a later carry stage grants no clearance at its port',
+);
+launchAt(ledgerNine);
+game.land(captain, ledgerNine.id);
+assert.ok(captain.ent, 'Ledger Nine still refuses before the pumps are collected');
+assert.equal(storyReportAccess(data, ferrum.id), true, 'the active carry destination is cleared');
+data.story.active!.stage = 2;
+assert.equal(
+  storyReportAccess(data, ferrum.id),
+  false,
+  'a finished carry stage keeps no clearance',
+);
+game.land(captain, ledgerNine.id);
+assert.equal(data.stellar, ledgerNine.id, 'the pump delivery lands at Ledger Nine');
+assert.ok(!data.landPass?.[ledgerNine.id], 'no landing pass was bought');
+story.storyAccept(captain, { id: 'p2-freefolk', choice: 'clinic' });
+assert.ok(data.story.done.includes('p2-freefolk'), 'the delivery completes the chapter');
+assert.equal(data.story.active, null);
+assert.equal(STORY[data.story.step].id, 'p2-unsworn');
+launchAt(ledgerNine);
+assert.equal(storyReportAccess(data, ferrum.id), false, 'no clearance away from the offer port');
+game.land(captain, ledgerNine.id);
+assert.equal(data.stellar, ledgerNine.id, 'the next chapter offer port accepts the captain');
+assert.ok(
+  captain.sock.out.some(
+    (packet) => packet.t === 'story' && (packet as unknown as { id?: string }).id === 'p2-unsworn',
+  ),
+  'the Unsworn chapter is offered after landing',
+);
+assert.equal(data.rep.index, -100, 'story landings never clear Index standing');
+data.story.flags = { main_ending: 'unsettling' };
+assert.equal(storyReportAccess(data, ledgerNine.id), false, 'Part II access needs the crossing');
+
 // Campaign choices describe missing prerequisites without opening unavailable choices.
 data.story = {
   step: STORY.findIndex((mission) => mission.id === 'p2-fleet'),

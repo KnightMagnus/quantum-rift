@@ -308,7 +308,7 @@
     "faction": "frontier",
     "label": "Frontier independent 01",
     "playerSelectable": true,
-    "poolEligible": false,
+    "poolEligible": true,
     "npcId": null
   },
   {
@@ -316,7 +316,7 @@
     "faction": "deep",
     "label": "Deep independent 01",
     "playerSelectable": true,
-    "poolEligible": false,
+    "poolEligible": true,
     "npcId": null
   },
   {
@@ -324,7 +324,7 @@
     "faction": "swarm",
     "label": "Feral Swarm 01",
     "playerSelectable": false,
-    "poolEligible": false,
+    "poolEligible": true,
     "npcId": null
   },
   {
@@ -332,7 +332,7 @@
     "faction": "eclipse",
     "label": "Umbral Eclipse 01",
     "playerSelectable": false,
-    "poolEligible": false,
+    "poolEligible": true,
     "npcId": null
   },
   {

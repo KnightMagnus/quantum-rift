@@ -170,6 +170,13 @@ try {
     .locator('#ctrllist .ctrlbinding')
     .evaluateAll((rows) => rows.some((row) => row.scrollWidth > row.clientWidth));
   assert.equal(overflow, false, 'Paired key labels and descriptions fit their columns');
+  const strandedHelp = page.locator('#ctrlstranded');
+  assert(await strandedHelp.isVisible(), 'HELP explains how to get out of a portless system');
+  assert.match(
+    await strandedHelp.innerText(),
+    /Log out.*enter the Rift again.*last port you landed at/is,
+    'The stranding note names the logout escape and where it docks you',
+  );
   await capture(page, 'controls-3440');
   await page.click('#ctrlclose');
   for (const [width, height, value] of [

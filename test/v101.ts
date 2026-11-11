@@ -105,5 +105,47 @@ assertCondition(
 );
 owner.send({ t: 'depart' });
 assertCondition(!!requiredFixtureValue(owner.s).ent, 'and now you can depart');
+// Stranding escape: logging out in flight where no world can be landed on docks you at your last landing.
+const logOutInFlight = (captain: ReturnType<typeof fake>, starSystem: string) => {
+  const playerData = requiredFixtureValue(captain.s).data;
+  playerData.sys = starSystem;
+  playerData.stellar = null;
+  game.spawnPlayer(captain.s, 0, 0, 0, 0);
+  requiredFixtureValue(captain.s.ent).fuel = 20;
+  game.disconnect(captain.s);
+  return playerData;
+};
+const castaway = fake('Castaway');
+const castawayData = requiredFixtureValue(castaway.s).data;
+castawayData.lastStellar = 'meridian-yards';
+logOutInFlight(castaway, 'umbra');
+assertCondition(
+  castawayData.stellar === 'meridian-yards' && castawayData.sys === 'meridian',
+  'logging out stranded in a portless system docks you at your last landing in its own system',
+);
+assertCondition(castawayData.fuel === 20, 'the stranding escape keeps the fuel you had in flight');
+const returning = fake('Castaway');
+assertCondition(
+  !requiredFixtureValue(returning.s).ent &&
+    requiredFixtureValue(returning.s).data.stellar === 'meridian-yards',
+  'signing back in after a stranded logout starts docked at the last landing',
+);
+const nowhere = fake('Nowhere');
+const nowhereData = requiredFixtureValue(nowhere.s).data;
+delete nowhereData.lastStellar;
+logOutInFlight(nowhere, 'umbra');
+assertCondition(
+  nowhereData.stellar === START.stellar && nowhereData.sys === STELLARS[START.stellar].system,
+  'with no recorded landing, a stranded logout docks you at the starting port',
+);
+const localDock = fake('Local');
+const localData = requiredFixtureValue(localDock.s).data;
+localData.lastStellar = 'meridian-yards';
+logOutInFlight(localDock, START.system);
+assertCondition(
+  localData.sys === START.system &&
+    STELLARS[requiredFixtureValue(localData.stellar)].system === START.system,
+  'a system with a landable world docks you there instead of at your last landing',
+);
 console.log('ALL 1.0.1 TESTS PASSED');
 process.exit(0);

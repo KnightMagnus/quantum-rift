@@ -40,11 +40,14 @@ The two-captain network bot uses the production landing guidance with per-tick p
 ship catalog and local yard, flight and glow artwork references without starting
 a server or changing content. Negative fixtures cover mismatched IDs, invalid
 capacities, combat/movement stats and recharge rates, weapon references/counts/ammo,
-stock gun and turret overflow, missing
+stock gun and turret overflow, player-visible hulls without a Codex category, missing
 files and nonlocal artwork paths. Diagnostics carry the authoring file; refit and
 Armada hull references and outfit weapon references are checked against the
 composed catalog. CLI checks exercise successful validation, failed staged-asset
-validation and invalid arguments.
+validation and invalid arguments. It also checks that composed hulls, Specialists
+and Index machines have distinct display names, that no wingmate ship shares a hull
+name, and that wingmates, arc officers and named Part II characters have distinct
+first names, with Captain Rooke's first name kept out of the officer name pools.
 
 NPC-only hulls retain the existing player-mount exception; unknown weapons still
 fail. Fixed weapons without corresponding outfits do not consume shop mounts,
@@ -340,6 +343,15 @@ and baseline-report arithmetic/completeness/stress-profile exclusion. The existi
 refinery browser case is updated for automatic pricing and one Start action while
 retaining real debit, cancellation, partial collection and fuel-cell checks.
 
+`economy-32.ts` also covers docking upkeep (`shared/docking-upkeep.ts`,
+`server/docking-upkeep.ts`) against the real hull catalogue: every hull below
+10M credits docks free, including the starting hull; larger hulls pay 0.2% of
+list price per docking, capped at 10% of current credits; captains at or below
+zero credits and captains docking at their own station pay nothing; the charge
+is recorded as a port service fee and survives save reload. The call from
+`Game.land` and the shipyard upkeep line are not yet wired, so no landing
+regression exists for them.
+
 No measured progression rate or tuned balance is claimed. The developer-only
 [measurement protocol](ECONOMY-BASELINES.md) specifies the 36 matched session cells,
 closure/cost requirements and reproducible evidence. Do not treat synthetic report
@@ -410,11 +422,11 @@ owner. Legacy `vNN` names are retained for traceability, and now run in CI.
 | `network-faults`          | `server/game.ts`, `server/ws.ts`                                                                                                 | [network-faults.ts](../test/network-faults.ts), [websocket-transport.ts](../test/websocket-transport.ts), [network-faults-loopback.ts](../test/network-faults-loopback.ts)                                                         | Replayed claims, accepts and landings settle once; evicted or closed local connections cannot act or steer; late frames after close never dispatch; restart keeps only flushed progress; real-TCP delay, lost replies, lost requests and half-open peers reconcile on reconnect.                                                                                                                                                                                                                                                                                                                                           |
 | `hangar`                  | `server/hangar.ts`                                                                                                               | [v05.ts](../test/v05.ts), [v12.ts](../test/v12.ts), [v21.ts](../test/v21.ts)                                                                                                                                                       | Shuttle dispatch/resolution/repair, officer assignment/XP/ranks, research prerequisites/queue, refining, stored loadouts and boarding.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `fronts`                  | `server/fronts.ts`                                                                                                               | [v06.ts](../test/v06.ts), [v09.ts](../test/v09.ts), [faction-standing.ts](../test/faction-standing.ts)                                                                                                                             | Invasion start/damage/win, anomalies/events/goals, faction store standing and convoy/rescue/survey/smuggling jobs.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `frontier`                | `server/frontier.ts`                                                                                                             | [v07.ts](../test/v07.ts)                                                                                                                                                                                                           | Colony ownership/accrual, station raid/defense waves, mastery, arena matchmaking/rating, exchange escrow/matching and profiles/leaderboards. Service-owned encounter state survives second-composition/repeated initialization; real queue/match disconnect cleanup settles on the next tick.                                                                                                                                                                                                                                                                                                                              |
+| `frontier`                | `server/frontier.ts`                                                                                                             | [v07.ts](../test/v07.ts)                                                                                                                                                                                                           | Colony ownership/accrual, station raid/defense waves, mastery, arena matchmaking/rating, even time-outs as unpaid draws, exchange escrow/matching and profiles/leaderboards. Service-owned encounter state survives second-composition/repeated initialization; real queue/match disconnect cleanup settles on the next tick.                                                                                                                                                                                                                                                                                              |
 | `specialists`             | `server/specialists.ts`                                                                                                          | [v08.ts](../test/v08.ts)                                                                                                                                                                                                           | Specialty roles, blueprint/part requirements, construction, tiers/upgrades and gameplay bonuses.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `hostile`                 | `server/hostile.ts`                                                                                                              | [v09.ts](../test/v09.ts), [v26.ts](../test/v26.ts)                                                                                                                                                                                 | Hostile levels/chest loot, Station Holdout wave/rewards and co-op helpers, weekly events/Eclipse.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `story`                   | `server/story.ts`                                                                                                                | [v10.ts](../test/v10.ts)                                                                                                                                                                                                           | Story offers/acceptance, board/travel/kill progression, gifts, Deep unlock and captain-specific objective/reward text (`story-continuation.ts` declared clarity helper).                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `rivals`                  | `server/rivals.ts`                                                                                                               | [v11.ts](../test/v11.ts), [core-actions.ts](../test/core-actions.ts)                                                                                                                                                               | Named career population, ordinary fresh-world wealth for all thirty captains, existing-career preservation on reload, presence preservation across second-composition/repeated initialization, missing-ship/dock cleanup and respawn, authenticated-online-only advancement without offline catch-up, relationships, hunters, damage/death/bounty, news/market flashes and status route.                                                                                                                                                                                                                                   |
+| `rivals`                  | `server/rivals.ts`                                                                                                               | [v11.ts](../test/v11.ts), [core-actions.ts](../test/core-actions.ts)                                                                                                                                                               | Named career population, ordinary fresh-world wealth for all thirty captains, existing-career preservation on reload, presence preservation across second-composition/repeated initialization, missing-ship/dock cleanup and respawn, authenticated-online-only advancement without offline catch-up, income scaled by distinct online captains (full rate at three), off-screen kills at about three an online hour with a cap of four per hour, relationships, hunters, damage/death/bounty, news/market flashes and status route.                                                                                       |
 | `hailing`                 | `server/hail.ts`, `server/hail-service.ts`                                                                                       | [v11.ts](../test/v11.ts), [hailing.ts](../test/hailing.ts), [network-systems.ts](../test/network-systems.ts), [station-docking.ts](../test/station-docking.ts)                                                                     | NPC bribes/fuel/landing clearance and encounters, authentic player hails, inbox privacy/blocking/flood controls.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `fleet-orders`            | `server/fleetcmd.ts`                                                                                                             | [v11.ts](../test/v11.ts), [v21.ts](../test/v21.ts)                                                                                                                                                                                 | Escort target/formation/hold/fire orders, jettison/loot limits and combat rating.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `syndicate`               | `server/syndicate.ts`                                                                                                            | [v12.ts](../test/v12.ts), [v203.ts](../test/v203.ts), [ship-banking.ts](../test/ship-banking.ts)                                                                                                                                   | Black market/Syndicate career, officer promotion/lower decks, bank loans/interest, timed delivery contracts.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -980,8 +992,13 @@ It checks one local store button, no button in the DOM at neutral or visitor lan
 all stores at the captain’s own Personal Station, decoded insignia and actual
 purchases for each available faction. The selected faction’s standing appears above
 the store on open and updates from the server’s player payload after buying a standing writ.
+The writ row lists its standing requirement as "Any".
 `faction-standing.ts` checks every landable public port and resource-preserving
 foreign-faction, unclaimed station and flight denials through store messages.
+It also buys the writ at negative standing down to the floor, while other items keep
+their gates, and files all three Commission steps at another faction's port: tokens
+and job standing go to the commissioning faction, and an ordinary job there still
+pays the port's faction.
 `faction-store-catalog.ts` checks that every store sells three store-only outfits
 with real assets and icons that no outfitter stocks. Purchases through the store
 message install the outfit at once, refuse a second copy or an under-standing
@@ -1056,9 +1073,16 @@ lamp dimming uses a precomputed black alpha mask instead of filtering the full
 mutable atlas on each paint. Private headless 4x-CPU profiles are constrained-host
 comparisons, not physical midrange-laptop or audible-output certification.
 
+The same resize loop checks the login note that the game plays best on a tablet or
+computer. It must appear above the login form, fully on screen and unclipped, on
+portrait and landscape phone viewports (360x640, 390x844, 750x342, 932x430), and stay
+hidden at 768x1024, 1024x768, 1280x720 and 1920x1080. The note shows when the
+viewport is under 600 px wide or under 500 px tall. This is Chromium viewport
+emulation, not a physical-device check.
+
 ## Planetary landscapes and portraits
 
-`planet-portrait-art` covers all mapped planetary scene identities, colony stage selection, asset hashes and portrait allowlists. `portrait-persistence.ts` exercises selection denials, authenticated-account-only mutation, bounded acknowledgement tokens and reload through Solo journals and the native checkpoint/CAS adapter. `planet-portrait-browser.ts` checks actual landed colony rendering, the personal chooser (every choice icon decodes under the current artwork version) and hail windows, denied or unconfirmed save recovery, stale-reply isolation and Captain-tab controls at narrow/scaled and desktop sizes. `nakama-network.ts` verifies selected portraits through real Nakama authentication and match ingress, spoofed-target isolation, public lookup, PostgreSQL checkpoint storage and a native service restart. The adapter unit fixture remains a separate bounded persistence check. Main-story portrait coverage checks the five character identities, completion-specific faces, exclusion from player and generic pools, text-only fallback, decoded browser images and narrow-screen dialogue controls.
+`planet-portrait-art` covers all mapped planetary scene identities, colony stage selection, asset hashes and portrait allowlists. `part-two-communities.ts` checks that every faction with portrait art, including Feral Swarm, Frontier, Deep and Umbral Eclipse, draws named and unnamed NPC faces only from its own pool. `portrait-persistence.ts` exercises selection denials, authenticated-account-only mutation, bounded acknowledgement tokens and reload through Solo journals and the native checkpoint/CAS adapter. `planet-portrait-browser.ts` checks actual landed colony rendering, the personal chooser (every choice icon decodes under the current artwork version) and hail windows, denied or unconfirmed save recovery, stale-reply isolation and Captain-tab controls at narrow/scaled and desktop sizes. `nakama-network.ts` verifies selected portraits through real Nakama authentication and match ingress, spoofed-target isolation, public lookup, PostgreSQL checkpoint storage and a native service restart. The adapter unit fixture remains a separate bounded persistence check. Main-story portrait coverage checks the five character identities, completion-specific faces, exclusion from player and generic pools, text-only fallback, decoded browser images and narrow-screen dialogue controls.
 
 ## Functional cockpit layout
 
@@ -1271,7 +1295,9 @@ until 5 kills or 30 jumps from the build, ends early at 150 ship power, and post
 one end notice. Saves already past Tier 3 and the protection opt-out stay
 unprotected. It runs 300 ambient raid spawns per case through `spawnTraffic` and
 checks every group stays within the power budget for the captain present, with
-the weakest raider as the floor. Farside and empty systems are unscaled. Mission
+the weakest raider as the floor. Farside and empty systems are unscaled. In Sol and
+Sirius Bastion, 200 regional spawns check that trade groups stay out of the raid
+budget and that patrols still spawn, up to the encounter cap. Mission
 danger labels are checked for patrols and bounties against a 72-power Caravel, and
 cargo jobs keep the system rating. The career practice raider is checked for size,
 one-at-a-time spawning and the systems it skips. A real spawned raider at 5% armor
@@ -1331,7 +1357,8 @@ The browser seeds a bounded mixed Index roster through the existing local game,
 then captures actual moving ships and an incoming ship-only hail. Intentional
 image failures check actual ship-art fallback and no humanoid substitution.
 `index-presentation.ts` checks outgoing/incoming/archive identities for every
-Index and Nhal hull, and advances a densely packed seven-large-hull fixture
+Index and Nhal hull, checks that Feral Swarm, Frontier, Deep and Umbral Eclipse ships
+hail with their own faction portrait, and advances a densely packed seven-large-hull fixture
 through 1,800 production steering/physics ticks with footprint clearance and
 restore/health/budget checks. After the group settles, every neutral hull must
 keep moving around the worksite within its radius, and a Quarry's drones must
@@ -1340,6 +1367,17 @@ return and rejoin through production steering without restoring lost health or
 spending replacement budget. The mixed-hull accelerated 60-second fixture is not a
 wall-clock soak or proof of every combat interleaving. Existing story and faction
 regressions retain reward, equipment, neutrality and finite-source coverage.
+
+## Stranding escape
+
+`v101.ts` logs captains out in flight. In a system with no landable world the
+captain is docked at their last landing in that port's system, keeps the fuel
+they had in flight and signs back in docked there. With no recorded landing they
+dock at the starting port. A system with a landable world still docks them
+locally. `ui-polish-browser.ts` checks that Controls shows the stranding note and
+that it fits at narrow and scaled sizes. The logout cases use an in-process game
+with fake sockets. Host friends and Nakama use the same `Game.disconnect` path but
+are not run here.
 
 ## `station-progression`: timer advancement
 
@@ -1700,7 +1738,7 @@ uncontested survival does not count. Combat Assist stops attacking disabled ship
 so a disable need not become a kill. Newcomer protection is explicitly disabled.
 The early-game lead uses its stock loadout; the larger fleets also receive all
 station research and Epic level-10, rank-3 combat officers. Combat Assist steers
-and fires, with nearest-hostile acquisition, but no retreat or manual bay launch.
+and fires, with nearest-hostile acquisition and automatic bay launch, but no retreat.
 The simulation uses isolated in-memory storage and a virtual clock at the normal
 physics tick rate. It does not establish human win rates or test every
 loadout, faction, system or multiplayer combination.
@@ -1815,12 +1853,15 @@ health multiplier as an experiment; `--export PATH` retains full bounded capture
 The scripted 3,200-unit retreat policy is not a human skill or optimal-kiting claim.
 
 `combat-maneuver.ts` calls the existing `Space.fight` entry point with a live
-steering fixture. Thirty hand-authored cases check primary/secondary battery
+steering fixture. Hand-authored cases check primary/secondary battery
 selection, empty ammo and point-defense/bay exclusion, the unarmed fallback,
 relative-velocity lead, approach/retreat thresholds, capital circling parity and
 speed cutoffs. Assertions preserve attacker input, mount and target identities,
 trigger fields and assignment order. NPC and player-owned attackers use the same
-policy. The fixture replaces steering without constructing another simulation.
+policy. Assist capitals with outfitted turrets steer the same path as a hull-armed
+NPC capital, which reports no outfitted turrets, instead of circling. `combat-assist.ts`
+checks that Assist launches fighter bays at its target, that the missile setting does
+not hold bays, and that manual trigger input never launches them. The fixture replaces steering without constructing another simulation.
 
 The same assertions pass before and after the move to
 `server/combat-maneuver.ts`. The existing registered `combat-playability.ts`
@@ -1906,7 +1947,7 @@ The landed service fixtures also start native Tab and Shift+Tab from BODY, witho
 
 ## Touch flight controls (`touch-flight-controls`)
 
-`touch-controls-browser.ts` reuses the isolated friend-host landed fixture with a touch-enabled Chromium context. Real browser touch protocol events verify MAP/FIRE/LAND center hit targets, map and dock precedence, primary-fire hold/release/cancel/drag commands, joystick cancellation, modal-entry release and a complete authoritative landing. A visibility-state seam without window blur checks the immediate neutral send synchronously, before another animation frame can mask the behavior; it is not a physical background-tab timing certification. Tablet 1024×768 and 1093×614 views exercise normal/enlarged UI. This does not certify physical iOS/Android hardware or full portrait-phone playability.
+`touch-controls-browser.ts` reuses the isolated friend-host landed fixture with a touch-enabled Chromium context. Real browser touch protocol events verify MAP/FIRE/LAND center hit targets, map and dock precedence, primary-fire hold/release/cancel/drag commands, joystick cancellation, modal-entry release and a complete authoritative landing. A visibility-state seam without window blur checks the immediate neutral send synchronously, before another animation frame can mask the behavior; it is not a physical background-tab timing certification. Tablet 1024×768 and 1093×614 views exercise normal/enlarged UI. Portrait phone views at 390×664 and 412×839 check that the stick centre is not covered by the button grid and that the stick steers. This does not certify physical iOS/Android hardware or full portrait-phone playability.
 
 `combat-browser.ts` is registered in the browser CI group for persisted missile settings and the real target/Assist/steering/firing path; optional environment variants remain diagnostic extensions, not claims of every combat scenario.
 
@@ -2025,8 +2066,11 @@ Authored remote quest observations and collections are covered by the docked-pro
 
 `story-encounters.ts` checks patrol and wing final hits, independent captain objectives,
 unchanged generic kill accounting, absent-owner denial, stale chapters and repeated credit.
-It reproduces abandoned hunter drift with seeded AI and movement, then checks bounded
-recovery on reentry without healing, duplicate targets or moving ships in active combat.
+A seeded 20-minute post-death run with the real AI and movement keeps the hunter inside
+the system, and a hunter coasting away at top speed while facing its destination thrusts
+and turns back. Recovery on reentry, and the once-a-second leash in flight, bring a target
+more than 12,000 units from its captain back without healing it or duplicating it. The
+captain's own lock does not block the leash; a target in another captain's fight stays put.
 The simulation does not establish behavior across every random seed or live multiplayer latency.
 
 ## Concord security fleet (`qcs-security-fleet`)
@@ -2041,6 +2085,10 @@ every combat matchup or long-running server population.
 
 `quest-recovery.ts` checks owner-only mission-wreck boarding, missing-wreck recovery without duplication, completed-rescue exclusion, NPC hit denial, faction objective credit after patrol kills, abandoned-target recovery without healing, contract-target recovery and patrol completion, and insurance when no able rescuer remains. It also runs actual Assist and weapon physics for both affected capital hulls against a moving target after finite ammunition is exhausted, requiring damage in each 30-second window. `combat-maneuver.ts` covers mixed forward/turret batteries and pursuit of moving targets. These deterministic checks do not establish combat balance or human completion times.
 
+## Rescue limits and rescued ships
+
+`v26.ts` checks the Armada rescue limit: the first two knockdowns in one fight wait for a boarding rescue, the second rescue tells both captains to retreat and regroup, and a third knockdown inside the lockout goes straight to insurance. A new flight, or a knockdown after the lockout, is held for rescue again. `v05.ts` checks that a rescued lawful NPC ship stays in the system, can't be boarded again for a second reward, and flies to a landing port and lands; in a system with no port it flies clear and jumps out. These are scripted cases, not a measure of how long player fights last.
+
 ## Captain objective log
 
 `captain-log.ts` covers current disclosed objective guidance, saved insurance history, HTML escaping, no future-story lookup, and stable eligible-first job ordering without mutating offers. Mission filters remain authoritative display filters, not acceptance permission.
@@ -2049,7 +2097,7 @@ every combat matchup or long-running server population.
 
 `recovery-safety.ts` also runs `encounter-feedback.ts`. Actual Dreamer, Watcher and Kraken AI windups supply range/countdown data; cancellation and resolution remove it. Recipient-visible IDs and live story-helper consent gate all encounter metadata. Tests cover generic boss health without invented timers and narrow-canvas health labels and world-scaled danger circles. Canvas fixtures verify draw commands, not browser screenshot placement.
 
-`shared-story.ts` and `story-pacing.ts` cover wire-parsed two-sided assistance consent, frozen helper sessions, same-step shared objective progress, duplicate-encounter suppression, failed-closed departure/disconnect/expiry, insurance history, alternate public report ports, one-time rewards and ordinary transport preparation premiums. `combat-assist.ts` distinguishes range, alignment and ammo failure from normal cooldown. `responsive-hud-browser.ts` checks the Captain log at five desktop sizes, scroll reachability and Escape dismissal.
+`shared-story.ts` and `story-pacing.ts` cover wire-parsed two-sided assistance consent, frozen helper sessions, same-step shared objective progress (unrelated earlier choices do not exclude a helper; a different Part II campaign objective does, and the excluded helper is told), duplicate-encounter suppression, failed-closed departure/disconnect/expiry, insurance history, alternate public report ports, one-time rewards and ordinary transport preparation premiums. `combat-assist.ts` distinguishes range, alignment and ammo failure from normal cooldown. `responsive-hud-browser.ts` checks the Captain log at five desktop sizes, scroll reachability and Escape dismissal.
 
 ## Flight feedback (`flight-feedback`) and multi-jump Follow
 
@@ -2062,6 +2110,9 @@ every combat matchup or long-running server population.
 ## Regional story continuation
 
 `milky-way-world.ts` checks the separate regional graph, reciprocal local lanes, story-gated station sites, authored planetary bodies, outer-orbit distance ratios, Luna size and return-mouth clearance. It also checks inner-world size order, round major moons and irregular minor moons, ring clearance for Saturn and Uranus moons, the return mouth beside Uranus and the stationary Rift arrival point facing Vigil's Rest. It also checks that the Codex hides all 57 Confederation, Freefolk, Unsworn and Type 0 hulls until the captain has crossed into the Milky Way, keeps ordinary hulls listed, and always lists the hull the captain flies. `part-two-fleets.ts` checks regional traffic and civilian/combat hull eligibility. `type0-hulls.ts` checks the 25 Type 0 hulls against their Concord descendants (sheets, stat lineage, tech floor, size), that Milky Way traffic, Freefolk and Unsworn pools and Milky Way shipyards carry no Concord hulls, that Confederation and Personal Station yards sell Type 0s while Index yards sell none, and that Rift shipyards still sell Concord hulls and no Type 0. `freefolk-hulls.ts` checks that the nine lightly armed Freefolk hulls load with their sheets and yard pictures, that Freefolk trade groups fly only Freefolk hulls in Index and Confederation space, and that all three Index station shipyards sell exactly the Freefolk hulls while Confederation yards sell none of them. `unsworn-hulls.ts` checks that the six Unsworn hulls register with their sheets, glow and yard artwork, that Unsworn traffic flies only Unsworn traders with the Shrike as its escort, and that Commonhold stays out of every traffic pool, faction hull list and shipyard. `part-two-story.ts` exercises mission progression, navigation rejection, battle objectives, ending gates, withdrawal and earned fleet spawning. `part-two-art-browser.ts` decodes station and ship sheets, captures the complete Sol layout, checks crossing input locks, holds story pop-ups until the crossing animation ends, and verifies the return mouth draws the Quantum Rift atlas rather than the ordinary wormhole atlas. These renderer captures are private verification evidence, not public story screenshots.
+
+`part-two-art-browser.ts` also holds notices until the crossing animation ends: held
+notices then show in order, and notices cleared at sign-out never show.
 
 ### Capital defender
 
@@ -2079,7 +2130,7 @@ records, cargo, bridge assignments, hull UIDs and the unique progression outfit.
 
 `combat-jobs-playability.ts` checks that real board rotations cannot sell a second unfinished patrol in the same system, while a completed patrol permits another contract. `story-combat-baseline.ts` retains prepared-cruiser and modest-wing success and unprepared-frigate failure across its declared seeds. These scripted runs are not human win-rate or time-to-upgrade measurements; ship prices and ordinary transport income are unchanged.
 
-`part-two-story.ts` covers required-report and accepted final-visit landing access without clearing faction standing, unavailable campaign explanations, distinct completion text and explicit preparation equipment rewards. Required-report access does not waive ordinary flight or unrelated landing gates. It also checks Part II text: Sol's description has no zero distance, the Threshold Spire objective uses the port's name, the Ascendant and Ashfall aftercare name their own crews, the memorial names Saint Orra once, and the broadcast mission has one broadcast room.
+`part-two-story.ts` covers required-report, active carry-destination and next-chapter offer-port landing access without clearing faction standing (including Ledger Nine at Index −100 for the Freefolk delivery and the Unsworn offer), unavailable campaign explanations, distinct completion text and explicit preparation equipment rewards. Required-report access does not waive ordinary flight or unrelated landing gates. It also checks Part II text: Sol's description has no zero distance, the Threshold Spire objective uses the port's name, the Ascendant and Ashfall aftercare name their own crews, the memorial names Saint Orra once, and the broadcast mission has one broadcast room.
 
 ### Regional communities and personal recovery
 
