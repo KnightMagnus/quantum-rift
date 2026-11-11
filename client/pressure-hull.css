@@ -462,6 +462,14 @@ body.pressure-hull #land .landbody .detail {
   background: transparent;
   box-shadow: none;
 }
+@container (max-width: 650px) {
+  body.pressure-hull #land .landbody .shipyard-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body.pressure-hull #land .landbody .shipyard-specs {
+    grid-row: 1;
+  }
+}
 body.pressure-hull #land .landfoot {
   grid-column: 1 / -1;
   grid-row: 4;
