@@ -4,9 +4,9 @@ This is an unstable beta. Stop the old server and back up your complete Solo or 
 
 ## Changes since 0.6
 
-- Updated arrival scenes, Sol visuals and generated planetary layouts.
+- Updated arrival scenes, planet visuals and generated planetary layouts.
 - More varied regional traffic and ship artwork.
-- New Freefolk and Unsworn hull designs.
+- New civilian hull designs.
 - Consistent unstable-beta labels in the game and release package.
 
 ## Download and play

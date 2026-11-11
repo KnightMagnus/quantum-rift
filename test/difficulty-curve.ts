@@ -8,6 +8,7 @@ import type { PlayerData, Session } from '../server/game.ts';
 import type { ClientGameState } from '../client/main.ts';
 import { Game } from '../server/game.ts';
 import { Space } from '../server/space.ts';
+import { refineryGame, refineryPilot } from './helpers/refinery-fixture.ts';
 import { augmentAssets, makeLoadout, allOutfits } from '../shared/rules.ts';
 import { SYS as systemsById, TRAFFIC } from '../shared/galaxy.ts';
 import { TUTORIAL } from '../shared/tutorial.ts';
@@ -227,6 +228,70 @@ for (const [power, danger] of [
   assert.equal(farside.raidBudget(), null, 'Farside keeps full-strength raids');
 }
 
+// ------------------------------------------------------------------ Milky Way patrols share the budget with raiders only
+// Regional traffic goes through spawnGroup. Trade groups must not use up the raid budget, or no
+// Confederation or Index patrol can ever spawn beside them.
+const regionalSpace = (systemId: string, power: number) => {
+  const space = Object.assign(Object.create(Space.prototype) as Space, {
+    id: systemId,
+    sys: systemsById[systemId],
+    A: assets,
+    t: 0,
+    ships: new Map<number, Entity>(),
+    events: [],
+    game: mockGame({
+      features: {
+        living: { stateOf: () => null },
+        hostile: { myPower: () => power },
+      },
+    }),
+    ports: () => [],
+    makeShip(options: { hull: number; ai: string; owner?: number | null; faction: string }) {
+      const ship = mockEntity({
+        id: space.ships.size + 1,
+        hull: options.hull,
+        ai: options.ai,
+        owner: options.owner ?? null,
+        faction: options.faction,
+        pw: hullCombatPower(assets, options.hull),
+      });
+      space.ships.set(ship.id, ship);
+      return ship;
+    },
+  });
+  const player = mockEntity({
+    id: 0,
+    st: { shield: power, armor: 0 },
+    player: { id: 1, s: mockSession({ data: captain({ ops: 3 }) }) },
+  });
+  player.player!.s.ent = player;
+  space.ships.set(0, player);
+  return space;
+};
+for (const systemId of ['mw-sol', 'mw-sirius-bastion']) {
+  const space = regionalSpace(systemId, 568);
+  for (let index = 0; index < 200; index++) {
+    space.t = index * 40;
+    space.spawnTraffic(false);
+  }
+  const ships = [...space.ships.values()].filter((ship) => !ship.player);
+  const traders = ships.filter((ship) => space.root(ship).ai === 'trade');
+  const patrols = new Set(
+    ships.filter((ship) => space.root(ship).warFleet).map((ship) => space.root(ship).id),
+  );
+  assert.ok(traders.length > 20, `${systemId} keeps spawning trade traffic`);
+  assert.ok(
+    traders.every((ship) => ship.ambientGroup == null),
+    `${systemId} trade groups are not ambient raiders`,
+  );
+  assert.ok(patrols.size >= 1, `${systemId} spawns patrols beside its trade traffic`);
+  assert.ok(
+    patrols.size <= (space.sys.danger >= 5 ? 3 : 2),
+    `${systemId} patrols stay within the encounter cap`,
+  );
+  assert.equal(space.raidBudget(), 0, `${systemId} live patrols use up the shared budget`);
+}
+
 // ------------------------------------------------------------------ danger labels compare power
 {
   const gloam = systemsById.gloam,
@@ -356,6 +421,30 @@ for (const [tut, sys] of [
   const { game, space, session, spawned } = practiceFixture(72, tut, sys);
   Game.prototype.practiceRaider.call(game, session, space);
   assert.equal(spawned.length, 0, `no straggler for step ${tut} in ${JSON.stringify(sys)}`);
+}
+
+// A badly damaged practice raider keeps fighting, so the career kill can still land.
+{
+  const game = refineryGame();
+  const pilot = refineryPilot(game, 'Practice Pilot');
+  pilot.data.tut = killStep;
+  pilot.data.stellar = null;
+  game.spawnPlayer(pilot, 0, 0, 0, 0);
+  const space = game.spaces[pilot.data.sys];
+  const raider = [...space.ships.values()].find((ship) => ship.practiceOf === pilot.id);
+  assert.ok(raider, 'arriving with the kill goal open brings the practice raider');
+  raider.pers = 'cautious';
+  raider.armor = raider.st.armor * 0.05;
+  raider.shield = 0;
+  assert.equal(space.mayFlee(raider), false, 'a nearly dead practice raider does not run');
+  for (let tick = 0; tick < 100; tick++) {
+    space.t += 1;
+    raider.think = 0;
+    space.ai(raider);
+  }
+  assert.equal(raider.disabled, undefined, 'the practice raider is never left disabled');
+  assert.equal(space.ships.get(raider.id), raider, 'and it is still there to target');
+  assert.equal(raider.dead, false);
 }
 
 // ------------------------------------------------------------------ Caravel stock loadout

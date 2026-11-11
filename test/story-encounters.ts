@@ -105,7 +105,49 @@ try {
 } finally {
   Math.random = originalRandom;
 }
-assert.ok(maximumDistance > 12000, 'seeded 20-minute run reproduces abandoned hunter drift');
+assert.ok(
+  maximumDistance < 12000,
+  'seeded 20-minute post-death run keeps the hunter steering inside the system',
+);
+
+// The playtest trace: coasting away at top speed while already facing the destination.
+// Speed toward the destination, not total speed, decides whether the hunter may thrust.
+drifting.x = 0;
+drifting.y = 0;
+drifting.a = 0;
+drifting.vx = 0;
+drifting.vy = drifting.st.maxSpeed;
+drifting.dest = { x: 0, y: -1000 };
+drifting.think = 0;
+let runawayDistance = 0;
+seed = 9001;
+Math.random = () => {
+  seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+  return seed / 4294967296;
+};
+try {
+  driftSpace.ai(drifting);
+  assert.equal(drifting.inp.turn, 0, 'the runaway hunter is already facing its destination');
+  assert.equal(drifting.inp.thrust, 1, 'a hunter coasting away thrusts to turn back');
+  for (let frame = 0; frame < 60 / DT; frame++) {
+    driftSpace.t += DT;
+    driftSpace.ai(drifting);
+    step(drifting, drifting.st, drifting.inp);
+    runawayDistance = Math.max(runawayDistance, Math.hypot(drifting.x, drifting.y));
+  }
+} finally {
+  Math.random = originalRandom;
+}
+assert.ok(
+  runawayDistance < 60 * drifting.st.maxSpeed * 0.5,
+  `a full-speed runaway brakes and returns (max ${runawayDistance.toFixed(0)})`,
+);
+// Recovery on reentry still covers a target that ended up far away.
+drifting.target = deceased;
+drifting.x = 30000;
+drifting.y = 0;
+drifting.vx = 0;
+drifting.vy = 0;
 owner.data.sys = 'shoalight';
 owner.data.stellar = null;
 drifting.armor *= 0.75;
@@ -138,8 +180,46 @@ combatTarget.combatTarget = null;
 game.features.story.storyArrive(owner, space);
 assert.ok(Math.hypot(drifting.x, drifting.y) <= 1500);
 
+// In flight, the leash brings a stray hunter back without waiting for the captain to leave.
+// The captain's own lock on the hunter, or the hunter's lock on them, is not a fight at this range.
+const leashTick = () => {
+  space.t = Math.floor(space.t) + 1;
+  game.features.story.storyTick(owner, space, DT);
+};
+drifting.x = owner.ent!.x + 44000;
+drifting.y = owner.ent!.y;
+drifting.target = owner.ent;
+owner.ent!.target = drifting;
+leashTick();
+assert.ok(
+  Math.hypot(drifting.x - owner.ent!.x, drifting.y - owner.ent!.y) <= 1500,
+  'a hunter far from its captain is brought back in flight',
+);
+assert.equal(drifting.target, owner.ent, 'the leashed hunter resumes the encounter');
+owner.ent!.target = null;
+drifting.x = owner.ent!.x + 44000;
+const strayArmor = drifting.armor;
+combatTarget.target = drifting;
+leashTick();
+assert.equal(
+  drifting.x,
+  owner.ent!.x + 44000,
+  'the leash does not take a target out of another fight',
+);
+assert.equal(drifting.armor, strayArmor, 'the leash does not heal');
+combatTarget.target = null;
+drifting.x = owner.ent!.x + 11000;
+leashTick();
+assert.equal(drifting.x, owner.ent!.x + 11000, 'a target inside the leash is left alone');
+space.t = Math.floor(space.t) + 0.5;
+drifting.x = owner.ent!.x + 44000;
+game.features.story.storyTick(owner, space, DT);
+assert.equal(drifting.x, owner.ent!.x + 44000, 'the leash runs once a second, not every tick');
+leashTick();
+assert.ok(Math.hypot(drifting.x - owner.ent!.x, drifting.y - owner.ent!.y) <= 1500);
+
 space.kill(drifting, owner.ent);
 assert.equal(owner.data.story.active!.got, 1, 'survivor remains creditable after death/reentry');
 console.log(
-  `Story encounters passed; seeded 20-minute post-death drift max distance ${maximumDistance.toFixed(0)}.`,
+  `Story encounters passed; seeded 20-minute post-death drift max distance ${maximumDistance.toFixed(0)}, full-speed runaway max ${runawayDistance.toFixed(0)}.`,
 );

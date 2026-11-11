@@ -35,11 +35,22 @@ runtime:
   js_max_count: 4
 socket:
   write_timeout_ms: 60000
+match:
+  input_queue_size: 512
 ```
 
 The pool sizes are the local test configuration, not a production capacity
 recommendation. The longer HTTP write timeout is needed for legacy first-login
 verification; it does not change the match tick or gameplay heartbeat.
+
+`match.input_queue_size` caps how many captain messages wait for the next match
+tick. Nakama's default of 128 is too small: in local load tests it dropped
+52–87% of trades with 10–30 captains trading every 0.25–1 s. At 512, 10 captains
+trading every 250 ms and 30 trading every second lost none, but 20 captains
+trading every 250 ms (about 80 messages per second) still lost about a third.
+Messages that arrive while the queue is full are dropped, so raise the value
+further for busier worlds.
+
 The launcher runs compiled `server/main.ts`: without `SOLO` or `HOST_FRIENDS=1`, it selects
 `server/nakama-host.ts`, which serves static HTTP and public connection
 configuration only. It does not launch Nakama, relay gameplay or own a game timer.

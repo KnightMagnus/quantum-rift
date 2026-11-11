@@ -405,5 +405,68 @@ assertCondition(
     !secondEntry.s.ent,
   'next arena tick settles and releases the encounter',
 );
+// An even time-out is a draw: idle captains get no credits, rating or record change.
+function idleArenaPair(azureName: string, crimsonName: string) {
+  const pair = [fake(azureName), fake(crimsonName)];
+  for (const entry of pair) {
+    entry.s.data.sys = 'meridian';
+    entry.s.data.stellar = 'meridian-yards';
+    entry.send({ t: 'arena', op: 'queue', mode: '1v1' });
+  }
+  const idleMatch = requiredFixtureValue(
+    Object.values(originalState.matches).find((entry) =>
+      entry.teams.A.concat(entry.teams.B).includes(azureName),
+    ),
+  );
+  return { pair, idleMatch };
+}
+{
+  const { pair, idleMatch } = idleArenaPair('Idle Azure', 'Idle Crimson');
+  const creditsBefore = pair.map((entry) => entry.s.data.credits);
+  idleMatch.until = Date.now() - 1;
+  game.features.frontier.arenaTick();
+  assertCondition(!originalState.matches[idleMatch.id], 'an idle time-out ends the match');
+  assertCondition(
+    pair.every((entry, index) => entry.s.data.credits === creditsBefore[index]),
+    'an idle time-out draw pays nobody',
+  );
+  assertCondition(
+    pair.every(
+      (entry) =>
+        (entry.s.data.arena?.rating ?? 1000) === 1000 &&
+        !entry.s.data.arena?.w &&
+        !entry.s.data.arena?.l,
+    ),
+    'an idle time-out draw leaves rating and record unchanged',
+  );
+  assertCondition(
+    pair.every((entry) =>
+      entry
+        .all('toast')
+        .some((toastMessage: { msg: string }) => /Draw, no payout/.test(toastMessage.msg)),
+    ),
+    'both captains are told the match was a draw',
+  );
+  assertCondition(
+    pair.every((entry) => !entry.s.ent && entry.s.data.stellar === 'meridian-yards'),
+    'draw returns both captains to port',
+  );
+}
+{
+  const { pair, idleMatch } = idleArenaPair('Even Azure', 'Hit Crimson');
+  const crimson = pair.find((entry) => idleMatch.teams.B.includes(entry.s.data.name));
+  const azure = pair.find((entry) => idleMatch.teams.A.includes(entry.s.data.name));
+  const crimsonShip = requiredFixtureValue<FixtureEntity>(requiredFixtureValue(crimson).s.ent);
+  crimsonShip.shield = Math.max(0, crimsonShip.shield - 1);
+  const azureCredits = requiredFixtureValue(azure).s.data.credits;
+  idleMatch.until = Date.now() - 1;
+  game.features.frontier.arenaTick();
+  assertCondition(
+    requiredFixtureValue(azure).s.data.credits > azureCredits &&
+      requiredFixtureValue(requiredFixtureValue(azure).s.data.arena).w === 1 &&
+      requiredFixtureValue(requiredFixtureValue(crimson).s.data.arena).l === 1,
+    'a time-out with uneven hull still has a winner',
+  );
+}
 console.log('ALL 0.7 TESTS PASSED');
 process.exit(0);

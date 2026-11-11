@@ -280,6 +280,12 @@ export type Entity = EntityFeatureState & {
    */
   rescueT?: number;
 
+  /** Armada rescues this captain has received in the current fight. */
+  rescueCount?: number;
+
+  /** Simulation timestamp of this captain's last Armada rescue. */
+  lastRescueT?: number;
+
   /** Parent carrier entity ID if this is a launched fighter drone. */
   fighterOf?: number;
 
@@ -1002,6 +1008,29 @@ export class Space {
    * @param entity Ship entity to remove.
    * @param reason Visual flash effect trigger reason (e.g. 'jump').
    */
+  /**
+   * Sends a boarded and rescued NPC ship on its way under its own power. It flies
+   * to a landing port in this system, or toward the edge to jump out if there is none.
+   * @param entity Rescued ship entity.
+   * @param armorShare Fraction of full armor the rescue restores.
+   */
+  releaseRescuedShip(entity: Entity, armorShare: number): void {
+    entity.disabled = false;
+    entity.armor = Math.max(entity.armor, entity.st.armor * armorShare);
+    entity.inp = { thrust: 0, turn: 0 };
+    entity.target = null;
+    entity.fireAt = null;
+    entity.aggro.clear();
+    entity.owner = null;
+    const ports = this.ports();
+    if (ports.length) {
+      entity.ai = 'trade';
+      entity.dest = pick(ports);
+    } else {
+      entity.ai = 'leave';
+      entity.dest = null;
+    }
+  }
   remove(entity: Entity, reason?: string): void {
     if (reason === 'jump' && isQuevariDefender(entity)) {
       keepQuevariPatrol(entity);
@@ -1704,7 +1733,8 @@ export class Space {
       });
       if (!initial) this.events.push(['flash', Math.round(entity.x), Math.round(entity.y)]);
       if (kind === 'patrol') entity.warFleet = true;
-      entity.ambientGroup = lead?.id ?? entity.id;
+      // Trade groups stay out of the shared raid budget; only armed groups count as encounters.
+      if (kind !== 'trade') entity.ambientGroup = lead?.id ?? entity.id;
       if (!lead) lead = entity;
     }
     return lead;
@@ -2099,9 +2129,18 @@ export class Space {
                   y: pick(this.sys.stellars).y + random2(-400, 400),
                 }
               : { x: random2(-2000, 2000), y: random2(-2000, 2000) };
-        this.steer(entity, entity.dest.x, entity.dest.y, false);
-        entity.inp.thrust =
-          entity.inp.thrust && Math.hypot(entity.vx, entity.vy) < entity.st.maxSpeed * 0.6 ? 1 : 0;
+        const distance = this.steer(entity, entity.dest.x, entity.dest.y, false);
+        // Story kill targets cap cruise by speed toward the destination, not total speed: one
+        // coasting away at full speed must still thrust to turn back, or its objective drifts
+        // out of the system. Ambient traffic keeps the total-speed cap its encounter balance uses.
+        let cruiseSpeed = Math.hypot(entity.vx, entity.vy);
+        if (entity.storyKill)
+          cruiseSpeed =
+            distance > 1
+              ? ((entity.dest.x - entity.x) * entity.vx + (entity.dest.y - entity.y) * entity.vy) /
+                distance
+              : 0;
+        entity.inp.thrust = entity.inp.thrust && cruiseSpeed < entity.st.maxSpeed * 0.6 ? 1 : 0;
         break;
       }
       case 'escort': {
@@ -2664,7 +2703,9 @@ export class Space {
         (!entity2 || !this.game.combatAssist.valid(this, this.root(entity), entity2))
       )
         continue;
-      if (weapon.bay && entity.player) continue; // bays launch and recall on a tap of F (toggleDrones)
+      // Manual pilots launch and recall bays with F (toggleDrones). Assist launches them
+      // at its target the same way NPC carriers do.
+      if (weapon.bay && entity.player && !automated) continue;
       const wantFire = entity.autoCombat
         ? !!entity2
         : entity.player

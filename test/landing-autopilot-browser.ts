@@ -211,8 +211,14 @@ try {
               ).recordLandingNotice(node.textContent);
       }).observe(document.getElementById('toasts')!, { childList: true });
     });
+    // NAV names the body L is about to land on.
+    await page.waitForFunction(() =>
+      document.getElementById('navto')!.textContent!.endsWith(' (L to land)'),
+    );
+    const navReadout = (await page.locator('#navto').textContent())!.replace(' (L to land)', '');
     await page.keyboard.press('l');
     await page.waitForFunction((identifier) => G.auto?.id === identifier, landingScenario2.port);
+    assert.equal(navReadout, STELLARS[landingScenario2.port].name, 'NAV named the landing body');
     const attempt = await page.evaluate(() => ({ phase: G.auto?.phase, settled: G.auto?.settled }));
     for (let repeat = 0; repeat < 10; repeat++) await page.keyboard.press('l');
     assert.equal(
@@ -392,6 +398,10 @@ try {
   await deniedPage.waitForFunction(() => G.you && G.landed);
   await deniedPage.click('#depart');
   await deniedPage.waitForFunction(() => G.view && !G.landed);
+  // L follows NAV, so point NAV back at the refusing port the ship just left.
+  await deniedPage.evaluate(() => {
+    G.navStellar = 'luna';
+  });
   const refusalNotices: string[] = [];
   await deniedPage.exposeFunction('recordRefusalNotice', (message: string) =>
     refusalNotices.push(message),

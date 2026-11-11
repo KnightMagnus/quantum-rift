@@ -1953,7 +1953,7 @@
     },
     "756": {
       "id": 756,
-      "name": "Tomas Eriksen-Kai",
+      "name": "Henrik Eriksen-Kai",
       "sub": "Wingmate: Lifeline",
       "cat": "Escorts for hire",
       "faction": "quantum",
@@ -1986,8 +1986,8 @@
       ],
       "size": 116,
       "glow": true,
-      "desc": "Tomas's Lifeline: a long-range rescue ship with a ring of drone cradles and two tractor arms. Its Mite drones swarm anything that threatens you, and it keeps its own armor and fuel topped up.",
-      "pilot": "WINGMATE: TOMAS ERIKSEN-KAI\n\nA long-range explorer and medic. Tomas keeps his tanks full and his crew calm, and he has pulled more than one pilot out of a dead ship.\n\nShip: the Lifeline, a one-of-a-kind rescue carrier.",
+      "desc": "Henrik's Lifeline: a long-range rescue ship with a ring of drone cradles and two tractor arms. Its Mite drones swarm anything that threatens you, and it keeps its own armor and fuel topped up.",
+      "pilot": "WINGMATE: HENRIK ERIKSEN-KAI\n\nA long-range explorer and medic. Henrik keeps his tanks full and his crew calm, and he has pulled more than one pilot out of a dead ship.\n\nShip: the Lifeline, a one-of-a-kind rescue carrier.",
       "img": "ships/756_yard.png"
     },
     "757": {

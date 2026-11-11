@@ -490,9 +490,11 @@ const JobOperations: JobOperations = {
             text: 'Lyra, Miri and Solenne hand you a digital copy of their album. "For our favourite captain. Keep us on the radio." Super-Idol Radio has been added to your console.',
           });
         }
+        // A commission step pays its own faction wherever the survey is filed.
+        const standingFaction = mission.chain?.fac || systemsById[stellarBody.system].faction;
         if (mission.syn !== 'hit')
-          playerData.rep[systemsById[stellarBody.system].faction] = clampStanding(
-            (playerData.rep[systemsById[stellarBody.system].faction] || 0) + 2,
+          playerData.rep[standingFaction] = clampStanding(
+            (playerData.rep[standingFaction] || 0) + 2,
           );
         if (Math.random() < 0.35) {
           const materialId = MATERIALS[Math.floor(Math.random() * 3)],

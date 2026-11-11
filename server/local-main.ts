@@ -61,7 +61,7 @@ const assets: GameAssets = JSON.parse(
 /**
  * Database persistence manager for player accounts and world state.
  */
-const releaseFriendSave = friendConfig
+const friendSaveOwner = friendConfig
   ? acquireFriendSaveOwner(friendConfig.dataDirectory, ROOT)
   : undefined;
 const database: Database = new Database(
@@ -312,6 +312,8 @@ server.on('error', (error2) => {
 });
 
 server.listen(PORT, friendConfig?.bind || process.env.HOST || '127.0.0.1', () => {
+  // Before the ready line, so anything that waits for it sees a clearable lock.
+  friendSaveOwner?.markRunning();
   console.log(
     `Quantum Rift ${VERSION}${FRIENDS ? ' (friend game)' : SOLO ? ' (solo game)' : ''} running at http://localhost:${PORT}`,
   );
@@ -346,10 +348,15 @@ function shutdown(exitCode = 0): void {
   server.close();
   try {
     database.flush();
-    releaseFriendSave?.();
+    friendSaveOwner?.release();
     process.exit(exitCode);
   } catch (error) {
     console.error('Save shutdown failed; ownership lock retained for operator recovery.', error);
+    try {
+      friendSaveOwner?.markNeedsRecovery();
+    } catch {
+      /* The retained lock already fails closed. */
+    }
     process.exit(1);
   }
 }
