@@ -9,7 +9,8 @@ export function canvasBackend(override: string | null): boolean {
   if (!probe) return true;
   const info = probe.getExtension('WEBGL_debug_renderer_info');
   const renderer = info ? String(probe.getParameter(info.UNMASKED_RENDERER_WEBGL)) : '';
-  const software = softwareRenderer(renderer);
+  const software =
+    softwareRenderer(renderer) || Number(probe.getParameter(probe.MAX_TEXTURE_SIZE)) < 8192;
   probe.getExtension('WEBGL_lose_context')?.loseContext();
   return software;
 }

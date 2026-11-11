@@ -67,6 +67,8 @@ export interface ArmadaPayload {
     jobSlots: number;
     /** Generic story status, never a hidden chapter title or destination. */
     storyStatus?: string;
+    /** Current reason a captain cannot follow, without disclosing hidden destinations. */
+    followStatus?: string;
   }>;
   pending: string[];
   follow: boolean;

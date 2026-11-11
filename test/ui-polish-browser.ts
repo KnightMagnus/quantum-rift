@@ -318,6 +318,71 @@ try {
   await page.keyboard.press('Enter');
   assert.equal(await page.locator('#cback').count(), 0);
   assert.equal(await page.evaluate(() => JSON.stringify(G.you!.story)), storyBefore);
+  await page.evaluate(() => {
+    const stale = document.createElement('button');
+    stale.id = 'stale-abandon-fixture';
+    stale.dataset.act = 'abandon';
+    stale.dataset.id = 'already-removed-job';
+    stale.textContent = 'Abandon removed job';
+    document.getElementById('landbody')!.prepend(stale);
+    stale.click();
+  });
+  assert.equal(
+    await page.locator('#askbox').isVisible(),
+    false,
+    'stale abandonment controls cannot reopen confirmation',
+  );
+  await page.evaluate(async () => {
+    G.ltab = 'jobs';
+    G.landed!.offers.unshift({
+      ...G.landed!.offers[0],
+      id: 'reward-summary-fixture',
+      type: 'quest',
+      title: 'Reward summary fixture',
+      text: 'Local contract.',
+      giver: 'Test contact',
+      steps: 1,
+      sys: G.sys!,
+      rewardText: undefined,
+    });
+    (await import('/ui.js')).renderLanded();
+  });
+  const rewardCard = page.locator('#landbody .quest').filter({ hasText: 'Reward summary fixture' });
+  assert.equal(await rewardCard.count(), 1);
+  assert.doesNotMatch(await rewardCard.innerText(), /undefined|finishing earns\s*$/);
+  for (const [width, height, zoom] of [
+    [360, 640, 1.4],
+    [1280, 720, 1],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await scale(page, zoom);
+    await page.evaluate(() => {
+      const tutorial = document.getElementById('tut')!;
+      tutorial.classList.remove('hidden', 'mini');
+      document.getElementById('tutx')!.textContent = 'A long career instruction. '.repeat(100);
+    });
+    const tutorial = page.locator('#tut');
+    const bounds = await tutorial.boundingBox();
+    assert(
+      bounds &&
+        bounds.x >= 0 &&
+        bounds.y >= 0 &&
+        bounds.x + bounds.width <= width + 1 &&
+        bounds.y + bounds.height <= height + 1,
+      'long career instructions stay inside narrow/scaled and desktop viewports',
+    );
+    assert(
+      await tutorial.evaluate((element) => element.scrollHeight > element.clientHeight),
+      'long instructions scroll',
+    );
+    await tutorial.evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+    assert(
+      await tutorial.evaluate((element) => element.scrollTop > 0),
+      'instructions remain reachable',
+    );
+  }
   await page.close();
 
   const index = await browser.newPage({ viewport: { width: 3440, height: 1440 } });

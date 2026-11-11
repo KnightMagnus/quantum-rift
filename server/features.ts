@@ -229,6 +229,7 @@ export type HostileCapabilities = Pick<
 export type StoryCapabilities = Pick<
   FeatureCore,
   | 'A'
+  | 'spaces'
   | 'broadcast'
   | 'db'
   | 'landed'
@@ -237,6 +238,7 @@ export type StoryCapabilities = Pick<
   | 'canBeginTableDeparture'
   | 'log'
   | 'send'
+  | 'sessions'
   | 'toast'
   | 'tradeIn'
   | 'you'
@@ -245,7 +247,13 @@ export type StoryCapabilities = Pick<
   Pick<BoundOperations<DocksOperations>, 'leadChanged'> &
   Pick<
     BoundOperations<StoryOperations>,
-    'storyComplete' | 'storyDone' | 'storyGift' | 'storyInit' | 'storyOffer'
+    | 'storyComplete'
+    | 'storyDone'
+    | 'storyGift'
+    | 'storyInit'
+    | 'storyOffer'
+    | 'storyArrive'
+    | 'storyProgress'
   > &
   Pick<BoundOperations<QuestOperations>, 'questReconcile'> & {
     nhal: FeatureServices['nhal'];
@@ -346,6 +354,7 @@ export type QuestsCapabilities = Pick<
   | 'toast'
   | 'you'
   | 'completeRemoteQuest'
+  | 'completeOnLanding'
 > &
   Pick<
     BoundOperations<QuestOperations>,
@@ -423,7 +432,8 @@ export type CoopCapabilities = Pick<
   > &
   Pick<BoundOperations<FrontsOperations>, 'goal' | 'mods'> &
   Pick<BoundOperations<FrontierOperations>, 'notify'> &
-  Pick<BoundOperations<HangarOperations>, 'officerXp'>;
+  Pick<BoundOperations<HangarOperations>, 'officerXp'> &
+  Pick<BoundOperations<StoryOperations>, 'deepLocked'>;
 // Explicit feature composition. No method is installed on Game or another feature.
 import { TowingOperations } from './towing.ts';
 import { IndustrialOperations } from './industrial.ts';
@@ -950,6 +960,9 @@ export function createFeatures(core: Game): FeatureServices {
     get nhal() {
       return features.nhal;
     },
+    get spaces() {
+      return core.spaces;
+    },
     get A() {
       return core.A;
     },
@@ -969,6 +982,15 @@ export function createFeatures(core: Game): FeatureServices {
     },
     log: core.log.bind(core),
     send: core.send.bind(core),
+    get sessions() {
+      return core.sessions;
+    },
+    get storyArrive() {
+      return features.story.storyArrive;
+    },
+    get storyProgress() {
+      return features.story.storyProgress;
+    },
     get storyComplete() {
       return features.story.storyComplete;
     },
@@ -1293,6 +1315,7 @@ export function createFeatures(core: Game): FeatureServices {
   features.living = bindOperations(LivingOperations, livingCapabilities);
 
   const questsCapabilities: QuestsCapabilities = {
+    completeOnLanding: (...args) => core.completeOnLanding(...args),
     completeRemoteQuest: (...args) => core.completeRemoteQuest(...args),
     get questReconcile() {
       return features.quests.questReconcile;
@@ -1435,6 +1458,9 @@ export function createFeatures(core: Game): FeatureServices {
     },
     set duels(value) {
       core.duels = value;
+    },
+    get deepLocked() {
+      return features.story.deepLocked;
     },
     get goal() {
       return features.fronts.goal;

@@ -1486,6 +1486,7 @@
     },
     "744": {
       "id": 744,
+      "npcOnly": true,
       "name": "Ina Que'var",
       "sub": "The Great Sail",
       "cat": "Que'vari",

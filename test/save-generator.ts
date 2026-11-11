@@ -79,7 +79,7 @@ assert.deepEqual(
   'generator must contain every player-eligible hull and no NPC-only hulls',
 );
 assert.ok(
-  !catalog.ships.some((ship) => ship.id >= 900 && ship.id <= 926),
+  !catalog.ships.some((ship) => ship.id === 744 || (ship.id >= 900 && ship.id <= 926)),
   'Index, Nhal and story-only ark hulls cannot be minted by the beta tool',
 );
 assert.deepEqual(

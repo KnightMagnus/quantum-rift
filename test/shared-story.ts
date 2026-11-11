@@ -2,6 +2,15 @@ import assert from 'node:assert/strict';
 import { refineryGame, refineryPilot } from './helpers/refinery-fixture.ts';
 import { STORY } from '../shared/story.ts';
 import { storyParticipant } from '../server/shared-story.ts';
+import { parseClientAction } from '../shared/wire-commands.ts';
+import type { FixtureSession } from './helpers/refinery-fixture.ts';
+
+function armadaAction(session: FixtureSession, op: string, name?: string) {
+  const packet = { t: 'armada', op, ...(name ? { name } : {}) };
+  assert.equal(parseClientAction(packet), packet, 'Story controls survive the wire parser');
+  game.onMessage(session, packet);
+}
+
 const game = refineryGame();
 game.solo = false;
 const owner = refineryPilot(game, 'Story owner');
@@ -33,16 +42,16 @@ const target = [...space.ships.values()].find(
   (entity) => entity.story === owner.id && entity.storyKill,
 )!;
 assert.equal(space.canHit(helper.ent!, target), false);
-game.features.coop.armadaOp(owner, { op: 'storyShare' });
+armadaAction(owner, 'storyShare');
 assert.equal(owner.sharedStory, undefined, 'Owner cannot opt helpers in');
-game.features.coop.armadaOp(helper, { op: 'storyAssist', name: owner.name! });
+armadaAction(helper, 'storyAssist', owner.name!);
 assert.equal(space.canHit(helper.ent!, target), false, 'Consent alone cannot start fight');
-game.features.coop.armadaOp(owner, { op: 'storyShare' });
+armadaAction(owner, 'storyShare');
 assert.equal(storyParticipant(game, target, helper.id), true);
 assert.equal(space.canHit(helper.ent!, target), true);
 assert.equal(space.canHit(target, helper.ent!), true, 'Shared enemies can retaliate');
 assert.equal(space.canHit(stranger.ent!, target), false);
-game.features.coop.armadaOp(stranger, { op: 'storyAssist', name: owner.name! });
+armadaAction(stranger, 'storyAssist', owner.name!);
 assert.equal(
   storyParticipant(game, target, stranger.id),
   false,
@@ -53,7 +62,29 @@ assert.equal(space.canHit(wing, target), true, 'Consenting helper wings particip
 const credits = helper.data.credits;
 space.kill(target, helper.ent!);
 assert.equal(owner.data.story.active!.got, 1);
-assert.equal(helper.data.story.active!.got, 0, 'Helper never inherits owner progress');
+assert.equal(
+  helper.data.story.active!.got,
+  1,
+  'Same-step consenting helper shares objective progress',
+);
+assert.equal(stranger.data.story.active!.got, 0, 'Late consent cannot receive shared credit');
+assert.equal(
+  [...space.ships.values()].filter((actor) => actor.story === helper.id && actor.storyKill).length,
+  0,
+  'Frozen same-step helpers do not keep duplicate enemies',
+);
+game.features.story.storyArrive(helper, space);
+assert.equal(
+  [...space.ships.values()].filter((actor) => actor.story === helper.id && actor.storyKill).length,
+  0,
+  'Arrival cannot respawn duplicate encounter during shared fight',
+);
+game.features.story.storyProgress(owner, target);
+assert.equal(
+  helper.data.story.active!.got,
+  1,
+  'Repeated kill notification awards no duplicate credit',
+);
 const remaining = [...space.ships.values()].find(
   (entity) => entity.story === owner.id && entity.storyKill,
 )!;
@@ -77,7 +108,7 @@ assert.ok(
   'Ordinary bounty may be paid; no story completion was awarded',
 );
 console.log(
-  'Shared story: explicit two-sided consent, frozen roster, retaliating enemies, owner-only progress and departure/disconnect/expiry denial passed.',
+  'Shared story: explicit two-sided consent, frozen roster, retaliating enemies, same-step objective progress and departure/disconnect/expiry denial passed.',
 );
 
 const defeat = refineryPilot(game, 'Defeat report');
@@ -116,8 +147,8 @@ const creature = [...nhalSpace.ships.values()].find(
   (entity) => entity.story === owner.id && entity.storyKill,
 )!;
 assert.ok(creature);
-game.features.coop.armadaOp(helper, { op: 'storyAssist', name: owner.name! });
-game.features.coop.armadaOp(owner, { op: 'storyShare' });
+armadaAction(helper, 'storyAssist', owner.name!);
+armadaAction(owner, 'storyShare');
 assert.equal(
   game.features.nhal.allow(nhalSpace, helper.ent!, creature),
   true,
@@ -136,14 +167,15 @@ assert.equal(
   false,
   'Returning on a new flight cannot revive old assistance',
 );
-game.features.coop.armadaOp(helper, { op: 'storyAssist', name: owner.name! });
+armadaAction(helper, 'storyAssist', owner.name!);
 assert.equal(
   storyParticipant(game, creature, helper.id),
   false,
   'New consent cannot rewrite the frozen flight roster',
 );
-game.features.coop.armadaOp(owner, { op: 'storyStop' });
-game.features.coop.armadaOp(owner, { op: 'storyShare' });
+armadaAction(owner, 'storyStop');
+armadaAction(helper, 'storyAssist', owner.name!);
+armadaAction(owner, 'storyShare');
 assert.equal(
   storyParticipant(game, creature, helper.id),
   true,
@@ -156,4 +188,106 @@ assert.equal(
   storyParticipant(game, creature, helper.id),
   false,
   'Leaving and rejoining cannot revive consent',
+);
+
+// A fresh fight exercises full completion, branch denial and recovery after withdrawal.
+const party = [owner, helper, stranger];
+for (const actor of space.ships.values())
+  if (actor.story && party.some((session) => actor.story === session.id)) space.remove(actor);
+for (const session of party) {
+  session.data.armada = 'test';
+  session.data.story = {
+    step: STORY.indexOf(mission),
+    done: [],
+    flags: { d1: 'concord' },
+    active: { id: mission.id, got: 0, spawned: false, ready: false },
+  };
+  session.data.sys = mission.sys!;
+  session.data.stellar = null;
+  game.spawnPlayer(session, 0, 0, 0, 0);
+}
+stranger.data.story.flags!.d1 = 'hollow';
+armadaAction(helper, 'storyAssist', owner.name!);
+armadaAction(stranger, 'storyAssist', owner.name!);
+armadaAction(owner, 'storyShare');
+const sharedTargets = [...space.ships.values()].filter(
+  (actor) => actor.story === owner.id && actor.storyKill && actor.storyMission === mission.id,
+);
+const beforeSharedStep = helper.data.story.step;
+for (const [index, actor] of sharedTargets.entries()) {
+  if (index === 2) stranger.data.story.flags!.d1 = 'concord';
+  space.kill(actor, helper.ent!);
+}
+assert.equal(owner.data.story.active!.ready, true);
+assert.equal(helper.data.story.active!.ready, true, 'Eligible helper finishes the same objective');
+assert.equal(
+  stranger.data.story.active!.got,
+  0,
+  'Branch-ineligible helper cannot gain chapter credit partway through a frozen fight',
+);
+assert.equal(
+  helper.data.story.done.includes(mission.id),
+  false,
+  'Combat cannot skip reporting or grant the chapter reward',
+);
+assert.equal(
+  helper.data.story.step,
+  beforeSharedStep,
+  'Shared combat does not report or advance the chapter',
+);
+
+// Stopping assistance recovers unfinished personal targets without resetting existing progress.
+for (const session of [owner, helper]) {
+  session.data.story.active = { id: mission.id, got: 1, ready: false, spawned: false };
+  game.features.story.storyArrive(session, space);
+}
+armadaAction(owner, 'storyStop');
+armadaAction(helper, 'storyAssist', owner.name!);
+armadaAction(owner, 'storyShare');
+assert.equal(
+  [...space.ships.values()].some((actor) => actor.story === helper.id && actor.storyKill),
+  false,
+);
+armadaAction(helper, 'storyStop');
+game.features.story.storyTick(helper, space, 0.1);
+assert.equal(helper.data.story.active!.got, 1, 'Recovery retains previously earned progress');
+assert.equal(
+  [...space.ships.values()].filter((actor) => actor.story === helper.id && actor.storyKill).length,
+  mission.count! - 1,
+  'Withdrawal resumes only the unfinished personal encounter',
+);
+
+// Follow routes respect each captain's gate and warn both sides without granting access.
+helper.data.armadaFollow = true;
+helper.armadaFormationLeader = owner.data.name;
+helper.ent!.state = 'fly';
+helper.ent!.autoCombat = false;
+helper.data.story.done = [];
+const helperBeforeGate = helper.sock.out.length;
+const ownerBeforeGate = owner.sock.out.length;
+game.features.coop.armadaLeaderJump(owner, 'quantum-rift');
+assert.ok(
+  helper.sock.out
+    .slice(helperBeforeGate)
+    .some((packet) => packet.t === 'toast' && /Cannot follow/.test(packet.msg)),
+);
+assert.ok(
+  owner.sock.out
+    .slice(ownerBeforeGate)
+    .some((packet) => packet.t === 'toast' && packet.msg.includes(helper.data.name)),
+);
+assert.equal(
+  helper.sock.out.slice(helperBeforeGate).some((packet) => packet.t === 'follow'),
+  false,
+);
+assert.equal(game.features.story.deepLocked(helper.data, 'quantum-rift'), true);
+owner.data.sys = 'quantum-rift';
+const roster = game.features.coop.armadaPayload(owner.data);
+assert.ok(roster && 'members' in roster && roster.members);
+assert.equal(
+  roster.members.find((member) => member.name === helper.data.name)?.followStatus,
+  'Cannot follow: story access required',
+);
+console.log(
+  'Shared story wire ingress, same-step completion, branch denial, recovery and gated following passed.',
 );

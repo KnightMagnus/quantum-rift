@@ -179,18 +179,18 @@ export const STORY: StoryMission[] = [
     hull: 744,
     pay: 0,
     rep: 20,
-    text: 'Above Ina Lumen, the Ina Que\'var unfurls her sails: a great sail-ship like a whale of white pearl, her light-blue sails spreading one after another until they fill the sky.\n\n"She has slept since the Umbral came," Sel\'ani says. "She would not wake for us. She woke for you." The elders have given her to you, freely. Her old crew is already aboard, and they are singing.',
-    brief: "Take the helm of the Ina Que'var.",
-    acc: 'Take the helm',
+    text: 'Above Ina Lumen, the Ina Que\'var unfurls her sails: a great sail-ship like a whale of white pearl, her light-blue sails spreading one after another until they fill the sky.\n\n"She has slept since the Umbral came," Sel\'ani says. "She would not wake for us. She woke for you." Her old crew is already aboard, singing as she turns to patrol Ina Lumen. "She will guard our home," Sel\'ani says.',
+    brief: "Watch the Ina Que'var awaken to defend Ina Lumen.",
+    acc: 'Watch her awaken',
     ref: 'Not yet',
-    done: "The Ina Que'var is yours. Your old ship is waiting in your drydock (or was sold for you, if every berth was full).",
+    done: "The Ina Que'var begins her patrol of Ina Lumen. She and her crew will remain here to defend the Que'vari capital. Your ship is unchanged.",
   },
   ...CONTINUATION,
   ...PART_TWO,
 ];
 
 /**
- * Hull ID of the legendary Ina Que'var reward ship awarded at the conclusion of the story.
+ * Hull ID of the Ina Que'var, the non-playable Que'vari capital defender.
  */
 export const STORY_SHIP: number = 744;
 

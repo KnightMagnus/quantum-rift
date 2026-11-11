@@ -72,6 +72,10 @@ export interface StoryFlags {
   title?: string;
 }
 export interface SavedStory {
+  /** Original retired flagship fittings retained for save recovery, never flyable inventory. */
+  retiredFlagships?: { ship: ShipLoadout; refund: number }[];
+  /** One-time login explanation for retired player-owned flagship replacements. */
+  retiredFlagshipNotice?: boolean;
   /** Reward-free portal space has no dock; resume the actual ship there. */
   flight?: { sys: string; x: number; y: number; a: number };
   /** Persistent decisions and personal presentation gates. */

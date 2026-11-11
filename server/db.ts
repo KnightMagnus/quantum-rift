@@ -47,6 +47,10 @@ export interface ArmadaState {
 
 /** Persisted galaxy world state data. */
 export type WorldData = FeatureWorldState & {
+  /** Persistent capital patrol unlock, independent of resident online accounts. */
+  quevariDefenderAwake?: boolean;
+  /** Destruction is permanent; later arrivals cannot recreate the unique ship. */
+  quevariDefenderDestroyed?: boolean;
   /** One saved security patrol across Concord territory. */
   qcsFleet?: QcsFleetState;
   armadas: Record<string, ArmadaState>;

@@ -2043,7 +2043,7 @@ every combat matchup or long-running server population.
 
 `recovery-safety.ts` also runs `encounter-feedback.ts`. Actual Dreamer, Watcher and Kraken AI windups supply range/countdown data; cancellation and resolution remove it. Recipient-visible IDs and live story-helper consent gate all encounter metadata. Tests cover generic boss health without invented timers and narrow-canvas health labels and world-scaled danger circles. Canvas fixtures verify draw commands, not browser screenshot placement.
 
-`shared-story.ts` and `story-pacing.ts` cover two-sided assistance consent, frozen helper sessions, owner-only progress, failed-closed departure/disconnect/expiry, insurance history, alternate public report ports, one-time rewards and ordinary transport preparation premiums. `combat-assist.ts` distinguishes range, alignment and ammo failure from normal cooldown. `responsive-hud-browser.ts` checks the Captain log at five desktop sizes, scroll reachability and Escape dismissal.
+`shared-story.ts` and `story-pacing.ts` cover wire-parsed two-sided assistance consent, frozen helper sessions, same-step shared objective progress, duplicate-encounter suppression, failed-closed departure/disconnect/expiry, insurance history, alternate public report ports, one-time rewards and ordinary transport preparation premiums. `combat-assist.ts` distinguishes range, alignment and ammo failure from normal cooldown. `responsive-hud-browser.ts` checks the Captain log at five desktop sizes, scroll reachability and Escape dismissal.
 
 ## Flight feedback (`flight-feedback`) and multi-jump Follow
 
@@ -2056,3 +2056,15 @@ every combat matchup or long-running server population.
 ## Regional story continuation
 
 `milky-way-world.ts` checks the separate regional graph, reciprocal local lanes, story-gated station sites, authored planetary bodies, outer-orbit distance ratios, Luna size and return-mouth clearance. It also checks inner-world size order, round major moons and irregular minor moons, ring clearance for Saturn and Uranus moons, the return mouth beside Uranus and the stationary Rift arrival point facing Vigil's Rest. `part-two-fleets.ts` checks regional traffic and civilian/combat hull eligibility. `type0-hulls.ts` checks the 25 Type 0 hulls against their Concord descendants (sheets, stat lineage, tech floor, size), that Milky Way traffic, Freefolk and Unsworn pools and Milky Way shipyards carry no Concord hulls, that Confederation and Personal Station yards sell Type 0s while Index yards sell none, and that Rift shipyards still sell Concord hulls and no Type 0. `freefolk-hulls.ts` checks that the nine unarmed Freefolk hulls load with their sheets and yard pictures, that Freefolk trade groups fly only Freefolk hulls in Index and Confederation space, and that all three Index station shipyards sell exactly the Freefolk hulls while Confederation yards sell none of them. `unsworn-hulls.ts` checks that the six Unsworn hulls register with their sheets, glow and yard artwork, that Unsworn traffic flies only Unsworn traders with the Shrike as its escort, and that Commonhold stays out of every traffic pool, faction hull list and shipyard. `part-two-story.ts` exercises mission progression, navigation rejection, battle objectives, ending gates, withdrawal and earned fleet spawning. `part-two-art-browser.ts` decodes station and ship sheets, captures the complete Sol layout, checks crossing input locks, holds story pop-ups until the crossing animation ends, and verifies the return mouth draws the Quantum Rift atlas rather than the ordinary wormhole atlas. These renderer captures are private verification evidence, not public story screenshots.
+
+### Capital defender
+
+`quevari-defender.ts` covers awakening through the message handler without replacing
+the captain’s ship, local-only patrol spawning, hostile acquisition, no retreat or
+age-out, and boarding denial. Legacy active and stored hulls receive replacement
+freighters and one-time assessed-value refunds while retaining original loadout
+records, cargo, bridge assignments, hull UIDs and the unique progression outfit.
+
+## Save and mission recovery
+
+`reliability-recovery.ts` exercises the reviewed generated-field spread migration with preserved depletion, ore parcels and a pre-migration checkpoint, docked reconnects in both galaxies, mandatory destruction targets, convoy arrival and loss, and rescue boarding clearance outside transit mouths. Unrecognized mining geometry still requires a separate migration. `quest-directions.ts` covers immediate same-port quest acceptance and duplicate offer IDs. `content-validation.ts` rejects unknown port commodity keys. `excalibur-contracts.ts` covers renderer selection for 4096-limit hardware; `ui-polish-browser.ts` checks long career cards at narrow/scaled sizes and absent reward summaries.

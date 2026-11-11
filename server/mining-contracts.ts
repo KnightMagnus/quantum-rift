@@ -70,6 +70,8 @@ export type MiningParcel = LootItem & {
 };
 export type SavedMiningLoot = FloatingLoot & { it: MiningParcel; expires: number };
 export type SavedField = {
+  /** Original field checkpoint before the generated-layout migration; never active inventory. */
+  geometryBackup?: Omit<SavedField, 'geometryBackup'>;
   config: string;
   rocks: SavedRockGeneration[];
   parcels: SavedMiningLoot[];
