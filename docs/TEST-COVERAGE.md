@@ -2032,8 +2032,11 @@ Authored remote quest observations and collections are covered by the docked-pro
 
 `story-encounters.ts` checks patrol and wing final hits, independent captain objectives,
 unchanged generic kill accounting, absent-owner denial, stale chapters and repeated credit.
-It reproduces abandoned hunter drift with seeded AI and movement, then checks bounded
-recovery on reentry without healing, duplicate targets or moving ships in active combat.
+A seeded 20-minute post-death run with the real AI and movement keeps the hunter inside
+the system, and a hunter coasting away at top speed while facing its destination thrusts
+and turns back. Recovery on reentry, and the once-a-second leash in flight, bring a target
+more than 12,000 units from its captain back without healing it or duplicating it. The
+captain's own lock does not block the leash; a target in another captain's fight stays put.
 The simulation does not establish behavior across every random seed or live multiplayer latency.
 
 ## Concord security fleet (`qcs-security-fleet`)
