@@ -1269,7 +1269,8 @@ checks every group stays within the power budget for the captain present, with
 the weakest raider as the floor. Farside and empty systems are unscaled. Mission
 danger labels are checked for patrols and bounties against a 72-power Caravel, and
 cargo jobs keep the system rating. The career practice raider is checked for size,
-one-at-a-time spawning and the systems it skips. The Caravel stock loadout is
+one-at-a-time spawning and the systems it skips. A real spawned raider at 5% armor
+and no shield must not flee or go disabled, so the career kill can still land. The Caravel stock loadout is
 checked for its Cinder Driver. `main-map-protection.ts` keeps covering the truce's
 targeting rules. Raid balance across real multiplayer sessions is not simulated.
 
