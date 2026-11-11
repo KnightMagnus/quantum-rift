@@ -23,9 +23,9 @@ for (const hull of FREEFOLK_HULLS) {
   const loaded = game.A.ships[hull.id];
   assert.ok(loaded, `${hull.name} is in the game catalog`);
   assert.equal(loaded.faction, 'freefolk');
-  assert.deepEqual(loaded.weapons, [], `${hull.name} is unarmed`);
+  assert.deepEqual(loaded.weapons, [[130, 1, 0]], `${hull.name} has one defensive turret`);
   assert.equal(loaded.guns, 0);
-  assert.equal(loaded.turrets, 0);
+  assert.equal(loaded.turrets, 1);
   assert.ok(loaded.role, `${hull.name} has a class role`);
   assert.ok(loaded.spr?.banks, `${hull.name} uses its banking sprite sheet`);
   assert.ok(loaded.tech! <= 3, `${hull.name} can be sold at tech 3 Index yards`);

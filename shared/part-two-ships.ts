@@ -74,12 +74,13 @@ export type RegionalTraffic = { kind: 'trade' | 'patrol'; faction: string; pool:
 /** Civilian communities are never drafted into Index patrols. Civilian traffic flies the Type 0s, the pre-Rift patterns of the Concord hulls. */
 export function milkyWayTraffic(systemFaction: string, roll: number): RegionalTraffic {
   if (systemFaction === 'index') {
-    if (roll < 0.32) return { kind: 'trade', faction: 'freefolk', pool: FREEFOLK_IDS };
-    if (roll < 0.55) return { kind: 'trade', faction: 'index', pool: [974, 976] };
+    if (roll < 0.18) return { kind: 'trade', faction: 'unsworn', pool: [1050, 1051, 1053, 1054] };
+    if (roll < 0.5) return { kind: 'trade', faction: 'freefolk', pool: FREEFOLK_IDS };
+    if (roll < 0.7) return { kind: 'trade', faction: 'index', pool: [974, 976] };
     return { kind: 'patrol', faction: 'index', pool: [970, 971, 972, 973, 975, 977] };
   }
-  if (roll < 0.12) return { kind: 'trade', faction: 'unsworn', pool: [1050, 1051, 1053, 1054] };
-  if (roll < 0.25) return { kind: 'trade', faction: 'freefolk', pool: FREEFOLK_IDS };
+  if (roll < 0.02) return { kind: 'trade', faction: 'unsworn', pool: [1050, 1051, 1053, 1054] };
+  if (roll < 0.04) return { kind: 'trade', faction: 'freefolk', pool: FREEFOLK_IDS };
   if (roll < 0.65) return { kind: 'trade', faction: 'confederation', pool: [952, 956, 957, 958] };
   return { kind: 'patrol', faction: 'confederation', pool: [950, 951, 954, 955, 959, 962, 963] };
 }

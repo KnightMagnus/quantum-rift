@@ -182,7 +182,8 @@
     "type0-hulls.ts",
     "freefolk-hulls.ts",
     "unsworn-hulls.ts",
-    "part-two-story.ts"
+    "part-two-story.ts",
+    "part-two-communities.ts"
   ],
   "browser": [
     "chat-projection-browser.ts",
@@ -941,7 +942,8 @@
       "helpers/temp-data.ts",
       "helpers/chromium.ts",
       "helpers/browser-fixture.ts"
-    ]
+    ],
+    "part-two-communities.ts": []
   },
   "characterization": ["features.ts"],
   "contracts": ["typecheck-contracts.ts"],
@@ -1085,7 +1087,8 @@
         "type0-hulls.ts",
         "freefolk-hulls.ts",
         "unsworn-hulls.ts",
-        "part-two-art-browser.ts"
+        "part-two-art-browser.ts",
+        "part-two-communities.ts"
       ],
       "asserts": "Story offers/acceptance, board/travel/kill progression, gifts and Deep unlock. Regional continuation covers graph isolation, authored Sol, mission objectives, fleet eligibility, Type 0 Milky Way traffic and shipyards, and runtime artwork."
     },

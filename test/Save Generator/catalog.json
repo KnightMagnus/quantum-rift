@@ -1882,12 +1882,12 @@
       "name": "Tallow",
       "loadout": {
         "hull": 1040,
-        "outfits": {},
+        "outfits": { "9003": 1 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 0,
+        "bonusSpace": 4,
         "name": "Tallow",
-        "stockOutfits": {}
+        "stockOutfits": { "9003": 1 }
       }
     },
     {
@@ -1895,12 +1895,12 @@
       "name": "Hawser",
       "loadout": {
         "hull": 1041,
-        "outfits": {},
+        "outfits": { "9003": 1 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 0,
+        "bonusSpace": 4,
         "name": "Hawser",
-        "stockOutfits": {}
+        "stockOutfits": { "9003": 1 }
       }
     },
     {
@@ -1908,12 +1908,12 @@
       "name": "Interpreter",
       "loadout": {
         "hull": 1042,
-        "outfits": {},
+        "outfits": { "9003": 1 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 0,
+        "bonusSpace": 4,
         "name": "Interpreter",
-        "stockOutfits": {}
+        "stockOutfits": { "9003": 1 }
       }
     },
     {
@@ -1921,12 +1921,12 @@
       "name": "Mender",
       "loadout": {
         "hull": 1043,
-        "outfits": {},
+        "outfits": { "9003": 1 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 0,
+        "bonusSpace": 4,
         "name": "Mender",
-        "stockOutfits": {}
+        "stockOutfits": { "9003": 1 }
       }
     },
     {
@@ -1934,12 +1934,12 @@
       "name": "Gleaner",
       "loadout": {
         "hull": 1044,
-        "outfits": {},
+        "outfits": { "9003": 1 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 0,
+        "bonusSpace": 4,
         "name": "Gleaner",
-        "stockOutfits": {}
+        "stockOutfits": { "9003": 1 }
       }
     },
     {
@@ -1947,12 +1947,12 @@
       "name": "Ferryman",
       "loadout": {
         "hull": 1045,
-        "outfits": {},
+        "outfits": { "9003": 1 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 0,
+        "bonusSpace": 4,
         "name": "Ferryman",
-        "stockOutfits": {}
+        "stockOutfits": { "9003": 1 }
       }
     },
     {
@@ -1960,12 +1960,12 @@
       "name": "Drumbarge",
       "loadout": {
         "hull": 1046,
-        "outfits": {},
+        "outfits": { "9003": 1 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 0,
+        "bonusSpace": 4,
         "name": "Drumbarge",
-        "stockOutfits": {}
+        "stockOutfits": { "9003": 1 }
       }
     },
     {
@@ -1973,12 +1973,12 @@
       "name": "Mercy",
       "loadout": {
         "hull": 1047,
-        "outfits": {},
+        "outfits": { "9003": 1 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 0,
+        "bonusSpace": 4,
         "name": "Mercy",
-        "stockOutfits": {}
+        "stockOutfits": { "9003": 1 }
       }
     },
     {
@@ -1986,12 +1986,12 @@
       "name": "Steading",
       "loadout": {
         "hull": 1048,
-        "outfits": {},
+        "outfits": { "9003": 1 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 0,
+        "bonusSpace": 4,
         "name": "Steading",
-        "stockOutfits": {}
+        "stockOutfits": { "9003": 1 }
       }
     },
     {
