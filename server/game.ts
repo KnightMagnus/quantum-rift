@@ -588,6 +588,8 @@ import { createStationProgress, type StationProgress } from './station-progress.
 import { discoverRadio } from './radio-discovery.ts';
 import { createJobService } from './jobs.ts';
 import { beginEconomyTrip, arriveEconomyTrip, economyReceipt } from '../shared/economy-receipt.ts';
+import { chargeDockingUpkeep } from './docking-upkeep.ts';
+import { dockingUpkeepNotice } from '../shared/docking-upkeep.ts';
 import {
   migrateCargoLots,
   addLots,
@@ -2272,6 +2274,13 @@ export class Game<Storage extends Database = Database> {
     playerData.fuel = computedShipStats!.fuel;
     playerData.shieldNow = undefined;
     playerData.armorNow = undefined;
+    const dockingHull = this.A.ships[playerData.ship.hull];
+    const upkeep = chargeDockingUpkeep(playerData, {
+      hullCost: dockingHull?.cost || 0,
+      port: sessionId,
+      ownStation: this.ownSite(playerData, stellarBody),
+    });
+    if (upkeep) this.toast(session, dockingUpkeepNotice(upkeep, dockingHull.name));
     this.completeOnLanding(session, stellarBody);
     if (playerData.sys !== START.system) this.tut(session, 'land2');
     if (stellarBody.site) this.tut(session, 'site');

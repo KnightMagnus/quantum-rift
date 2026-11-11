@@ -26,7 +26,8 @@ import {
   dockingUpkeepNotice,
   dockingUpkeepRate,
 } from '../shared/docking-upkeep.ts';
-import { START } from '../shared/galaxy.ts';
+import { START, STELLARS } from '../shared/galaxy.ts';
+import { makeLoadout } from '../shared/rules.ts';
 
 const account = {};
 assert.equal(economyReceipt(account), null, 'Old saves are read without adding invented history');
@@ -350,6 +351,36 @@ assert.throws(
   /Missing/,
   'KNIGHT-style test wealth does not fill ordinary baseline cells',
 );
+// Real depart/land path: Game.land charges upkeep once and toasts it; small hulls dock free.
+{
+  const upkeepGame = refineryGame();
+  const landWith = (hull: number, cash: number) => {
+    const session = refineryPilot(upkeepGame, 'Upkeep' + hull);
+    const pilot = session.data;
+    pilot.ship = makeLoadout(upkeepGame.A, hull, 'Upkeep');
+    pilot.credits = cash;
+    const port = STELLARS[requiredFixtureValue(pilot.stellar)];
+    upkeepGame.depart(session);
+    const entity = requiredFixtureValue(session.ent);
+    Object.assign(entity, { x: port.x, y: port.y, vx: 0, vy: 0, disabled: false });
+    session.sock.out.length = 0;
+    upkeepGame.land(session, port.id);
+    return { session, pilot, port };
+  };
+  const large = landWith(784, 5_000_000);
+  assert.equal(large.pilot.stellar, large.port.id, 'Large hull lands');
+  assert.equal(large.pilot.credits, 5_000_000 - 26_000, 'Land charges 0.2% of list price once');
+  assert.ok(
+    large.session.sock.out.some((message) => /upkeep/i.test(String(message.msg ?? ''))),
+    'Landing shows the upkeep notice',
+  );
+  const small = landWith(703, 5_000_000);
+  assert.equal(small.pilot.credits, 5_000_000, 'Starter hull docks free');
+  assert.ok(
+    !small.session.sock.out.some((message) => /upkeep/i.test(String(message.msg ?? ''))),
+    'No upkeep notice for a free docking',
+  );
+}
 console.log(
-  '3.2 settlement previews, trip recap conservation/persistence, docking upkeep thresholds/caps/exemptions, refinery preview/atomic denial and measurement report invariants passed.',
+  '3.2 settlement previews, trip recap conservation/persistence, docking upkeep thresholds/caps/exemptions and land wiring, refinery preview/atomic denial and measurement report invariants passed.',
 );

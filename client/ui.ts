@@ -134,6 +134,7 @@ import {
   route,
   price,
 } from '../shared/rules.ts';
+import { dockingUpkeepRate } from '../shared/docking-upkeep.ts';
 import { galaxy, mapHit, mapFit, stationDesign, storyPopupHoldMs } from './render.ts';
 import { createNoticeHold } from './notice-hold.ts';
 import { captainMap, captainRoute } from './map-fog.ts';
@@ -1832,6 +1833,10 @@ export function renderLanded(): void {
         trade = tradeIn(playerPayload);
       height = `<div class="detail"><img src="${artworkUrl(shipHullAsset.img!)}"><div><b style="font-size:16px;color:#fff">${escapeHtml2(shipHullAsset.name)}</b> <span class="dim">${escapeHtml2(shipHullAsset.sub)}</span> ${roleTag(shipHullAsset)}${shipHullAsset.cargo ? '' : ' <span class="nocargo">NO CARGO HOLD</span>'}${statLines(shipHullAsset, playerPayload.shipless ? null : clientGameState.A!.ships[playerPayload.ship.hull])}
         <div class="kv"><span>Price</span><span class="cr">${credits(shipHullAsset.cost)}</span></div>${
+          dockingUpkeepRate(shipHullAsset.cost)
+            ? `<div class="kv"><span>Docking upkeep</span><span class="cr">${credits(dockingUpkeepRate(shipHullAsset.cost))} per docking</span></div>`
+            : ''
+        }${
           WING_ONLY.includes(shipHullAsset.id) ||
           (!playerPayload.shipless && shipHullAsset.id === playerPayload.ship.hull) ||
           playerPayload.shipless

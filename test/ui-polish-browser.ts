@@ -7,6 +7,8 @@ import { type Page } from 'playwright';
 import { DB } from '../server/db.ts';
 import { Game } from '../server/game.ts';
 import { tempDataDir } from './helpers/temp-data.ts';
+import { credits } from '../shared/rules.ts';
+import { DOCKING_UPKEEP_MIN_HULL_COST, dockingUpkeepRate } from '../shared/docking-upkeep.ts';
 import {
   root,
   availablePort,
@@ -30,6 +32,17 @@ for (const name of ['Polish Pilot', 'Index Viewer']) {
   player.tut = 999;
   Object.assign(player, { story: { step: 0, active: null, done: ['start'] } });
   db.create(name, 'fixture', player);
+}
+{
+  // Docked where the shipyard sells a 10M+ hull, for the docking upkeep line.
+  const player = Game.prototype.fresh.call({ A: assets });
+  player.tut = 999;
+  Object.assign(player, {
+    story: { step: 0, active: null, done: ['start'] },
+    sys: 'caravanserai',
+    stellar: 'serai',
+  });
+  db.create('Upkeep Viewer', 'fixture', player);
 }
 db.flush();
 const port = await availablePort();
@@ -157,6 +170,34 @@ try {
     await capture(page, `landed-3440-scale-${value}`);
   }
   await scale(page, 1);
+  const yardUpkeep = [];
+  for (const hullId of await page
+    .locator('#landbody .card[data-h]')
+    .evaluateAll((cards) => cards.map((card) => (card as HTMLElement).dataset.h!))) {
+    await page.locator(`#landbody .card[data-h="${hullId}"]`).click();
+    yardUpkeep.push(
+      await page.evaluate((id) => {
+        const row = [...document.querySelectorAll('#landbody .detail .kv')].find((element) =>
+          element.textContent?.startsWith('Docking upkeep'),
+        );
+        return { id, cost: G.A!.ships[Number(id)].cost, text: row?.textContent ?? null };
+      }, hullId),
+    );
+  }
+  assert.ok(yardUpkeep.length > 0, 'Shipyard lists hulls');
+  for (const hull of yardUpkeep) {
+    assert.equal(
+      hull.text !== null,
+      hull.cost >= DOCKING_UPKEEP_MIN_HULL_COST,
+      `Docking upkeep line only for 10M+ hulls: ${JSON.stringify(hull)}`,
+    );
+    if (hull.text)
+      assert.equal(
+        hull.text,
+        'Docking upkeep' + credits(dockingUpkeepRate(hull.cost)) + ' per docking',
+      );
+  }
+  await page.click('[data-lt="yard"]');
   await page.click('#cbhelp');
   const columns = async () =>
     page
@@ -502,6 +543,25 @@ try {
   );
   assert.equal(await index.locator('#hailportrait').getAttribute('src'), null);
   assert.deepEqual(errors, []);
+  const upkeepPage = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+  const upkeepErrors: string[] = [];
+  upkeepPage.on('pageerror', (error) => upkeepErrors.push(String(error)));
+  await upkeepPage.goto(origin);
+  await upkeepPage.locator('[data-slot="Upkeep Viewer"]').click();
+  await upkeepPage.waitForFunction(() => G.you && G.landed);
+  await upkeepPage.click('[data-lt="yard"]');
+  await upkeepPage.locator('#landbody .card[data-h="784"]').click();
+  assert.equal(
+    await upkeepPage
+      .locator('#landbody .detail .kv')
+      .filter({ hasText: 'Docking upkeep' })
+      .textContent(),
+    'Docking upkeep' + credits(dockingUpkeepRate(assets.ships[784].cost)) + ' per docking',
+    'A 10M+ hull shows its docking upkeep under Price',
+  );
+  assert.deepEqual(upkeepErrors, []);
+  await upkeepPage.close();
+
   filesystem.writeFileSync(
     path.join(output, 'measurements.json'),
     JSON.stringify(
@@ -517,7 +577,7 @@ try {
     ),
   );
   console.log(
-    'UI polish: usable-flight landing ratios, two-column/narrow Controls, Codex spoiler denial and actual separated Index fleet/ship-only hails with missing-art fallback passed.',
+    'UI polish: usable-flight landing ratios, two-column/narrow Controls, Codex spoiler denial, shipyard docking upkeep lines and actual separated Index fleet/ship-only hails with missing-art fallback passed.',
   );
 } catch (error) {
   await failureEvidence(browser, output, error);
