@@ -976,8 +976,13 @@ It checks one local store button, no button in the DOM at neutral or visitor lan
 all stores at the captain’s own Personal Station, decoded insignia and actual
 purchases for each available faction. The selected faction’s standing appears above
 the store on open and updates from the server’s player payload after buying a standing writ.
+The writ row lists its standing requirement as "Any".
 `faction-standing.ts` checks every landable public port and resource-preserving
 foreign-faction, unclaimed station and flight denials through store messages.
+It also buys the writ at negative standing down to the floor, while other items keep
+their gates, and files all three Commission steps at another faction's port: tokens
+and job standing go to the commissioning faction, and an ordinary job there still
+pays the port's faction.
 `faction-store-catalog.ts` checks that every store sells three store-only outfits
 with real assets and icons that no outfitter stocks. Purchases through the store
 message install the outfit at once, refuse a second copy or an under-standing

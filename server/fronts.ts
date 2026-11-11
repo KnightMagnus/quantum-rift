@@ -1126,9 +1126,9 @@ export const FrontsOperations = {
     position: { system: string },
   ) {
     const playerData = session.data,
-      faction2 = systemsById[position.system].faction,
+      payingFaction = mission.chain?.fac || systemsById[position.system].faction,
       count = 1 + Math.min(2, Math.floor(mission.reward / 12000));
-    if (mission.syn !== 'hit') this.token(playerData, faction2, count);
+    if (mission.syn !== 'hit') this.token(playerData, payingFaction, count);
     this.goal(session, 'jobs');
     if (mission.chain) {
       playerData.chains = playerData.chains || {};
