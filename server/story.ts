@@ -1203,20 +1203,21 @@ function battleChoices(flags: StoryFlags) {
   return partTwoEndings(flags).map((value) => ({ value, label: labels[value] }));
 }
 
-/** Required Part II reports and the final memorial permit only their assigned landing. */
+/**
+ * Part II story landings that hostile standing must not block: the active step's carry
+ * destination, a ready report's assigned port, and the offer port of the next chapter.
+ */
 export function storyReportAccess(player: PlayerData, portId: string): boolean {
-  const active = player.story.active;
-  if (
-    !active ||
-    !active.id.startsWith('p2-') ||
-    player.story.flags?.main_ending !== 'table' ||
-    !player.story.flags.crossed_quantum_rift
-  )
+  if (player.story.flags?.main_ending !== 'table' || !player.story.flags.crossed_quantum_rift)
     return false;
+  const active = player.story.active;
+  if (!active) {
+    const next = STORY[player.story.step];
+    return !!next && next.id.startsWith('p2-') && next.at === portId;
+  }
+  if (!active.id.startsWith('p2-')) return false;
   const mission = effectiveMission(player, active.id);
-  return (
-    !!mission &&
-    ((active.ready && mission.type !== 'carry' && mission.back === portId) ||
-      (active.id === 'p2-names' && mission.dest === portId))
-  );
+  if (!mission) return false;
+  if (mission.type === 'carry') return mission.dest === portId;
+  return active.ready && mission.back === portId;
 }

@@ -2073,7 +2073,7 @@ records, cargo, bridge assignments, hull UIDs and the unique progression outfit.
 
 `combat-jobs-playability.ts` checks that real board rotations cannot sell a second unfinished patrol in the same system, while a completed patrol permits another contract. `story-combat-baseline.ts` retains prepared-cruiser and modest-wing success and unprepared-frigate failure across its declared seeds. These scripted runs are not human win-rate or time-to-upgrade measurements; ship prices and ordinary transport income are unchanged.
 
-`part-two-story.ts` covers required-report and accepted final-visit landing access without clearing faction standing, unavailable campaign explanations, distinct completion text and explicit preparation equipment rewards. Required-report access does not waive ordinary flight or unrelated landing gates.
+`part-two-story.ts` covers required-report, active carry-destination and next-chapter offer-port landing access without clearing faction standing (including Ledger Nine at Index −100 for the Freefolk delivery and the Unsworn offer), unavailable campaign explanations, distinct completion text and explicit preparation equipment rewards. Required-report access does not waive ordinary flight or unrelated landing gates.
 
 ### Regional communities and personal recovery
 
