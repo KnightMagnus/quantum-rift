@@ -637,6 +637,13 @@ export function partTwoAftercare(flags: StoryFlags): PartTwoObjective[] {
   ];
 }
 
+/** Objective stages of a Part II chapter under the saved story choices. */
+export function partTwoStages(flags: StoryFlags, chapterId: string): PartTwoObjective[] {
+  if (chapterId === 'p2-aftercare') return partTwoAftercare(flags);
+  if (chapterId === 'p2-fleet') return partTwoBattle(flags);
+  return PART_TWO_OBJECTIVES[chapterId] || [];
+}
+
 /** Every recorded choice is acknowledged by the people affected, not by changing the shared world. */
 export function partTwoMemorial(flags: StoryFlags): string {
   const lines: string[] = [

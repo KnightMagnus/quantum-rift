@@ -6,14 +6,12 @@ import {
   storyParticipant,
 } from './shared-story.ts';
 import {
-  PART_TWO_OBJECTIVES,
-  partTwoBattle,
   partTwoEndings,
   partTwoEndingText,
   partTwoCampaignGuidance,
   partTwoMemorialText,
-  partTwoAftercare,
   partTwoMemorial,
+  partTwoStages,
 } from '../shared/part-two-story.ts';
 import { storyReportPort, storyReportGuidance } from '../shared/story-pacing.ts';
 export interface StoryPayload {
@@ -1167,10 +1165,7 @@ function storyGuidance(player: PlayerData, chapter: string): string {
 }
 
 function stagesFor(playerData: PlayerData, id: string) {
-  if (id === 'p2-aftercare') return partTwoAftercare(playerData.story.flags || {});
-  return id === 'p2-fleet'
-    ? partTwoBattle(playerData.story.flags || {})
-    : PART_TWO_OBJECTIVES[id] || [];
+  return partTwoStages(playerData.story.flags || {}, id);
 }
 function isLastStage(playerData: PlayerData, id: string): boolean {
   return (playerData.story.active?.stage || 0) >= stagesFor(playerData, id).length - 1;
