@@ -10,8 +10,7 @@ import {
   partTwoEndings,
   partTwoEndingText,
   partTwoCampaignGuidance,
-  partTwoMemorialText,
-  partTwoMemorial,
+  partTwoAftercareScene,
   partTwoStages,
 } from '../shared/part-two-story.ts';
 import { storyReportPort, storyReportGuidance } from '../shared/story-pacing.ts';
@@ -83,6 +82,7 @@ export const StoryOperations = {
       );
       this.db.touch();
     }
+    if (foldLegacyMemorialChapter(playerData.story)) this.db.touch();
     if (
       (playerData.story.done.includes('qv5') || playerData.story.retiredFlagships?.length) &&
       !this.db.world.quevariDefenderAwake
@@ -561,23 +561,11 @@ export const StoryOperations = {
               savedStory.flags || {},
               !!playerData.officers?.some((officer) => officer.name === 'Seren Of-The-Veil'),
             )
-          : storyStep.id === 'p2-names'
-            ? partTwoMemorialText(savedStory.flags || {}) +
-              '\n\n' +
-              partTwoMemorial(savedStory.flags || {})
-            : storyStep.id === 'p2-aftercare'
-              ? storyStep.done +
-                '\n\n' +
-                (savedStory.flags?.p2_freefolk === 'clinic'
-                  ? 'Moss’s clinic is treating the returned crews; the family shelter still needs berths.'
-                  : 'Moss’s shelter has room for the returned families; the mobile clinic still needs parts.') +
-                '\n\n' +
-                (savedStory.flags?.p2_unsworn === 'public'
-                  ? 'Dene’s witnesses speak at the open hearing with their consent.'
-                  : 'Dene keeps the witnesses’ names sealed from command.')
-              : storyStep.id === 'p2-fleet'
-                ? partTwoEndingText(savedStory.flags || {})
-                : storyStep.done) +
+          : storyStep.id === 'p2-aftercare'
+            ? partTwoAftercareScene(savedStory.flags || {}, storyStep.done)
+            : storyStep.id === 'p2-fleet'
+              ? partTwoEndingText(savedStory.flags || {})
+              : storyStep.done) +
         crewBeat(playerData, storyStep.id) +
         (received.some(Boolean) ? `\n\nRewards: ${received.filter(Boolean).join(', ')}.` : ''),
       done: true,
@@ -1138,7 +1126,7 @@ function pendingSideDecision(player: PlayerData, stellar: string) {
 function crewBeat(player: PlayerData, chapter: string): string {
   if (chapter.startsWith('p2-') && player.officers?.length) {
     const officer = player.officers[0];
-    if (chapter === 'p2-names')
+    if (chapter === 'p2-aftercare')
       return `\n\n${officer.name} stands beside you at the memorial. “We should keep our own list. Everyone we brought home, and everyone we could not.”`;
     if (chapter === 'p2-freefolk')
       return `\n\n${officer.name} checks Moss’s crew against the rescue log before releasing the pump shipment.`;
@@ -1252,4 +1240,31 @@ export function storyReportAccess(player: PlayerData, portId: string): boolean {
   if (!mission) return false;
   if (mission.type === 'carry') return mission.dest === portId;
   return active.ready && mission.back === portId;
+}
+
+/** Saves from before the memorial visit moved into “The Work That Remains” carried its own chapter. */
+const LEGACY_MEMORIAL_CHAPTER = 'p2-names';
+/** The former memorial chapter sat at this index, directly before “People Between Ports”. */
+const LEGACY_MEMORIAL_STEP = STORY.findIndex((mission) => mission.id === 'p2-freefolk');
+
+/**
+ * Drop the retired memorial chapter from a save and realign the chapter index.
+ * Captains who finished it move back one step so their current chapter keeps its place;
+ * an accepted but unfinished visit is released so “People Between Ports” is offered next.
+ * @param savedStory - Saved story progress, changed in place.
+ * @returns True when the save changed.
+ */
+export function foldLegacyMemorialChapter(savedStory: SavedStory): boolean {
+  let changed = false;
+  if (savedStory.active?.id === LEGACY_MEMORIAL_CHAPTER) {
+    savedStory.active = null;
+    changed = true;
+  }
+  const doneIndex = savedStory.done.indexOf(LEGACY_MEMORIAL_CHAPTER);
+  if (doneIndex >= 0) {
+    savedStory.done.splice(doneIndex, 1);
+    if (savedStory.step > LEGACY_MEMORIAL_STEP) savedStory.step--;
+    changed = true;
+  }
+  return changed;
 }

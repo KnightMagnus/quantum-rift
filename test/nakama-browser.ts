@@ -324,7 +324,18 @@ try {
     'fresh reconnected flight snapshot',
   );
   const reconnectBefore = latest('snap')!.me!;
-  assert.equal(reconnectBefore[1], 0);
+  // Departing resumes the input loop before the first snapshot is observed.
+  // A valid fresh-epoch input may already have been acknowledged by then.
+  const reconnectInputs = frames
+    .slice(replacementWelcome + 1)
+    .filter((frame) => frame.direction === 'sent' && frame.packet.t === 'input');
+  if (reconnectInputs.length)
+    assert.equal(reconnectInputs[0].packet.seq, 1, 'reconnected inputs start at sequence one');
+  assert(
+    reconnectBefore[1] === 0 ||
+      reconnectInputs.some((frame) => frame.packet.seq === reconnectBefore[1]),
+    'reconnected snapshot acknowledges only a fresh-epoch input',
+  );
   await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
   try {
     await page.keyboard.down('w');
