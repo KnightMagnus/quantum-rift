@@ -9,7 +9,6 @@ import {
   partTwoEndings,
   partTwoEndingText,
   partTwoCampaignGuidance,
-  partTwoAftercare,
   partTwoAftercareScene,
   partTwoStages,
 } from '../shared/part-two-story.ts';
