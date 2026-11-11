@@ -1695,6 +1695,9 @@ export class Game<Storage extends Database = Database> {
     });
     raider.huntOf = session.id;
     raider.practiceOf = session.id;
+    // The career goal needs a kill, so the straggler fights to the end instead of drifting
+    // disabled (and untargetable) or running.
+    raider.noDisable = true;
     raider.life = 600;
     raider.target = entity;
     space.events.push(['flash', Math.round(raider.x), Math.round(raider.y)]);

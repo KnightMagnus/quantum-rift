@@ -8,6 +8,7 @@ import type { PlayerData, Session } from '../server/game.ts';
 import type { ClientGameState } from '../client/main.ts';
 import { Game } from '../server/game.ts';
 import { Space } from '../server/space.ts';
+import { refineryGame, refineryPilot } from './helpers/refinery-fixture.ts';
 import { augmentAssets, makeLoadout, allOutfits } from '../shared/rules.ts';
 import { SYS as systemsById, TRAFFIC } from '../shared/galaxy.ts';
 import { TUTORIAL } from '../shared/tutorial.ts';
@@ -356,6 +357,30 @@ for (const [tut, sys] of [
   const { game, space, session, spawned } = practiceFixture(72, tut, sys);
   Game.prototype.practiceRaider.call(game, session, space);
   assert.equal(spawned.length, 0, `no straggler for step ${tut} in ${JSON.stringify(sys)}`);
+}
+
+// A badly damaged practice raider keeps fighting, so the career kill can still land.
+{
+  const game = refineryGame();
+  const pilot = refineryPilot(game, 'Practice Pilot');
+  pilot.data.tut = killStep;
+  pilot.data.stellar = null;
+  game.spawnPlayer(pilot, 0, 0, 0, 0);
+  const space = game.spaces[pilot.data.sys];
+  const raider = [...space.ships.values()].find((ship) => ship.practiceOf === pilot.id);
+  assert.ok(raider, 'arriving with the kill goal open brings the practice raider');
+  raider.pers = 'cautious';
+  raider.armor = raider.st.armor * 0.05;
+  raider.shield = 0;
+  assert.equal(space.mayFlee(raider), false, 'a nearly dead practice raider does not run');
+  for (let tick = 0; tick < 100; tick++) {
+    space.t += 1;
+    raider.think = 0;
+    space.ai(raider);
+  }
+  assert.equal(raider.disabled, undefined, 'the practice raider is never left disabled');
+  assert.equal(space.ships.get(raider.id), raider, 'and it is still there to target');
+  assert.equal(raider.dead, false);
 }
 
 // ------------------------------------------------------------------ Caravel stock loadout
