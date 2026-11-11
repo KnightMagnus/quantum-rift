@@ -1323,12 +1323,12 @@
       "name": "Flint",
       "loadout": {
         "hull": 950,
-        "outfits": { "9001": 1 },
+        "outfits": { "9001": 1, "9002": 1 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 2,
+        "bonusSpace": 5,
         "name": "Flint",
-        "stockOutfits": { "9001": 1 }
+        "stockOutfits": { "9001": 1, "9002": 1 }
       }
     },
     {
@@ -1336,12 +1336,12 @@
       "name": "Rivet",
       "loadout": {
         "hull": 951,
-        "outfits": { "9001": 1 },
+        "outfits": { "9001": 1, "9002": 2 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 2,
+        "bonusSpace": 8,
         "name": "Rivet",
-        "stockOutfits": { "9001": 1 }
+        "stockOutfits": { "9001": 1, "9002": 2 }
       }
     },
     {
@@ -1362,12 +1362,12 @@
       "name": "Gauge",
       "loadout": {
         "hull": 953,
-        "outfits": { "9001": 1 },
+        "outfits": { "9001": 2 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 2,
+        "bonusSpace": 4,
         "name": "Gauge",
-        "stockOutfits": { "9001": 1 }
+        "stockOutfits": { "9001": 2 }
       }
     },
     {
@@ -1375,12 +1375,12 @@
       "name": "Hatchet",
       "loadout": {
         "hull": 954,
-        "outfits": { "9001": 1 },
-        "ammo": {},
+        "outfits": { "600": 1, "9002": 2 },
+        "ammo": { "332": 8 },
         "fixed": [],
-        "bonusSpace": 2,
+        "bonusSpace": 12,
         "name": "Hatchet",
-        "stockOutfits": { "9001": 1 }
+        "stockOutfits": { "600": 1, "9002": 2 }
       }
     },
     {
@@ -1388,12 +1388,12 @@
       "name": "Hound",
       "loadout": {
         "hull": 955,
-        "outfits": { "9001": 2 },
-        "ammo": {},
+        "outfits": { "600": 2, "9002": 2 },
+        "ammo": { "332": 16 },
         "fixed": [],
-        "bonusSpace": 4,
+        "bonusSpace": 18,
         "name": "Hound",
-        "stockOutfits": { "9001": 2 }
+        "stockOutfits": { "600": 2, "9002": 2 }
       }
     },
     {
@@ -1440,12 +1440,12 @@
       "name": "Pennant",
       "loadout": {
         "hull": 959,
-        "outfits": { "9001": 2 },
+        "outfits": { "9002": 2, "9003": 1 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 4,
+        "bonusSpace": 10,
         "name": "Pennant",
-        "stockOutfits": { "9001": 2 }
+        "stockOutfits": { "9002": 2, "9003": 1 }
       }
     },
     {
@@ -1453,12 +1453,12 @@
       "name": "Rampart",
       "loadout": {
         "hull": 960,
-        "outfits": { "9001": 4 },
-        "ammo": {},
-        "fixed": [],
-        "bonusSpace": 8,
+        "outfits": { "600": 2, "9005": 2 },
+        "ammo": { "332": 24 },
+        "fixed": [[143, 2, 0]],
+        "bonusSpace": 36,
         "name": "Rampart",
-        "stockOutfits": { "9001": 4 }
+        "stockOutfits": { "600": 2, "9005": 2 }
       }
     },
     {
@@ -1466,12 +1466,12 @@
       "name": "Picket",
       "loadout": {
         "hull": 962,
-        "outfits": { "9001": 2 },
-        "ammo": {},
+        "outfits": { "600": 1, "9002": 2, "9004": 2 },
+        "ammo": { "332": 16 },
         "fixed": [],
-        "bonusSpace": 4,
+        "bonusSpace": 24,
         "name": "Picket",
-        "stockOutfits": { "9001": 2 }
+        "stockOutfits": { "600": 1, "9002": 2, "9004": 2 }
       }
     },
     {
@@ -1479,12 +1479,12 @@
       "name": "Sickle",
       "loadout": {
         "hull": 963,
-        "outfits": { "9001": 4 },
-        "ammo": {},
+        "outfits": { "600": 2, "9002": 3, "9005": 2 },
+        "ammo": { "332": 30 },
         "fixed": [],
-        "bonusSpace": 8,
+        "bonusSpace": 45,
         "name": "Sickle",
-        "stockOutfits": { "9001": 4 }
+        "stockOutfits": { "600": 2, "9002": 3, "9005": 2 }
       }
     },
     {
@@ -1492,12 +1492,12 @@
       "name": "Bulwark",
       "loadout": {
         "hull": 964,
-        "outfits": { "9001": 4 },
+        "outfits": { "598": 4, "9004": 2, "9005": 1 },
         "ammo": {},
         "fixed": [],
-        "bonusSpace": 8,
+        "bonusSpace": 44,
         "name": "Bulwark",
-        "stockOutfits": { "9001": 4 }
+        "stockOutfits": { "598": 4, "9004": 2, "9005": 1 }
       }
     },
     {
@@ -1505,12 +1505,12 @@
       "name": "Anvil",
       "loadout": {
         "hull": 965,
-        "outfits": { "9001": 4 },
-        "ammo": {},
+        "outfits": { "598": 3, "602": 1, "9004": 2 },
+        "ammo": { "333": 8 },
         "fixed": [],
-        "bonusSpace": 8,
+        "bonusSpace": 47,
         "name": "Anvil",
-        "stockOutfits": { "9001": 4 }
+        "stockOutfits": { "598": 3, "602": 1, "9004": 2 }
       }
     },
     {
@@ -1518,12 +1518,12 @@
       "name": "Spearhead",
       "loadout": {
         "hull": 966,
-        "outfits": { "9001": 4 },
-        "ammo": {},
+        "outfits": { "598": 2, "600": 2, "602": 1, "9002": 2 },
+        "ammo": { "332": 24, "333": 6 },
         "fixed": [],
-        "bonusSpace": 8,
+        "bonusSpace": 48,
         "name": "Spearhead",
-        "stockOutfits": { "9001": 4 }
+        "stockOutfits": { "598": 2, "600": 2, "602": 1, "9002": 2 }
       }
     },
     {
@@ -1531,12 +1531,12 @@
       "name": "Dominion",
       "loadout": {
         "hull": 967,
-        "outfits": { "9001": 4 },
-        "ammo": {},
+        "outfits": { "598": 2, "600": 2, "9002": 2, "9005": 4 },
+        "ammo": { "332": 40 },
         "fixed": [],
-        "bonusSpace": 8,
+        "bonusSpace": 76,
         "name": "Dominion",
-        "stockOutfits": { "9001": 4 }
+        "stockOutfits": { "598": 2, "600": 2, "9002": 2, "9005": 4 }
       }
     },
     {
@@ -1544,12 +1544,12 @@
       "name": "Citadel",
       "loadout": {
         "hull": 968,
-        "outfits": { "9001": 4 },
-        "ammo": {},
-        "fixed": [],
-        "bonusSpace": 8,
+        "outfits": { "599": 1, "600": 2, "9005": 6 },
+        "ammo": { "332": 40 },
+        "fixed": [[143, 2, 0]],
+        "bonusSpace": 92,
         "name": "Citadel",
-        "stockOutfits": { "9001": 4 }
+        "stockOutfits": { "599": 1, "600": 2, "9005": 6 }
       }
     },
     {
