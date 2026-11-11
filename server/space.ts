@@ -1704,7 +1704,8 @@ export class Space {
       });
       if (!initial) this.events.push(['flash', Math.round(entity.x), Math.round(entity.y)]);
       if (kind === 'patrol') entity.warFleet = true;
-      entity.ambientGroup = lead?.id ?? entity.id;
+      // Trade groups stay out of the shared raid budget; only armed groups count as encounters.
+      if (kind !== 'trade') entity.ambientGroup = lead?.id ?? entity.id;
       if (!lead) lead = entity;
     }
     return lead;
