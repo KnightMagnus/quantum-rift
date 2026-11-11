@@ -986,7 +986,8 @@ back at an ordinary outfitter. All 33 outfits are purchased through the message 
 with exact credit/token charges and weapon fitting checked. Full outfit-space and
 turret-mount refusals preserve inventory and currencies. Reserve cells add their
 advertised fuel. A star chart adds exactly the faction's systems to the save and
-payload, is not sold twice and survives a database reopen.
+payload, is not sold twice and survives a database reopen. Store and salvage crate
+messages use the right article for alloy, isotope and crystal.
 
 `input-audio-browser.ts` checks login music before activation under explicit
 allowed and blocked autoplay policies, real-interaction recovery and stopping
@@ -1825,7 +1826,7 @@ No save schema, wire payload or caller signature changes.
 
 ## First-entry orientation
 
-`onboarding-shortcuts`: `onboarding-browser.ts` runs an isolated Solo captain through the clockwise spotlight tour and ten-slide briefing. It checks every visible sidebar menu and cockpit button, targeting and navigation readouts, left-to-right cockpit rows from Captain then Mining, followed by JUMP, annotated combat/mining gameplay images, landing/tutorial suppression, no gameplay commands from the tour, desktop spotlight bounds and separation, uniform image frames, current rebound keys, completion persistence, HELP replay, Escape/skip navigation and viewport resizing. It also checks Title Case tour headings, INFO and REFINE labels, EJECT opening the quit menu without logging out, cancellation restoring Solo play, the unchanged Escape route, the complete twelve-key grid, separate Captain/Ship Details entry points, keyboard focus return, and shortcut/label containment inside the HUD with the Tray open and closed at 1920, 1366, 800 and 480 pixels wide, at normal and 150% UI scale. It also verifies the first three briefing titles, the Jobs screenshot, the absence of the flight annotation, jump/hull/starting-map image selection, jump labels, and the signed closing slide with AI transparency and final-slide Back/Finish navigation. It does not prove live multiplayer timing or every device and UI scale.
+`onboarding-shortcuts`: `onboarding-browser.ts` runs an isolated Solo captain through the clockwise spotlight tour and ten-slide briefing. It checks every visible sidebar menu and cockpit button, targeting and navigation readouts, left-to-right cockpit rows from Captain then Mining, followed by JUMP, annotated combat/mining gameplay images, landing/tutorial suppression, no gameplay commands from the tour, desktop spotlight bounds and separation, uniform image frames, current rebound keys, completion persistence, HELP replay, Escape/skip navigation and viewport resizing. It also checks Title Case tour headings, INFO and REFINE labels, EJECT opening the quit menu without logging out, cancellation restoring Solo play, the unchanged Escape route, the complete twelve-key grid, separate Captain/Ship Details entry points, keyboard focus return, and shortcut/label containment inside the HUD with the Tray open and closed at 1920, 1366, 800 and 480 pixels wide, at normal and 150% UI scale. It also checks the briefing text for the fixed tense, apostrophe, lowercase duel and Personal Station capitalisation. It also verifies the first three briefing titles, the Jobs screenshot, the absence of the flight annotation, jump/hull/starting-map image selection, jump labels, and the signed closing slide with AI transparency and final-slide Back/Finish navigation. It does not prove live multiplayer timing or every device and UI scale.
 
 Browser fixtures use `launchChromium` to treat unrelated fixture captains as returning players by seeding missing orientation-completion keys when read. `onboarding-browser.ts` explicitly opts into untouched first-run storage and owns startup, completion and replay coverage.
 
@@ -2073,7 +2074,7 @@ records, cargo, bridge assignments, hull UIDs and the unique progression outfit.
 
 `combat-jobs-playability.ts` checks that real board rotations cannot sell a second unfinished patrol in the same system, while a completed patrol permits another contract. `story-combat-baseline.ts` retains prepared-cruiser and modest-wing success and unprepared-frigate failure across its declared seeds. These scripted runs are not human win-rate or time-to-upgrade measurements; ship prices and ordinary transport income are unchanged.
 
-`part-two-story.ts` covers required-report and accepted final-visit landing access without clearing faction standing, unavailable campaign explanations, distinct completion text and explicit preparation equipment rewards. Required-report access does not waive ordinary flight or unrelated landing gates.
+`part-two-story.ts` covers required-report and accepted final-visit landing access without clearing faction standing, unavailable campaign explanations, distinct completion text and explicit preparation equipment rewards. Required-report access does not waive ordinary flight or unrelated landing gates. It also checks Part II text: Sol's description has no zero distance, the Threshold Spire objective uses the port's name, the Ascendant and Ashfall aftercare name their own crews, the memorial names Saint Orra once, and the broadcast mission has one broadcast room.
 
 ### Regional communities and personal recovery
 

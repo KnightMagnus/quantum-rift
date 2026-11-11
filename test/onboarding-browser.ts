@@ -256,6 +256,13 @@ try {
           'Visit other star systems to discover new locations.',
         ),
       );
+    {
+      const slideText = (await page.locator('#onboarding').textContent())!;
+      for (const slip of [/\bits why\b/, /were now inhabitants/, /, Duel,/, /personal station/])
+        assert.doesNotMatch(slideText, slip, `briefing slide ${slide + 1} text`);
+      if (slide === 0) assert.match(slideText, /found themselves in a densely populated region/);
+      if (slide === 9) assert.match(slideText, /it's why this game exists today/);
+    }
     if (slide >= 6) {
       assert.equal(
         await page.locator('#onboarding-title').textContent(),
