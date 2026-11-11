@@ -83,12 +83,16 @@ credentials as well as progress.
 Run only one host per save directory, even on different ports. Before opening
 the database, the server exclusively creates `.friend-host.lock/` in that
 directory. A clean stop (Ctrl+C or SIGTERM) flushes the database and removes its
-lock. A crash, startup failure or failed flush can leave the lock behind; the
-next startup refuses to take over automatically. Before manually removing only
-`.friend-host.lock/`, verify that no host on any machine is using that save
-directory and back up the directory. The lock’s `owner.json` is a diagnostic
-hint, not proof that a process is no longer running. Never remove a live host’s
-lock or start another host against its saves.
+lock. A crash, startup failure or failed flush can leave the lock behind.
+
+The next startup removes a leftover lock by itself only when its `owner.json`
+says the host was running on this computer and that process no longer exists.
+It refuses to take over in every other case: the host was still starting, its
+save failed, it ran on another machine, the process ID is in use, or the lock
+is from an older version or damaged. Before manually removing only
+`.friend-host.lock/` (a hidden folder in Finder and Explorer), verify that no
+host on any machine is using that save directory and back up the directory.
+Never remove a live host’s lock or start another host against its saves.
 
 Friend startup sets a restrictive umask (`077`) and applies POSIX permissions
 `0700` to save directories and `0600` to files, including existing checkpoints
