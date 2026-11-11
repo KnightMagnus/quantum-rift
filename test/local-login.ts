@@ -127,7 +127,51 @@ try {
 } finally {
   derivations.mock.restore();
 }
+// One address sending wrong passwords holds at most eight sign-in slots; other captains still get in.
+const floodQueue = new LocalLoginQueue();
+const floodAttempts = Array.from({ length: 20 }, () =>
+  floodQueue.run(database, 'Async Pilot', 'wrong-password', 'flood-address', () => {}),
+);
+const ownerSignIn = floodQueue.run(
+  database,
+  'Async Pilot',
+  'local-fixture-pass',
+  'owner-address',
+  () => {
+    assert.equal(database.check(database.get('Async Pilot')!, 'local-fixture-pass'), true);
+  },
+);
+const floodResults = await Promise.allSettled(floodAttempts);
+assert.equal(
+  floodResults.filter((result) => result.status === 'fulfilled').length,
+  8,
+  'one address holds at most eight waiting or active sign-ins',
+);
+assert.ok(
+  floodResults
+    .filter((result) => result.status === 'rejected')
+    .every((result) => /Too many sign-ins from this connection/.test(String(result.reason))),
+);
+await ownerSignIn;
+await floodQueue.run(database, 'Async Pilot', 'wrong-password', 'flood-address', () => {});
+const heldSignIns = Array.from({ length: 8 }, () =>
+  floodQueue.run(database, 'Async Pilot', 'wrong-password', 'budget-address', () => {}),
+);
+await assert.rejects(
+  floodQueue.run(database, 'Budget Recruit', 'fixture-pass', 'budget-address', () => {}),
+  /Too many sign-ins from this connection/,
+);
+await Promise.all(heldSignIns);
+const budgetRegistrations = await Promise.allSettled(
+  Array.from({ length: 8 }, (_, index) =>
+    floodQueue.run(database, 'Budget Recruit ' + index, 'fixture-pass', 'budget-address', () => {}),
+  ),
+);
+assert.ok(
+  budgetRegistrations.every((result) => result.status === 'fulfilled'),
+  'settled sign-ins free their slots and a refused registration does not spend the budget',
+);
 console.log(
-  'Local login: background scrypt, scoped credentials, durable admission, denied passwords, close cancellation and bounded registration/socket admission.',
+  'Local login: background scrypt, scoped credentials, durable admission, denied passwords, close cancellation, bounded registration/socket admission and a per-address sign-in cap.',
 );
 process.exit(0);

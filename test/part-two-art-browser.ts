@@ -16,6 +16,13 @@ const bundle = await build({
   format: 'esm',
   platform: 'browser',
 });
+const noticeBundle = await build({
+  entryPoints: [path.join(root, 'client/notice-hold.ts')],
+  bundle: true,
+  write: false,
+  format: 'esm',
+  platform: 'browser',
+});
 const browser = await launchChromium({ headless: true, args: ['--no-sandbox'] });
 try {
   const page = await browser.newPage({ viewport: { width: 1500, height: 900 } });
@@ -30,6 +37,11 @@ try {
       });
     if (pathname === '/render.js')
       return route.fulfill({ contentType: 'text/javascript', body: bundle.outputFiles[0].text });
+    if (pathname === '/notice-hold.js')
+      return route.fulfill({
+        contentType: 'text/javascript',
+        body: noticeBundle.outputFiles[0].text,
+      });
     try {
       const file = path.join(root, 'client', pathname);
       return route.fulfill({
@@ -84,7 +96,45 @@ try {
     render.updateEffects(crossing, 0.016, 10000);
     const holdMidway = render.storyPopupHoldMs(crossing, 13000);
     const holdAfter = render.storyPopupHoldMs(crossing, 16500);
+    // Toasts wait for the same crossing and then show in order.
+    const { createNoticeHold } = await import('/notice-hold.js');
+    const toastCrossing = { ...crossing, sys: 'quantum-rift' } as unknown as ClientGameState;
+    let toastNow = 20000;
+    render.updateEffects(toastCrossing, 0.016, toastNow);
+    toastCrossing.sys = 'mw-sol';
+    const shown: string[] = [],
+      timers: (() => void)[] = [];
+    const toastHold = createNoticeHold({
+      holdMs: () => render.storyPopupHoldMs(toastCrossing, toastNow),
+      show: (message: string) => shown.push(message),
+      schedule: (callback: () => void) => timers.push(callback),
+    });
+    toastHold.notice('Through the Quantum Rift: Sol · Milky Way.');
+    toastHold.notice('2 becalmed sloops drift in this system.');
+    const shownPending = shown.length;
+    render.updateEffects(toastCrossing, 0.016, toastNow);
+    toastNow = 23000;
+    timers.shift()!();
+    const shownMidway = shown.length;
+    toastNow = 26500;
+    timers.shift()!();
+    const toastOrder = [...shown];
+    const droppedHold = createNoticeHold({
+      holdMs: () => 1000,
+      show: (message: string) => shown.push(message),
+      schedule: (callback: () => void) => timers.push(callback),
+    });
+    droppedHold.notice('From the previous captain.');
+    droppedHold.clear();
+    timers.shift()?.();
+    const immediate = createNoticeHold({
+      holdMs: () => 0,
+      show: (message: string) => shown.push(message),
+      schedule: (callback: () => void) => timers.push(callback),
+    });
+    immediate.notice('Ordinary notice.');
     return {
+      toasts: { shownPending, shownMidway, toastOrder, after: shown.slice(2) },
       receiver,
       locked,
       skipArrivalLocked,
@@ -97,6 +147,18 @@ try {
   assert.ok(Math.abs(results.receiver.y + 25.601) < 0.01);
   assert.ok(results.locked && results.skipArrivalLocked && results.unlocked);
   assert.deepEqual(results.holds, [0, 6400, 3400, 0], 'story pop-ups wait for the Rift arrival');
+  assert.equal(results.toasts.shownPending, 0, 'toasts wait before the crossing starts');
+  assert.equal(results.toasts.shownMidway, 0, 'and while it plays');
+  assert.deepEqual(
+    results.toasts.toastOrder,
+    ['Through the Quantum Rift: Sol · Milky Way.', '2 becalmed sloops drift in this system.'],
+    'held toasts show in order once the crossing ends',
+  );
+  assert.deepEqual(
+    results.toasts.after,
+    ['Ordinary notice.'],
+    'cleared toasts never show; ordinary toasts show at once',
+  );
   assert.ok(results.nonBlack > 0, 'The real Milky Way sky must render');
   assert.deepEqual(failures, []);
   await page.screenshot({ path: path.join(evidence, 'sol-helios-luna.png') });

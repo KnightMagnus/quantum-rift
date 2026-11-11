@@ -3,10 +3,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import net from 'node:net';
+import os from 'node:os';
 import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
+import { acquireFriendSaveOwner } from '../server/friend-save-owner.ts';
 
 const repository = fileURLToPath(new URL('../', import.meta.url));
 const temp = path.resolve(repository, '../temp');
@@ -186,17 +188,94 @@ try {
   await stop(restart.child, process.platform === 'win32' ? 'SIGTERM' : 'SIGHUP');
   assert.equal(restart.child.exitCode, 0, 'supported console-close signal finalizes saves');
   assert.equal(fs.existsSync(path.join(data, '.friend-host.lock')), false);
-  // An unclean death leaves an unreclaimed lock, including a dead PID.
+  // A host killed while running on this computer leaves a lock that the next start clears.
   const crash = start(await availablePort());
   await until(() => crash.output().includes('running at'), 'crash fixture ready');
   await stop(crash.child, 'SIGKILL');
-  const stale = start(await availablePort());
-  await until(() => stale.child.exitCode !== null, 'stale lock fail closed');
-  assert.notEqual(stale.child.exitCode, 0);
-  assert.match(stale.output(), /manually remove only .friend-host.lock/);
-  assert.equal(fs.existsSync(path.join(data, '.friend-host.lock')), true);
+  const lock = path.join(data, '.friend-host.lock');
+  assert.equal(fs.existsSync(lock), true, 'a hard kill leaves the lock behind');
+  const crashedOwner = JSON.parse(fs.readFileSync(path.join(lock, 'owner.json'), 'utf8'));
+  assert.equal(crashedOwner.pid, crash.child.pid);
+  assert.equal(crashedOwner.state, 'running');
+  const recovered = start(await availablePort());
+  await until(() => recovered.output().includes('running at'), 'restart after crash');
+  assert.match(recovered.output(), /Removed a leftover friend save lock/);
+  assert.equal(fs.readFileSync(path.join(data, 'players.json'), 'utf8'), players);
+  assert.equal(
+    JSON.parse(fs.readFileSync(path.join(lock, 'owner.json'), 'utf8')).pid,
+    recovered.child.pid,
+    'the restarted host owns a fresh lock',
+  );
+  await stop(recovered.child);
+  assert.equal(recovered.child.exitCode, 0);
+  assert.equal(fs.existsSync(lock), false);
+  privateTree(data);
+  // Every uncertain leftover lock still fails closed and stays in place.
+  const exited = spawn(process.execPath, ['-e', '']);
+  await until(() => exited.exitCode !== null, 'short-lived process exits');
+  const deadPid = exited.pid!;
+  const owner = (fields: Record<string, unknown>) =>
+    JSON.stringify({
+      pid: deadPid,
+      host: os.hostname(),
+      state: 'running',
+      started: new Date().toISOString(),
+      ...fields,
+    });
+  const uncertainLocks: [string, string][] = [
+    ['lock written before this check existed', JSON.stringify({ pid: deadPid, started: 'x' })],
+    ['host on another computer', owner({ host: os.hostname() + '-other' })],
+    ['process still running', owner({ pid: process.pid })],
+    ['host that failed to save', owner({ state: 'needs-recovery' })],
+    ['host that crashed while starting', owner({ state: 'starting' })],
+    ['damaged owner record', '{"pid":'],
+  ];
+  for (const [index, [label, record]] of uncertainLocks.entries()) {
+    const store = path.join(fixture, 'uncertain-' + index);
+    fs.mkdirSync(path.join(store, '.friend-host.lock'), { recursive: true });
+    fs.writeFileSync(path.join(store, '.friend-host.lock', 'owner.json'), record);
+    assert.throws(
+      () => acquireFriendSaveOwner(store, repository),
+      /manually remove only .friend-host.lock/,
+      label,
+    );
+    assert.equal(
+      fs.readFileSync(path.join(store, '.friend-host.lock', 'owner.json'), 'utf8'),
+      record,
+      label + ' keeps its lock',
+    );
+  }
+  const missingOwner = path.join(fixture, 'uncertain-missing-owner');
+  fs.mkdirSync(path.join(missingOwner, '.friend-host.lock'), { recursive: true });
+  assert.throws(() => acquireFriendSaveOwner(missingOwner, repository), /stale lock/);
+  assert.equal(fs.existsSync(path.join(missingOwner, '.friend-host.lock')), true);
+  const extraFile = path.join(fixture, 'uncertain-extra-file');
+  fs.mkdirSync(path.join(extraFile, '.friend-host.lock'), { recursive: true });
+  fs.writeFileSync(path.join(extraFile, '.friend-host.lock', 'owner.json'), owner({}));
+  fs.writeFileSync(path.join(extraFile, '.friend-host.lock', 'note.txt'), 'operator note');
+  assert.throws(() => acquireFriendSaveOwner(extraFile, repository), /stale lock/);
+  assert.equal(fs.existsSync(path.join(extraFile, '.friend-host.lock', 'note.txt')), true);
+  assert.deepEqual(
+    fs.readdirSync(extraFile).filter((name) => name.includes('.stale-')),
+    [],
+    'a refused lock is moved back into place',
+  );
+  // The in-process path clears a dead same-computer owner and its replacement can be released.
+  const reclaim = path.join(fixture, 'reclaim');
+  fs.mkdirSync(path.join(reclaim, '.friend-host.lock'), { recursive: true });
+  fs.writeFileSync(path.join(reclaim, '.friend-host.lock', 'owner.json'), owner({}));
+  const reclaimed = acquireFriendSaveOwner(reclaim, repository);
+  assert.equal(
+    JSON.parse(fs.readFileSync(path.join(reclaim, '.friend-host.lock', 'owner.json'), 'utf8'))
+      .state,
+    'starting',
+  );
+  reclaimed.markNeedsRecovery();
+  assert.throws(() => acquireFriendSaveOwner(reclaim, repository), /stale lock/);
+  reclaimed.release();
+  assert.deepEqual(fs.readdirSync(reclaim), []);
   console.log(
-    'Friend save security passed: different-port exclusion before recovery, clean restart, private saves under umask 022, hostile HTTP/upgrade denial, stale lock fail-closed.',
+    'Friend save security passed: different-port exclusion before recovery, clean restart, private saves under umask 022, hostile HTTP/upgrade denial, crashed-host lock cleared, uncertain locks fail closed.',
   );
 } finally {
   for (const child of children) {

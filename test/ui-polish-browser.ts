@@ -170,6 +170,13 @@ try {
     .locator('#ctrllist .ctrlbinding')
     .evaluateAll((rows) => rows.some((row) => row.scrollWidth > row.clientWidth));
   assert.equal(overflow, false, 'Paired key labels and descriptions fit their columns');
+  const strandedHelp = page.locator('#ctrlstranded');
+  assert(await strandedHelp.isVisible(), 'HELP explains how to get out of a portless system');
+  assert.match(
+    await strandedHelp.innerText(),
+    /Log out.*enter the Rift again.*last port you landed at/is,
+    'The stranding note names the logout escape and where it docks you',
+  );
   await capture(page, 'controls-3440');
   await page.click('#ctrlclose');
   for (const [width, height, value] of [
@@ -267,6 +274,25 @@ try {
   await page.setViewportSize({ width: 1920, height: 1080 });
   await scale(page, 1);
   await page.click('[data-tab="codex"]');
+  await page.click('#cchips [data-c="Ships"]');
+  assert((await page.locator('#clist .it').count()) > 0, 'a new captain sees ordinary Codex hulls');
+  for (const hidden of ['s950', 's1010', 's1040', 's1050'])
+    assert.equal(await page.locator(`#clist [data-k="${hidden}"]`).count(), 0, `${hidden} hidden`);
+  assert(!(await page.locator('#clist').innerText()).includes('Flint'));
+  await page.fill('#cq', 'Flint');
+  assert.equal(await page.locator('#clist .it').count(), 0, 'search does not find Milky Way hulls');
+  await page.fill('#cq', '');
+  await page
+    .locator('#clist .it')
+    .first()
+    .evaluate((row) => {
+      row.dataset.k = 's950';
+      (row as HTMLElement).click();
+    });
+  assert(
+    !(await page.locator('#clist').innerText()).includes('Confederation'),
+    'stale detail navigation cannot open a Milky Way hull',
+  );
   await page.click('#cchips [data-c="Outfits"]');
   assert.equal(await page.locator('#clist [data-k="o9021"]').count(), 0);
   assert(!(await page.locator('#clist').innerText()).includes('Rift Harness'));

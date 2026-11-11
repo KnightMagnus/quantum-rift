@@ -49,6 +49,25 @@ const ROSTER: readonly { name: string; ship: string }[] = [
   { name: 'Sal "Lucky" Abernathy', ship: "Dead Man's Credit" }, // r29
 ];
 
+/** Online captains needed before rival careers earn at their full rate. */
+export const RIVAL_FULL_INCOME_CAPTAINS = 3;
+/** Chance per 20-second career tick that a hunter or pirate logs a kill: about 3 an online hour. */
+export const RIVAL_KILL_CHANCE = 3 / 180;
+/** Most kills one rival can log in a single kill window. */
+export const RIVAL_KILLS_PER_WINDOW = 4;
+/** Length of the rival kill window in milliseconds. */
+export const RIVAL_KILL_WINDOW_MS = 60 * 60 * 1000;
+
+/**
+ * Scale rival income by how many captains are online.
+ * @param onlineCaptains - Authenticated captains with an open connection.
+ * @returns Income multiplier from 0 to 1.
+ */
+export function rivalIncomeScale(onlineCaptains: number): number {
+  if (!(onlineCaptains > 0)) return 0;
+  return Math.min(1, onlineCaptains / RIVAL_FULL_INCOME_CAPTAINS);
+}
+
 // careers: what they do, which powers they fly for, and how they earn
 export const KINDS: Record<
   string,

@@ -4,8 +4,10 @@ import { requiredFixtureValue } from './helpers/required.ts';
 // physics for every stock hull, with varied drift, headings and landing radii.
 import assert from 'node:assert/strict';
 import filesystem from 'node:fs';
+import type { ClientGameState } from '../client/main.ts';
 import {
   chooseLandingPort,
+  landingDestination,
   landingGuidance,
   landingReady,
   type AutopilotState,
@@ -360,6 +362,44 @@ for (const authority of [
     'a clicked body that cannot be landed on falls back to the nearest',
   );
   assert.equal(chooseLandingPort([], origin, noIntent), undefined, 'nowhere to land');
+  assert.equal(
+    chooseLandingPort(bodies, origin, { ...noIntent, shownNav: 'pinned' })?.id,
+    'pinned',
+    'the automatic nav point beats a closer body',
+  );
+  assert.equal(
+    chooseLandingPort(bodies, origin, {
+      ...noIntent,
+      shownNav: 'pinned',
+      missionStellars: ['mission-far'],
+    })?.id,
+    'mission-far',
+    'a mission destination beats the automatic nav point',
+  );
+}
+// NAV and L agree in Meridian, where the derelict hull is closer than Meridian Yards.
+{
+  const state = {
+    sys: 'meridian',
+    view: { x: -800, y: -450, vx: 0, vy: 0 },
+    navStellar: 'meridian-yards',
+    navPicked: false,
+    pinnedObjective: null,
+    you: undefined,
+  } as unknown as ClientGameState;
+  assert.equal(
+    landingDestination(state)?.id,
+    'meridian-yards',
+    'L lands where NAV points, not on the nearer station hull',
+  );
+  state.navPicked = true;
+  state.navStellar = 'site-meridian';
+  assert.equal(landingDestination(state)?.id, 'site-meridian', 'a clicked hull is still honoured');
+  state.navPicked = false;
+  state.navStellar = null;
+  assert.equal(landingDestination(state)?.id, 'site-meridian', 'no nav point: nearest body');
+  state.view = null;
+  assert.equal(landingDestination(state), undefined, 'docked: nothing to land on');
 }
 // The network bot receives delayed snapshots and sends quantized turn packets.
 // Replay both hosted failure states and long approaches without extending its

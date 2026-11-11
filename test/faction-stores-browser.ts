@@ -153,6 +153,15 @@ try {
             .evaluateAll((els) => [...new Set(els.map((e) => e.dataset.f))]),
           [fac],
         );
+        assert.equal(
+          await page
+            .locator('#storein tr', { has: page.locator('[data-id="writ"]') })
+            .locator('td')
+            .nth(1)
+            .innerText(),
+          'Any',
+          'Free-passage writ lists no standing requirement',
+        );
         await page.locator('#storein [data-id="writ"]').click();
         await page.waitForFunction(
           (faction) => G.you!.rep[faction!] === 110 && G.you!.tokens[faction!] === 88,
