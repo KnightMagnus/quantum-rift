@@ -45,6 +45,25 @@ for (const faction of ['confederation', 'freefolk', 'unsworn']) {
   assert.equal(actual.saved.rep[faction], 0);
   delete actual.saved.rep[faction];
 }
+// Living states now roll from their own economy stream (server/economy-random.ts),
+// so the fixture's per-system picks came from a sequence the game no longer uses.
+// Keep the state count and entry shape; every other world field must still match.
+{
+  const actualStates = actual.world.states as Record<string, Record<string, unknown>>;
+  const expectedStates = expected.world.states as Record<string, Record<string, unknown>>;
+  assert.equal(Object.keys(actualStates).length, Object.keys(expectedStates).length);
+  const shape = (state: Record<string, unknown>) => Object.keys(state).sort();
+  const expectedShape = shape(Object.values(expectedStates)[0]);
+  for (const [systemId, state] of Object.entries(actualStates)) {
+    assert.ok(
+      SYSTEMS.some((system) => system.id === systemId),
+      `${systemId}: state on a known system`,
+    );
+    assert.deepEqual(shape(state), expectedShape, `${systemId}: state payload shape`);
+  }
+  delete actual.world.states;
+  delete expected.world.states;
+}
 // Docked story/arc settlement now precedes the port projection on login.
 // Keep the original fixture and all other initialization evidence unchanged.
 assert.deepEqual(expected.login.slice(30, 32), ['storyInit', 'storyInit']);
