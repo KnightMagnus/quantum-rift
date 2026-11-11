@@ -2186,7 +2186,7 @@ function questCard(mission: LandedOffer): string {
       ? 0
       : (route(systemsById, clientGameState.sys!, mission.sys) || []).length;
   return `<div class="card story quest" style="cursor:default"><div class="storytag">${mission.side ? 'SIDE STORY' : 'CONTACT'} · ${escapeHtml2(mission.giver)}${mission.standing ? ` · <span class="dim">${escapeHtml2(mission.standing)}</span>` : ''}</div><div class="t">${escapeHtml2(mission.title)}</div><div class="qintro">${escapeHtml2(mission.text)}</div>
-    <div class="p">${mission.steps} steps, starting in ${systemsById[mission.sys] ? escapeHtml2(systemsById[mission.sys].name) : 'nearby'}${count ? ` (${count} jump${count > 1 ? 's' : ''})` : ''} · each step pays, and finishing earns <span class="cr">${escapeHtml2(mission.rewardText)}</span></div>
+    <div class="p">${mission.steps} steps, starting in ${systemsById[mission.sys] ? escapeHtml2(systemsById[mission.sys].name) : 'nearby'}${count ? ` (${count} jump${count > 1 ? 's' : ''})` : ''} · each step pays, ${mission.rewardText ? `and finishing earns <span class="cr">${escapeHtml2(mission.rewardText)}</span>` : 'rewards are shown with each step'}</div>
     ${mission.full ? '<div class="jwarn">You are already following three stories.</div>' : ''}${clientGameState.you!.missions.length >= 6 ? '<div class="jwarn">All six job slots are full. Finish or abandon a job first.</div>' : ''}${questNeeds(mission)}<div><button class="btn sm" data-act="accept" data-id="${escapeHtml2(mission.id)}"${mission.full || clientGameState.you!.missions.length >= 6 ? ' disabled' : ''}>TAKE IT ON</button>${missionRouteButton(clientGameState, mission.sys, 'PLOT')}</div></div>`;
 }
 /**
@@ -2422,8 +2422,9 @@ function onAct(mouseEvent: MouseEvent): void {
       const mission = (clientGameState.you!.missions || []).find(
         (mission) => mission.id === domStringMap.id,
       );
+      if (!mission) return;
       ask(
-        mission && mission.quest
+        mission.quest
           ? `Abandon this step? That ends the story "${mission.quest.name}".`
           : 'Abandon this job? You will not be paid for it.',
         () => send({ t: 'abandon', id: domStringMap.id }),

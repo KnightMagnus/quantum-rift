@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fileSystem from 'node:fs';
 import { advanceFlightClock } from '../client/flight-clock.ts';
 import { DT } from '../shared/rules.ts';
-import { softwareRenderer } from '../client/graphics-backend.ts';
+import { canvasBackend, softwareRenderer } from '../client/graphics-backend.ts';
 for (const name of [
   'ANGLE (Google, Vulkan SwiftShader)',
   'llvmpipe LLVM',
@@ -11,6 +11,35 @@ for (const name of [
   assert.equal(softwareRenderer(name), true);
 for (const name of ['NVIDIA RTX', 'Intel Iris', 'AMD Radeon', 'Apple M3'])
   assert.equal(softwareRenderer(name), false);
+
+// Probe a hardware renderer with a constrained texture limit before claiming the game canvas.
+let lostContexts = 0;
+let textureLimit = 4096;
+const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+Object.defineProperty(globalThis, 'document', {
+  configurable: true,
+  value: {
+    createElement: () => ({
+      getContext: () => ({
+        MAX_TEXTURE_SIZE: 3379,
+        getParameter: () => textureLimit,
+        getExtension: (name: string) =>
+          name === 'WEBGL_lose_context' ? { loseContext: () => lostContexts++ } : null,
+      }),
+    }),
+  },
+});
+try {
+  assert.equal(canvasBackend(null), true, '4096-limit hardware gets a supported canvas backend');
+  textureLimit = 8192;
+  assert.equal(canvasBackend(null), false, '8192-limit hardware retains WebGL');
+  assert.equal(lostContexts, 2, 'probe contexts released');
+  assert.equal(canvasBackend('canvas'), true);
+  assert.equal(canvasBackend('webgl'), false, 'explicit diagnostics override remains available');
+} finally {
+  if (originalDocument) Object.defineProperty(globalThis, 'document', originalDocument);
+  else Reflect.deleteProperty(globalThis, 'document');
+}
 
 // Independent elapsed-time displacement, with the original DT and extrapolation remainder.
 for (const framesPerSecond of [30, 60, 144]) {

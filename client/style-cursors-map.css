@@ -140,6 +140,10 @@ body.busy #gcanvas {
   top: 52px;
   z-index: 5;
   width: 330px;
+  max-width: calc(100vw / var(--ui, 1) - 24px);
+  max-height: calc(100vh / var(--ui, 1) - 24px);
+  overflow: auto;
+  box-sizing: border-box;
   padding: 10px 12px;
   border-radius: 5px;
   display: flex;
