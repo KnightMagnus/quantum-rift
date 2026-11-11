@@ -3,10 +3,50 @@ import type { Session } from './game.ts';
 import type { Entity } from './space.ts';
 import type { CoopMessage } from './coop-contracts.ts';
 
+const suppressedEncounters = new WeakSet<Session>();
+
+/** Shared credit never accepts a different chapter, stage or story branch. */
+export function sameStoryStep(owner: Session, helper: Session): boolean {
+  const left = owner.data.story;
+  const right = helper.data.story;
+  const choices = (session: Session) =>
+    JSON.stringify(
+      Object.entries(session.data.story?.flags || {})
+        .filter(([, value]) => typeof value === 'string')
+        .sort(([left], [right]) => left.localeCompare(right)),
+    );
+  return !!(
+    left?.active &&
+    right?.active &&
+    !right.active.ready &&
+    left.step === right.step &&
+    left.active.id === right.active.id &&
+    (left.active.stage || 0) === (right.active.stage || 0) &&
+    choices(owner) === choices(helper)
+  );
+}
+
+/** A suppressed personal encounter resumes after consent or the frozen flight ends. */
+export function resumeStoryEncounter(session: Session): boolean {
+  return suppressedEncounters.delete(session);
+}
+
+/** Frozen consent, not merely READY TO HELP, suppresses a second personal fight. */
+export function sharedEncounterOwner(
+  game: Pick<CoopCapabilities, 'sessions'>,
+  helper: Session,
+): Session | undefined {
+  const owner = game.sessions.get(helper.storyAssistOwner!);
+  const run = owner?.sharedStory;
+  if (!owner || !run || !sameStoryStep(owner, helper)) return;
+  const target = { story: owner.id, storyKill: true, storyMission: run.mission };
+  return storyParticipant(game, target, helper.id) ? owner : undefined;
+}
+
 /** Check live consent every time; stale rosters never grant access after reconnect or departure. */
 export function storyParticipant(
   game: Pick<CoopCapabilities, 'sessions'> | undefined,
-  target: Entity,
+  target: Pick<Entity, 'story' | 'storyKill' | 'storyMission'>,
   captainId: number,
 ): boolean {
   if (target.story === captainId) return true;
@@ -20,6 +60,7 @@ export function storyParticipant(
     run &&
     target.storyKill &&
     target.storyMission === run.mission &&
+    (owner.data.story?.active?.stage || 0) === (run.stage || 0) &&
     run.until > Date.now() &&
     run.helpers.includes(helper.id) &&
     owner.ent?.id === run.ownerEntity &&
@@ -46,9 +87,7 @@ export function sharedStoryAction(
   message: CoopMessage,
 ): void {
   if (message.op === 'storyStop') {
-    delete session.sharedStory;
-    delete session.storyAssistOwner;
-    delete session.storyAssistFlight;
+    withdrawStoryAssistance(game, session);
     game.toast(session, 'Shared story assistance stopped.');
     return;
   }
@@ -70,7 +109,7 @@ export function sharedStoryAction(
     session.storyAssistFlight = { owner: owner.ent.id, helper: session.ent.id };
     game.toast(
       session,
-      `Ready to help ${owner.name}. They must start shared assistance; only they receive story progress and unique rewards.`,
+      `Ready to help ${owner.name}. They must start shared assistance; captains on the same chapter, stage and branch share objective progress. Each reports their own chapter for rewards.`,
     );
     game.toast(
       owner,
@@ -93,7 +132,8 @@ export function sharedStoryAction(
   if (
     session.sharedStory &&
     session.sharedStory.until > Date.now() &&
-    session.sharedStory.mission === active.id
+    session.sharedStory.mission === active.id &&
+    (session.sharedStory.stage || 0) === (active.stage || 0)
   )
     return game.toast(
       session,
@@ -113,6 +153,10 @@ export function sharedStoryAction(
   if (!helpers.length) return game.toast(session, 'Ask helpers to choose READY TO HELP first.');
   session.sharedStory = {
     mission: active.id,
+    stage: active.stage || 0,
+    progressHelpers: helpers
+      .filter((helper) => sameStoryStep(session, helper))
+      .map((helper) => helper.id),
     ownerEntity: session.ent.id,
     helperEntities: Object.fromEntries(helpers.map((helper) => [helper.id, helper.ent!.id])),
     armada: session.data.armada!,
@@ -120,10 +164,25 @@ export function sharedStoryAction(
     helpers: helpers.map((helper) => helper.id),
     until: Date.now() + 15 * 60_000,
   };
+  // Remove duplicate mission actors without kills, bounties or progression.
+  for (const helper of helpers) {
+    if (!sameStoryStep(session, helper)) continue;
+    const removed = new Set<number>();
+    for (const actor of space.ships.values())
+      if (actor.story === helper.id && (actor.storyMission === active.id || actor.storyAlly))
+        removed.add(actor.id);
+    for (const actor of space.ships.values())
+      if (actor.owner && removed.has(actor.owner)) removed.add(actor.id);
+    for (const id of removed) {
+      const actor = space.ships.get(id);
+      if (actor) space.remove(actor);
+    }
+    suppressedEncounters.add(helper);
+  }
   for (const participant of [session, ...helpers])
     game.toast(
       participant,
-      `Shared story fight started by ${session.name}: ${helpers.map((helper) => helper.name).join(', ')}. Assistance lasts up to 15 minutes while both captains remain connected, in-system and in the Armada. Only the owner advances the story and receives unique rewards; ordinary combat bounties apply.`,
+      `Shared story fight started by ${session.name}: ${helpers.map((helper) => helper.name).join(', ')}. Assistance lasts up to 15 minutes while both captains remain connected, in-system and in the Armada. Captains on the same chapter, stage and branch share objective progress; each reports their own chapter for rewards. Other helpers receive ordinary combat bounties.`,
     );
 }
 

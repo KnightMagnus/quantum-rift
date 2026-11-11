@@ -65,6 +65,17 @@ function sendFollowRoute(
   const route = `${armada.id}:${armada.leader}:${follower.data.sys}:${destination}`;
   if (followRoutes.get(follower) === route) return;
   followRoutes.set(follower, route);
+  if (game.deepLocked(follower.data, destination)) {
+    game.toast(
+      follower,
+      `Cannot follow ${leader.data.name}: story access is required for the next system.`,
+    );
+    game.toast(
+      leader,
+      `${follower.data.name} cannot follow: story access is required for the next system.`,
+    );
+    return;
+  }
   game.send(follower, { t: 'follow', to: destination, leader: leader.data.name });
 }
 
@@ -434,6 +445,7 @@ export const CoopOperations = {
   },
   coopLogout(this: CoopCapabilities, session: Session) {
     cleanContractPlans(this, session);
+    withdrawStoryAssistance(this, session);
     const playerData = session.data;
     if (!playerData || this.solo) return;
     playerData.lastSeen = Date.now();
@@ -651,6 +663,21 @@ export const CoopOperations = {
             ? this.A.ships[playerAccount.ship.hull].name
             : '',
         landed: !!(session && !session.ent),
+        followStatus: !session
+          ? 'Offline'
+          : !session.ent
+            ? 'Cannot follow: landed'
+            : session.ent.disabled
+              ? 'Cannot follow: disabled'
+              : (() => {
+                  const leader = this.sessionOf(armadaState.leader);
+                  return leader &&
+                    playerAccount &&
+                    leader !== session &&
+                    this.deepLocked(playerAccount, leader.data.sys)
+                    ? 'Cannot follow: story access required'
+                    : undefined;
+                })(),
         storyStatus: !session
           ? 'Offline'
           : playerAccount?.story?.active
