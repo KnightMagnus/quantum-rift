@@ -105,6 +105,9 @@ export async function runTouchControls(origin: string, output: string): Promise<
       [1024, 768, 1],
       [1024, 768, 1.4],
       [1093, 614, 1.4],
+      // Portrait phones: the stick must stay clear of the button grid.
+      [390, 664, 1],
+      [412, 839, 1],
     ]) {
       await page.setViewportSize({ width: width!, height: height! });
       await page.evaluate((scale) => {
@@ -165,8 +168,25 @@ export async function runTouchControls(origin: string, output: string): Promise<
       await waitPacket(released, (packet) => packet.t === 'input' && packet.f1 === 0);
       const stick = await page.locator('#tstick').boundingBox();
       assert.ok(stick);
+      assert.equal(
+        await page.evaluate(() => {
+          const stickElement = document.getElementById('tstick')!,
+            bounds = stickElement.getBoundingClientRect();
+          return stickElement.contains(
+            document.elementFromPoint(
+              bounds.left + bounds.width / 2,
+              bounds.top + bounds.height / 2,
+            ),
+          );
+        }),
+        true,
+        `the stick centre is not covered at ${width}x${height}`,
+      );
       const steering = packets.length;
-      await touch(session, 'touchStart', { x: stick.x + stick.width / 2, y: stick.y + 8 });
+      await touch(session, 'touchStart', {
+        x: stick.x + stick.width / 2,
+        y: stick.y + stick.height * 0.1,
+      });
       try {
         await waitPacket(steering, (packet) => !!packet.th || !!packet.tu);
       } finally {
