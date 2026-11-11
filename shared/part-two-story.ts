@@ -116,7 +116,7 @@ export const PART_TWO_OBJECTIVES: Record<string, PartTwoObjective[]> = {
       'ledger-nine',
       'ledger-nine',
       2,
-      'Under the local ceasefire rescue the human and Freefolk civilian crews. Report to Greta Tell.',
+      'Under the local ceasefire, rescue the human and Freefolk civilian crews. Report to Greta Tell.',
       'independent_backup',
     ),
   ],
@@ -132,7 +132,7 @@ export const PART_TWO_OBJECTIVES: Record<string, PartTwoObjective[]> = {
     haul('vigils-rest', 'Compare the lunar observatory logs with Earthlight measurements.'),
     haul(
       'threshold',
-      'At Threshold in the Rift, ask Terra to appoint a human delegation carrying recorded testimony from its Rift neighbours.',
+      'At the Threshold Spire in the Rift, ask Terra to appoint a human delegation carrying recorded testimony from its Rift neighbours.',
     ),
     haul(
       'ledger-nine',
@@ -290,7 +290,7 @@ export function partTwoBattle(flags: StoryFlags): PartTwoObjective[] {
       haul(
         'ledger-nine',
         ending === 'dormancy'
-          ? 'Deliver signed withdrawal terms, staged protected handovers and agreed reactivation conditions. The Index choose whether to sleep.'
+          ? 'Deliver signed withdrawal terms, staged protected handovers and agreed reactivation conditions. The Index chooses whether to sleep.'
           : 'Deliver the signed withdrawal orders to the independent relay.',
         'negotiated',
       ),
@@ -480,7 +480,7 @@ export const PART_TWO: StoryMission[] = [
     'p2-broadcast',
     'A Victory Broadcast',
     'hearthline',
-    'Rauth meets you in the broadcast booth. “You saw what they did at Pale Meridian. Tell the fleet.” Saye sets the second recorder beside the first. “Then tell them what we did before that.” Rauth keeps his hand on the microphone. “There will be another attack while you argue.” Both records are in your custody. You must choose who receives copies.',
+    'Rauth meets you at the dock. “You saw what they did at Pale Meridian. Tell the fleet.” Saye sets the second recorder beside the first. “Then tell them what we did before that.” Rauth keeps his hand on the microphone. “There will be another attack while you argue.” Both records are in your custody. You must choose who receives copies.',
     'The broadcast office records your instructions.',
     'p2_records',
     [
@@ -619,7 +619,7 @@ export function partTwoAftercare(flags: StoryFlags): PartTwoObjective[] {
         'ledger-nine',
         harsh ? 3 : 2,
         harsh
-          ? 'Recover the surviving archive crews displaced by your offensive; report at Ledger Nine.'
+          ? `Recover the surviving ${flags.p2_ending === 'ascendant' ? 'relay and yard' : 'archive'} crews displaced by your offensive; report at Ledger Nine.`
           : 'Recover the stranded ceasefire inspectors and report at Ledger Nine.',
         'aftercare_crews',
       ),
@@ -646,9 +646,7 @@ export function partTwoStages(flags: StoryFlags, chapterId: string): PartTwoObje
 
 /** Every recorded choice is acknowledged by the people affected, not by changing the shared world. */
 export function partTwoMemorial(flags: StoryFlags): string {
-  const lines: string[] = [
-    'At Saint Orra, Rooke keeps two lists: crews returned and people still missing.',
-  ];
+  const lines: string[] = ['Rooke keeps two lists: crews returned and people still missing.'];
   const responses: Array<[keyof StoryFlags, Record<string, string>]> = [
     [
       'p2_entry',
