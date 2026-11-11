@@ -59,6 +59,7 @@ import { applyTake, planTake } from '../shared/cargo-lots.ts';
 import { destType } from './syndicate.ts';
 import { freightOffers } from './freight-offers.ts';
 import { grantRadio, radioTourOffer, advanceRadioTour } from './radio-discovery.ts';
+import { isUnswornPassage } from './unsworn-passage.ts';
 
 /**
  * Ordinary job board, acceptance and landing-completion owner. Feature-specific
@@ -475,6 +476,10 @@ const JobOperations: JobOperations = {
         playerData.credits += mission.reward;
         playerData.stats.earned += mission.reward;
         mission.paid = true;
+        if (isUnswornPassage(mission)) {
+          playerData.unswornYard = true;
+          this.toast(session, 'Unsworn hulls are now for sale at Confederation shipyards.');
+        }
         if (mission.radioTour) {
           grantRadio(this, session, 'super-idol');
           this.send(session, {

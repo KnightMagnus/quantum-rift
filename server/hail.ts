@@ -19,6 +19,13 @@ import type { NetworkMessage } from './message-registry.ts';
 import type { Entity, Space } from './space.ts';
 
 import { contextualHail } from './hail-dialogue.ts';
+import {
+  UNSWORN_PASSAGE_OPTION,
+  unswornPassageMission,
+  unswornPassageRefusal,
+  unswornPassageSource,
+  unswornYardOpen,
+} from './unsworn-passage.ts';
 // hailing. Talk to the ship you have targeted or the planet you have selected:
 // bribe pirates, ask traders for fuel or repairs when stranded, bribe a planet for landing rights, trade words with rivals.
 import { SYS as systemsById, STELLARS, FACTIONS, COMMODITIES } from '../shared/galaxy.ts';
@@ -241,6 +248,8 @@ export const HailOperations = {
         label: 'Hire support: 1,500 cr / 5 min, this system only; no refunds',
       });
     if (hurt) options3.push({ k: 'repair', label: 'Ask for emergency repairs (1,500 cr)' });
+    if (unswornPassageSource(entity2, root) && !unswornYardOpen(playerData))
+      options3.push({ k: UNSWORN_PASSAGE_OPTION, label: 'Ask how to buy an Unsworn ship' });
     return announce(contextualHail(session, entity2, space), options3);
   },
   /**
@@ -296,6 +305,23 @@ export const HailOperations = {
       }
     };
     switch (message.k) {
+      case UNSWORN_PASSAGE_OPTION: {
+        if (!unswornPassageSource(entity2, root) || space.isHostile(root, entity)) return;
+        const refusal = unswornPassageRefusal(playerData);
+        if (refusal) return announce(refusal);
+        const mission = unswornPassageMission(playerData.sys, playerData, Date.now());
+        if (!mission)
+          return announce(
+            'There is no yard we trust within reach of here. Ask us again elsewhere.',
+          );
+        playerData.missions.push({ ...mission, owner: session.id });
+        this.log(playerData, `Accepted: ${mission.title}.`);
+        this.db.touch();
+        this.you(session);
+        return announce(
+          `No Confederation yard sells our hulls to strangers. Carry these papers to ${STELLARS[mission.dest!].name} and our people there will put your name on the list. After that, any Confederation shipyard will sell you an Unsworn hull.`,
+        );
+      }
       case 'mercenary':
         return announce(this.hails.hire(session, entity2, space));
       case 'bribe': {
