@@ -1,9 +1,29 @@
 import type { CoopCapabilities } from './features.ts';
 import type { Session } from './game.ts';
-import type { Entity } from './space.ts';
+import type { Entity, ShipStats, Space } from './space.ts';
 import type { CoopMessage } from './coop-contracts.ts';
 
 const suppressedEncounters = new WeakSet<Session>();
+
+/** Extra durability each live helper adds, as a share of the encounter's solo durability. */
+export const SHARED_DURABILITY_PER_HELPER = 1;
+/** Extra outgoing damage each live helper adds, as a share of the encounter's solo damage. */
+export const SHARED_DAMAGE_PER_HELPER = 0.1;
+/** Helpers beyond this count add no further scaling. */
+export const SHARED_SCALING_HELPER_CAP = 4;
+
+/** Solo stats and the helper count currently applied to one scaled encounter actor. */
+interface SharedEncounterScaling {
+  /** Story owner whose shared roster sets this actor's scale. */
+  ownerId: number;
+  /** Stats the actor had before any shared scaling. */
+  soloStats: ShipStats;
+  /** Live helper count the current stats reflect. */
+  helpers: number;
+}
+
+const scaledActors = new WeakMap<Entity, SharedEncounterScaling>();
+const scaledOwners = new WeakSet<Session>();
 
 /** Shared credit never accepts a different chapter, stage or story branch. */
 export function sameStoryStep(owner: Session, helper: Session): boolean {
@@ -78,6 +98,98 @@ export function storyParticipant(
     owner.data.armada &&
     helper.data.armada === owner.data.armada
   );
+}
+
+/** Durability and damage multipliers for a shared encounter with this many live helpers. */
+export function sharedEncounterScale(helpers: number): { durability: number; damage: number } {
+  const counted = Math.max(0, Math.min(SHARED_SCALING_HELPER_CAP, Math.floor(helpers)));
+  return {
+    durability: 1 + SHARED_DURABILITY_PER_HELPER * counted,
+    damage: 1 + SHARED_DAMAGE_PER_HELPER * counted,
+  };
+}
+
+/** Helpers on the frozen roster who still pass every live participation check. */
+export function liveSharedHelpers(
+  game: Pick<CoopCapabilities, 'sessions'>,
+  owner: Session,
+): number {
+  const run = owner.sharedStory;
+  if (!run) return 0;
+  const target = { story: owner.id, storyKill: true, storyMission: run.mission };
+  return run.helpers.filter((helperId) => storyParticipant(game, target, helperId)).length;
+}
+
+/** Hostile actors of the owner's current fight: story targets and the escorts they command. */
+function sharedEncounterActors(space: Space, owner: Session, mission: string): Entity[] {
+  const targets = [...space.ships.values()].filter(
+    (actor) =>
+      !actor.dead &&
+      actor.story === owner.id &&
+      actor.storyKill &&
+      actor.storyMission === mission &&
+      !actor.storyAlly &&
+      !actor.player,
+  );
+  const targetIds = new Set(targets.map((actor) => actor.id));
+  const escorts = [...space.ships.values()].filter(
+    (actor) =>
+      !actor.dead &&
+      actor.owner !== null &&
+      targetIds.has(actor.owner) &&
+      !actor.storyAlly &&
+      !actor.player &&
+      !targetIds.has(actor.id),
+  );
+  return [...targets, ...escorts];
+}
+
+/** Rebuild an actor's stats for a helper count while keeping its current health fraction. */
+function applyActorScale(actor: Entity, scaling: SharedEncounterScaling, helpers: number): void {
+  if (scaling.helpers === helpers) return;
+  const scale = sharedEncounterScale(helpers);
+  const solo = scaling.soloStats;
+  const shieldFraction = actor.st.shield > 0 ? actor.shield / actor.st.shield : 1;
+  const armorFraction = actor.st.armor > 0 ? actor.armor / actor.st.armor : 1;
+  actor.st = {
+    ...solo,
+    shield: solo.shield * scale.durability,
+    shieldRe: solo.shieldRe * scale.durability,
+    armor: solo.armor * scale.durability,
+    armorRe: solo.armorRe * scale.durability,
+    damageMul: solo.damageMul * scale.damage,
+  };
+  actor.shield = actor.st.shield * shieldFraction;
+  actor.armor = actor.st.armor * armorFraction;
+  scaling.helpers = helpers;
+}
+
+/**
+ * Match the owner's shared fight to the captains still on its roster. Runs every
+ * tick; scaling follows live helpers down as well as up and preserves each
+ * actor's health fraction, so joining or leaving never heals or breaks a target.
+ */
+export function scaleSharedEncounter(
+  game: Pick<CoopCapabilities, 'sessions'>,
+  owner: Session,
+  space: Space,
+): void {
+  const run = owner.sharedStory;
+  if (!run && !scaledOwners.has(owner)) return;
+  const helpers = run && run.sys === space.id ? liveSharedHelpers(game, owner) : 0;
+  const mission = run?.mission || owner.data.story?.active?.id;
+  const actors = mission ? sharedEncounterActors(space, owner, mission) : [];
+  for (const actor of actors) {
+    let scaling = scaledActors.get(actor);
+    if (!scaling) {
+      if (!helpers) continue;
+      scaling = { ownerId: owner.id, soloStats: actor.st, helpers: 0 };
+      scaledActors.set(actor, scaling);
+    }
+    if (scaling.ownerId === owner.id) applyActorScale(actor, scaling, helpers);
+  }
+  if (helpers) scaledOwners.add(owner);
+  else if (!run) scaledOwners.delete(owner);
 }
 
 /** Only the story owner starts a fight roster; helpers opt in before that roster is frozen. */
@@ -182,7 +294,7 @@ export function sharedStoryAction(
   for (const participant of [session, ...helpers])
     game.toast(
       participant,
-      `Shared story fight started by ${session.name}: ${helpers.map((helper) => helper.name).join(', ')}. Assistance lasts up to 15 minutes while both captains remain connected, in-system and in the Armada. Captains on the same chapter, stage and branch share objective progress; each reports their own chapter for rewards. Other helpers receive ordinary combat bounties.`,
+      `Shared story fight started by ${session.name}: ${helpers.map((helper) => helper.name).join(', ')}. Assistance lasts up to 15 minutes while both captains remain connected, in-system and in the Armada. Captains on the same chapter, stage and branch share objective progress; each reports their own chapter for rewards. Other helpers receive ordinary combat bounties. Story enemies get tougher for each helper still in the fight.`,
     );
 }
 

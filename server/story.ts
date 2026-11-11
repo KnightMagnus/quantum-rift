@@ -3,6 +3,7 @@ import {
   sameStoryStep,
   sharedEncounterOwner,
   resumeStoryEncounter,
+  scaleSharedEncounter,
   storyParticipant,
 } from './shared-story.ts';
 import {
@@ -623,6 +624,7 @@ export const StoryOperations = {
   storyTick(this: StoryCapabilities, session: Session, space: Space, duration: number) {
     if (!sharedEncounterOwner(this, session) && resumeStoryEncounter(session))
       this.storyArrive(session, space);
+    scaleSharedEncounter(this, session, space);
     const active = session.data.story?.active;
     if (
       active?.id !== 'dreamer' ||
