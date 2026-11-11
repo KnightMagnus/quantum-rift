@@ -209,7 +209,6 @@ export const PART_TWO_OBJECTIVES: Record<string, PartTwoObjective[]> = {
       'aftercare',
     ),
   ],
-  'p2-names': [haul('saint-orra', 'Visit Saint Orra’s memorial and the people who survived.')],
 };
 
 export function partTwoBattle(flags: StoryFlags): PartTwoObjective[] {
@@ -351,15 +350,6 @@ export function partTwoCampaignGuidance(flags: StoryFlags): string {
     unavailable.join(' ') +
     '\n\nYou may withdraw from conquest or the archive campaign, but deaths and destroyed archives cannot be undone.'
   );
-}
-
-/** The memorial recalls local consequences without repeating the campaign ending. */
-export function partTwoMemorialText(flags: StoryFlags): string {
-  const supplies =
-    flags.p2_supply === 'grain'
-      ? 'Saint Orra’s grain line was restored; the frontier battery went short.'
-      : 'The frontier battery received machinery; Saint Orra endured delayed grain deliveries.';
-  return `At Saint Orra, the memorial lists those who died beside the names of the people you brought home. ${supplies}`;
 }
 
 export function partTwoEndingText(flags: StoryFlags): string {
@@ -570,13 +560,6 @@ export const PART_TWO: StoryMission[] = [
     'The battle is over.',
   ),
   mission(
-    'p2-names',
-    'Names for the Living',
-    'vigils-rest',
-    'Go to Saint Orra. Read the memorial and meet the survivors before returning to flight.',
-    'The memorial records the saved outcome, not the outcome anyone promised.',
-  ),
-  mission(
     'p2-freefolk',
     'People Between Ports',
     'saint-orra',
@@ -604,8 +587,8 @@ export const PART_TWO: StoryMission[] = [
     'p2-aftercare',
     'The Work That Remains',
     'vigils-rest',
-    'Rooke brings a reconstruction manifest instead of a battle order. “The crews you saved still need somewhere to live. The crews we lost still have families.” Complete the recovery work your campaign left behind, then meet him at Saint Orra.',
-    'At Saint Orra, Rooke reads the returned crews into the harbour register. Moss and Dene stand with their own people. The memorial keeps the names of those who did not return.',
+    'Rooke brings a reconstruction manifest instead of a battle order. “The crews you saved still need somewhere to live. The crews we lost still have families.” Complete the recovery work your campaign left behind, then meet him at Saint Orra’s memorial.',
+    'At Saint Orra, Rooke reads the returned crews into the harbour register. Moss and Dene stand with their own people. The memorial lists those who died beside the names of the people you brought home.',
   ),
 ];
 
@@ -637,11 +620,29 @@ export function partTwoAftercare(flags: StoryFlags): PartTwoObjective[] {
   ];
 }
 
+/**
+ * The closing memorial scene: Rooke’s register, the Freefolk and Unsworn outcomes, then
+ * every personal Part II decision. Recalls local consequences without repeating the campaign ending.
+ */
+export function partTwoAftercareScene(flags: StoryFlags, done: string): string {
+  const supplies =
+    flags.p2_supply === 'grain'
+      ? 'Saint Orra’s grain line was restored; the frontier battery went short.'
+      : 'The frontier battery received machinery; Saint Orra endured delayed grain deliveries.';
+  const freefolk =
+    flags.p2_freefolk === 'clinic'
+      ? 'Moss’s clinic is treating the returned crews; the family shelter still needs berths.'
+      : 'Moss’s shelter has room for the returned families; the mobile clinic still needs parts.';
+  const unsworn =
+    flags.p2_unsworn === 'public'
+      ? 'Dene’s witnesses speak at the open hearing with their consent.'
+      : 'Dene keeps the witnesses’ names sealed from command.';
+  return [`${done} ${supplies}`, freefolk, unsworn, partTwoMemorial(flags)].join('\n\n');
+}
+
 /** Every recorded choice is acknowledged by the people affected, not by changing the shared world. */
 export function partTwoMemorial(flags: StoryFlags): string {
-  const lines: string[] = [
-    'At Saint Orra, Rooke keeps two lists: crews returned and people still missing.',
-  ];
+  const lines: string[] = ['Rooke keeps two lists: crews returned and people still missing.'];
   const responses: Array<[keyof StoryFlags, Record<string, string>]> = [
     [
       'p2_entry',

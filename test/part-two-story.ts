@@ -161,7 +161,7 @@ assert.equal(data.story.flags?.p2_campaign, 'border');
 assert.equal(data.story.active?.stage, 0, 'withdrawal starts replacement transport recovery');
 assert.equal(data.story.flags?.p2_ending, undefined);
 console.log(
-  'Part II: all 19 missions, all five outcomes, navigation rejection, ending gates and withdrawal passed.',
+  'Part II: all 18 missions, all five outcomes, navigation rejection, ending gates and withdrawal passed.',
 );
 
 // Native simulation spawns actual new hulls and custody requires the Capture interaction.
@@ -257,10 +257,18 @@ const fleetCompletion = captain.sock.out
   .filter((packet) => packet.t === 'story' && (packet as unknown as { done?: boolean }).done)
   .at(-1) as unknown as { text: string };
 assert.match(fleetCompletion.text, /The Border That Holds/);
-dock('vigils-rest');
-story.storyAccept(captain, { id: 'p2-names' });
 const memorialPort = STELLARS['saint-orra'];
 data.story.flags!.p2_supply = 'grain';
+data.story.flags!.p2_freefolk = 'clinic';
+data.story.flags!.p2_unsworn = 'public';
+data.story.step = STORY.findIndex((mission) => mission.id === 'p2-aftercare');
+data.story.active = { id: 'p2-aftercare', got: 0, ready: false, spawned: false, stage: 1 };
+assert.equal(
+  storyReportAccess(data, memorialPort.id),
+  false,
+  'recovery work before the memorial grants no landing exception',
+);
+data.story.active.stage = partTwoAftercare(data.story.flags!).length - 1;
 data.sys = memorialPort.system;
 data.stellar = null;
 game.spawnPlayer(captain, memorialPort.x, memorialPort.y, 0, 0);
@@ -275,17 +283,26 @@ const memorialCompletion = captain.sock.out
   .filter(
     (packet) =>
       packet.t === 'story' &&
-      (packet as unknown as { id?: string; done?: boolean }).id === 'p2-names' &&
+      (packet as unknown as { id?: string; done?: boolean }).id === 'p2-aftercare' &&
       (packet as unknown as { done?: boolean }).done,
   )
   .at(-1) as unknown as { text: string };
-assert.match(memorialCompletion.text, /At Saint Orra, the memorial/);
+assert.match(memorialCompletion.text, /^At Saint Orra, Rooke reads the returned crews/);
+assert.match(memorialCompletion.text, /The memorial lists those who died/);
+assert.equal(
+  memorialCompletion.text.match(/At Saint Orra/g)!.length,
+  1,
+  'one scene, not two memorial openings',
+);
 assert.doesNotMatch(memorialCompletion.text, /The Border That Holds/);
 assert.match(
   memorialCompletion.text,
   /The grain-line workers bring bread/,
-  'the distinct memorial retains the saved supply decision callback',
+  'the memorial retains the saved supply decision callback',
 );
+assert.match(memorialCompletion.text, /Moss’s clinic is treating the returned crews/);
+assert.match(memorialCompletion.text, /Dene’s witnesses speak at the open hearing/);
+assert.ok(data.story.done.includes('p2-aftercare'));
 data.sys = reportPort.system;
 data.stellar = null;
 game.spawnPlayer(captain, reportPort.x, reportPort.y, 0, 0);
