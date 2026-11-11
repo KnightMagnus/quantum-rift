@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { SYSTEMS, PERSONAL_SYSTEMS, SYS, STELLARS, SITES } from '../shared/galaxy.ts';
-import { storySystemVisible } from '../shared/story-world.ts';
+import { storySystemVisible, codexHullVisible } from '../shared/story-world.ts';
+import { augmentAssets, type GameAssets } from '../shared/rules.ts';
+import { TYPE0_IDS } from '../shared/ships-type0.ts';
+import filesystem from 'node:fs';
 import {
   SOL_ARRIVAL_PORT,
   SOL_IRREGULAR_MOONS,
@@ -132,4 +135,42 @@ for (const [planet, extent, moons] of [
         STELLARS[planet].r * extent,
       `${moon} clears ${planet}'s rings`,
     );
-console.log('Milky Way world: Sol sizes, irregular moons and Rift arrival point passed');
+
+// The Codex keeps Milky Way hulls hidden until the captain crosses into the Milky Way.
+{
+  const assets = augmentAssets(
+    JSON.parse(
+      filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
+    ) as GameAssets,
+  );
+  const listed = (story?: Parameters<typeof codexHullVisible>[1], currentHull?: number) =>
+    Object.values(assets.ships)
+      .filter((hull) => codexHullVisible(hull, story, currentHull))
+      .map((hull) => hull.id);
+  const milkyWay = Object.values(assets.ships)
+    .filter(
+      (hull) =>
+        !hull.npcOnly &&
+        (['confederation', 'freefolk', 'unsworn'].includes(hull.faction ?? '') ||
+          TYPE0_IDS.includes(hull.id)),
+    )
+    .map((hull) => hull.id);
+  assert.equal(milkyWay.length, 57, 'Confederation, Freefolk, Unsworn and Type 0 hulls');
+  const fresh = listed({ done: [], flags: {} });
+  for (const id of milkyWay)
+    assert.ok(!fresh.includes(id), `${assets.ships[id].name} is hidden from a new captain`);
+  assert.ok(fresh.includes(703), 'the Gnat Skiff still lists');
+  assert.ok(!fresh.includes(744), "the Ina Que'var waits for its story step");
+  const beforeCrossing = listed({ done: [], flags: { main_ending: 'table' } });
+  assert.ok(!beforeCrossing.includes(950), 'choosing the ending alone does not open the roster');
+  const crossed = listed({ done: [], flags: { main_ending: 'table', crossed_quantum_rift: true } });
+  for (const id of milkyWay)
+    assert.ok(crossed.includes(id), `${assets.ships[id].name} lists after the crossing`);
+  assert.ok(listed({ done: [], flags: {} }, 1010).includes(1010), 'the hull you fly always lists');
+  assert.ok(!listed({ done: [], flags: {} }, 1010).includes(950));
+  assert.ok(!listed(undefined).includes(950), 'no story data keeps the roster hidden');
+}
+
+console.log(
+  'Milky Way world: Sol sizes, irregular moons, Rift arrival point and Codex hull gating passed',
+);
