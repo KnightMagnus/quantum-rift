@@ -160,6 +160,23 @@ const clamp = (value: number, firstValue: number, secondValue: number): number =
 const comName = (identifier: string): string =>
   (COMMODITIES.find((commodityDef) => commodityDef.id === identifier) || { name: identifier }).name;
 
+/**
+ * Return surviving captains to their ports and remove the finished match.
+ * @param capabilities - Frontier service capabilities.
+ * @param match - Arena match descriptor.
+ */
+function endArenaMatch(capabilities: FrontierCapabilities, match: ArenaMatch) {
+  // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
+  for (const count of [...match.alive]) {
+    const session = capabilities.sessionOf(count);
+    if (session) capabilities.arenaExit(session, match, false);
+  }
+  match.sp.keep = false;
+  delete capabilities.frontierState.matches[match.id];
+  delete capabilities.live[match.id];
+  capabilities.db.touch();
+}
+
 export const FrontierOperations = {
   /**
    * Initialize persistent colonies and market orders without resetting live encounters.
@@ -899,7 +916,22 @@ export const FrontierOperations = {
               : 0)
           );
         }, 0);
-      winner = hullPoints(alive2) >= hullPoints(alive3) ? 'A' : 'B';
+      const pointsA = hullPoints(alive2),
+        pointsB = hullPoints(alive3);
+      // An even time-out is a draw: no rating change and no payout, so idle matches earn nothing.
+      winner = pointsA > pointsB ? 'A' : pointsB > pointsA ? 'B' : null;
+    }
+    if (!winner) {
+      for (const team of [...match.teams.A, ...match.teams.B]) {
+        const playerAccount = this.db.get(team);
+        if (!playerAccount) continue;
+        const session = this.sessionOf(team);
+        if (session)
+          this.toast(session, 'Arena: time ran out with both teams even. Draw, no payout.');
+        this.log(playerAccount, `Arena ${match.mode}: draw.`);
+      }
+      endArenaMatch(this, match);
+      return;
     }
     const rating = (names: string[]) =>
       names.reduce(
@@ -935,15 +967,7 @@ export const FrontierOperations = {
           `Arena ${match.mode}: ${hasWon ? 'won' : 'lost'} (rating ${playerAccount.arena.rating}).`,
         );
       }
-    // oxlint-disable-next-line unicorn/no-useless-spread -- Snapshot before callbacks mutate the live collection.
-    for (const count of [...match.alive]) {
-      const session = this.sessionOf(count);
-      if (session) this.arenaExit(session, match, false);
-    }
-    match.sp.keep = false;
-    delete this.frontierState.matches[match.id];
-    delete this.live[match.id];
-    this.db.touch();
+    endArenaMatch(this, match);
   },
   /**
    * Periodic tick check across all arena matches and matchmaker queues.
