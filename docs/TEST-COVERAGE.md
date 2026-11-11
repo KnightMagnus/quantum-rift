@@ -1880,7 +1880,7 @@ Delivery warning cases in `gameplay-safety.ts` cover ordinary goods without grad
 
 Fleet boarding cases in `gameplay-safety.ts` reject own and Armada wingmate plunder/capture and reward farming, retain their drydock recovery, and preserve the downed-captain rescue route.
 
-`recovery-safety.ts` exercises actual death, eligible insurance berths, wanted and universally hostile standing, owned stations, depleted credits, and production departure/jump without moving the captain to an artificial escape location.
+`recovery-safety.ts` exercises actual death, nearest eligible public insurance berths, wanted and universally hostile standing, preferred owned stations, depleted credits, and production departure/jump. It also checks ordinary combat salvage priority for the killer and frozen present Armada roster, support pickup, outsider denial, exact expiry, cross-system rejection and wing ownership. Mining, jettisoned cargo and quest loot retain their own rules.
 
 Insurance departure grants thirty seconds of NPC-only exit grace once per rebuild; firing by the fleet cancels it. `recovery-safety.ts` verifies one-time consumption and cancellation, alongside real wanted departure.
 
@@ -2068,3 +2068,9 @@ records, cargo, bridge assignments, hull UIDs and the unique progression outfit.
 ## Save and mission recovery
 
 `reliability-recovery.ts` exercises the reviewed generated-field spread migration with preserved depletion, ore parcels and a pre-migration checkpoint, docked reconnects in both galaxies, mandatory destruction targets, convoy arrival and loss, and rescue boarding clearance outside transit mouths. Unrecognized mining geometry still requires a separate migration. `quest-directions.ts` covers immediate same-port quest acceptance and duplicate offer IDs. `content-validation.ts` rejects unknown port commodity keys. `excalibur-contracts.ts` covers renderer selection for 4096-limit hardware; `ui-polish-browser.ts` checks long career cards at narrow/scaled sizes and absent reward summaries.
+
+### Progression and reporting safeguards
+
+`combat-jobs-playability.ts` checks that real board rotations cannot sell a second unfinished patrol in the same system, while a completed patrol permits another contract. `story-combat-baseline.ts` retains prepared-cruiser and modest-wing success and unprepared-frigate failure across its declared seeds. These scripted runs are not human win-rate or time-to-upgrade measurements; ship prices and ordinary transport income are unchanged.
+
+`part-two-story.ts` covers required-report and accepted final-visit landing access without clearing faction standing, unavailable campaign explanations, distinct completion text and explicit preparation equipment rewards. Required-report access does not waive ordinary flight or unrelated landing gates.
