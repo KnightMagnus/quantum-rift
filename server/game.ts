@@ -1,3 +1,4 @@
+import { storyReportAccess } from './story.ts';
 import { encounterFeedback } from './encounter-feedback.ts';
 import { storyParticipant } from './shared-story.ts';
 import { flightFeedbackPayload } from './flight-feedback.ts';
@@ -2233,6 +2234,7 @@ export class Game<Storage extends Database = Database> {
     if (space2 > 80) return this.toast(session, 'Slow down to land.');
     const faction2 = systemsById[playerData.sys].faction;
     if (
+      !storyReportAccess(playerData, stellarBody.id) &&
       landingRefused({
         standing: playerData.rep[faction2] || 0,
         outlawPort: !!stellarBody.outlaw,

@@ -10,6 +10,8 @@ import {
   partTwoBattle,
   partTwoEndings,
   partTwoEndingText,
+  partTwoCampaignGuidance,
+  partTwoMemorialText,
 } from '../shared/part-two-story.ts';
 import { storyReportPort, storyReportGuidance } from '../shared/story-pacing.ts';
 export interface StoryPayload {
@@ -427,7 +429,7 @@ export const StoryOperations = {
           t: 'story',
           id: 'p2-fleet',
           title: 'The Homeward Fleet',
-          text: storyStep.text,
+          text: storyStep.text + partTwoCampaignGuidance(flags),
           choices: battleChoices(flags),
           acc: 'Choose campaign',
           ref: 'Not yet',
@@ -549,14 +551,11 @@ export const StoryOperations = {
               savedStory.flags || {},
               !!playerData.officers?.some((officer) => officer.name === 'Seren Of-The-Veil'),
             )
-          : ['p2-fleet', 'p2-names'].includes(storyStep.id)
-            ? partTwoEndingText(savedStory.flags || {}) +
-              (storyStep.id === 'p2-names'
-                ? savedStory.flags?.p2_supply === 'grain'
-                  ? ' Saint Orra’s grain line was restored; the frontier battery went short.'
-                  : ' The frontier battery received machinery; Saint Orra endured delayed grain deliveries.'
-                : '')
-            : storyStep.done) +
+          : storyStep.id === 'p2-fleet'
+            ? partTwoEndingText(savedStory.flags || {})
+            : storyStep.id === 'p2-names'
+              ? partTwoMemorialText(savedStory.flags || {})
+              : storyStep.done) +
         crewBeat(playerData, storyStep.id) +
         (received.some(Boolean) ? `\n\nRewards: ${received.filter(Boolean).join(', ')}.` : ''),
       done: true,
@@ -972,7 +971,12 @@ export const StoryOperations = {
     active2.got++;
     this.toast(
       session,
-      (storyMission.progress || 'Objective recovered.') +
+      (storyMission.progress ||
+        (storyMission.type === 'kill'
+          ? 'Mission target destroyed.'
+          : storyMission.capture
+            ? 'Installation captured.'
+            : 'Crew recovered.')) +
         (storyMission.count && active2.got < storyMission.count
           ? ` (${active2.got}/${storyMission.count})`
           : ''),
@@ -1150,4 +1154,22 @@ function battleChoices(flags: StoryFlags) {
     ashfall: 'I understand: destroy archive refuges, including their Freefolk civilians',
   };
   return partTwoEndings(flags).map((value) => ({ value, label: labels[value] }));
+}
+
+/** Required Part II reports and the final memorial permit only their assigned landing. */
+export function storyReportAccess(player: PlayerData, portId: string): boolean {
+  const active = player.story.active;
+  if (
+    !active ||
+    !active.id.startsWith('p2-') ||
+    player.story.flags?.main_ending !== 'table' ||
+    !player.story.flags.crossed_quantum_rift
+  )
+    return false;
+  const mission = effectiveMission(player, active.id);
+  return (
+    !!mission &&
+    ((active.ready && mission.type !== 'carry' && mission.back === portId) ||
+      (active.id === 'p2-names' && mission.dest === portId))
+  );
 }

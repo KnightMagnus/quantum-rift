@@ -10,6 +10,7 @@ import {
 import { STELLARS, SYS } from '../shared/galaxy.ts';
 import type { StoryFlags } from '../server/save-contracts.ts';
 import type { Entity } from '../server/space.ts';
+import { storyReportAccess } from '../server/story.ts';
 
 const game = refineryGame();
 const captain = refineryPilot(game, 'Part Two');
@@ -213,3 +214,120 @@ for (const combatTarget of combatTargets) {
   );
   assert.equal(combatTarget.target, captain.ent, 'campaign enemies engage the arriving captain');
 }
+
+// Required reports do not strand a captain whose mission combat cost faction standing.
+const reportPort = STELLARS['vigils-rest'];
+data.story = {
+  step: STORY.findIndex((mission) => mission.id === 'p2-fleet'),
+  active: { id: 'p2-fleet', got: 2, ready: false, spawned: true, stage: 1 },
+  done: [],
+  flags: {
+    p2_campaign: 'border',
+    main_ending: 'table',
+    crossed_quantum_rift: true,
+    p2_objectives: { corridor: true },
+  },
+};
+data.rep.confederation = -80;
+data.sys = reportPort.system;
+data.stellar = null;
+game.spawnPlayer(captain, reportPort.x, reportPort.y, 0, 0);
+captain.ent!.vx = captain.ent!.vy = 0;
+game.land(captain, reportPort.id);
+assert.ok(captain.ent, 'an unfinished report grants no landing exception');
+data.story.active!.got = 3;
+data.story.active!.ready = true;
+assert.equal(storyReportAccess(data, 'saint-orra'), false, 'no clearance at unrelated ports');
+game.land(captain, reportPort.id);
+assert.equal(
+  data.stellar,
+  reportPort.id,
+  'ready mandatory combat report permits its assigned landing',
+);
+assert.ok(data.story.done.includes('p2-fleet'));
+assert.equal(data.rep.confederation, -80, 'report access never clears faction consequences');
+const fleetCompletion = captain.sock.out
+  .filter((packet) => packet.t === 'story' && (packet as unknown as { done?: boolean }).done)
+  .at(-1) as unknown as { text: string };
+assert.match(fleetCompletion.text, /The Border That Holds/);
+dock('vigils-rest');
+story.storyAccept(captain, { id: 'p2-names' });
+const memorialPort = STELLARS['saint-orra'];
+data.sys = memorialPort.system;
+data.stellar = null;
+game.spawnPlayer(captain, memorialPort.x, memorialPort.y, 0, 0);
+captain.ent!.vx = captain.ent!.vy = 0;
+game.land(captain, memorialPort.id);
+assert.equal(
+  data.stellar,
+  memorialPort.id,
+  'the required memorial remains accessible after combat',
+);
+const memorialCompletion = captain.sock.out
+  .filter((packet) => packet.t === 'story')
+  .at(-1) as unknown as { text: string };
+assert.match(memorialCompletion.text, /At Saint Orra, the memorial/);
+assert.doesNotMatch(memorialCompletion.text, /The Border That Holds/);
+data.sys = reportPort.system;
+data.stellar = null;
+game.spawnPlayer(captain, reportPort.x, reportPort.y, 0, 0);
+captain.ent!.vx = captain.ent!.vy = 0;
+game.land(captain, reportPort.id);
+assert.ok(captain.ent, 'the completed report grants no permanent landing immunity');
+
+// Campaign choices describe missing prerequisites without opening unavailable choices.
+data.story = {
+  step: STORY.findIndex((mission) => mission.id === 'p2-fleet'),
+  active: null,
+  done: [],
+  flags: { main_ending: 'table', crossed_quantum_rift: true },
+};
+dock('black-anchorage');
+story.storyAccept(captain, { id: 'p2-fleet' });
+const prompt = captain.sock.out.filter((packet) => packet.t === 'story').at(-1) as unknown as {
+  text: string;
+  choices: { value: string }[];
+};
+assert.match(prompt.text, /missing independent copies of both records/);
+assert.match(prompt.text, /deaths and destroyed archives cannot be undone/);
+assert.deepEqual(
+  prompt.choices.map((choice) => choice.value),
+  ['border'],
+);
+story.storyAccept(captain, { id: 'p2-fleet', choice: 'ashfall' });
+assert.equal(data.story.active, null, 'explanation does not weaken the campaign gate');
+
+// Combat progress names destruction rather than claiming a recovered objective.
+data.story.active = { id: 'p2-fleet', got: 0, ready: false, spawned: true, stage: 1 };
+data.story.flags!.p2_campaign = 'border';
+data.sys = 'mw-sol';
+story.storyProgress(captain, {
+  story: captain.id,
+  storyMission: 'p2-fleet',
+  storyStage: 1,
+  storyKill: true,
+} as Entity);
+assert.match(
+  captain.sock.out.filter((packet) => packet.t === 'toast').at(-1)!.msg,
+  /Mission target destroyed/,
+);
+console.log('Part II report access, memorial, campaign explanations and combat feedback passed.');
+
+const harnessCaptain = refineryPilot(game, 'Harness reward');
+const harnessData = harnessCaptain.data;
+harnessData.story.flags = { main_ending: 'table' };
+harnessData.sys = STELLARS['vigil-lamp'].system;
+harnessData.stellar = 'vigil-lamp';
+for (const side of ['rift-alloy', 'rift-lattice', 'rift-tuning', 'rift-song', 'rift-route'])
+  harnessData.quests.sides[side] = 1;
+game.features.quests.questStart(harnessCaptain, { side: 'rift-harness' });
+const harnessQuest = harnessData.quests.active['s:rift-harness'];
+assert.ok(harnessQuest, 'completed components permit the fitting assignment');
+game.features.quests.questFinish(harnessCaptain, harnessQuest);
+assert.equal(harnessData.ship.outfits[9021], 1);
+const harnessCompletion = harnessCaptain.sock.out
+  .filter((packet) => packet.t === 'story' && (packet as unknown as { done?: boolean }).done)
+  .at(-1) as unknown as { text: string; tag: string };
+assert.match(harnessCompletion.tag, /^RIFT PREPARATION COMPLETE/);
+assert.match(harnessCompletion.text, /Rewards: Rift Harness fitted to your ship/);
+assert.doesNotMatch(harnessCompletion.text, /Rewards: \./);
