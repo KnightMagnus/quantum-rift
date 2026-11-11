@@ -376,6 +376,33 @@ export function partTwoEndingText(flags: StoryFlags): string {
       return 'The Border That Holds: the evacuation corridor stayed open long enough for civilians to leave. The fleets are separated across a watched ceasefire line, and the Rift crossing remains protected. Families can meet through controlled crossings. The war continues elsewhere.';
   }
 }
+/**
+ * Credits paid when each Part II chapter completes. Pay starts at the top Act I
+ * reward and climbs toward the final battle, so the whole part is worth about
+ * the freight income a captain gives up while playing it. The memorial visit
+ * pays only a token amount.
+ */
+export const PART_TWO_PAY: Record<string, number> = {
+  'p2-voice': 150000,
+  'p2-papers': 150000,
+  'p2-seat': 200000,
+  'p2-flag': 250000,
+  'p2-bread': 250000,
+  'p2-ashes': 300000,
+  'p2-regiment': 350000,
+  'p2-broadcast': 300000,
+  'p2-observation': 350000,
+  'p2-mind': 400000,
+  'p2-moon': 400000,
+  'p2-report': 400000,
+  'p2-road': 500000,
+  'p2-makers': 500000,
+  'p2-fleet': 1000000,
+  'p2-names': 50000,
+  'p2-freefolk': 400000,
+  'p2-unsworn': 400000,
+  'p2-aftercare': 300000,
+};
 const choices = (entries: string[][]) => entries.map(([value, label]) => ({ value, label }));
 function mission(
   id: string,
@@ -392,7 +419,7 @@ function mission(
     title,
     at,
     ...first,
-    pay: 40000,
+    pay: PART_TWO_PAY[id] ?? 0,
     rep: 0,
     text,
     done,
