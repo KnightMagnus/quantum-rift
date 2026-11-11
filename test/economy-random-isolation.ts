@@ -1,6 +1,6 @@
 // Living-economy system-state rolls own a separate random stream. Adding trade ports
 // changes how many economy draws warmup makes, but must not advance or shift the
-// ambient simulation stream that combat and survey movement read.
+// per-system simulation streams that combat and survey movement read.
 import assert from 'node:assert/strict';
 import filesystem from 'node:fs';
 import operatingSystem from 'node:os';
@@ -28,7 +28,7 @@ const startTime = 1800000000000;
 let now = startTime;
 let ambientDraws = 0;
 
-/** Install a seeded ambient simulation stream that counts every draw. */
+/** Install a seeded ambient source for root initialization and unmigrated feature draws. */
 function seedAmbient(seed: number): void {
   let state = seed >>> 0;
   ambientDraws = 0;
@@ -86,7 +86,7 @@ interface Warmup {
   game: Game;
   /** Ambient draws taken by Game construction, including economy warmup. */
   constructionDraws: number;
-  /** Next ambient value after construction, identifying the simulation stream position. */
+  /** Next ambient value after construction, identifying the remaining ambient position. */
   nextAmbient: number;
   /** Trade-port systems that economy warmup rolled over. */
   marketSystems: number;
@@ -155,7 +155,7 @@ try {
     assert.equal(storage.world.randomStreams, invalid, 'rejected state is preserved for recovery');
   }
 
-  // Warmup with extra trade ports leaves the simulation stream where it was.
+  // Warmup with extra trade ports also leaves the remaining ambient source unchanged.
   // Several seeds: with the shared stream, most of these took a different number of
   // ambient draws once the extra ports were added.
   assert.ok(addedMarketCount() > 0, 'the scene pack adds trade ports');
@@ -178,7 +178,7 @@ try {
     assert.equal(
       widened.nextAmbient,
       original.nextAmbient,
-      `seed ${candidate}: the simulation stream continues from the same position`,
+      `seed ${candidate}: the ambient source continues from the same position`,
     );
     if (candidate === seed) extended = widened;
   }
