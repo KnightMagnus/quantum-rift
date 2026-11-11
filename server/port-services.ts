@@ -111,6 +111,7 @@ import { assertLots, addLots, commonLots, planTake, applyTake } from '../shared/
 import { recordEconomy } from '../shared/economy-receipt.ts';
 import { WING_ONLY } from '../shared/docks.ts';
 import { TYPE0_OF } from '../shared/ships-type0.ts';
+import { withUnswornHulls } from './unsworn-passage.ts';
 
 /**
  * Ordinary port commerce owns commodity/material transactions, shipyard and
@@ -436,6 +437,7 @@ const PortOperations: PortOperations = {
         const hullId = milkyWayHull(stellarBody, commonHullId);
         if (this.A.ships[hullId].tech! <= stellarBody.tech!) list.add(hullId); // the Wasp, Swift and Pelican are sold everywhere
       }
+    withUnswornHulls(list, stellarBody, playerData);
     return [...list].sort(
       (leftHullId, rightHullId) => this.A.ships[leftHullId].cost - this.A.ships[rightHullId].cost,
     );
