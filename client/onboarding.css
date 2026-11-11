@@ -158,6 +158,7 @@ body.onboarding-active #tut {
   color: #8a98a2;
   letter-spacing: 0.015em;
 }
+#onboarding[data-stage='offer'],
 #onboarding[data-stage='briefing'] {
   display: flex;
   align-items: center;
@@ -376,6 +377,7 @@ body.onboarding-active #tut {
   white-space: nowrap;
 }
 @media (max-width: 950px) {
+  #onboarding[data-stage='offer'],
   #onboarding[data-stage='briefing'] {
     padding: 16px;
   }
@@ -524,6 +526,10 @@ body.onboarding-active #functiondock > .function-icon {
   font-size: 13px;
   line-height: 1.65;
   margin-bottom: 0;
+}
+
+#onboarding[data-stage='offer'] .intro-callout {
+  position: relative;
 }
 
 /* Header and footer stay in view and only the slide content scrolls. The id plus

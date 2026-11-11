@@ -116,7 +116,7 @@ export const PART_TWO_OBJECTIVES: Record<string, PartTwoObjective[]> = {
       'ledger-nine',
       'ledger-nine',
       2,
-      'Under the local ceasefire rescue the human and Freefolk civilian crews. Report to Greta Tell.',
+      'Under the local ceasefire, rescue the human and Freefolk civilian crews. Report to Greta Tell.',
       'independent_backup',
     ),
   ],
@@ -132,7 +132,7 @@ export const PART_TWO_OBJECTIVES: Record<string, PartTwoObjective[]> = {
     haul('vigils-rest', 'Compare the lunar observatory logs with Earthlight measurements.'),
     haul(
       'threshold',
-      'At Threshold in the Rift, ask Terra to appoint a human delegation carrying recorded testimony from its Rift neighbours.',
+      'At the Threshold Spire in the Rift, ask Terra to appoint a human delegation carrying recorded testimony from its Rift neighbours.',
     ),
     haul(
       'ledger-nine',
@@ -290,7 +290,7 @@ export function partTwoBattle(flags: StoryFlags): PartTwoObjective[] {
       haul(
         'ledger-nine',
         ending === 'dormancy'
-          ? 'Deliver signed withdrawal terms, staged protected handovers and agreed reactivation conditions. The Index choose whether to sleep.'
+          ? 'Deliver signed withdrawal terms, staged protected handovers and agreed reactivation conditions. The Index chooses whether to sleep.'
           : 'Deliver the signed withdrawal orders to the independent relay.',
         'negotiated',
       ),
@@ -376,6 +376,33 @@ export function partTwoEndingText(flags: StoryFlags): string {
       return 'The Border That Holds: the evacuation corridor stayed open long enough for civilians to leave. The fleets are separated across a watched ceasefire line, and the Rift crossing remains protected. Families can meet through controlled crossings. The war continues elsewhere.';
   }
 }
+/**
+ * Credits paid when each Part II chapter completes. Pay starts at the top Act I
+ * reward and climbs toward the final battle, so the whole part is worth about
+ * the freight income a captain gives up while playing it. The memorial visit
+ * pays only a token amount.
+ */
+export const PART_TWO_PAY: Record<string, number> = {
+  'p2-voice': 150000,
+  'p2-papers': 150000,
+  'p2-seat': 200000,
+  'p2-flag': 250000,
+  'p2-bread': 250000,
+  'p2-ashes': 300000,
+  'p2-regiment': 350000,
+  'p2-broadcast': 300000,
+  'p2-observation': 350000,
+  'p2-mind': 400000,
+  'p2-moon': 400000,
+  'p2-report': 400000,
+  'p2-road': 500000,
+  'p2-makers': 500000,
+  'p2-fleet': 1000000,
+  'p2-names': 50000,
+  'p2-freefolk': 400000,
+  'p2-unsworn': 400000,
+  'p2-aftercare': 300000,
+};
 const choices = (entries: string[][]) => entries.map(([value, label]) => ({ value, label }));
 function mission(
   id: string,
@@ -392,7 +419,7 @@ function mission(
     title,
     at,
     ...first,
-    pay: 40000,
+    pay: PART_TWO_PAY[id] ?? 0,
     rep: 0,
     text,
     done,
@@ -480,7 +507,7 @@ export const PART_TWO: StoryMission[] = [
     'p2-broadcast',
     'A Victory Broadcast',
     'hearthline',
-    'Rauth meets you in the broadcast booth. “You saw what they did at Pale Meridian. Tell the fleet.” Saye sets the second recorder beside the first. “Then tell them what we did before that.” Rauth keeps his hand on the microphone. “There will be another attack while you argue.” Both records are in your custody. You must choose who receives copies.',
+    'Rauth meets you at the dock. “You saw what they did at Pale Meridian. Tell the fleet.” Saye sets the second recorder beside the first. “Then tell them what we did before that.” Rauth keeps his hand on the microphone. “There will be another attack while you argue.” Both records are in your custody. You must choose who receives copies.',
     'The broadcast office records your instructions.',
     'p2_records',
     [
@@ -619,7 +646,7 @@ export function partTwoAftercare(flags: StoryFlags): PartTwoObjective[] {
         'ledger-nine',
         harsh ? 3 : 2,
         harsh
-          ? 'Recover the surviving archive crews displaced by your offensive; report at Ledger Nine.'
+          ? `Recover the surviving ${flags.p2_ending === 'ascendant' ? 'relay and yard' : 'archive'} crews displaced by your offensive; report at Ledger Nine.`
           : 'Recover the stranded ceasefire inspectors and report at Ledger Nine.',
         'aftercare_crews',
       ),
@@ -646,9 +673,7 @@ export function partTwoStages(flags: StoryFlags, chapterId: string): PartTwoObje
 
 /** Every recorded choice is acknowledged by the people affected, not by changing the shared world. */
 export function partTwoMemorial(flags: StoryFlags): string {
-  const lines: string[] = [
-    'At Saint Orra, Rooke keeps two lists: crews returned and people still missing.',
-  ];
+  const lines: string[] = ['Rooke keeps two lists: crews returned and people still missing.'];
   const responses: Array<[keyof StoryFlags, Record<string, string>]> = [
     [
       'p2_entry',
