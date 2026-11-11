@@ -283,7 +283,7 @@ assert.equal(
 assert.equal(game.features.story.deepLocked(helper.data, 'quantum-rift'), true);
 owner.data.sys = 'quantum-rift';
 const roster = game.features.coop.armadaPayload(owner.data);
-assert.ok(roster && 'members' in roster);
+assert.ok(roster && 'members' in roster && roster.members);
 assert.equal(
   roster.members.find((member) => member.name === helper.data.name)?.followStatus,
   'Cannot follow: story access required',
