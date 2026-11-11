@@ -1,6 +1,6 @@
 import { ammoReadout, rescueReadout } from './flight-feedback.ts';
 import { overlays } from './overlay-controller.ts';
-import { storySystemVisible, storyDescription } from '../shared/story-world.ts';
+import { storySystemVisible, storyDescription, codexHullVisible } from '../shared/story-world.ts';
 import { ui as playInterfaceSound } from './audio.ts';
 import { landscapeScene } from '../shared/landscapes.ts';
 import type { PlayerPayload, LandedPayload } from './main.ts';
@@ -103,6 +103,7 @@ import {
   pinnedObjectiveHtml,
   missionRouteButton,
 } from './missions.ts';
+import { landingDestination } from './landing_autopilot.ts';
 import { playStation, stopRadio, RADIO_STATIONS, setUnlockedStations } from './radio.ts';
 import { blackMarketHtml, bankHtml, arcCardsHtml, bunkInfo, synBadge } from './syn_ui.ts';
 import {
@@ -133,7 +134,8 @@ import {
   route,
   price,
 } from '../shared/rules.ts';
-import { galaxy, mapHit, mapFit, stationDesign } from './render.ts';
+import { galaxy, mapHit, mapFit, stationDesign, storyPopupHoldMs } from './render.ts';
+import { createNoticeHold } from './notice-hold.ts';
 import { captainMap, captainRoute } from './map-fog.ts';
 import { crewHtml, hangarHtml, researchHtml, materialsHtml } from './hangar_ui.ts';
 import { specialistsHtml } from './spec_ui.ts';
@@ -607,11 +609,27 @@ export function ask(message: string, confirmed: () => void, askOptions: AskOptio
   elementById('askno').onclick = () => done(false);
   overlays.open('askbox');
 }
+/** Holds notices while the Rift crossing animation plays, like story pop-ups. */
+const toastHold = createNoticeHold({
+  holdMs: () => (clientGameState ? storyPopupHoldMs(clientGameState) : 0),
+  show: showToast,
+});
 /**
- * Renders a transient notification toast banner on screen with an audio sting.
- * @param message2 Notification message text
+ * Shows a notification toast, or holds it until the Rift crossing animation ends.
+ * @param message Notification message text
  */
 export function toast(message: string): void {
+  toastHold.notice(message);
+}
+/** Drops toasts still held for the Rift crossing, so they never reach the next session. */
+export function clearHeldToasts(): void {
+  toastHold.clear();
+}
+/**
+ * Renders a transient notification toast banner on screen with an audio sting.
+ * @param message Notification message text
+ */
+function showToast(message: string): void {
   const entryKey = TOAST_SND.find(([regExp]) => regExp.test(message)),
     kind = entryKey ? entryKey[1] : 'toast';
   window.dispatchEvent(new CustomEvent('rift-toast-sound', { detail: kind }));
@@ -888,12 +906,15 @@ export function hud(): void {
     ),
     shortFuel = clientGameState.route && clientGameState.route.length > fuelJumps; // warn when the route is longer than your fuel
   elementById2('navto').classList.toggle('warnf', !!shortFuel);
+  const landingPort = landingDestination(clientGameState);
   elementById2('navto').textContent =
     clientGameState.route && clientGameState.route.length
       ? `${systemsById[clientGameState.route[clientGameState.route.length - 1]].name} (${clientGameState.route.length} jump${clientGameState.route.length > 1 ? 's' : ''}, J to jump)${shortFuel ? ` · fuel for ${fuelJumps}: refuel on the way` : ''}`
-      : clientGameState.navStellar && STELLARS[clientGameState.navStellar]
-        ? STELLARS[clientGameState.navStellar].name + ' (L to land)'
-        : 'None (press M)';
+      : landingPort
+        ? landingPort.name + ' (L to land)'
+        : clientGameState.navStellar && STELLARS[clientGameState.navStellar]
+          ? STELLARS[clientGameState.navStellar].name
+          : 'None (press M)';
   const hasFleet =
     !!(
       playerPayload.docks &&
@@ -1131,13 +1152,12 @@ function renderCodex(): void {
   let items;
   if (codexCat === 'Ships')
     items = Object.values(clientGameState.A!.ships)
-      .filter((shipHullAsset) => !shipHullAsset.npcOnly)
-      .filter(
-        (shipHullAsset) =>
-          shipHullAsset.id !== 744 ||
-          (clientGameState.you &&
-            clientGameState.you!.story &&
-            clientGameState.you!.story.done.includes('qv5')),
+      .filter((shipHullAsset) =>
+        codexHullVisible(
+          shipHullAsset,
+          clientGameState.you?.story,
+          clientGameState.you?.ship?.hull,
+        ),
       )
       .sort((shipHullAsset, shipHullAsset2) => shipHullAsset.cost - shipHullAsset2.cost)
       .map((shipHullAsset) => ({
@@ -1206,8 +1226,16 @@ function renderCodex(): void {
  * @param entryKey Item key prefix + ID (e.g. 's701' for ship, 'o50' for outfit)
  */
 function codexDetail(entryKey: string): void {
-  // Story equipment is not a discoverable catalog entry, even through a stale row.
-  if (entryKey[0] !== 's' && allOutfits(clientGameState.A!)[+entryKey.slice(1)]?.eff?.riftHarness) {
+  // Story equipment and hidden hulls are not discoverable catalog entries, even through a stale row.
+  const detailHull = entryKey[0] === 's' ? clientGameState.A!.ships[+entryKey.slice(1)] : null;
+  const hiddenHull =
+    entryKey[0] === 's' &&
+    (!detailHull ||
+      !codexHullVisible(detailHull, clientGameState.you?.story, clientGameState.you?.ship?.hull));
+  if (
+    hiddenHull ||
+    (entryKey[0] !== 's' && allOutfits(clientGameState.A!)[+entryKey.slice(1)]?.eff?.riftHarness)
+  ) {
     renderCodex();
     return;
   }

@@ -116,6 +116,17 @@ for (const distance of [140, 141, 299, 300, 480, 481, 659, 660]) {
   if (distance === 140 || distance === 660) assert.deepEqual(point, [distance, 0]);
   else assert.ok(Math.abs(point[1]) > 200, 'capital circles strictly inside its range window');
 }
+// Hull-armed NPC raiders report no outfitted turrets and close head-on. Assist
+// capitals follow that policy instead of orbiting, so forward guns stay in arc.
+for (const distance of [141, 400, 659]) {
+  const assisted = fixture(distance, { size: 110, turrets: 2 });
+  assisted.attacker.player = { id: 1 } as Entity['player'];
+  assisted.attacker.autoCombat = true;
+  const point = assisted.run('Assist capital closes like NPC ' + distance);
+  assert.deepEqual(point, [distance, 0], 'Assist capital steers at its target, not a broadside');
+  const npc = fixture(distance, { size: 110, turrets: 0 });
+  assert.deepEqual(npc.run('hull-armed NPC capital ' + distance), point, 'same path as NPC');
+}
 for (const options of [
   { size: 109, turrets: 2 },
   { size: 110, turrets: 1 },

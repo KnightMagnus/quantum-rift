@@ -220,16 +220,13 @@ const sharedTargets = [...space.ships.values()].filter(
   (actor) => actor.story === owner.id && actor.storyKill && actor.storyMission === mission.id,
 );
 const beforeSharedStep = helper.data.story.step;
-for (const [index, actor] of sharedTargets.entries()) {
-  if (index === 2) stranger.data.story.flags!.d1 = 'concord';
-  space.kill(actor, helper.ent!);
-}
+for (const actor of sharedTargets) space.kill(actor, helper.ent!);
 assert.equal(owner.data.story.active!.ready, true);
 assert.equal(helper.data.story.active!.ready, true, 'Eligible helper finishes the same objective');
 assert.equal(
-  stranger.data.story.active!.got,
-  0,
-  'Branch-ineligible helper cannot gain chapter credit partway through a frozen fight',
+  stranger.data.story.active!.ready,
+  true,
+  'An unrelated earlier choice does not exclude a helper from shared progress',
 );
 assert.equal(
   helper.data.story.done.includes(mission.id),
@@ -241,6 +238,83 @@ assert.equal(
   beforeSharedStep,
   'Shared combat does not report or advance the chapter',
 );
+armadaAction(owner, 'storyStop');
+armadaAction(stranger, 'storyStop');
+
+// A different Part II campaign is a different objective: no shared credit, and the helper is told.
+const fleet = STORY.find((entry) => entry.id === 'p2-fleet')!;
+const fleetSpace = game.spaces['mw-sol'];
+const campaigns: Array<[FixtureSession, 'border' | 'ascendant']> = [
+  [owner, 'border'],
+  [helper, 'border'],
+  [stranger, 'ascendant'],
+];
+for (const [session, campaign] of campaigns) {
+  session.data.armada = 'test';
+  session.data.story = {
+    step: STORY.indexOf(fleet),
+    done: [],
+    flags: {
+      main_ending: 'table',
+      crossed_quantum_rift: true,
+      p2_campaign: campaign,
+      d1: session === helper ? 'hollow' : 'concord',
+    },
+    active: { id: fleet.id, got: 0, spawned: true, ready: false, stage: 1 },
+  };
+  session.data.sys = 'mw-sol';
+  session.data.stellar = null;
+  game.spawnPlayer(session, 49000, -9000, 0, 0);
+}
+armadaAction(helper, 'storyAssist', owner.name!);
+armadaAction(stranger, 'storyAssist', owner.name!);
+const strangerToasts = stranger.sock.out.length;
+const helperToasts = helper.sock.out.length;
+armadaAction(owner, 'storyShare');
+assert.deepEqual(owner.sharedStory!.progressHelpers, [helper.id]);
+const notice = /fight is not your current story step, so it won't advance your chapter/;
+assert.ok(
+  stranger.sock.out
+    .slice(strangerToasts)
+    .some((packet) => packet.t === 'toast' && notice.test(packet.msg)),
+  'An excluded helper is told why their progress does not move',
+);
+assert.equal(
+  helper.sock.out
+    .slice(helperToasts)
+    .some((packet) => packet.t === 'toast' && notice.test(packet.msg)),
+  false,
+  'An included helper gets no exclusion notice',
+);
+const fleetTargets = [...fleetSpace.ships.values()].filter(
+  (actor) => actor.story === owner.id && actor.storyKill && actor.storyMission === fleet.id,
+);
+assert.ok(fleetTargets.length >= 2);
+for (const [index, actor] of fleetTargets.entries()) {
+  if (index === 1) stranger.data.story.flags!.p2_campaign = 'border';
+  fleetSpace.kill(actor, helper.ent!);
+}
+assert.equal(helper.data.story.active!.got, fleetTargets.length);
+assert.equal(
+  stranger.data.story.active!.got,
+  0,
+  'Branch-ineligible helper cannot gain chapter credit partway through a frozen fight',
+);
+armadaAction(owner, 'storyStop');
+armadaAction(helper, 'storyStop');
+armadaAction(stranger, 'storyStop');
+for (const actor of fleetSpace.ships.values())
+  if (actor.story && party.some((session) => actor.story === session.id)) fleetSpace.remove(actor);
+for (const session of party) {
+  session.data.story = {
+    step: STORY.indexOf(mission),
+    done: [],
+    active: { id: mission.id, got: 0, spawned: false, ready: false },
+  };
+  session.data.sys = mission.sys!;
+  session.data.stellar = null;
+  game.spawnPlayer(session, 0, 0, 0, 0);
+}
 
 // Stopping assistance recovers unfinished personal targets without resetting existing progress.
 for (const session of [owner, helper]) {

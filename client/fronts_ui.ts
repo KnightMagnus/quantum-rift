@@ -60,6 +60,7 @@ import { STATES } from '../shared/living.ts';
 import { factionStoreListings } from '../shared/faction-store-catalog.ts';
 import { FACTION_STORE_OUTFITS } from '../shared/faction-outfits.ts';
 import { chartSystems } from '../shared/map-knowledge.ts';
+import { STANDING_MIN } from '../shared/reputation.ts';
 
 /**
  * Formats time remaining until a timestamp into days, hours, or minutes.
@@ -293,7 +294,7 @@ export function storeHtml(clientGameState: ClientGameState, facArg?: string): st
       reputation >= factionStoreItem.rep &&
       token + scrip >= factionStoreItem.tokens &&
       playerPayload.credits >= factionStoreItem.credits;
-    height += `<tr><td>${escapeHtml2(name2)}${detail}${requirement ? `<div class="dim small">${escapeHtml2(requirement)}</div>` : ''}</td><td style="color:${reputation >= factionStoreItem.rep ? '#8ff0ad' : '#ff9a8a'}">${factionStoreItem.rep}</td><td>${factionStoreItem.tokens}</td><td>${factionStoreItem.credits ? credits(factionStoreItem.credits) : '-'}</td><td style="text-align:right"><button class="btn sm" data-act="buystore" data-f="${faction}" data-id="${factionStoreItem.id}" ${allowed ? '' : 'disabled'}>BUY</button></td></tr>`;
+    height += `<tr><td>${escapeHtml2(name2)}${detail}${requirement ? `<div class="dim small">${escapeHtml2(requirement)}</div>` : ''}</td><td style="color:${reputation >= factionStoreItem.rep ? '#8ff0ad' : '#ff9a8a'}">${factionStoreItem.rep <= STANDING_MIN ? 'Any' : factionStoreItem.rep}</td><td>${factionStoreItem.tokens}</td><td>${factionStoreItem.credits ? credits(factionStoreItem.credits) : '-'}</td><td style="text-align:right"><button class="btn sm" data-act="buystore" data-f="${faction}" data-id="${factionStoreItem.id}" ${allowed ? '' : 'disabled'}>BUY</button></td></tr>`;
   }
   return height + '</table>';
 }

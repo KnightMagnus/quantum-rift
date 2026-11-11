@@ -227,6 +227,23 @@ export function validateImportedPlayerSave(value: unknown, assets: GameAssets): 
 }
 
 /**
+ * Login needs a current ship whose hull is in the catalog. A save that lost its ship or kept a
+ * retired hull is refused with its own message instead of failing after `welcome`.
+ * @param value Saved player account.
+ * @param assets Game catalog the hull must resolve in.
+ */
+export function validateLoginShip(value: unknown, assets: GameAssets): void {
+  const ship = record(value).ship as SavedRecord | null | undefined;
+  if (
+    !ship ||
+    typeof ship !== 'object' ||
+    Array.isArray(ship) ||
+    !Object.hasOwn(assets.ships, String(ship.hull))
+  )
+    throw new Error('Login ship: missing or unknown hull');
+}
+
+/**
  * Validate present compatibility fields before any default/refund owner mutates them.
  * Missing/null legacy default fields remain the owner's responsibility. Unknown
  * append-only fields are retained; this is not a closed schema for the whole game.

@@ -75,7 +75,7 @@ import fileSystem from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-/** Missing files are fresh state; unreadable or corrupt existing files are not. */
+/** Missing files read as undefined; unreadable or corrupt existing files throw. */
 function readSavedJson(filename: string): unknown {
   let serialized: string;
   try {
@@ -85,6 +85,31 @@ function readSavedJson(filename: string): unknown {
     throw error;
   }
   return JSON.parse(serialized);
+}
+
+/** Newest rolling backup whose player and world snapshots both load and validate. */
+function newestValidBackup(
+  directory: string,
+): { name: string; players: string; world: string } | undefined {
+  const root = path.join(directory, 'backups');
+  let names: string[];
+  try {
+    names = fileSystem.readdirSync(root).sort().reverse();
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
+    throw error;
+  }
+  for (const name of names) {
+    try {
+      const players = fileSystem.readFileSync(path.join(root, name, 'players.json'), 'utf8');
+      const world = fileSystem.readFileSync(path.join(root, name, 'world.json'), 'utf8');
+      validateLocalSnapshots(JSON.parse(players), JSON.parse(world));
+      return { name, players, world };
+    } catch (error) {
+      console.error('Skipping save backup ' + name + ': ' + (error as Error).message);
+    }
+  }
+  return undefined;
 }
 
 function savedRecord(value: unknown): value is Record<string, unknown> {
@@ -146,6 +171,7 @@ export class DB implements GameStorage {
       this.syncDirectory();
     }
 
+    this.restoreMissingSnapshots();
     const savedPlayers = readSavedJson(this.file);
     const savedWorld = readSavedJson(this.wfile);
     const players = savedPlayers === undefined ? {} : savedPlayers;
@@ -162,6 +188,52 @@ export class DB implements GameStorage {
     }, 15000).unref();
     setInterval(() => this.backup(), 30 * 60000).unref();
     setTimeout(() => this.backup(), 60000).unref();
+  }
+
+  /**
+   * When players.json or world.json is missing, restore both from the newest valid backup so
+   * accounts and station claims stay paired. A file that is still present is renamed to
+   * `<name>.unpaired-<time>` rather than overwritten. With no usable backup the missing file
+   * keeps its fresh default.
+   */
+  restoreMissingSnapshots(): void {
+    const playersPresent = fileSystem.existsSync(this.file);
+    const worldPresent = fileSystem.existsSync(this.wfile);
+    if (playersPresent && worldPresent) return;
+    const missing = [!playersPresent && 'players.json', !worldPresent && 'world.json']
+      .filter(Boolean)
+      .join(' and ');
+    const backup = newestValidBackup(this.dir);
+    if (!backup) {
+      if (playersPresent || worldPresent || fileSystem.existsSync(path.join(this.dir, 'backups')))
+        console.warn(
+          'Save file ' +
+            missing +
+            ' is missing and no usable backup was found in ' +
+            path.join(this.dir, 'backups') +
+            '. Starting it fresh.',
+        );
+      return;
+    }
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    for (const present of [playersPresent && this.file, worldPresent && this.wfile]) {
+      if (!present) continue;
+      const aside = present + '.unpaired-' + stamp;
+      fileSystem.renameSync(present, aside);
+      console.warn('Kept the unpaired save file as ' + aside);
+    }
+    this.writeDurable(this.file + '.tmp', backup.players);
+    fileSystem.renameSync(this.file + '.tmp', this.file);
+    this.writeDurable(this.wfile + '.tmp', backup.world);
+    fileSystem.renameSync(this.wfile + '.tmp', this.wfile);
+    this.syncDirectory();
+    console.warn(
+      'Save file ' +
+        missing +
+        ' was missing. Restored players and world from backup ' +
+        backup.name +
+        '. Progress after that backup is not included.',
+    );
   }
 
   /** Node-only startup services. Portable hosts pass their platform directly to Game. */

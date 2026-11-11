@@ -52,7 +52,7 @@
   {
     "id": 955,
     "key": "conf_hound",
-    "name": "Hound",
+    "name": "Mastiff",
     "fs": 104,
     "cols": 12,
     "banks": true,
@@ -122,7 +122,7 @@
   {
     "id": 962,
     "key": "conf_picket",
-    "name": "Picket",
+    "name": "Outrider",
     "fs": 200,
     "cols": 12,
     "banks": true,
@@ -142,7 +142,7 @@
   {
     "id": 964,
     "key": "conf_bulwark",
-    "name": "Bulwark",
+    "name": "Redoubt",
     "fs": 200,
     "cols": 12,
     "banks": true,
