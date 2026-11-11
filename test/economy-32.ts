@@ -19,6 +19,14 @@ import {
   refineryWorld,
 } from './helpers/refinery-fixture.ts';
 import { DB as Database } from '../server/db.ts';
+import { chargeDockingUpkeep } from '../server/docking-upkeep.ts';
+import {
+  DOCKING_UPKEEP_MIN_HULL_COST,
+  dockingUpkeepFee,
+  dockingUpkeepNotice,
+  dockingUpkeepRate,
+} from '../shared/docking-upkeep.ts';
+import { START } from '../shared/galaxy.ts';
 
 const account = {};
 assert.equal(economyReceipt(account), null, 'Old saves are read without adding invented history');
@@ -206,6 +214,97 @@ try {
   Date.now = realNow;
 }
 
+{
+  // Docking upkeep: a money sink for the most expensive hulls, read from the real hull catalogue.
+  const upkeepGame = refineryGame(),
+    upkeepSession = refineryPilot(upkeepGame, 'Upkeep'),
+    captain = requiredFixtureValue(upkeepSession).data,
+    hullCost = (hullId: number) => upkeepGame.A.ships[hullId].cost || 0,
+    grandCaravan = 784,
+    eventHorizon = 787;
+  assert.equal(upkeepGame.A.ships[grandCaravan].name, 'Grand Caravan');
+  assert.equal(upkeepGame.A.ships[eventHorizon].name, 'Event Horizon');
+  for (const [hullId, hull] of Object.entries(upkeepGame.A.ships))
+    if ((hull.cost || 0) < DOCKING_UPKEEP_MIN_HULL_COST)
+      assert.equal(dockingUpkeepRate(hull.cost || 0), 0, `${hull.name} (${hullId}) docks free`);
+  assert.equal(dockingUpkeepRate(hullCost(START.ship)), 0, 'The starting hull docks free');
+  assert.equal(dockingUpkeepRate(hullCost(grandCaravan)), 26000);
+  assert.equal(dockingUpkeepRate(hullCost(eventHorizon)), 90000);
+
+  captain.credits = 5_000_000;
+  delete captain.economyReceipt;
+  const charged = chargeDockingUpkeep(captain, {
+    hullCost: hullCost(grandCaravan),
+    port: 'qstation',
+    ownStation: false,
+  });
+  assert.equal(charged, 26000, 'A Grand Caravan pays 0.2% of its price per docking');
+  assert.equal(captain.credits, 5_000_000 - 26000);
+  assert.equal(
+    requiredFixtureValue(economyReceipt(captain)).serviceFees,
+    26000,
+    'Upkeep is recorded as a port service fee on the trip recap',
+  );
+  const persisted = JSON.parse(JSON.stringify(captain));
+  assert.equal(requiredFixtureValue(economyReceipt(persisted)).serviceFees, 26000);
+
+  captain.credits = 100_000;
+  assert.equal(
+    chargeDockingUpkeep(captain, {
+      hullCost: hullCost(eventHorizon),
+      port: 'qstation',
+      ownStation: false,
+    }),
+    10000,
+    'Upkeep never takes more than 10% of current credits',
+  );
+  assert.equal(captain.credits, 90000);
+
+  for (const brokeCredits of [0, -500]) {
+    captain.credits = brokeCredits;
+    assert.equal(
+      chargeDockingUpkeep(captain, {
+        hullCost: hullCost(eventHorizon),
+        port: 'qstation',
+        ownStation: false,
+      }),
+      0,
+      'Upkeep never pushes a captain into or deeper into debt',
+    );
+    assert.equal(captain.credits, brokeCredits);
+  }
+
+  captain.credits = 5_000_000;
+  const receiptBeforeOwnStation = JSON.stringify(captain.economyReceipt);
+  assert.equal(
+    chargeDockingUpkeep(captain, {
+      hullCost: hullCost(eventHorizon),
+      port: 'site-own',
+      ownStation: true,
+    }),
+    0,
+    'Docking at your own station is free',
+  );
+  assert.equal(captain.credits, 5_000_000);
+  assert.equal(JSON.stringify(captain.economyReceipt), receiptBeforeOwnStation);
+
+  assert.equal(
+    chargeDockingUpkeep(captain, {
+      hullCost: hullCost(START.ship),
+      port: 'qstation',
+      ownStation: false,
+    }),
+    0,
+    'Small hulls never pay upkeep',
+  );
+  assert.equal(captain.credits, 5_000_000);
+  assert.equal(
+    dockingUpkeepNotice(dockingUpkeepFee(hullCost(grandCaravan), 5_000_000), 'Grand Caravan'),
+    'Docking upkeep for the Grand Caravan: 26,000 credits.',
+  );
+  assert.equal(dockingUpkeepFee(Number.NaN, 5_000_000), 0, 'Unknown hull prices charge nothing');
+}
+
 // Synthetic arithmetic fixtures test the report only; they are NOT measured game sessions.
 const observations: Parameters<typeof analyseSessions>[0] = [];
 for (const band of BANDS)
@@ -252,5 +351,5 @@ assert.throws(
   'KNIGHT-style test wealth does not fill ordinary baseline cells',
 );
 console.log(
-  '3.2 settlement previews, trip recap conservation/persistence, refinery preview/atomic denial and measurement report invariants passed.',
+  '3.2 settlement previews, trip recap conservation/persistence, docking upkeep thresholds/caps/exemptions, refinery preview/atomic denial and measurement report invariants passed.',
 );

@@ -340,6 +340,15 @@ and baseline-report arithmetic/completeness/stress-profile exclusion. The existi
 refinery browser case is updated for automatic pricing and one Start action while
 retaining real debit, cancellation, partial collection and fuel-cell checks.
 
+`economy-32.ts` also covers docking upkeep (`shared/docking-upkeep.ts`,
+`server/docking-upkeep.ts`) against the real hull catalogue: every hull below
+10M credits docks free, including the starting hull; larger hulls pay 0.2% of
+list price per docking, capped at 10% of current credits; captains at or below
+zero credits and captains docking at their own station pay nothing; the charge
+is recorded as a port service fee and survives save reload. The call from
+`Game.land` and the shipyard upkeep line are not yet wired, so no landing
+regression exists for them.
+
 No measured progression rate or tuned balance is claimed. The developer-only
 [measurement protocol](ECONOMY-BASELINES.md) specifies the 36 matched session cells,
 closure/cost requirements and reproducible evidence. Do not treat synthetic report
