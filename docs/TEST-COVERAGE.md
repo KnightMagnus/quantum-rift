@@ -1864,7 +1864,7 @@ or native transport; `planet-portrait-browser.ts` covers the stage-art matrix.
 
 Native world authority checks also cover wall-time checkpoints under slow ticks and backward clock changes, recovery notification, and retirement without retrying an uncertain write.
 
-[Local login admission](../test/local-login.ts) verifies background password derivation without blocking initial event-loop progress, correct password checks, complete durable registration, cancellation and bounded queues/connections. Snapshot serialization and journal I/O remain synchronous.
+[Local login admission](../test/local-login.ts) verifies background password derivation without blocking initial event-loop progress, correct password checks, complete durable registration, cancellation and bounded queues/connections, including a per-address cap of eight waiting or active sign-ins so one address cannot fill the queue. Snapshot serialization and journal I/O remain synchronous.
 
 Friend lifecycle coverage includes clean occupied-port failure/retry and SIGHUP finalization on POSIX; SIGINT/SIGTERM and stale-lock fail-closed behavior are retained. Physical Windows console behavior remains a platform check.
 
