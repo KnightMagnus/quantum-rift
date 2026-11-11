@@ -6,6 +6,7 @@ import {
   PART_TWO_OBJECTIVES,
   partTwoBattle,
   partTwoEndings,
+  partTwoAftercare,
 } from '../shared/part-two-story.ts';
 import { STELLARS, SYS } from '../shared/galaxy.ts';
 import type { StoryFlags } from '../server/save-contracts.ts';
@@ -50,12 +51,18 @@ const decisions: Record<string, string> = {
   'p2-moon': 'family',
   'p2-report': 'joint',
   'p2-makers': 'talks',
+  'p2-freefolk': 'clinic',
+  'p2-unsworn': 'protected',
 };
 function completeStage() {
   const active = data.story.active!;
   const mission = STORY.find((item) => item.id === active.id)!;
   const stages =
-    active.id === 'p2-fleet' ? partTwoBattle(data.story.flags!) : PART_TWO_OBJECTIVES[active.id];
+    active.id === 'p2-fleet'
+      ? partTwoBattle(data.story.flags!)
+      : active.id === 'p2-aftercare'
+        ? partTwoAftercare(data.story.flags!)
+        : PART_TWO_OBJECTIVES[active.id];
   const objective = stages[active.stage || 0];
   if (objective.type !== 'carry') {
     data.sys = objective.sys!;
@@ -154,7 +161,7 @@ assert.equal(data.story.flags?.p2_campaign, 'border');
 assert.equal(data.story.active?.stage, 0, 'withdrawal starts replacement transport recovery');
 assert.equal(data.story.flags?.p2_ending, undefined);
 console.log(
-  'Part II: all 16 missions, all five outcomes, navigation rejection, ending gates and withdrawal passed.',
+  'Part II: all 19 missions, all five outcomes, navigation rejection, ending gates and withdrawal passed.',
 );
 
 // Native simulation spawns actual new hulls and custody requires the Capture interaction.
@@ -253,6 +260,7 @@ assert.match(fleetCompletion.text, /The Border That Holds/);
 dock('vigils-rest');
 story.storyAccept(captain, { id: 'p2-names' });
 const memorialPort = STELLARS['saint-orra'];
+data.story.flags!.p2_supply = 'grain';
 data.sys = memorialPort.system;
 data.stellar = null;
 game.spawnPlayer(captain, memorialPort.x, memorialPort.y, 0, 0);
@@ -264,10 +272,20 @@ assert.equal(
   'the required memorial remains accessible after combat',
 );
 const memorialCompletion = captain.sock.out
-  .filter((packet) => packet.t === 'story')
+  .filter(
+    (packet) =>
+      packet.t === 'story' &&
+      (packet as unknown as { id?: string; done?: boolean }).id === 'p2-names' &&
+      (packet as unknown as { done?: boolean }).done,
+  )
   .at(-1) as unknown as { text: string };
 assert.match(memorialCompletion.text, /At Saint Orra, the memorial/);
 assert.doesNotMatch(memorialCompletion.text, /The Border That Holds/);
+assert.match(
+  memorialCompletion.text,
+  /The grain-line workers bring bread/,
+  'the distinct memorial retains the saved supply decision callback',
+);
 data.sys = reportPort.system;
 data.stellar = null;
 game.spawnPlayer(captain, reportPort.x, reportPort.y, 0, 0);

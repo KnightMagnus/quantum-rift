@@ -15,8 +15,11 @@ export function playerPortrait(value: unknown): string {
 }
 /** Stable individual identity within a faction pool, independent of array ordering. */
 export function genericPortrait(identity: string, faction: string): string {
+  const portraitFaction = ['confederation', 'freefolk', 'unsworn'].includes(faction)
+    ? 'spacer'
+    : faction;
   const pool = entries
-    .filter((entry) => entry.poolEligible && entry.faction === faction)
+    .filter((entry) => entry.poolEligible && entry.faction === portraitFaction)
     .sort((left, right) => left.id.localeCompare(right.id));
   const safePool = pool.length
     ? pool
@@ -30,6 +33,8 @@ export function npcPortrait(
   entity: { rival?: string; name?: string | null; faction: string; hull: number | string },
   system: string,
 ): string {
+  if (system.startsWith('mw-') && entity.faction !== 'index')
+    return genericPortrait(`captain:${entity.name || entity.hull}`, 'spacer');
   const named = entity.rival && byId.get(`npc-${entity.rival}`);
   if (named) return named.id;
   const captured = genericByEntity.get(entity);

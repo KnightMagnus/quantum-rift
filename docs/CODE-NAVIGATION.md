@@ -519,3 +519,9 @@ escort AI. `test/qcs-fleet.ts` covers routing, attrition, restore and runway geo
 `Space.dropLoot` freezes a 15-second simulation-time pickup priority for the killer and living, present Armada captains on ordinary combat credit/material drops. Wing kills resolve through their owner. `Game.onLoot` enforces the claim for every collector; automatic collectors skip reserved drops. Other loot types retain their existing rules. `recovery-safety.ts` covers frozen membership, support pickup, outsider denial, expiry and wing ownership.
 
 Insurance recovery prefers an eligible owned station, otherwise the nearest eligible public port by jump distance, excluding hidden and Deep systems. Faction refusal and wanted checks still apply. The recovery regression exercises real death and departure.
+
+## Regional communities and recovery chapters
+
+`shared/part-two-story.ts` appends personal recovery chapters without shifting earlier chapter indices. `partTwoAftercare` derives the recovery route from saved campaign and supply decisions; `partTwoMemorial` supplies personal decision callbacks. `server/story.ts` uses the existing encounter, boarding, landed-choice and completion authorities and settles earned community standing once. Shared faction hostility, ports and markets are not rewritten by another captain’s ending.
+
+`shared/portraits.ts` restricts regional human NPCs to the human variation pool while retaining Rift identities and player-selected portraits. `shared/part-two-ships.ts` owns regional traffic proportions; `shared/ships-freefolk.ts` gives civilian hulls one small defensive turret. `shared/milky-way.ts` defines local supply profiles independently of personal campaign flags.

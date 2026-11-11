@@ -212,6 +212,40 @@ export function defaultNavStellar(system: StarSystem): string | null {
   return system.stellars.find((stellar) => stellar.svc?.includes('L'))?.id ?? null;
 }
 
+/** Local supplies reflect port work, not a captain’s private campaign outcome. */
+const PORT_PROFILES: Record<string, { description: string; prices: Record<string, number> }> = {
+  ferrum: {
+    description:
+      'Holt’s foundries stamp replacement hull plates beside the conscript transport berths. Metal and equipment leave on outgoing freighters; grain and medicine arrive under escort.',
+    prices: { metal: -1, equipment: -1, food: 1, medical: 1 },
+  },
+  'saint-orra': {
+    description:
+      'Grain elevators share the quay with field hospitals and the civilian memorial. The port exports food but needs medical supplies and replacement machinery.',
+    prices: { food: -1, medical: 1, equipment: 1 },
+  },
+  hearthline: {
+    description:
+      'Migrant human crews weld replacement habitats here. The docks sell repaired equipment and buy metal, food and medical supplies for the people waiting for berths.',
+    prices: { equipment: -1, metal: 1, food: 1, medical: 1 },
+  },
+  'ledger-nine': {
+    description:
+      'Freefolk archivists and dockworkers live in the Index archive’s outer halls. Repair tenders trade recovered machinery for food and medicine; independent witnesses keep their records here.',
+    prices: { equipment: -1, food: 1, medical: 1 },
+  },
+  'pale-meridian': {
+    description:
+      'Human recorder capsules and Index telemetry are recovered from the same debris field. The small dock buys medical supplies and equipment for salvage crews.',
+    prices: { metal: -1, medical: 1, equipment: 1 },
+  },
+  'sirius-bastion': {
+    description:
+      'Freefolk casualty boats use the civilian docks outside the Index defensive shell. Life-support equipment and medicine pass through inspection before entering the refuge.',
+    prices: { metal: -1, equipment: 1, medical: 1, food: 1 },
+  },
+};
+
 export function createMilkyWay(): StarSystem[] {
   const systems: StarSystem[] = Object.entries(catalog).map(([key, entry]) => {
     const id = milkyWayId(key);
@@ -250,14 +284,21 @@ export function createMilkyWay(): StarSystem[] {
                   key === 'ledger_nine' || key === 'sirius_bastion' ? key : undefined,
                   'station',
                 ),
+                prices: PORT_PROFILES[port]?.prices || {
+                  food: 0,
+                  equipment: 0,
+                  medical: 0,
+                  metal: 0,
+                },
                 desc:
-                  key === 'ledger_nine'
+                  PORT_PROFILES[port]?.description ||
+                  (key === 'ledger_nine'
                     ? 'An Index archive whose outer halls are home to Freefolk archivists and dockworkers.'
                     : key === 'sirius_bastion'
                       ? 'An Index stronghold with Freefolk civilian docks outside its closed defensive shell.'
                       : key === 'hearthline'
                         ? 'A Confederation repair habitat built by migrant human crews, with a little Index help.'
-                        : `${entry.place || entry.star}: a working port in the solar neighbourhood.`,
+                        : `${entry.place || entry.star}: a working port in the solar neighbourhood.`),
               },
             ],
     };
