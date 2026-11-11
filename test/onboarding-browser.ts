@@ -80,8 +80,28 @@ try {
   );
   assert.equal(await page.locator('#land').isVisible(), false);
   assert.equal(await page.locator('#tut').isVisible(), false);
+  assert.equal(
+    await page.locator('#onboarding').getAttribute('data-stage'),
+    'offer',
+    'a first run offers the optional controls guide before the briefing',
+  );
+  assert.equal(await page.locator('#onboarding-title').textContent(), 'Captain’s Orientation');
+  assert.match(await page.locator('#onboarding').innerText(), /HELP/);
+  assert.equal(await page.locator('.intro-spot').count(), 0, 'the offer spotlights nothing');
+  assert.equal(
+    await page.evaluate(() => (document.activeElement as HTMLElement).dataset.intro),
+    'next',
+    'focus starts on the Captain’s Briefing choice',
+  );
+  const offerCard = await page.locator('.intro-callout').boundingBox();
+  assert(
+    offerCard && offerCard.y >= 0 && offerCard.y + offerCard.height <= 1080,
+    JSON.stringify(offerCard),
+  );
+  await page.screenshot({ path: path.join(output, 'orientation-offer-1920.png') });
   await page.evaluate(() => (window.onboardingPackets = []));
-  for (const key of ['w', 'Space', 'l', 'j', 'r']) await page.keyboard.press(key);
+  for (const key of ['w', 'l', 'j', 'r']) await page.keyboard.press(key);
+  assert.equal(await page.locator('#onboarding').getAttribute('data-stage'), 'offer');
   await page.locator('#cbmap').click({ force: true });
   assert.equal(await page.locator('#gmap').isVisible(), false);
   assert.equal(await page.evaluate(() => !!G.landed), true);
@@ -105,13 +125,97 @@ try {
           Math.max(0, Math.min(card.bottom, spot.bottom) - Math.max(card.top, spot.top)),
       };
     });
-  // The Space press advances through native button activation. Replay starts at the first step.
+  await page.locator('[data-intro="tour"]').click();
+  assert.equal(await page.locator('#onboarding').getAttribute('data-stage'), 'tour');
+  assert.equal(await page.locator('#onboarding').getAttribute('data-tour-target'), '#radarwrap');
   await page.locator('[data-intro="skip"]').click();
+  assert.equal(await page.locator('#onboarding').getAttribute('data-stage'), 'briefing');
   await page.locator('[data-intro="skip"]').click();
   assert.equal(await page.locator('#land').isVisible(), true);
+  // A new first run takes the default choice straight to the briefing.
+  await page.evaluate(() => {
+    for (const key of Object.keys(localStorage))
+      if (key.startsWith('rift.onboarding.v1.')) localStorage.removeItem(key);
+  });
+  await page.reload();
+  await page.locator('[data-slot="Orientation Pilot"]').click();
+  await page.waitForFunction(
+    () => G.you && G.landed && document.getElementById('onboarding')!.dataset.stage === 'offer',
+  );
+  await page.setViewportSize({ width: 1366, height: 768 });
+  const offerCard1366 = await page.locator('.intro-callout').boundingBox();
+  assert(
+    offerCard1366 && offerCard1366.y >= 0 && offerCard1366.y + offerCard1366.height <= 768,
+    JSON.stringify(offerCard1366),
+  );
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('#onboarding').getAttribute('data-stage'), 'briefing');
+  assert.equal(await page.locator('#onboarding-title').textContent(), 'Welcome to the Rift');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#onboarding').isVisible(), false);
+  assert.equal(await page.locator('#land').isVisible(), true);
+  // Escape on the offer also skips the guide.
+  await page.evaluate(() => {
+    for (const key of Object.keys(localStorage))
+      if (key.startsWith('rift.onboarding.v1.')) localStorage.removeItem(key);
+  });
+  await page.reload();
+  await page.locator('[data-slot="Orientation Pilot"]').click();
+  await page.waitForFunction(
+    () => G.you && G.landed && document.getElementById('onboarding')!.dataset.stage === 'offer',
+  );
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#onboarding').getAttribute('data-stage'), 'briefing');
+  await page.locator('[data-intro="skip"]').click();
+  assert.equal(await page.locator('#land').isVisible(), true);
+  // Docked after orientation, the first career card must be readable, not under the dock panel.
+  await page.waitForFunction(() => !document.getElementById('tut')!.classList.contains('hidden'));
+  const careerCardHits = await page.evaluate(() => {
+    const card = document.getElementById('tut')!,
+      bounds = card.getBoundingClientRect();
+    return [
+      [0.5, 0.5],
+      [0.1, 0.15],
+      [0.9, 0.15],
+      [0.1, 0.85],
+      [0.9, 0.85],
+    ].map(([horizontal, vertical]) =>
+      card.contains(
+        document.elementFromPoint(
+          bounds.left + bounds.width * horizontal,
+          bounds.top + bounds.height * vertical,
+        ),
+      ),
+    );
+  });
+  assert.deepEqual(
+    careerCardHits,
+    [true, true, true, true, true],
+    'the docked career card is on top of the dock panel',
+  );
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.waitForTimeout(100);
+  assert.equal(
+    await page.evaluate(() => {
+      const card = document.getElementById('tut')!,
+        bounds = card.getBoundingClientRect();
+      return (
+        bounds.right <= innerWidth &&
+        card.contains(
+          document.elementFromPoint(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2),
+        )
+      );
+    }),
+    true,
+    'the docked career card stays readable at 1366x768',
+  );
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  // HELP replays the tour directly, without the offer.
   await page.locator('#cbhelp').click();
   await page.locator('#introreplay').click();
   await page.waitForTimeout(250);
+  assert.equal(await page.locator('#onboarding').getAttribute('data-stage'), 'tour');
   const expectedSidebarTabs = await page
     .locator('#ctabs > button:visible')
     .evaluateAll((buttons) =>
@@ -256,6 +360,13 @@ try {
           'Visit other star systems to discover new locations.',
         ),
       );
+    {
+      const slideText = (await page.locator('#onboarding').textContent())!;
+      for (const slip of [/\bits why\b/, /were now inhabitants/, /, Duel,/, /personal station/])
+        assert.doesNotMatch(slideText, slip, `briefing slide ${slide + 1} text`);
+      if (slide === 0) assert.match(slideText, /found themselves in a densely populated region/);
+      if (slide === 9) assert.match(slideText, /it's why this game exists today/);
+    }
     if (slide >= 6) {
       assert.equal(
         await page.locator('#onboarding-title').textContent(),
@@ -534,7 +645,7 @@ try {
     ),
   );
   console.log(
-    'PASS onboarding: startup, clockwise complete menu tour, tour geometry, input denial, gameplay examples, uniform slides, live bindings, skip, replay, completion and resize',
+    'PASS onboarding: startup, optional orientation offer, clockwise complete menu tour, tour geometry, input denial, gameplay examples, uniform slides, live bindings, skip, replay, completion and resize',
   );
 } catch (error) {
   await failureEvidence(browser, output, error);

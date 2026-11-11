@@ -490,6 +490,15 @@ export const COMMODITIES: CommodityDef[] = [
 export const MATERIALS: string[] = ['alloy', 'crystal', 'isotope'];
 
 /**
+ * English indefinite article for a material name in player messages.
+ * @param material Material ID, such as alloy.
+ * @returns "an" before a vowel, otherwise "a".
+ */
+export function materialArticle(material: string): 'a' | 'an' {
+  return /^[aeiou]/i.test(material) ? 'an' : 'a';
+}
+
+/**
  * Material grade designation roman numerals (Grades I through V).
  */
 export const GRADES: string[] = ['I', 'II', 'III', 'IV', 'V'];

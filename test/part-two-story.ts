@@ -8,6 +8,8 @@ import {
   partTwoEndings,
   partTwoAftercare,
   PART_TWO_PAY,
+  partTwoMemorial,
+  partTwoMemorialText,
 } from '../shared/part-two-story.ts';
 import { STELLARS, SYS } from '../shared/galaxy.ts';
 import type { StoryFlags } from '../server/save-contracts.ts';
@@ -411,6 +413,44 @@ assert.match(
   /Mission target destroyed/,
 );
 console.log('Part II report access, memorial, campaign explanations and combat feedback passed.');
+
+// Part II text names places as the map shows them and follows the saved ending.
+{
+  const objectiveText = (id: string) =>
+    (PART_TWO_OBJECTIVES[id] || []).map((objective) => objective.brief).join(' ');
+  assert.equal(SYS['mw-sol'].desc, "Sol. The Milky Way's familiar band crosses the sky.");
+  assert.match(SYS['mw-wolf-359'].desc ?? '', /^Wolf 359, \d+(\.\d+)? light-years from Sol\./);
+  assert.match(objectiveText('p2-moon'), /At the Threshold Spire in the Rift/);
+  assert.match(
+    Object.values(PART_TWO_OBJECTIVES)
+      .flat()
+      .map((objective) => objective.brief)
+      .join(' '),
+    /Under the local ceasefire, rescue/,
+  );
+  const broadcast = PART_TWO.find((mission) => mission.id === 'p2-broadcast')!;
+  assert.doesNotMatch(JSON.stringify(broadcast), /broadcast booth/, 'one broadcast room');
+  const aftercareText = (ending: string) =>
+    partTwoAftercare({ p2_ending: ending } as StoryFlags)
+      .map((objective) => objective.brief)
+      .join(' ');
+  assert.match(aftercareText('ascendant'), /relay and yard crews/);
+  assert.match(aftercareText('ashfall'), /archive crews/);
+  const memorialFlags = { p2_supply: 'grain' } as StoryFlags;
+  assert.equal(
+    `${partTwoMemorialText(memorialFlags)} ${partTwoMemorial(memorialFlags)}`.match(
+      /At Saint Orra/g,
+    )?.length,
+    1,
+    'the memorial names Saint Orra once',
+  );
+  assert.match(
+    partTwoBattle({ p2_campaign: 'dormancy' } as StoryFlags)
+      .map((objective) => objective.brief)
+      .join(' '),
+    /The Index chooses whether to sleep/,
+  );
+}
 
 const harnessCaptain = refineryPilot(game, 'Harness reward');
 const harnessData = harnessCaptain.data;

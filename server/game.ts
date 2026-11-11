@@ -616,6 +616,7 @@ import {
   FACTIONS,
   COMMODITIES,
   MATERIALS,
+  materialArticle,
   GRADES,
   START,
   RESEARCH,
@@ -2984,7 +2985,10 @@ export class Game<Storage extends Database = Database> {
     if (lootItem.credits || lootItem.mat) this.features.specialists.specOnLoot(session);
     if (lootItem.mat) {
       playerData.mats[lootItem.mat][lootItem.grade!]++;
-      this.toast(session, `Salvaged a ${lootItem.mat} crate (grade ${GRADES[lootItem.grade!]}).`);
+      this.toast(
+        session,
+        `Salvaged ${materialArticle(lootItem.mat)} ${lootItem.mat} crate (grade ${GRADES[lootItem.grade!]}).`,
+      );
     }
     this.you(session);
   }
