@@ -238,15 +238,35 @@ try {
   if (!baseline) {
     const bounds = await page.locator('#landbody').evaluate((entity) => {
       const result = entity.getBoundingClientRect();
-      return [...entity.querySelectorAll('.detail .kv, .detail button[data-act="buyhangar"]')].map(
-        (quantity) => {
-          const secondCaptain = quantity.getBoundingClientRect();
-          return secondCaptain.top >= result.top && secondCaptain.bottom <= result.bottom;
-        },
-      );
+      return [
+        ...entity.querySelectorAll(
+          '.detail .stat, .detail .kv, .detail button[data-act="buyhangar"]',
+        ),
+      ].map((quantity) => {
+        const secondCaptain = quantity.getBoundingClientRect();
+        return secondCaptain.top >= result.top && secondCaptain.bottom <= result.bottom;
+      });
     });
     assert.ok(bounds.length > 3 && bounds.every(Boolean), 'purchase button and stats visible');
+    assert.equal(
+      await page.locator('#landbody .detail .kv').filter({ hasText: 'Docking upkeep' }).count(),
+      1,
+      'The visibility case includes the docking fee for an expensive hull',
+    );
   }
+  await page.setViewportSize({ width: 700, height: 900 });
+  const narrowDetails = await page.locator('#landbody .shipyard-detail').evaluate((detail) => {
+    const specs = detail.querySelector('.shipyard-specs')!.getBoundingClientRect();
+    const offer = detail.querySelector('button[data-act="buyhangar"]')!.getBoundingClientRect();
+    const body = detail.closest('#landbody')!;
+    return { specsFirst: specs.top < offer.top, fits: body.scrollWidth <= body.clientWidth + 1 };
+  });
+  assert.deepEqual(narrowDetails, { specsFirst: true, fits: true });
+  const purchase = page.locator('#landbody .detail button[data-act="buyhangar"]');
+  await purchase.scrollIntoViewIfNeeded();
+  assert.ok(await purchase.isVisible(), 'Narrow shipyard keeps purchasing reachable');
+  await capture('shipyard-narrow');
+  await page.setViewportSize({ width: 1500, height: 1050 });
   await page.locator('#landbody [data-act="sel"]').last().scrollIntoViewIfNeeded();
   const browsingTop = await page.locator('#landbody').evaluate((entity) => entity.scrollTop);
   // The production background renderer must not jump a captain back to details.

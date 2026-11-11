@@ -364,12 +364,19 @@ assert.throws(
     const entity = requiredFixtureValue(session.ent);
     Object.assign(entity, { x: port.x, y: port.y, vx: 0, vy: 0, disabled: false });
     session.sock.out.length = 0;
+    entity.vx = 81;
+    upkeepGame.land(session, port.id);
+    assert.equal(pilot.credits, cash, 'Rejected landing does not charge upkeep');
+    assert.equal(session.ent, entity, 'Rejected landing leaves the ship in flight');
+    entity.vx = 0;
     upkeepGame.land(session, port.id);
     return { session, pilot, port };
   };
   const large = landWith(784, 5_000_000);
   assert.equal(large.pilot.stellar, large.port.id, 'Large hull lands');
   assert.equal(large.pilot.credits, 5_000_000 - 26_000, 'Land charges 0.2% of list price once');
+  upkeepGame.land(large.session, large.port.id);
+  assert.equal(large.pilot.credits, 5_000_000 - 26_000, 'Repeated landing does not charge twice');
   assert.ok(
     large.session.sock.out.some((message) => /upkeep/i.test(String(message.msg ?? ''))),
     'Landing shows the upkeep notice',

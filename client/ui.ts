@@ -1831,7 +1831,7 @@ export function renderLanded(): void {
           : length2.yard![0];
       const shipHullAsset = clientGameState.A!.ships[selected],
         trade = tradeIn(playerPayload);
-      height = `<div class="detail"><img src="${artworkUrl(shipHullAsset.img!)}"><div><b style="font-size:16px;color:#fff">${escapeHtml2(shipHullAsset.name)}</b> <span class="dim">${escapeHtml2(shipHullAsset.sub)}</span> ${roleTag(shipHullAsset)}${shipHullAsset.cargo ? '' : ' <span class="nocargo">NO CARGO HOLD</span>'}${statLines(shipHullAsset, playerPayload.shipless ? null : clientGameState.A!.ships[playerPayload.ship.hull])}
+      height = `<div class="detail shipyard-detail"><div><img src="${artworkUrl(shipHullAsset.img!)}">
         <div class="kv"><span>Price</span><span class="cr">${credits(shipHullAsset.cost)}</span></div>${
           dockingUpkeepRate(shipHullAsset.cost)
             ? `<div class="kv"><span>Docking upkeep</span><span class="cr">${credits(dockingUpkeepRate(shipHullAsset.cost))} per docking</span></div>`
@@ -1861,6 +1861,7 @@ export function renderLanded(): void {
             hangarButton
           );
         })()}
+        </div><div class="shipyard-specs"><b style="font-size:16px;color:#fff">${escapeHtml2(shipHullAsset.name)}</b> <span class="dim">${escapeHtml2(shipHullAsset.sub)}</span> ${roleTag(shipHullAsset)}${shipHullAsset.cargo ? '' : ' <span class="nocargo">NO CARGO HOLD</span>'}${statLines(shipHullAsset, playerPayload.shipless ? null : clientGameState.A!.ships[playerPayload.ship.hull])}
         <p style="white-space:pre-wrap;line-height:1.4;color:#ccc">${escapeHtml2(shipHullAsset.desc)}</p></div></div><div class="ysort small">Sort by <select id="ysort">${[
           ['cost', 'price'],
           ['cargo', 'cargo'],
