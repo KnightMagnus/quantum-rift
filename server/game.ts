@@ -2814,9 +2814,7 @@ export class Game<Storage extends Database = Database> {
     let back =
       ownStation && this.ownSite(playerData, ownStation) && eligibleRecovery(ownStation)
         ? ownStation.id
-        : eligibleRecovery(STELLARS[START.stellar])
-          ? START.stellar
-          : '';
+        : '';
     if (!back) {
       for (const [systemId] of galaxyGraph.walk(playerData.sys, {
         canEnter: (id) => storySystemVisible(undefined, id) && systemsById[id].faction !== 'deep',
@@ -2895,6 +2893,14 @@ export class Game<Storage extends Database = Database> {
     const session = playerReference.s,
       playerData = session.data;
     if (!playerData) return;
+    const priority = lootItem.combatPickup;
+    if (
+      priority &&
+      (playerData.sys !== priority.sys ||
+        ((this.spaces[priority.sys]?.t ?? 0) < priority.until &&
+          !priority.captains.includes(playerData.name)))
+    )
+      return false;
     if (!this.features.index.pickup(session, lootItem)) return false;
     if (lootItem.cargo) return this.features.fleetcmd.lootCargo(session, lootItem as CargoLoot); // jettisoned cargo
     if (lootItem.salvage) return this.features.quests.questLoot(session, lootItem); // a quest's salvage
