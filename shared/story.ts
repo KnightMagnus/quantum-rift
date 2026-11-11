@@ -142,7 +142,8 @@ export const STORY: StoryMission[] = [
     minRep: 25,
     crate: ['isotope', 3],
     text: 'The elders are grave. "The Umbral hunt our trade-choirs in Shoalight now. They put out a ship\'s light and take everything inside. A choir is crossing tomorrow. Will you stand with it?"',
-    brief: 'Destroy the four Umbral hunters waiting in Shoalight, then return to Ina Lumen.',
+    brief:
+      'Destroy the four Umbral hunters waiting in Shoalight, then return to Ina Lumen. These are warships: fit weapons and shields, or bring wingmates before setting out. You can keep earning through courier jobs and faction work while you prepare.',
     acc: 'Stand with them',
     ref: 'Not yet',
     progress: 'An Umbral hunter breaks apart.',
@@ -164,7 +165,7 @@ export const STORY: StoryMission[] = [
     crate: ['crystal', 4],
     text: 'Every Que\'vari choir-of-war is gathering over Ina Lumen. "The Night Anchor has put out the light of a hundred ships," Sel\'ani says. "Tomorrow we go to Umbra and put an end to it. The elders ask you to lead us."',
     brief:
-      "Lead the Que'vari choirs-of-war into Umbra and destroy the Night Anchor. Then return to Ina Lumen. Prepare at the outfitter and hangar first; bridge crew, defensive research or wing support can help.",
+      "Lead the Que'vari choirs-of-war into Umbra and destroy the Night Anchor. Then return to Ina Lumen. A light ship may not survive this battle. Prepare a stronger combat ship with fitted weapons, shields and wingmates; bridge crew and defensive research can help. You can retreat and return after preparing.",
     acc: 'Lead them',
     ref: 'Not yet',
     progress:

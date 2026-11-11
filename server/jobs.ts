@@ -343,6 +343,16 @@ const JobOperations: JobOperations = {
       this.landed(session);
       return;
     }
+    if (
+      mission.type === 'patrol' &&
+      playerData.missions.some(
+        (accepted) => accepted.type === 'patrol' && accepted.sys === mission.sys && !accepted.done,
+      )
+    )
+      return this.toast(
+        session,
+        'Finish your current patrol in that system before accepting another.',
+      );
     if (mission.type === 'quest') return this.features.quests.questStart(session, mission); // 2.4
     if (mission.type === 'warband') return this.features.coop.warbandAccept(session, mission); // Armada contracts go to the whole Armada
     if (mission.type === 'cargo' || mission.type === 'smuggle') {
