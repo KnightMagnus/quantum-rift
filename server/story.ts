@@ -6,14 +6,12 @@ import {
   storyParticipant,
 } from './shared-story.ts';
 import {
-  PART_TWO_OBJECTIVES,
-  partTwoBattle,
   partTwoEndings,
   partTwoEndingText,
   partTwoCampaignGuidance,
   partTwoMemorialText,
-  partTwoAftercare,
   partTwoMemorial,
+  partTwoStages,
 } from '../shared/part-two-story.ts';
 import { storyReportPort, storyReportGuidance } from '../shared/story-pacing.ts';
 export interface StoryPayload {
@@ -624,6 +622,15 @@ export const StoryOperations = {
     if (!sharedEncounterOwner(this, session) && resumeStoryEncounter(session))
       this.storyArrive(session, space);
     const active = session.data.story?.active;
+    // Check about once a second: a kill target that is out of the fight and far from its
+    // captain is brought back, so the objective never depends on chasing it out of the system.
+    if (
+      active &&
+      !active.ready &&
+      session.ent?.state === 'fly' &&
+      Math.floor(space.t) !== Math.floor(space.t - duration)
+    )
+      recoverStrayStoryTargets(space, session, liveStoryTargets(space, session, active));
     if (
       active?.id !== 'dreamer' ||
       active.ready ||
@@ -788,36 +795,9 @@ export const StoryOperations = {
       }
       active2.spawned = true;
     }
-    const existing = [...space.ships.values()].filter(
-      (entity) =>
-        entity.story === session.id &&
-        entity.storyMission === active2.id &&
-        (entity.storyKill || entity.storyBoard) &&
-        (entity.storyStage || 0) === (active2.stage || 0),
-    );
+    const existing = liveStoryTargets(space, session, active2);
     if (existing.length) {
-      // Recover abandoned targets without healing them or interrupting another captain's fight.
-      for (const [index, target] of existing.entries()) {
-        if (
-          !session.ent ||
-          Math.hypot(target.x - session.ent.x, target.y - session.ent.y) <= 12000 ||
-          (target.target && !target.target.dead && space.ships.has(target.target.id)) ||
-          [...space.ships.values()].some(
-            (attacker) =>
-              !attacker.dead &&
-              (attacker.target === target ||
-                attacker.combatTarget === target ||
-                attacker.fireAt === target),
-          )
-        )
-          continue;
-        const angle = (index / existing.length) * Math.PI * 2;
-        target.x = session.ent.x + Math.cos(angle) * 1400;
-        target.y = session.ent.y + Math.sin(angle) * 1400;
-        target.vx = 0;
-        target.vy = 0;
-        if (target.storyKill) target.target = session.ent;
-      }
+      recoverStrayStoryTargets(space, session, existing);
       return;
     }
     const entity = session.ent,
@@ -1033,6 +1013,59 @@ export const StoryOperations = {
   },
 };
 
+/** Distance from its captain beyond which a disengaged story target is brought back. */
+const STORY_TARGET_LEASH = 12000;
+
+/** Live kill and boarding targets of the captain's current story step and stage. */
+function liveStoryTargets(
+  space: Space,
+  session: Session,
+  active: NonNullable<SavedStory['active']>,
+): Entity[] {
+  return [...space.ships.values()].filter(
+    (entity) =>
+      entity.story === session.id &&
+      entity.storyMission === active.id &&
+      (entity.storyKill || entity.storyBoard) &&
+      (entity.storyStage || 0) === (active.stage || 0),
+  );
+}
+
+/**
+ * Brings story targets that drifted beyond the leash back near their captain, without healing
+ * them. A target still fighting, or attacked by, anyone outside the captain's own wing stays put,
+ * so another captain's fight is never interrupted.
+ */
+function recoverStrayStoryTargets(space: Space, session: Session, targets: Entity[]): void {
+  const captain = session.ent;
+  if (!captain) return;
+  const ownWing = (ship: Entity) => space.root(ship) === captain;
+  for (const [index, target] of targets.entries()) {
+    if (
+      Math.hypot(target.x - captain.x, target.y - captain.y) <= STORY_TARGET_LEASH ||
+      (target.target &&
+        !target.target.dead &&
+        space.ships.has(target.target.id) &&
+        !ownWing(target.target)) ||
+      [...space.ships.values()].some(
+        (attacker) =>
+          !attacker.dead &&
+          !ownWing(attacker) &&
+          (attacker.target === target ||
+            attacker.combatTarget === target ||
+            attacker.fireAt === target),
+      )
+    )
+      continue;
+    const angle = (index / targets.length) * Math.PI * 2;
+    target.x = captain.x + Math.cos(angle) * 1400;
+    target.y = captain.y + Math.sin(angle) * 1400;
+    target.vx = 0;
+    target.vy = 0;
+    if (target.storyKill) target.target = captain;
+  }
+}
+
 /** Recompute all options from authoritative saved prerequisites, including on repeated packets. */
 function legalChoices(
   playerData: PlayerData,
@@ -1167,10 +1200,7 @@ function storyGuidance(player: PlayerData, chapter: string): string {
 }
 
 function stagesFor(playerData: PlayerData, id: string) {
-  if (id === 'p2-aftercare') return partTwoAftercare(playerData.story.flags || {});
-  return id === 'p2-fleet'
-    ? partTwoBattle(playerData.story.flags || {})
-    : PART_TWO_OBJECTIVES[id] || [];
+  return partTwoStages(playerData.story.flags || {}, id);
 }
 function isLastStage(playerData: PlayerData, id: string): boolean {
   return (playerData.story.active?.stage || 0) >= stagesFor(playerData, id).length - 1;
@@ -1203,20 +1233,21 @@ function battleChoices(flags: StoryFlags) {
   return partTwoEndings(flags).map((value) => ({ value, label: labels[value] }));
 }
 
-/** Required Part II reports and the final memorial permit only their assigned landing. */
+/**
+ * Part II story landings that hostile standing must not block: the active step's carry
+ * destination, a ready report's assigned port, and the offer port of the next chapter.
+ */
 export function storyReportAccess(player: PlayerData, portId: string): boolean {
-  const active = player.story.active;
-  if (
-    !active ||
-    !active.id.startsWith('p2-') ||
-    player.story.flags?.main_ending !== 'table' ||
-    !player.story.flags.crossed_quantum_rift
-  )
+  if (player.story.flags?.main_ending !== 'table' || !player.story.flags.crossed_quantum_rift)
     return false;
+  const active = player.story.active;
+  if (!active) {
+    const next = STORY[player.story.step];
+    return !!next && next.id.startsWith('p2-') && next.at === portId;
+  }
+  if (!active.id.startsWith('p2-')) return false;
   const mission = effectiveMission(player, active.id);
-  return (
-    !!mission &&
-    ((active.ready && mission.type !== 'carry' && mission.back === portId) ||
-      (active.id === 'p2-names' && mission.dest === portId))
-  );
+  if (!mission) return false;
+  if (mission.type === 'carry') return mission.dest === portId;
+  return active.ready && mission.back === portId;
 }
