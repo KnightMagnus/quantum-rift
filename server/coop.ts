@@ -39,6 +39,15 @@ import { credits, makeLoadout, shipStats, allOutfits } from '../shared/rules.ts'
 // Route delivery is transient and never restores a captain's flight consent.
 const followRoutes = new WeakMap<Session, string>();
 
+/**
+ * Counts the Armada rescues a captain has had in the current fight. A fight ends
+ * once `RESCUE.lockoutSec` passes without a rescue, or when the ship leaves the system.
+ */
+function fightRescues(entity: Entity, space: Space): number {
+  if (!entity.rescueCount || space.t - (entity.lastRescueT ?? 0) > RESCUE.lockoutSec) return 0;
+  return entity.rescueCount;
+}
+
 function sendFollowRoute(
   game: CoopCapabilities,
   follower: Session,
@@ -1649,6 +1658,13 @@ export const CoopOperations = {
         session3.data.sys === playerData.sys,
     );
     if (!mates.length) return false;
+    if (fightRescues(entity, space) >= RESCUE.perFight) {
+      this.toast(
+        session,
+        `Your Armada has already patched you up ${RESCUE.perFight} times in this fight. The insurers take over.`,
+      );
+      return false;
+    }
     entity.armor = 1;
     entity.shield = 0;
     entity.disabled = true;
@@ -1691,13 +1707,26 @@ export const CoopOperations = {
     entity.rescueT = 0;
     entity.armor = Math.max(entity.armor, entity.st.armor * RESCUE.repair);
     entity.graceT = space.t + 4;
+    entity.rescueCount = fightRescues(entity, space) + 1;
+    entity.lastRescueT = space.t;
     playerData.stats.rescues = (playerData.stats.rescues || 0) + 1;
     this.officerXp(session, 20);
     this.toast(session, `You patched up ${entity.player.name}'s ship.`);
-    this.toast(
-      entity.player.s,
-      `${playerData.name} boarded and patched you up. Back in the fight!`,
-    );
+    if (entity.rescueCount >= RESCUE.perFight) {
+      const lockoutMinutes = Math.round(RESCUE.lockoutSec / 60);
+      this.toast(
+        entity.player.s,
+        `${playerData.name} patched you up again. Retreat and regroup: if you are disabled in the next ${lockoutMinutes} minutes, your Armada can't patch you up and the insurers take over.`,
+      );
+      this.toast(
+        session,
+        `That was ${entity.player.name}'s last patch-up for ${lockoutMinutes} minutes. Another knockdown goes to the insurers.`,
+      );
+    } else
+      this.toast(
+        entity.player.s,
+        `${playerData.name} boarded and patched you up. Back in the fight!`,
+      );
     this.log(playerData, `Rescued ${entity.player.name} in ${systemsById[playerData.sys].name}.`);
     this.log(
       entity.player.s.data,

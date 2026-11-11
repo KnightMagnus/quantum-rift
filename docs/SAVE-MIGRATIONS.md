@@ -36,8 +36,11 @@ other versions, negative/fractional/nonfinite indices and legacy integer overflo
 before executing either owner. The same tutorial checks also run at local/native load, import and login boundaries.
 
 Local database startup rejects malformed JSON, invalid snapshot envelope shapes
-and read failures other than a missing file. Missing snapshot files retain the
-fresh-file defaults. A committed journal takes precedence over stale snapshots;
+and read failures other than a missing file. If `players.json` or `world.json` is
+missing, startup restores both from the newest backup in `backups/` whose two files
+load and validate, and renames a file that is still present to
+`<name>.unpaired-<time>`. Without a usable backup, a missing file keeps its
+fresh-file default and the console says so. A committed journal takes precedence over stale snapshots and backups;
 both journal payloads must have valid envelope shapes before either is restored.
 [Feature validation](../server/save-validation.ts) checks present compatibility fields
 before any owner can default them or pay refunds. It covers numeric economy fields,

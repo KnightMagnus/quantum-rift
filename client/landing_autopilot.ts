@@ -28,6 +28,9 @@ export interface FlightStats {
 }
 // Landing-only guidance. Manual flight and server landing limits are unchanged.
 import { DT as tickDuration, wrap } from '../shared/rules.ts';
+import { SYS as systemsById } from '../shared/galaxy.ts';
+import { missionTargets } from './missions.ts';
+import type { ClientGameState } from './main.ts';
 
 /**
  * Steer toward a landing volume, then commit to a retrograde braking pass.
@@ -159,11 +162,15 @@ export interface LandingIntent {
 
   /** Stellar bodies named by any active mission objective. */
   missionStellars: string[];
+
+  /** Nav point set automatically on arrival and shown in the NAV readout, or null. */
+  shownNav?: string | null;
 }
 
 /**
  * Chooses the body that L lands on. A clicked nav point wins, then the pinned
- * objective, then the nearest mission destination, then the nearest landable body.
+ * objective, then the nearest mission destination, then the automatic nav point,
+ * then the nearest landable body.
  * @param candidates Landable bodies in the current system.
  * @param ship Player position.
  * @param intent Highlighted nav point and mission destinations.
@@ -184,6 +191,33 @@ export function chooseLandingPort<Candidate extends LandingCandidate>(
     named(intent.pickedNav) ??
     named(intent.pinnedStellar) ??
     byDistance.find((body) => intent.missionStellars.includes(body.id)) ??
+    named(intent.shownNav ?? null) ??
     byDistance[0]
+  );
+}
+
+/**
+ * The body L would land on right now in flight. The NAV readout shows the same body.
+ * @param clientGameState Client state with the current system, view and objectives.
+ * @returns The landable body, or undefined when not flying or nothing here is landable.
+ */
+export function landingDestination(clientGameState: ClientGameState) {
+  const clientView = clientGameState.view,
+    starSystem = systemsById[clientGameState.sys!];
+  if (!clientView || !starSystem) return undefined;
+  const objectives = missionTargets(clientGameState);
+  return chooseLandingPort(
+    starSystem.stellars.filter((rawStellarBody) => rawStellarBody.svc!.includes('L')),
+    clientView,
+    {
+      pickedNav: clientGameState.navPicked ? clientGameState.navStellar : null,
+      pinnedStellar:
+        objectives.find((objective) => objective.key === clientGameState.pinnedObjective)
+          ?.stellar ?? null,
+      missionStellars: objectives.flatMap((objective) =>
+        objective.stellar ? [objective.stellar] : [],
+      ),
+      shownNav: clientGameState.navPicked ? null : clientGameState.navStellar,
+    },
   );
 }

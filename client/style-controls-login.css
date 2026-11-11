@@ -483,3 +483,26 @@ body:has(.overlay:not(.hidden)) #touch {
     height: 44px;
   }
 }
+/* Narrow play areas (portrait phones) have no room for the stick beside a four-wide button
+   grid, so the grid folds into two compact columns and leaves the stick uncovered. */
+#touch {
+  container: touch-controls / inline-size;
+}
+@container touch-controls (max-width: 520px) {
+  #tstick {
+    width: 110px;
+    height: 110px;
+    left: 12px;
+    bottom: 12px;
+  }
+  #tbtns {
+    grid-template-columns: repeat(2, 48px);
+    right: 8px;
+    bottom: 12px;
+    gap: 4px;
+  }
+  #tbtns button {
+    height: 44px;
+    font-size: 12px;
+  }
+}

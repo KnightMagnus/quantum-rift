@@ -521,6 +521,66 @@ assertCondition(
     'if nobody comes in time, the insurers take over',
   );
 }
+{
+  // Rescue loops: the third knockdown in one fight goes to the insurers.
+  const downed = toSpace(captain, requiredFixtureValue(lawless).id, 60, 0);
+  const rescuer = requiredFixtureValue<FixtureEntity>(requiredFixtureValue(firstEntry.s).ent);
+  const raider = message.makeShip({ hull: 711, faction: 'hollow', x: 200, y: 0 });
+  const knockDown = () => {
+    downed.shield = 0;
+    downed.armor = 5;
+    downed.graceT = 0;
+    message.damage(downed, 500, 500, raider);
+  };
+  const patchUp = () => {
+    Object.assign(rescuer, { x: downed.x + 20, y: downed.y, vx: downed.vx, vy: downed.vy });
+    firstEntry.send({ t: 'board', id: downed.id });
+  };
+  knockDown();
+  patchUp();
+  assertCondition(
+    !downed.disabled && downed.rescueCount === 1,
+    'the first rescue in a fight patches the captain up',
+  );
+  knockDown();
+  assertCondition(
+    downed.disabled && downed.rescueT! > message.t,
+    'a second knockdown still waits for the Armada',
+  );
+  patchUp();
+  assertCondition(
+    !downed.disabled &&
+      downed.rescueCount === RESCUE.perFight &&
+      captain.toasts().some((text: string) => /Retreat and regroup/.test(text)) &&
+      firstEntry.toasts().some((text: string) => /last patch-up/.test(text)),
+    'the second rescue tells both captains to retreat and regroup',
+  );
+  knockDown();
+  assertCondition(
+    !message.ships.has(downed.id) &&
+      captain.last('dead') &&
+      captain.toasts().some((text: string) => /already patched you up/.test(text)),
+    'a third knockdown in the same fight is not held for rescue',
+  );
+  const fresh = toSpace(captain, requiredFixtureValue(lawless).id, 60, 0);
+  assertCondition(
+    !fresh.rescueCount,
+    'a new flight starts a new fight with a fresh rescue allowance',
+  );
+  fresh.rescueCount = RESCUE.perFight;
+  fresh.lastRescueT = message.t - RESCUE.lockoutSec - 1;
+  fresh.shield = 0;
+  fresh.armor = 5;
+  message.damage(fresh, 500, 500, raider);
+  assertCondition(
+    message.ships.has(fresh.id) && fresh.disabled && fresh.rescueT! > message.t,
+    'once the lockout has passed, a knockdown is held for rescue again',
+  );
+  fresh.disabled = false;
+  fresh.rescueT = 0;
+  fresh.armor = fresh.st.armor;
+  message.remove(raider);
+}
 
 // ------------------------------------------------------------------ duels
 const starSystem = SYSTEMS.find(

@@ -116,7 +116,7 @@ export const PART_TWO_OBJECTIVES: Record<string, PartTwoObjective[]> = {
       'ledger-nine',
       'ledger-nine',
       2,
-      'Under the local ceasefire rescue the human and Freefolk civilian crews. Report to Maren Tell.',
+      'Under the local ceasefire rescue the human and Freefolk civilian crews. Report to Greta Tell.',
       'independent_backup',
     ),
   ],
@@ -520,7 +520,7 @@ export const PART_TWO: StoryMission[] = [
     'p2-observation',
     'Terms of Observation',
     'vigils-rest',
-    'Maren Tell arranges a local ceasefire for a joint rescue. Human and Freefolk crews are stranded at Ledger Nine. War Ledger supplies telemetry identifying earlier Index civilian casualties. The rescue is evidence of cooperation, not absolution.',
+    'Greta Tell arranges a local ceasefire for a joint rescue. Human and Freefolk crews are stranded at Ledger Nine. War Ledger supplies telemetry identifying earlier Index civilian casualties. The rescue is evidence of cooperation, not absolution.',
     'War Ledger recognises your Harness core. It admits knowing about the war throughout your journey. An independent navigation backup is recorded before you answer.',
     'p2_witness',
     [
@@ -664,6 +664,13 @@ export function partTwoAftercare(flags: StoryFlags): PartTwoObjective[] {
   ];
 }
 
+/** Objective stages of a Part II chapter under the saved story choices. */
+export function partTwoStages(flags: StoryFlags, chapterId: string): PartTwoObjective[] {
+  if (chapterId === 'p2-aftercare') return partTwoAftercare(flags);
+  if (chapterId === 'p2-fleet') return partTwoBattle(flags);
+  return PART_TWO_OBJECTIVES[chapterId] || [];
+}
+
 /** Every recorded choice is acknowledged by the people affected, not by changing the shared world. */
 export function partTwoMemorial(flags: StoryFlags): string {
   const lines: string[] = [
@@ -721,7 +728,7 @@ export function partTwoMemorial(flags: StoryFlags): string {
       'p2_witness',
       {
         reject:
-          'Maren Tell brings the independent navigation backup; War Ledger does not speak for you.',
+          'Greta Tell brings the independent navigation backup; War Ledger does not speak for you.',
         disclose: 'War Ledger’s full disclosure is filed with the civilian witnesses.',
         rebuild:
           'War Ledger submits corrections to its account. Trust is still work, not a verdict.',

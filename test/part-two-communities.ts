@@ -25,6 +25,31 @@ assert.equal(
   'npc-r3',
   'Rift identity unchanged',
 );
+// Every faction with its own portrait art keeps its NPC faces inside that pool,
+// including the region and non-answering factions that used to borrow player faces.
+const poolFactions = [
+  ...new Set(PORTRAITS.filter((entry) => entry.poolEligible).map((entry) => entry.faction)),
+];
+for (const faction of ['swarm', 'frontier', 'deep', 'eclipse'])
+  assert.ok(poolFactions.includes(faction), `${faction} has a portrait pool`);
+for (const faction of poolFactions) {
+  const pool = new Set(
+    PORTRAITS.filter((entry) => entry.poolEligible && entry.faction === faction).map(
+      (entry) => entry.id,
+    ),
+  );
+  for (let index = 0; index < 300; index++) {
+    const face = npcPortrait({ faction, name: `Captain ${index}`, hull: 1 }, 'wild-landing');
+    assert.ok(pool.has(face), `${faction} captain ${index} drew ${face} from another faction`);
+    const unnamed = npcPortrait({ faction, name: null, hull: index }, 'wild-landing');
+    assert.ok(pool.has(unnamed), `${faction} unnamed traffic drew ${unnamed}`);
+  }
+}
+assert.equal(
+  npcPortrait({ faction: 'swarm', name: 'Mite Drone', hull: 718 }, 'wild-landing'),
+  'generic-swarm-01',
+  'a Feral Swarm drone shows Swarm art, not a human settler',
+);
 const frequencies = (faction: string) => {
   const counts: Record<string, number> = {};
   for (let step = 0; step < 1000; step++) {
@@ -39,5 +64,5 @@ assert.equal(frequencies('index').freefolk, 320);
 assert.equal(frequencies('index').unsworn, 180);
 
 console.log(
-  'Regional communities: human-only NPC variations, retained Rift identities and exact regional traffic proportions passed.',
+  'Regional communities: human-only NPC variations, per-faction portrait pools, retained Rift identities and exact regional traffic proportions passed.',
 );
