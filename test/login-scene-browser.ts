@@ -391,11 +391,17 @@ try {
     traffic,
   });
 
-  for (const [width, height] of [
-    [1920, 1080],
-    [1280, 720],
-    [390, 844],
-  ]) {
+  // Phones in either orientation see the larger-screen note; tablets and computers do not.
+  for (const [width, height, phone] of [
+    [1920, 1080, false],
+    [1280, 720, false],
+    [1024, 768, false],
+    [768, 1024, false],
+    [390, 844, true],
+    [360, 640, true],
+    [750, 342, true],
+    [932, 430, true],
+  ] as const) {
     await page.setViewportSize({ width, height });
     await page.waitForFunction(() => {
       const element5 = document.querySelector<HTMLElement>('.login-scene');
@@ -426,6 +432,34 @@ try {
           )?.id === 'lbtn',
       };
     });
+    const screenNotice = await page.evaluate(() => {
+      const notice = document.querySelector<HTMLElement>('#screennotice')!,
+        bounds = notice.getBoundingClientRect(),
+        captainName = document.querySelector<HTMLElement>('#lname')!.getBoundingClientRect();
+      return {
+        shown: getComputedStyle(notice).display !== 'none' && bounds.height > 0,
+        text: notice.textContent!.trim().replace(/\s+/g, ' '),
+        onscreen:
+          bounds.left >= 0 &&
+          bounds.right <= innerWidth &&
+          bounds.top >= 0 &&
+          bounds.bottom <= innerHeight,
+        clearOfForm: bounds.bottom <= captainName.top,
+        clipped:
+          notice.scrollWidth > notice.clientWidth || notice.scrollHeight > notice.clientHeight,
+      };
+    });
+    assert.equal(
+      screenNotice.shown,
+      phone,
+      `larger-screen note shown only on phones ${width}x${height}`,
+    );
+    if (phone) {
+      assert.match(screenNotice.text, /best on a tablet or computer/);
+      assert.equal(screenNotice.onscreen, true, 'note fits the phone screen');
+      assert.equal(screenNotice.clearOfForm, true, 'note sits above the login form');
+      assert.equal(screenNotice.clipped, false, 'note text is not clipped');
+    }
     const banner = await page.evaluate(() => {
       const boundingBox = document.querySelector<HTMLElement>('#login .loginbox');
       const session = getComputedStyle(boundingBox!, '::before');
@@ -466,6 +500,7 @@ try {
       check: `DPR 2 resize and usable form ${width}x${height}`,
       status: 'pass',
       layout,
+      screenNotice,
     });
   }
   await page.setViewportSize({ width: 1440, height: 960 });

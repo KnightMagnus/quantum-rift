@@ -531,3 +531,59 @@ body.onboarding-active #functiondock > .function-icon {
 #onboarding[data-stage='offer'] .intro-callout {
   position: relative;
 }
+
+/* Header and footer stay in view and only the slide content scrolls. The id plus
+   two classes outrank the `.overlay:not(#login) > div` cap, which would otherwise
+   fit the deck beside the HUD column instead of the whole viewport. */
+#onboarding.overlay > .intro-deck {
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  min-height: min(664px, calc(100dvh - 64px));
+  max-height: calc(100dvh - 64px);
+  overflow: hidden;
+}
+#onboarding .intro-deck > header,
+#onboarding .intro-deck > footer {
+  flex: none;
+}
+#onboarding .intro-deck > .intro-deck-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* A gold edge marks hidden content below; the local cover hides it at the end. */
+  background:
+    linear-gradient(#101a2300, #101a23 70%) 0 100% / 100% 36px no-repeat local,
+    radial-gradient(farthest-side at 50% 100%, #e6bd7055, #e6bd7000) 0 100% / 100% 14px no-repeat
+      scroll;
+}
+@media (max-width: 950px) {
+  #onboarding.overlay > .intro-deck {
+    min-height: 0;
+    max-height: calc(100dvh - 32px);
+  }
+}
+@media (max-height: 820px) {
+  #onboarding header {
+    height: 64px;
+  }
+  #onboarding footer {
+    height: 64px;
+  }
+  #onboarding figure {
+    padding: 22px 0 22px 26px;
+  }
+  #onboarding article {
+    padding: 26px 32px;
+  }
+  #onboarding article h2 {
+    font-size: 32px;
+    margin-top: 12px;
+    margin-bottom: 14px;
+  }
+  #onboarding article p {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+}

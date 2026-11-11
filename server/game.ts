@@ -10,7 +10,11 @@ import {
   type StationServiceCapabilities,
 } from './station-service.ts';
 
-import { validateFeaturePlayerSave, validateImportedPlayerSave } from './save-validation.ts';
+import {
+  validateFeaturePlayerSave,
+  validateImportedPlayerSave,
+  validateLoginShip,
+} from './save-validation.ts';
 import { COMPATIBILITY_MESSAGE, supportedProtocol } from '../shared/protocol.ts';
 import { storySystemVisible } from '../shared/story-world.ts';
 import { utf8Bytes } from '../shared/health.ts';
@@ -827,9 +831,8 @@ export class Game<Storage extends Database = Database> {
   slots(): SaveSlotSummary[] {
     return Object.values(this.db.players).map((playerAccount) => ({
       name: playerAccount.name,
-      ship: this.A.ships[playerAccount.ship.hull]
-        ? this.A.ships[playerAccount.ship.hull].name
-        : '?',
+      // A damaged slot still lists, so one bad save can't hide every captain.
+      ship: this.A.ships[playerAccount.ship?.hull]?.name ?? '?',
       credits: playerAccount.credits,
       ops: playerAccount.station ? playerAccount.station.ops : 0,
       sys: systemsById[playerAccount.sys] ? systemsById[playerAccount.sys].name : '',
@@ -1695,6 +1698,9 @@ export class Game<Storage extends Database = Database> {
     });
     raider.huntOf = session.id;
     raider.practiceOf = session.id;
+    // The career goal needs a kill, so the straggler fights to the end instead of drifting
+    // disabled (and untargetable) or running.
+    raider.noDisable = true;
     raider.life = 600;
     raider.target = entity;
     space.events.push(['flash', Math.round(raider.x), Math.round(raider.y)]);
@@ -1916,14 +1922,17 @@ export class Game<Storage extends Database = Database> {
       }
     try {
       validateFeaturePlayerSave(playerAccount);
+      validateLoginShip(playerAccount, this.A);
       if (migrateCargoLots(playerAccount).changed) this.db.touch();
     } catch (error) {
       console.error('Save validation rejected:', (error as Error).message);
+      const reason = error instanceof Error ? error.message : '';
       return this.send(session, {
         t: 'error',
-        msg:
-          error instanceof Error && error.message.startsWith('Cargo ledger:')
-            ? 'Cargo save validation failed. Contact the server operator.'
+        msg: reason.startsWith('Cargo ledger:')
+          ? 'Cargo save validation failed. Contact the server operator.'
+          : reason.startsWith('Login ship:')
+            ? "This captain's save has no usable ship. Restore it from a backup or contact the server operator."
             : 'Save validation failed. Contact the server operator.',
       });
     }
@@ -2994,9 +3003,7 @@ export class Game<Storage extends Database = Database> {
         name: playerAccount.name,
         earned: (playerAccount.stats && playerAccount.stats.earned) || 0,
         kills: (playerAccount.stats && playerAccount.stats.kills) || 0,
-        ship: this.A.ships[playerAccount.ship.hull]
-          ? this.A.ships[playerAccount.ship.hull].name
-          : '',
+        ship: this.A.ships[playerAccount.ship?.hull]?.name ?? '',
       }))
       .concat(
         Object.values(this.db.world.rivals || {}).map((rivalState) => ({

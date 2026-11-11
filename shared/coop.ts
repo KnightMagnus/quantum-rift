@@ -60,6 +60,10 @@ export type RescueConfig = {
   windowSec: number;
   /** Fraction of armor restored upon successful boarding rescue. */
   repair: number;
+  /** Rescues a captain can receive in one fight before the repair lockout starts. */
+  perFight: number;
+  /** Seconds after the last rescue during which the lockout holds; a later knockdown starts a new fight. */
+  lockoutSec: number;
 };
 export type CoopHoldoutConfig = {
   /** Additional hostiles spawned per helper captain. */
@@ -150,6 +154,8 @@ export const DUEL: DuelConfig = {
 export const RESCUE: RescueConfig = {
   windowSec: 60, // a downed Armada captain can be boarded by a member this long before the insurers take over
   repair: 0.35, // armor restored by a rescue (shields come back on their own)
+  perFight: 2, // after the second rescue in a fight, another knockdown goes to the insurers
+  lockoutSec: 180, // the fight counts as over once this long passes without a rescue
 };
 
 // co-op Holdout: each helper from your Armada adds hostiles to every wave and makes them tougher, and shares the rewards

@@ -1,4 +1,9 @@
 import type { StoryFlags } from '../server/save-contracts.ts';
+import type { ShipHullAsset } from './rules.ts';
+import { TYPE0_IDS } from './ships-type0.ts';
+
+/** Factions whose hulls belong to the Milky Way and stay out of the Codex until Part II. */
+const milkyWayHullFactions = ['confederation', 'freefolk', 'unsworn'];
 
 /** Hidden places are never unlocked by a route request or another captain's ending. */
 export function storySystemVisible(flags: StoryFlags | undefined, system: string): boolean {
@@ -12,6 +17,27 @@ export function storySystemVisible(flags: StoryFlags | undefined, system: string
     );
   if (system.startsWith('mw-'))
     return flags?.main_ending === 'table' && !!flags.crossed_quantum_rift;
+  return true;
+}
+
+/**
+ * Whether the Codex may list a hull. NPC-only hulls never list, the Ina Que'var waits for qv5,
+ * and Milky Way hulls (Confederation, Freefolk, Unsworn, Type 0) wait until the captain has
+ * crossed into the Milky Way, unless they are flying that hull.
+ * @param hull Hull catalog entry.
+ * @param story Viewing captain's story progress, if known.
+ * @param currentHull Hull ID the captain is flying.
+ */
+export function codexHullVisible(
+  hull: ShipHullAsset,
+  story: { done?: string[]; flags?: StoryFlags } | undefined,
+  currentHull?: number | string,
+): boolean {
+  if (hull.npcOnly) return false;
+  if (currentHull !== undefined && hull.id === Number(currentHull)) return true;
+  if (hull.id === 744) return !!story?.done?.includes('qv5');
+  if (milkyWayHullFactions.includes(hull.faction ?? '') || TYPE0_IDS.includes(hull.id))
+    return storySystemVisible(story?.flags, 'mw-sol');
   return true;
 }
 

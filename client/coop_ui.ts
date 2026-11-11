@@ -85,7 +85,7 @@ import { escapeHtml as escapeHtml2 } from './html.ts';
 // Quantum Rift: interface: the CAPTAINS companion tab (friends and their status, messages, the Armada,
 // trading between Personal Stations, duels), Armada ally detection for the HUD and radar, and follow-the-leader.
 import { SYS as systemsById, COMMODITIES, MATERIALS, GRADES } from '../shared/galaxy.ts';
-import { ARMADA, TRADE, DUEL } from '../shared/coop.ts';
+import { ARMADA, TRADE, DUEL, RESCUE } from '../shared/coop.ts';
 import { credits } from '../shared/rules.ts';
 
 /**
@@ -533,7 +533,7 @@ function armadaHtml() {
       height +
       `<div class="sect">FORM AN ARMADA</div><div class="rrow"><input id="aname" placeholder="Armada name (optional)" maxlength="24"><button class="btn sm" data-cact="aform">FORM</button></div>
       <div class="rrow"><input id="ainv" placeholder="Captain online (creates Armada)" maxlength="20"><button class="btn sm" data-cact="ainv2">INVITE</button></div>
-      <div class="dim small">An Armada is a short co-op group of up to ${ARMADA.max} captains, each with their own wingmates. Members and their wingmates can't hurt each other and show in green. You get a private chat (/a), +5% shield recharge and bounties while another member shares your system, a share of each other's bounties and kill credit, Armada contracts, co-op Holdouts, and a rescue window if your ship goes down. It disbands when everyone has been offline for ${ARMADA.idleMin} minutes.</div>`
+      <div class="dim small">An Armada is a short co-op group of up to ${ARMADA.max} captains, each with their own wingmates. Members and their wingmates can't hurt each other and show in green. You get a private chat (/a), +5% shield recharge and bounties while another member shares your system, a share of each other's bounties and kill credit, Armada contracts, co-op Holdouts, and a rescue window if your ship goes down (up to ${RESCUE.perFight} rescues per fight). It disbands when everyone has been offline for ${ARMADA.idleMin} minutes.</div>`
     );
   }
   height += `<p class="small">Armada buffs: ${armada2.buffsActive ? '+5% shield recharge and +5% bounties active' : 'inactive — another member must be flying in your system'}.</p>`;

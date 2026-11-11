@@ -334,7 +334,7 @@ export const SYNERGY: Record<string, Record<string, number>> = {
  */
 export const OFFICER_NAMES: Record<string, [string[], string[]]> = {
   quantum: [
-    ['Ada', 'Mira', 'Tomas', 'Iris', 'Corin', 'Selene', 'Hal', 'Juno', 'Rhea', 'Dorian'],
+    ['Ada', 'Mira', 'Felix', 'Iris', 'Corin', 'Selene', 'Hal', 'Juno', 'Rhea', 'Dorian'],
     [
       'Vance',
       'Okafor',

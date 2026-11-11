@@ -443,14 +443,14 @@
     },
     {
       "id": 756,
-      "name": "Tomas Eriksen-Kai",
+      "name": "Henrik Eriksen-Kai",
       "loadout": {
         "hull": 756,
         "outfits": { "598": 3, "599": 1, "602": 1 },
         "ammo": { "333": 6 },
         "fixed": [],
         "bonusSpace": 43,
-        "name": "Tomas Eriksen-Kai",
+        "name": "Henrik Eriksen-Kai",
         "stockOutfits": { "598": 3, "599": 1, "602": 1 }
       }
     },
@@ -1385,14 +1385,14 @@
     },
     {
       "id": 955,
-      "name": "Hound",
+      "name": "Mastiff",
       "loadout": {
         "hull": 955,
         "outfits": { "9001": 2 },
         "ammo": {},
         "fixed": [],
         "bonusSpace": 4,
-        "name": "Hound",
+        "name": "Mastiff",
         "stockOutfits": { "9001": 2 }
       }
     },
@@ -1463,14 +1463,14 @@
     },
     {
       "id": 962,
-      "name": "Picket",
+      "name": "Outrider",
       "loadout": {
         "hull": 962,
         "outfits": { "9001": 2 },
         "ammo": {},
         "fixed": [],
         "bonusSpace": 4,
-        "name": "Picket",
+        "name": "Outrider",
         "stockOutfits": { "9001": 2 }
       }
     },
@@ -1489,14 +1489,14 @@
     },
     {
       "id": 964,
-      "name": "Bulwark",
+      "name": "Redoubt",
       "loadout": {
         "hull": 964,
         "outfits": { "9001": 4 },
         "ammo": {},
         "fixed": [],
         "bonusSpace": 8,
-        "name": "Bulwark",
+        "name": "Redoubt",
         "stockOutfits": { "9001": 4 }
       }
     },

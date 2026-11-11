@@ -66,6 +66,10 @@ export interface RivalState {
   rel: Record<string, number>;
   dockT?: number;
   dockAt?: string | null;
+  /** Start time of the current kill window, in epoch milliseconds. */
+  killWindowAt?: number;
+  /** Kills logged in the current kill window. */
+  killWindowCount?: number;
 }
 export interface LegacyFleet {
   members: string[];

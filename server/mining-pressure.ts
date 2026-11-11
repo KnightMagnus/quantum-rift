@@ -327,9 +327,11 @@ export const MiningPressureOperations = {
       ) {
         miningHazard.resolved = true;
         for (const entity of space.ships.values()) {
+          // NPCs have no captain key; online storage rejects an empty name.
           const participant =
+              !!entity.player &&
               miningHazard.entities[
-                miningHazard.participants.indexOf(this.db.key(entity.player?.s.data.name || ''))
+                miningHazard.participants.indexOf(this.db.key(entity.player.s.data.name))
               ] === entity.id &&
               eligible(this, space, miningHazard.participants, miningHazard.sessions, entity),
             enrolled =
