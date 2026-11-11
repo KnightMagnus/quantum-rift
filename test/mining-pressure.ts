@@ -1,9 +1,12 @@
 import { requiredFixtureValue } from './helpers/required.ts';
 // Real contacts and actual shield/armor checks across hazard and encounter scopes.
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { refineryGame, refineryPilot } from './helpers/refinery-fixture.ts';
 import { weaponParams, DT as simulationStepSeconds } from '../shared/rules.ts';
 import { DB as Database } from '../server/db.ts';
+import { NakamaDatabase } from '../server/nakama-storage.ts';
+import type { StorageBackend } from '../shared/nakama-contracts.ts';
 import { Game, type Session } from '../server/game.ts';
 import type { Space } from '../server/space.ts';
 import type { SavedRockGeneration } from '../server/mining-contracts.ts';
@@ -311,3 +314,77 @@ console.log('ALL REAL MINING PRESSURE / TELEGRAPH / CONSENT / NEWCOMER / PERSIST
   hull6.features.pressure.consent(captain, { op: 'join' });
   assert.equal(hull6.features.pressure.payload(captain).groupConsent, true);
 }
+
+// Online storage rejects empty captain names. A hazard with an NPC in the system still
+// detonates on the captain and does not abort the rest of the tick.
+{
+  const rows = new Map<string, { value: unknown; version: string }>();
+  let revision = 0;
+  const storage: StorageBackend = {
+    read: (key) => {
+      const row = rows.get(key);
+      return row ? structuredClone(row) : null;
+    },
+    write: (key, value) => {
+      const version = String(++revision);
+      rows.set(key, { value: structuredClone(value), version });
+      return version;
+    },
+  };
+  const onlineDatabase = new NakamaDatabase(storage);
+  assert.throws(() => onlineDatabase.key(''), 'online storage refuses unnamed captains');
+  const onlineGame = new Game(
+      JSON.parse(readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8')),
+      onlineDatabase,
+      {
+        seedDefinitions: [],
+        automaticClock: false,
+        defer: () => {},
+        randomUUID: () => 'online-hazard-fixture',
+      },
+    ),
+    onlinePilot = onlineDatabase.withAuthenticatedCaptain('Online Miner', () =>
+      refineryPilot(onlineGame, 'Online Miner'),
+    ),
+    onlineShip = spawnFlyingPilot(onlineGame, onlinePilot),
+    onlineSpace = miningSpace(onlineGame.spaces.meridian);
+  const trader = onlineSpace.makeShip({
+    hull: 704,
+    faction: 'spacer',
+    ai: 'trade',
+    x: onlineShip.x + 9000,
+    y: onlineShip.y,
+  });
+  // Ambient traffic is usually ahead of the captain in iteration order.
+  onlineSpace.ships = new Map([
+    [trader.id, trader],
+    [onlineShip.id, onlineShip],
+  ]);
+  const hazardRock = onlineSpace.rocks.find((entry) => entry.ore === 'gas') || onlineSpace.rocks[0];
+  hazardRock.ore = 'gas';
+  hazardRock.x = onlineShip.x + 40;
+  hazardRock.y = onlineShip.y;
+  hazardRock.captain = onlineDatabase.key('Online Miner');
+  onlineGame.features.pressure.work(onlineSpace, hazardRock, 5);
+  const onlineHazard = requiredFixtureValue(onlineGame.db.world.miningPressure).hazards.find(
+    (entry) => entry.id === hazardRock.key,
+  );
+  assert.ok(onlineHazard, 'online hazard armed');
+  const healthBefore = onlineShip.shield + onlineShip.armor;
+  onlineSpace.events = [];
+  for (let index = 0; index < 120 && !onlineHazard.resolved; index++) {
+    onlineGame.features.mining.advanceClock(simulationStepSeconds);
+    assert.doesNotThrow(() => onlineGame.features.pressure.pressureTick(onlineSpace));
+  }
+  assert.equal(onlineHazard.resolved, true);
+  assert.ok(
+    onlineShip.shield + onlineShip.armor < healthBefore,
+    'online blast damages the participating captain',
+  );
+  assert.ok(
+    onlineSpace.events.some((event) => event[0] === 'blast'),
+    'online blast event is sent',
+  );
+  assert.equal(trader.shield, trader.st?.shield ?? trader.shield, 'NPC outside scope untouched');
+}
+console.log('ONLINE STORAGE MINING HAZARD TEST PASSED');
