@@ -1060,6 +1060,13 @@ lamp dimming uses a precomputed black alpha mask instead of filtering the full
 mutable atlas on each paint. Private headless 4x-CPU profiles are constrained-host
 comparisons, not physical midrange-laptop or audible-output certification.
 
+The same resize loop checks the login note that the game plays best on a tablet or
+computer. It must appear above the login form, fully on screen and unclipped, on
+portrait and landscape phone viewports (360x640, 390x844, 750x342, 932x430), and stay
+hidden at 768x1024, 1024x768, 1280x720 and 1920x1080. The note shows when the
+viewport is under 600 px wide or under 500 px tall. This is Chromium viewport
+emulation, not a physical-device check.
+
 ## Planetary landscapes and portraits
 
 `planet-portrait-art` covers all mapped planetary scene identities, colony stage selection, asset hashes and portrait allowlists. `part-two-communities.ts` checks that every faction with portrait art, including Feral Swarm, Frontier, Deep and Umbral Eclipse, draws named and unnamed NPC faces only from its own pool. `portrait-persistence.ts` exercises selection denials, authenticated-account-only mutation, bounded acknowledgement tokens and reload through Solo journals and the native checkpoint/CAS adapter. `planet-portrait-browser.ts` checks actual landed colony rendering, the personal chooser (every choice icon decodes under the current artwork version) and hail windows, denied or unconfirmed save recovery, stale-reply isolation and Captain-tab controls at narrow/scaled and desktop sizes. `nakama-network.ts` verifies selected portraits through real Nakama authentication and match ingress, spoofed-target isolation, public lookup, PostgreSQL checkpoint storage and a native service restart. The adapter unit fixture remains a separate bounded persistence check. Main-story portrait coverage checks the five character identities, completion-specific faces, exclusion from player and generic pools, text-only fallback, decoded browser images and narrow-screen dialogue controls.

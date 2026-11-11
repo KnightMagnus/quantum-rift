@@ -46,3 +46,28 @@
     animation: none !important;
   }
 }
+
+/* Phones get a plain note on the login screen; the game is laid out for larger screens. */
+#login .screen-notice {
+  display: none;
+  box-sizing: border-box;
+  width: min(440px, 94vw);
+  margin: 0;
+  padding: 6px 12px;
+  font:
+    12px Tahoma,
+    Geneva,
+    sans-serif;
+  line-height: 1.35;
+  text-align: center;
+  color: #ffe2a8;
+  background: #04172bcc;
+  border: 1px solid #b8893a;
+  border-radius: 4px;
+  text-shadow: 0 1px 2px #000;
+}
+@media (max-width: 599px), (max-height: 499px) {
+  #login .screen-notice {
+    display: block;
+  }
+}
