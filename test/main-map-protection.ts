@@ -52,6 +52,7 @@ function fixture(
   operations = 2,
 ) {
   const space = Object.assign(Object.create(Space.prototype) as Space, {
+    random: { next: () => Math.random() },
     id: 'trial',
     sys: systemId,
     game,

@@ -26,7 +26,8 @@ export type FixtureShape<Value> = Value extends (...parameters: infer Parameters
 
 // These deliberate unit boundaries do not claim to construct complete live objects.
 export const mockGame = (value: FixtureShape<Game>): Game => value as Game;
-export const mockSpace = (value: FixtureShape<Space>): Space => value as Space;
+export const mockSpace = (value: FixtureShape<Space>): Space =>
+  ({ random: { next: () => Math.random() }, ...value }) as Space;
 export const mockEntity = (value: FixtureShape<Entity>): Entity => value as Entity;
 export const mockSession = (value: FixtureShape<Session>): Session => value as Session;
 export const mockShipStats = (value: FixtureShape<ComputedShipStats>): ComputedShipStats =>

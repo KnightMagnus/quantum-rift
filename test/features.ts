@@ -19,8 +19,9 @@ import { STATE_SHARE } from '../shared/living.ts';
 // Characterization checks ordering, stacking, schema, payloads and session normalization.
 // capture-features runs in a separate process with fixed time and RNG. The baseline
 // permits passengerSeats, stockOutfits, armadaFollow=false, empty versioned
-// cargoLots/storageLots and storage. Living-state allocation accounts for the six
-// additional markets in the seeded selection pool. All other fields must match.
+// cargoLots/storageLots and storage. Living-state allocation uses the independently derived economy stream over the
+// full market roster. Only world.states was recaptured for that seed-boundary change;
+// all other initialization fields and generation/topology contracts must match.
 const actual = JSON.parse(
   execFileSync(
     process.execPath,
@@ -44,25 +45,6 @@ delete actual.saved.rep.index;
 for (const faction of ['confederation', 'freefolk', 'unsworn']) {
   assert.equal(actual.saved.rep[faction], 0);
   delete actual.saved.rep[faction];
-}
-// Living states now roll from their own economy stream (server/economy-random.ts),
-// so the fixture's per-system picks came from a sequence the game no longer uses.
-// Keep the state count and entry shape; every other world field must still match.
-{
-  const actualStates = actual.world.states as Record<string, Record<string, unknown>>;
-  const expectedStates = expected.world.states as Record<string, Record<string, unknown>>;
-  assert.equal(Object.keys(actualStates).length, Object.keys(expectedStates).length);
-  const shape = (state: Record<string, unknown>) => Object.keys(state).sort();
-  const expectedShape = shape(Object.values(expectedStates)[0]);
-  for (const [systemId, state] of Object.entries(actualStates)) {
-    assert.ok(
-      SYSTEMS.some((system) => system.id === systemId),
-      `${systemId}: state on a known system`,
-    );
-    assert.deepEqual(shape(state), expectedShape, `${systemId}: state payload shape`);
-  }
-  delete actual.world.states;
-  delete expected.world.states;
 }
 // Docked story/arc settlement now precedes the port projection on login.
 // Keep the original fixture and all other initialization evidence unchanged.
