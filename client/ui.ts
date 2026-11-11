@@ -103,6 +103,7 @@ import {
   pinnedObjectiveHtml,
   missionRouteButton,
 } from './missions.ts';
+import { landingDestination } from './landing_autopilot.ts';
 import { playStation, stopRadio, RADIO_STATIONS, setUnlockedStations } from './radio.ts';
 import { blackMarketHtml, bankHtml, arcCardsHtml, bunkInfo, synBadge } from './syn_ui.ts';
 import {
@@ -888,12 +889,15 @@ export function hud(): void {
     ),
     shortFuel = clientGameState.route && clientGameState.route.length > fuelJumps; // warn when the route is longer than your fuel
   elementById2('navto').classList.toggle('warnf', !!shortFuel);
+  const landingPort = landingDestination(clientGameState);
   elementById2('navto').textContent =
     clientGameState.route && clientGameState.route.length
       ? `${systemsById[clientGameState.route[clientGameState.route.length - 1]].name} (${clientGameState.route.length} jump${clientGameState.route.length > 1 ? 's' : ''}, J to jump)${shortFuel ? ` · fuel for ${fuelJumps}: refuel on the way` : ''}`
-      : clientGameState.navStellar && STELLARS[clientGameState.navStellar]
-        ? STELLARS[clientGameState.navStellar].name + ' (L to land)'
-        : 'None (press M)';
+      : landingPort
+        ? landingPort.name + ' (L to land)'
+        : clientGameState.navStellar && STELLARS[clientGameState.navStellar]
+          ? STELLARS[clientGameState.navStellar].name
+          : 'None (press M)';
   const hasFleet =
     !!(
       playerPayload.docks &&
