@@ -113,3 +113,102 @@ console.log('Insurance exit grace is one-time, NPC-only and ends on aggression.'
 await import('./mercenary-contracts.ts');
 
 await import('./encounter-feedback.ts');
+
+// Recovery stays near the loss unless the captain owns a recovery station.
+const nearbyGame = refineryGame();
+const nearbyCaptain = refineryPilot(nearbyGame, 'Nearby recovery');
+const remotePort = Object.values(STELLARS).find(
+  (port) =>
+    port.system !== START.system &&
+    port.svc.includes('L') &&
+    !port.site &&
+    storySystemVisible(undefined, port.system) &&
+    SYS[port.system].faction !== 'deep' &&
+    !landingRefused({
+      standing: nearbyCaptain.data.rep[SYS[port.system].faction] || 0,
+      outlawPort: !!port.outlaw,
+      ownStation: false,
+      passExpires: 0,
+      now: Date.now(),
+    }),
+);
+assert.ok(remotePort);
+nearbyCaptain.data.station.site = undefined;
+nearbyCaptain.data.sys = remotePort.system;
+nearbyCaptain.data.stellar = null;
+nearbyGame.spawnPlayer(nearbyCaptain, 0, 0, 0, 0);
+nearbyGame.onPlayerDeath(nearbyGame.pref(nearbyCaptain), nearbyGame.spaces[remotePort.system]);
+assert.equal(
+  nearbyCaptain.data.sys,
+  remotePort.system,
+  'local eligible berth wins over distant starter port',
+);
+
+const lootGame = refineryGame();
+const killer = refineryPilot(lootGame, 'Salvage killer');
+const helper = refineryPilot(lootGame, 'Salvage support');
+const outsider = refineryPilot(lootGame, 'Salvage outsider');
+for (const captain of [killer, helper, outsider]) {
+  captain.data.sys = START.system;
+  captain.data.stellar = null;
+  lootGame.spawnPlayer(captain, 0, 0, 0, 0);
+}
+killer.data.armada = helper.data.armada = 'salvage-party';
+lootGame.db.world.armadas['salvage-party'] = {
+  id: 'salvage-party',
+  name: 'Salvage party',
+  leader: killer.data.name,
+  members: [killer.data.name, helper.data.name],
+  invites: {},
+  t: 0,
+  emptyT: 0,
+};
+const lootSpace = lootGame.spaces[START.system];
+const victim = lootSpace.makeShip({ hull: 708, faction: 'umbral', x: 0, y: 0, ai: 'raid' });
+lootSpace.dropLoot(victim, killer.ent);
+const protectedLoot = lootSpace.loot[0].it;
+assert.ok(protectedLoot.credits);
+assert.deepEqual(protectedLoot.combatPickup?.captains, [killer.data.name, helper.data.name]);
+const outsiderCredits = outsider.data.credits;
+assert.equal(lootGame.onLoot(lootGame.pref(outsider), protectedLoot), false);
+assert.equal(outsider.data.credits, outsiderCredits, 'outsider cannot consume reserved loot');
+// A late join does not rewrite the already-dropped parcel's claim.
+lootGame.db.world.armadas['salvage-party'].members.push(outsider.data.name);
+outsider.data.armada = 'salvage-party';
+assert.equal(lootGame.onLoot(lootGame.pref(outsider), protectedLoot), false);
+const helperCredits = helper.data.credits;
+lootGame.onLoot(lootGame.pref(helper), protectedLoot);
+assert.ok(helper.data.credits > helperCredits, 'support member may collect without last hit');
+lootGame.db.world.armadas['salvage-party'].members.pop();
+lootSpace.dropLoot(victim, killer.ent);
+const expiringLoot = lootSpace.loot.at(-1)!.it;
+assert.ok(expiringLoot.combatPickup);
+lootSpace.t = expiringLoot.combatPickup.until - 0.001;
+assert.equal(lootGame.onLoot(lootGame.pref(outsider), expiringLoot), false);
+lootSpace.t = expiringLoot.combatPickup.until;
+assert.notEqual(
+  lootGame.onLoot(lootGame.pref(outsider), expiringLoot),
+  false,
+  'priority expires exactly at deadline',
+);
+outsider.data.sys = remotePort.system;
+assert.equal(
+  lootGame.onLoot(lootGame.pref(outsider), expiringLoot),
+  false,
+  'wrong-system pickup is denied even after expiry',
+);
+const wing = lootSpace.makeShip({ hull: 708, faction: 'player', x: 0, y: 0, ai: 'escort' });
+wing.owner = killer.ent!.id;
+lootSpace.dropLoot(victim, wing);
+assert.equal(
+  lootSpace.loot.at(-1)!.it.combatPickup?.captains[0],
+  killer.data.name,
+  'wing kills reserve salvage for the commanding captain',
+);
+lootSpace.dropLoot(victim);
+assert.equal(
+  lootSpace.loot.at(-1)!.it.combatPickup,
+  undefined,
+  'environmental kills stay unclaimed',
+);
+console.log('Nearby insurance and brief party salvage priority passed.');

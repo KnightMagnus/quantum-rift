@@ -540,6 +540,9 @@ export type LootItem = {
   basis?: GradeLots;
   lvl?: number;
 
+  /** Frozen combat-party pickup priority, in origin-system simulation time. */
+  combatPickup?: { captains: string[]; sys: string; until: number };
+
   /** Credits salvage value. */
   credits?: number;
 
@@ -2122,6 +2125,13 @@ export class Space {
           for (const floatingLoot of this.loot) {
             if (floatingLoot.taken || floatingLoot.it.indexClaim || floatingLoot.it.indexTakenBy)
               continue;
+            const priority = floatingLoot.it.combatPickup;
+            if (
+              priority &&
+              this.t < priority.until &&
+              !priority.captains.includes(this.root(owner).player?.s.data.name || '')
+            )
+              continue;
             const distanceSquared = Math.hypot(
               floatingLoot.x - entity.x,
               floatingLoot.y - entity.y,
@@ -2991,13 +3001,34 @@ export class Space {
       }
     }
     if (!entity.fighterOf && Math.random() < (entity2 && entity2.hull === 810 ? 0.82 : 0.55))
-      this.dropLoot(entity);
+      this.dropLoot(entity, entity2);
   }
   /**
    * Spawns floating credit canisters and material salvage crates at destroyed ship's position.
    * @param entity Destroyed ship entity.
    */
-  dropLoot(entity: Entity): void {
+  dropLoot(entity: Entity, killer?: Entity | null): void {
+    const captain = killer && this.root(killer).player?.s;
+    const armada = captain && this.game.features.coop.armadaOf(captain.data);
+    const combatPickup = captain
+      ? {
+          captains: [
+            captain.data.name,
+            ...[...this.game.sessions.values()]
+              .filter(
+                (session) =>
+                  session !== captain &&
+                  session.ent &&
+                  !session.ent.dead &&
+                  session.data?.sys === this.id &&
+                  armada?.members.includes(session.data.name),
+              )
+              .map((session) => session.data.name),
+          ],
+          sys: this.id,
+          until: this.t + 15,
+        }
+      : undefined;
     const text = entity.strength || 10,
       items = [];
     items.push({ credits: Math.round(text * random2(15, 40)) });
@@ -3013,7 +3044,7 @@ export class Space {
         y: entity.y + random2(-30, 30),
         vx: entity.vx * 0.3 + random2(-20, 20),
         vy: entity.vy * 0.3 + random2(-20, 20),
-        it: item,
+        it: { ...item, combatPickup },
         t: this.t,
         kind: item.mat ? 1 : 0,
       });

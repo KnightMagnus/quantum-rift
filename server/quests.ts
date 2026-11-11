@@ -913,6 +913,7 @@ export const QuestOperations = {
       cargoSpace.last = [quest.chain, ...(cargoSpace.last || [])].slice(0, 3);
     }
     const received = radius.credits ? [`${credits(radius.credits)} credits`] : [];
+    if (quest.side === 'rift-harness') received.push('Rift Harness fitted to your ship');
     if (radius.radio && grantRadio(this, session, radius.radio))
       received.push(
         `radio station: ${RADIO_STATIONS.find((state) => state.id === radius.radio)!.name}`,
@@ -974,7 +975,7 @@ export const QuestOperations = {
     this.log(playerData, `Story complete: ${quest.name}.`);
     this.send(session, {
       t: 'story',
-      tag: `${quest.side ? 'SIDE STORY' : 'QUEST'} COMPLETE · ${quest.name.toUpperCase()}`,
+      tag: `${quest.side === 'rift-harness' ? 'RIFT PREPARATION' : quest.side ? 'SIDE STORY' : 'QUEST'} COMPLETE · ${quest.name.toUpperCase()}`,
       title: quest.name,
       done: true,
       text: `${endText}\n\nRewards: ${received.join(', ')}.`,

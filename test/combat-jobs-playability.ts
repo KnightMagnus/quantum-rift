@@ -3,7 +3,7 @@ import filesystem from 'node:fs';
 import { missionTargets } from '../client/missions.ts';
 import { missionDetails } from '../client/mission-details.ts';
 import type { ClientGameState } from '../client/main.ts';
-import { Game } from '../server/game.ts';
+import { Game, type Mission } from '../server/game.ts';
 import { DB } from '../server/db.ts';
 import { STELLARS } from '../shared/galaxy.ts';
 import { hullCombatPower } from '../shared/hostile.ts';
@@ -69,6 +69,36 @@ try {
     messages.some((message) => message.t === 'landed'),
     'stale accept refreshes actual landed board',
   );
+
+  // Repeated board rotations must not sell several rewards for the same patrol kills.
+  const patrolOffers: Array<{ mission: Mission; now: number }> = [];
+  for (let window = 0; window < 1000 && patrolOffers.length < 2; window++) {
+    Date.now = () => 1800000000000 + window * 600000;
+    const candidate = game
+      .offers(home, captain)
+      .find(
+        (offer) =>
+          offer.type === 'patrol' &&
+          (!patrolOffers.length || offer.sys === patrolOffers[0].mission.sys),
+      );
+    if (candidate) patrolOffers.push({ mission: candidate, now: Date.now() });
+  }
+  assert.equal(patrolOffers.length, 2, 'two real rotations offer a patrol in the same system');
+  captain.missions = [];
+  Date.now = () => patrolOffers[0].now;
+  game.accept(session, patrolOffers[0].mission.id);
+  assert.equal(captain.missions.length, 1);
+  Date.now = () => patrolOffers[1].now;
+  messages.length = 0;
+  game.accept(session, patrolOffers[1].mission.id);
+  assert.equal(captain.missions.length, 1, 'same-system patrol cannot multiply kill rewards');
+  assert.ok(
+    messages.some((message) => message.t === 'toast' && /current patrol/.test(message.msg)),
+  );
+  captain.missions[0].done = true;
+  game.accept(session, patrolOffers[1].mission.id);
+  assert.equal(captain.missions.length, 2, 'completed patrol does not block the next contract');
+  captain.missions = [];
 
   const pickup = STELLARS.concordia;
   const destination = requiredFixtureValue(

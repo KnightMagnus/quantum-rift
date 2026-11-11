@@ -132,11 +132,11 @@ export const PART_TWO_OBJECTIVES: Record<string, PartTwoObjective[]> = {
     haul('vigils-rest', 'Compare the lunar observatory logs with Earthlight measurements.'),
     haul(
       'threshold',
-      'Ask Terra to appoint a human delegation carrying recorded testimony from its Rift neighbours.',
+      'At Threshold in the Rift, ask Terra to appoint a human delegation carrying recorded testimony from its Rift neighbours.',
     ),
     haul(
       'ledger-nine',
-      'Deliver Terra’s independently accredited delegation. No mandate transfers its sovereignty.',
+      'Carry Terra’s independently accredited delegates to Ledger Nine. No mandate transfers its sovereignty.',
       'terra_delegation',
     ),
   ],
@@ -325,12 +325,49 @@ export function partTwoEndings(flags: StoryFlags): string[] {
   if (flags.p2_makers === 'maps' && flags.p2_relay === 'destroy') result.push('ashfall');
   return result;
 }
+/** Explain unavailable campaigns from the captain's recorded decisions. */
+export function partTwoCampaignGuidance(flags: StoryFlags): string {
+  const missingPeace: string[] = [];
+  if (!['publish', 'delegates'].includes(flags.p2_records || ''))
+    missingPeace.push('independent copies of both records');
+  if (flags.p2_relay !== 'independent') missingPeace.push('an independent relay');
+  if (!flags.p2_objectives?.signatory) missingPeace.push('a surviving conscript signatory');
+  if (!flags.p2_objectives?.records) missingPeace.push('both Pale Meridian records');
+  if (!['talks', 'stand_down'].includes(flags.p2_makers || ''))
+    missingPeace.push('the makers’ agreement to talks or voluntary dormancy');
+  const unavailable: string[] = [];
+  if (missingPeace.length)
+    unavailable.push(`Negotiated peace is unavailable: missing ${missingPeace.join(', ')}.`);
+  if (!partTwoEndings(flags).includes('ascendant'))
+    unavailable.push(
+      'Conquest requires the makers’ maps, human custody of the relay, and fleet-command access or a military expedition.',
+    );
+  if (!partTwoEndings(flags).includes('ashfall'))
+    unavailable.push(
+      'The archive campaign requires the makers’ maps and destruction of the relay.',
+    );
+  return (
+    '\n\n' +
+    unavailable.join(' ') +
+    '\n\nYou may withdraw from conquest or the archive campaign, but deaths and destroyed archives cannot be undone.'
+  );
+}
+
+/** The memorial recalls local consequences without repeating the campaign ending. */
+export function partTwoMemorialText(flags: StoryFlags): string {
+  const supplies =
+    flags.p2_supply === 'grain'
+      ? 'Saint Orra’s grain line was restored; the frontier battery went short.'
+      : 'The frontier battery received machinery; Saint Orra endured delayed grain deliveries.';
+  return `At Saint Orra, the memorial lists those who died beside the names of the people you brought home. ${supplies}`;
+}
+
 export function partTwoEndingText(flags: StoryFlags): string {
   switch (flags.p2_ending) {
     case 'armistice':
       return 'The Armistice of Two Skies: the final strike was stopped. Human borders and independent Index survey corridors are recognised. Freefolk join the inspections; the Unsworn can return without the oath. Holdouts remain. The makers answer as witnesses, not rulers.';
     case 'dormancy':
-      return 'The Armistice of Two Skies: the Index accepted voluntary dormancy after staged protected handovers. The treaty records when they may wake. No control key changed hands. Rauth’s holdouts can still break the peace.';
+      return 'Voluntary dormancy: the Index accepted sleep after staged protected handovers. The treaty records when they may wake. No control key changed hands. Rauth’s holdouts can still break the peace.';
     case 'ascendant':
       return 'Sol Ascendant: human fleets hold the relay and repair yards. Independent Index cells survive elsewhere. Captured Freefolk are pressed into service and the Unsworn are hunted. The emergency government keeps its powers. Forced service is not equality.';
     case 'ashfall':
@@ -475,7 +512,7 @@ export const PART_TWO: StoryMission[] = [
     [
       ['independent', 'Preserve its independent channel'],
       ['custody', 'Put the relay in human custody'],
-      ['destroy', 'Destroy the relay'],
+      ['destroy', 'Destroy the relay permanently; negotiated peace becomes unavailable'],
     ],
   ),
   mission(

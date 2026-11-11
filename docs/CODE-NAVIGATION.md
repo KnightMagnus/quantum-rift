@@ -512,6 +512,14 @@ escort AI. `test/qcs-fleet.ts` covers routing, attrition, restore and runway geo
 
 `server/flight-feedback.ts` projects existing rescue deadlines and same-system Armada contacts into flight snapshots. `client/flight-feedback.ts` formats ammo/rescue guidance and calculates edge-marker positions; `client/ui.ts` and `client/render.ts` own presentation. `server/coop.ts` delivers catch-up destinations to opted-in followers after delayed arrivals, using the existing client navigation and jump gates.
 
+## Patrol rewards and combat recovery
+
+`server/jobs.ts` accepts at most one unfinished ordinary patrol per system. Completed contracts and patrols in other systems remain available; existing saved contracts are preserved. `combat-jobs-playability.ts` covers acceptance across real board rotations.
+
+`Space.dropLoot` freezes a 15-second simulation-time pickup priority for the killer and living, present Armada captains on ordinary combat credit/material drops. Wing kills resolve through their owner. `Game.onLoot` enforces the claim for every collector; automatic collectors skip reserved drops. Other loot types retain their existing rules. `recovery-safety.ts` covers frozen membership, support pickup, outsider denial, expiry and wing ownership.
+
+Insurance recovery prefers an eligible owned station, otherwise the nearest eligible public port by jump distance, excluding hidden and Deep systems. Faction refusal and wanted checks still apply. The recovery regression exercises real death and departure.
+
 ## Regional communities and recovery chapters
 
 `shared/part-two-story.ts` appends personal recovery chapters without shifting earlier chapter indices. `partTwoAftercare` derives the recovery route from saved campaign and supply decisions; `partTwoMemorial` supplies personal decision callbacks. `server/story.ts` uses the existing encounter, boarding, landed-choice and completion authorities and settles earned community standing once. Shared faction hostility, ports and markets are not rewritten by another captain’s ending.

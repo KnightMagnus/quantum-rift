@@ -1078,7 +1078,9 @@
         "shared/part-two-story.ts",
         "shared/part-two-ships.ts",
         "shared/ships-type0.ts",
-        "shared/ships-unsworn.ts"
+        "shared/ships-unsworn.ts",
+        "server/game.ts",
+        "server/quests.ts"
       ],
       "services": ["story"],
       "tests": [
@@ -1093,7 +1095,7 @@
         "part-two-expansion.ts",
         "part-two-communities.ts"
       ],
-      "asserts": "Story offers/acceptance, board/travel/kill progression, gifts and Deep unlock. Regional continuation covers graph isolation, authored Sol, mission objectives, fleet eligibility, Type 0 Milky Way traffic and shipyards, and runtime artwork. Appended personal recovery chapters retain pre-existing chapter indices; campaign and supply choices select recovery objectives, earned standing settles once, all earlier decisions have personal memorial callbacks, and the final command encounter has a named lead. Regional human identities and measured traffic selection preserve Rift identities."
+      "asserts": "Story offers/acceptance, board/travel/kill progression, gifts and Deep unlock. Regional continuation covers graph isolation, authored Sol, mission objectives, fleet eligibility, Type 0 Milky Way traffic and shipyards, and runtime artwork. Ready Part II combat reports and the accepted final visit permit only their assigned landing despite faction refusal without changing standing; ordinary landing gates remain. Campaign prompts explain missing prerequisites and irreversible losses; ending and memorial reports are distinct; Harness fitting names its equipment reward. Appended personal recovery chapters retain pre-existing chapter indices; campaign and supply choices select recovery objectives, earned standing settles once, all earlier decisions have personal memorial callbacks, and the final command encounter has a named lead. Regional human identities and measured traffic selection preserve Rift identities."
     },
     {
       "id": "rivals",
@@ -1345,7 +1347,7 @@
         "flight-heading.ts",
         "nakama-world-lease.ts"
       ],
-      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading with sustained ordinary thrust and no afterburner, wormhole steering-noise deadband, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input. L lands on a clicked nav point, then the pinned objective, then the nearest mission destination, before the nearest landable body. Fractional landing and Gateway steering matches client prediction in queued and match scheduling; native ingress accepts bounded fractional turns and rejects invalid controls without advancing acknowledgements."
+      "asserts": "Smooth drifting landings, direct-center Gateway throttle/aperture guidance, bidirectional crossing and exit anti-bounce. Targetward capped cruise heading with sustained ordinary thrust and no afterburner, wormhole steering-noise deadband, lateral correction, settled braking, actual L docking/denial/manual takeover with delayed authoritative input. L lands on a clicked nav point, then the pinned objective, then the nearest mission destination, before the nearest landable body. Fractional landing and Gateway steering matches client prediction in queued and match scheduling; native ingress accepts bounded fractional turns and rejects invalid controls without advancing acknowledgements. Insurance prefers an eligible owned station, otherwise nearest eligible public recovery, excluding hidden and Deep systems. Combat salvage freezes killer/present Armada priority for 15 simulation seconds, resolves wing ownership, denies outsiders and cross-system pickup, and becomes public at expiry."
     },
     {
       "id": "ships-catalog-art",
@@ -2219,7 +2221,7 @@
         "local-retaliation.ts",
         "combat-balance-ratings.ts"
       ],
-      "asserts": "Fixed-seed authored Act I climax matrix checks prepared mid-tier solo and modest-wing survival in all three seeds through ten seconds after boss defeat, unprepared-light-ship denial, production boss health, reproducibility, real damage attribution and stand-off observations. Ambient traffic is excluded only in the disclosed story fixture. Thirty hand-authored Space.fight maneuver traces retain battery choice, thresholds, relative lead, capital parity, thrust and live reference/steering behavior. Fixed-seed actual Game arrivals and eight-minute combat runs across early, Hollow and Umbral encounters; fitted combat ratings, shared ambient raid and incursion budgets, bounded retaliation and secondary-assisted combat. Bounty suitability and participation, passenger pickup order, expired offer recovery and distinct default controls are checked at their production boundaries. Seeded bots are bounded regression evidence, not proof of human win rates. Distinct initial bearings, distances, target motion, fitted bonuses and Assist/scripted-manual policies exercise primary participation, beam hit rate, damage contacts, defeat timing and recovery. Shipyard settlement precedes fixture loadouts, arrival/combat and exact checkpoint reopen. Bounded offline captures reproduce outcomes on the exact build/runtime. Shared-host synchronous tick samples are not native or hardware qualification."
+      "asserts": "Fixed-seed authored Act I climax matrix checks prepared mid-tier solo and modest-wing survival in all three seeds through ten seconds after boss defeat, unprepared-light-ship denial, production boss health, reproducibility, real damage attribution and stand-off observations. Ambient traffic is excluded only in the disclosed story fixture. Thirty hand-authored Space.fight maneuver traces retain battery choice, thresholds, relative lead, capital parity, thrust and live reference/steering behavior. Fixed-seed actual Game arrivals and eight-minute combat runs across early, Hollow and Umbral encounters; fitted combat ratings, shared ambient raid and incursion budgets, bounded retaliation and secondary-assisted combat. Bounty suitability and participation, passenger pickup order, expired offer recovery and distinct default controls are checked at their production boundaries. Seeded bots are bounded regression evidence, not proof of human win rates. Distinct initial bearings, distances, target motion, fitted bonuses and Assist/scripted-manual policies exercise primary participation, beam hit rate, damage contacts, defeat timing and recovery. Shipyard settlement precedes fixture loadouts, arrival/combat and exact checkpoint reopen. Bounded offline captures reproduce outcomes on the exact build/runtime. Shared-host synchronous tick samples are not native or hardware qualification. Ordinary patrol acceptance rejects a second unfinished contract in the same system while allowing the next after completion; existing saved contracts remain intact."
     },
     {
       "id": "asset-recovery",
