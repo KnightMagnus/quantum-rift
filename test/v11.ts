@@ -12,7 +12,14 @@ import { legacySocket } from './helpers/legacy-fixture.ts';
 import { DB as Database } from '../server/db.ts';
 import { Game, type PlayerData } from '../server/game.ts';
 import { SYS as systemsById, STELLARS, START } from '../shared/galaxy.ts';
-import { RIVALS, combatRank } from '../shared/rivals.ts';
+import {
+  RIVALS,
+  KINDS,
+  combatRank,
+  rivalIncomeScale,
+  RIVAL_KILLS_PER_WINDOW,
+  RIVAL_KILL_WINDOW_MS,
+} from '../shared/rivals.ts';
 import { makeLoadout } from '../shared/rules.ts';
 const assets: GameAssets = JSON.parse(
   filesystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8'),
@@ -163,6 +170,109 @@ assertCondition(
   Object.values(worldData.rivals).reduce((total, rival) => total + rival.earned, 0) > event1,
   'careers resume for an online captain without retroactive offline income',
 );
+// Off-screen kills run at about 3 an online hour with a hard cap per hour; income scales with online captains.
+{
+  const savedRivals = JSON.stringify(worldData.rivals);
+  const savedNews = [...worldData.news];
+  const savedFlash = JSON.stringify(worldData.flash);
+  const previousRandom = Math.random;
+  const previousNow = Date.now;
+  const fighters = RIVALS.filter((rival) => rival.kind === 'hunter' || rival.kind === 'pirate');
+  const killsOf = () => fighters.map((rival) => worldData.rivals[rival.id].kills);
+  const earnedOf = () => RIVALS.map((rival) => worldData.rivals[rival.id].earned);
+  const extraCaptains: ReturnType<typeof fake>[] = [];
+  let clock = previousNow();
+  const runOnlineHour = () => {
+    for (let index = 0; index < 180; index++) {
+      clock += 20_000;
+      game.features.rivals.rivalsTick();
+    }
+  };
+  try {
+    Date.now = () => clock;
+    for (const rival of RIVALS) worldData.rivals[rival.id].down = 0;
+    Math.random = () => 0.1;
+    const steadyKills = killsOf();
+    runOnlineHour();
+    assertCondition(
+      killsOf().every((kills, index) => kills === steadyKills[index]),
+      'rival hunters and pirates no longer log a kill on a 10% roll (old rate was 15% a tick)',
+    );
+    Math.random = () => 0.001;
+    const luckyKills = killsOf();
+    runOnlineHour();
+    assertCondition(
+      killsOf().every((kills, index) => kills - luckyKills[index] === RIVAL_KILLS_PER_WINDOW),
+      `a rival logs at most ${RIVAL_KILLS_PER_WINDOW} kills in one online hour even when every roll succeeds`,
+    );
+    runOnlineHour();
+    assertCondition(
+      killsOf().every((kills, index) => kills - luckyKills[index] === RIVAL_KILLS_PER_WINDOW * 2),
+      'the kill cap opens again in the next hour',
+    );
+    worldData.rivals[fighters[0].id].killWindowAt = clock + 10 * RIVAL_KILL_WINDOW_MS;
+    worldData.rivals[fighters[0].id].killWindowCount = 99;
+    const corruptWindowKills = worldData.rivals[fighters[0].id].kills;
+    clock += 20_000;
+    game.features.rivals.rivalsTick();
+    assertCondition(
+      worldData.rivals[fighters[0].id].kills === corruptWindowKills + 1 &&
+        worldData.rivals[fighters[0].id].killWindowCount === 1,
+      'a kill window saved in the future restarts instead of blocking kills',
+    );
+
+    Math.random = () => 0.5;
+    const expectedGain = (rival: (typeof RIVALS)[number], captains: number) =>
+      Math.round(
+        (KINDS[rival.kind].earn * rival.luck * (0.3 + 0.5 * 0.9) * rivalIncomeScale(captains)) / 12,
+      );
+    const tickGain = () => {
+      const before = earnedOf();
+      clock += 20_000;
+      game.features.rivals.rivalsTick();
+      return earnedOf().map((earned, index) => earned - before[index]);
+    };
+    const oneCaptainGain = tickGain();
+    assertCondition(
+      oneCaptainGain.every((gain, index) => gain === expectedGain(RIVALS[index], 1)) &&
+        oneCaptainGain.some((gain) => gain > 0),
+      'with one captain online, rivals earn a third of their full rate',
+    );
+    extraCaptains.push(fake('Second Online'));
+    const twoCaptainGain = tickGain();
+    assertCondition(
+      twoCaptainGain.every((gain, index) => gain === expectedGain(RIVALS[index], 2)),
+      'with two captains online, rivals earn two thirds of their full rate',
+    );
+    extraCaptains.push(fake('Third Online'), fake('Fourth Online'));
+    const fullGain = tickGain();
+    assertCondition(
+      fullGain.every((gain, index) => gain === expectedGain(RIVALS[index], 3)) &&
+        rivalIncomeScale(4) === 1,
+      'three or more online captains pay rivals the full rate and no more',
+    );
+    const duplicateSession = requiredFixtureValue(extraCaptains[0].s);
+    const duplicateEntry = fake('Fifth Online');
+    const duplicateSessionTarget = requiredFixtureValue(duplicateEntry.s);
+    const fifthCaptainData = duplicateSessionTarget.data;
+    duplicateSessionTarget.data = duplicateSession.data;
+    for (const captain of extraCaptains.slice(1)) captain.sock.open = false;
+    const duplicateGain = tickGain();
+    assertCondition(
+      duplicateGain.every((gain, index) => gain === expectedGain(RIVALS[index], 2)),
+      'two connections for one captain count once toward rival income',
+    );
+    duplicateEntry.sock.open = false;
+    duplicateSessionTarget.data = fifthCaptainData;
+  } finally {
+    Math.random = previousRandom;
+    Date.now = previousNow;
+    for (const captain of extraCaptains) captain.sock.open = false;
+    worldData.rivals = JSON.parse(savedRivals);
+    worldData.news = savedNews;
+    worldData.flash = JSON.parse(savedFlash);
+  }
+}
 assertCondition(worldData.news.length > 0 || true, 'they make the news (feed exists)');
 // a rival shows up in the system you are in
 const playerData = requiredFixtureValue(firstEntry.s).data;
