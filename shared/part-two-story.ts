@@ -209,7 +209,6 @@ export const PART_TWO_OBJECTIVES: Record<string, PartTwoObjective[]> = {
       'aftercare',
     ),
   ],
-  'p2-names': [haul('saint-orra', 'Visit Saint Orra’s memorial and the people who survived.')],
 };
 
 export function partTwoBattle(flags: StoryFlags): PartTwoObjective[] {
@@ -353,15 +352,6 @@ export function partTwoCampaignGuidance(flags: StoryFlags): string {
   );
 }
 
-/** The memorial recalls local consequences without repeating the campaign ending. */
-export function partTwoMemorialText(flags: StoryFlags): string {
-  const supplies =
-    flags.p2_supply === 'grain'
-      ? 'Saint Orra’s grain line was restored; the frontier battery went short.'
-      : 'The frontier battery received machinery; Saint Orra endured delayed grain deliveries.';
-  return `At Saint Orra, the memorial lists those who died beside the names of the people you brought home. ${supplies}`;
-}
-
 export function partTwoEndingText(flags: StoryFlags): string {
   switch (flags.p2_ending) {
     case 'armistice':
@@ -376,6 +366,32 @@ export function partTwoEndingText(flags: StoryFlags): string {
       return 'The Border That Holds: the evacuation corridor stayed open long enough for civilians to leave. The fleets are separated across a watched ceasefire line, and the Rift crossing remains protected. Families can meet through controlled crossings. The war continues elsewhere.';
   }
 }
+/**
+ * Credits paid when each Part II chapter completes. Pay starts at the top Act I
+ * reward and climbs toward the final battle, so the whole part is worth about
+ * the freight income a captain gives up while playing it. The memorial visit
+ * pays only a token amount.
+ */
+export const PART_TWO_PAY: Record<string, number> = {
+  'p2-voice': 150000,
+  'p2-papers': 150000,
+  'p2-seat': 200000,
+  'p2-flag': 250000,
+  'p2-bread': 250000,
+  'p2-ashes': 300000,
+  'p2-regiment': 350000,
+  'p2-broadcast': 300000,
+  'p2-observation': 350000,
+  'p2-mind': 400000,
+  'p2-moon': 400000,
+  'p2-report': 400000,
+  'p2-road': 500000,
+  'p2-makers': 500000,
+  'p2-fleet': 1000000,
+  'p2-freefolk': 400000,
+  'p2-unsworn': 400000,
+  'p2-aftercare': 300000,
+};
 const choices = (entries: string[][]) => entries.map(([value, label]) => ({ value, label }));
 function mission(
   id: string,
@@ -392,7 +408,7 @@ function mission(
     title,
     at,
     ...first,
-    pay: 40000,
+    pay: PART_TWO_PAY[id] ?? 0,
     rep: 0,
     text,
     done,
@@ -570,13 +586,6 @@ export const PART_TWO: StoryMission[] = [
     'The battle is over.',
   ),
   mission(
-    'p2-names',
-    'Names for the Living',
-    'vigils-rest',
-    'Go to Saint Orra. Read the memorial and meet the survivors before returning to flight.',
-    'The memorial records the saved outcome, not the outcome anyone promised.',
-  ),
-  mission(
     'p2-freefolk',
     'People Between Ports',
     'saint-orra',
@@ -604,8 +613,8 @@ export const PART_TWO: StoryMission[] = [
     'p2-aftercare',
     'The Work That Remains',
     'vigils-rest',
-    'Rooke brings a reconstruction manifest instead of a battle order. “The crews you saved still need somewhere to live. The crews we lost still have families.” Complete the recovery work your campaign left behind, then meet him at Saint Orra.',
-    'At Saint Orra, Rooke reads the returned crews into the harbour register. Moss and Dene stand with their own people. The memorial keeps the names of those who did not return.',
+    'Rooke brings a reconstruction manifest instead of a battle order. “The crews you saved still need somewhere to live. The crews we lost still have families.” Complete the recovery work your campaign left behind, then meet him at Saint Orra’s memorial.',
+    'At Saint Orra, Rooke reads the returned crews into the harbour register. Moss and Dene stand with their own people. The memorial lists those who died beside the names of the people you brought home.',
   ),
 ];
 
@@ -635,6 +644,26 @@ export function partTwoAftercare(flags: StoryFlags): PartTwoObjective[] {
     ),
     ...PART_TWO_OBJECTIVES['p2-aftercare'],
   ];
+}
+
+/**
+ * The closing memorial scene: Rooke’s register, the Freefolk and Unsworn outcomes, then
+ * every personal Part II decision. Recalls local consequences without repeating the campaign ending.
+ */
+export function partTwoAftercareScene(flags: StoryFlags, done: string): string {
+  const supplies =
+    flags.p2_supply === 'grain'
+      ? 'Saint Orra’s grain line was restored; the frontier battery went short.'
+      : 'The frontier battery received machinery; Saint Orra endured delayed grain deliveries.';
+  const freefolk =
+    flags.p2_freefolk === 'clinic'
+      ? 'Moss’s clinic is treating the returned crews; the family shelter still needs berths.'
+      : 'Moss’s shelter has room for the returned families; the mobile clinic still needs parts.';
+  const unsworn =
+    flags.p2_unsworn === 'public'
+      ? 'Dene’s witnesses speak at the open hearing with their consent.'
+      : 'Dene keeps the witnesses’ names sealed from command.';
+  return [`${done} ${supplies}`, freefolk, unsworn, partTwoMemorial(flags)].join('\n\n');
 }
 
 /** Objective stages of a Part II chapter under the saved story choices. */
