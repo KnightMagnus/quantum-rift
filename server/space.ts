@@ -280,6 +280,12 @@ export type Entity = EntityFeatureState & {
    */
   rescueT?: number;
 
+  /** Armada rescues this captain has received in the current fight. */
+  rescueCount?: number;
+
+  /** Simulation timestamp of this captain's last Armada rescue. */
+  lastRescueT?: number;
+
   /** Parent carrier entity ID if this is a launched fighter drone. */
   fighterOf?: number;
 
@@ -1002,6 +1008,29 @@ export class Space {
    * @param entity Ship entity to remove.
    * @param reason Visual flash effect trigger reason (e.g. 'jump').
    */
+  /**
+   * Sends a boarded and rescued NPC ship on its way under its own power. It flies
+   * to a landing port in this system, or toward the edge to jump out if there is none.
+   * @param entity Rescued ship entity.
+   * @param armorShare Fraction of full armor the rescue restores.
+   */
+  releaseRescuedShip(entity: Entity, armorShare: number): void {
+    entity.disabled = false;
+    entity.armor = Math.max(entity.armor, entity.st.armor * armorShare);
+    entity.inp = { thrust: 0, turn: 0 };
+    entity.target = null;
+    entity.fireAt = null;
+    entity.aggro.clear();
+    entity.owner = null;
+    const ports = this.ports();
+    if (ports.length) {
+      entity.ai = 'trade';
+      entity.dest = pick(ports);
+    } else {
+      entity.ai = 'leave';
+      entity.dest = null;
+    }
+  }
   remove(entity: Entity, reason?: string): void {
     if (reason === 'jump' && isQuevariDefender(entity)) {
       keepQuevariPatrol(entity);
@@ -2674,7 +2703,9 @@ export class Space {
         (!entity2 || !this.game.combatAssist.valid(this, this.root(entity), entity2))
       )
         continue;
-      if (weapon.bay && entity.player) continue; // bays launch and recall on a tap of F (toggleDrones)
+      // Manual pilots launch and recall bays with F (toggleDrones). Assist launches them
+      // at its target the same way NPC carriers do.
+      if (weapon.bay && entity.player && !automated) continue;
       const wantFire = entity.autoCombat
         ? !!entity2
         : entity.player

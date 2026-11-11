@@ -44,7 +44,10 @@ stock gun and turret overflow, player-visible hulls without a Codex category, mi
 files and nonlocal artwork paths. Diagnostics carry the authoring file; refit and
 Armada hull references and outfit weapon references are checked against the
 composed catalog. CLI checks exercise successful validation, failed staged-asset
-validation and invalid arguments.
+validation and invalid arguments. It also checks that composed hulls, Specialists
+and Index machines have distinct display names, that no wingmate ship shares a hull
+name, and that wingmates, arc officers and named Part II characters have distinct
+first names, with Captain Rooke's first name kept out of the officer name pools.
 
 NPC-only hulls retain the existing player-mount exception; unknown weapons still
 fail. Fixed weapons without corresponding outfits do not consume shop mounts,
@@ -339,6 +342,15 @@ invalidating legacy binding quotes, atomic missing-input/expired/duplicate denia
 and baseline-report arithmetic/completeness/stress-profile exclusion. The existing
 refinery browser case is updated for automatic pricing and one Start action while
 retaining real debit, cancellation, partial collection and fuel-cell checks.
+
+`economy-32.ts` also covers docking upkeep (`shared/docking-upkeep.ts`,
+`server/docking-upkeep.ts`) against the real hull catalogue: every hull below
+10M credits docks free, including the starting hull; larger hulls pay 0.2% of
+list price per docking, capped at 10% of current credits; captains at or below
+zero credits and captains docking at their own station pay nothing; the charge
+is recorded as a port service fee and survives save reload. The call from
+`Game.land` and the shipyard upkeep line are not yet wired, so no landing
+regression exists for them.
 
 No measured progression rate or tuned balance is claimed. The developer-only
 [measurement protocol](ECONOMY-BASELINES.md) specifies the 36 matched session cells,
@@ -995,7 +1007,8 @@ back at an ordinary outfitter. All 33 outfits are purchased through the message 
 with exact credit/token charges and weapon fitting checked. Full outfit-space and
 turret-mount refusals preserve inventory and currencies. Reserve cells add their
 advertised fuel. A star chart adds exactly the faction's systems to the save and
-payload, is not sold twice and survives a database reopen.
+payload, is not sold twice and survives a database reopen. Store and salvage crate
+messages use the right article for alloy, isotope and crystal.
 
 `input-audio-browser.ts` checks login music before activation under explicit
 allowed and blocked autoplay policies, real-interaction recovery and stopping
@@ -1725,7 +1738,7 @@ uncontested survival does not count. Combat Assist stops attacking disabled ship
 so a disable need not become a kill. Newcomer protection is explicitly disabled.
 The early-game lead uses its stock loadout; the larger fleets also receive all
 station research and Epic level-10, rank-3 combat officers. Combat Assist steers
-and fires, with nearest-hostile acquisition, but no retreat or manual bay launch.
+and fires, with nearest-hostile acquisition and automatic bay launch, but no retreat.
 The simulation uses isolated in-memory storage and a virtual clock at the normal
 physics tick rate. It does not establish human win rates or test every
 loadout, faction, system or multiplayer combination.
@@ -1840,12 +1853,15 @@ health multiplier as an experiment; `--export PATH` retains full bounded capture
 The scripted 3,200-unit retreat policy is not a human skill or optimal-kiting claim.
 
 `combat-maneuver.ts` calls the existing `Space.fight` entry point with a live
-steering fixture. Thirty hand-authored cases check primary/secondary battery
+steering fixture. Hand-authored cases check primary/secondary battery
 selection, empty ammo and point-defense/bay exclusion, the unarmed fallback,
 relative-velocity lead, approach/retreat thresholds, capital circling parity and
 speed cutoffs. Assertions preserve attacker input, mount and target identities,
 trigger fields and assignment order. NPC and player-owned attackers use the same
-policy. The fixture replaces steering without constructing another simulation.
+policy. Assist capitals with outfitted turrets steer the same path as a hull-armed
+NPC capital, which reports no outfitted turrets, instead of circling. `combat-assist.ts`
+checks that Assist launches fighter bays at its target, that the missile setting does
+not hold bays, and that manual trigger input never launches them. The fixture replaces steering without constructing another simulation.
 
 The same assertions pass before and after the move to
 `server/combat-maneuver.ts`. The existing registered `combat-playability.ts`
@@ -1856,7 +1872,7 @@ No save schema, wire payload or caller signature changes.
 
 ## First-entry orientation
 
-`onboarding-shortcuts`: `onboarding-browser.ts` runs an isolated Solo captain through the clockwise spotlight tour and ten-slide briefing. It checks every visible sidebar menu and cockpit button, targeting and navigation readouts, left-to-right cockpit rows from Captain then Mining, followed by JUMP, annotated combat/mining gameplay images, landing/tutorial suppression, no gameplay commands from the tour, desktop spotlight bounds and separation, uniform image frames, current rebound keys, completion persistence, the docked career card staying on top of the dock panel at 1920 and 1366 pixels wide, HELP replay, Escape/skip navigation and viewport resizing. It also checks Title Case tour headings, INFO and REFINE labels, EJECT opening the quit menu without logging out, cancellation restoring Solo play, the unchanged Escape route, the complete twelve-key grid, separate Captain/Ship Details entry points, keyboard focus return, and shortcut/label containment inside the HUD with the Tray open and closed at 1920, 1366, 800 and 480 pixels wide, at normal and 150% UI scale. It also verifies the first three briefing titles, the Jobs screenshot, the absence of the flight annotation, jump/hull/starting-map image selection, jump labels, and the signed closing slide with AI transparency and final-slide Back/Finish navigation. On every briefing slide at 1600×900, 1366×768, 1280×720 and 800×650 it checks that the card fits the viewport and that Skip, Back and Next are on screen and receive clicks. It does not prove live multiplayer timing or every device and UI scale.
+`onboarding-shortcuts`: `onboarding-browser.ts` runs an isolated Solo captain through the clockwise spotlight tour and ten-slide briefing. It checks every visible sidebar menu and cockpit button, targeting and navigation readouts, left-to-right cockpit rows from Captain then Mining, followed by JUMP, annotated combat/mining gameplay images, landing/tutorial suppression, no gameplay commands from the tour, desktop spotlight bounds and separation, uniform image frames, current rebound keys, completion persistence, the docked career card staying on top of the dock panel at 1920 and 1366 pixels wide, HELP replay, Escape/skip navigation and viewport resizing. It also checks Title Case tour headings, INFO and REFINE labels, EJECT opening the quit menu without logging out, cancellation restoring Solo play, the unchanged Escape route, the complete twelve-key grid, separate Captain/Ship Details entry points, keyboard focus return, and shortcut/label containment inside the HUD with the Tray open and closed at 1920, 1366, 800 and 480 pixels wide, at normal and 150% UI scale. It also checks the briefing text for the fixed tense, apostrophe, lowercase duel and Personal Station capitalisation. It also verifies the first three briefing titles, the Jobs screenshot, the absence of the flight annotation, jump/hull/starting-map image selection, jump labels, and the signed closing slide with AI transparency and final-slide Back/Finish navigation. On every briefing slide at 1600×900, 1366×768, 1280×720 and 800×650 it checks that the card fits the viewport and that Skip, Back and Next are on screen and receive clicks. It does not prove live multiplayer timing or every device and UI scale.
 
 Browser fixtures use `launchChromium` to treat unrelated fixture captains as returning players by seeding missing orientation-completion keys when read. `onboarding-browser.ts` explicitly opts into untouched first-run storage and owns startup, completion and replay coverage.
 
@@ -2069,6 +2085,10 @@ every combat matchup or long-running server population.
 
 `quest-recovery.ts` checks owner-only mission-wreck boarding, missing-wreck recovery without duplication, completed-rescue exclusion, NPC hit denial, faction objective credit after patrol kills, abandoned-target recovery without healing, contract-target recovery and patrol completion, and insurance when no able rescuer remains. It also runs actual Assist and weapon physics for both affected capital hulls against a moving target after finite ammunition is exhausted, requiring damage in each 30-second window. `combat-maneuver.ts` covers mixed forward/turret batteries and pursuit of moving targets. These deterministic checks do not establish combat balance or human completion times.
 
+## Rescue limits and rescued ships
+
+`v26.ts` checks the Armada rescue limit: the first two knockdowns in one fight wait for a boarding rescue, the second rescue tells both captains to retreat and regroup, and a third knockdown inside the lockout goes straight to insurance. A new flight, or a knockdown after the lockout, is held for rescue again. `v05.ts` checks that a rescued lawful NPC ship stays in the system, can't be boarded again for a second reward, and flies to a landing port and lands; in a system with no port it flies clear and jumps out. These are scripted cases, not a measure of how long player fights last.
+
 ## Captain objective log
 
 `captain-log.ts` covers current disclosed objective guidance, saved insurance history, HTML escaping, no future-story lookup, and stable eligible-first job ordering without mutating offers. Mission filters remain authoritative display filters, not acceptance permission.
@@ -2110,7 +2130,7 @@ records, cargo, bridge assignments, hull UIDs and the unique progression outfit.
 
 `combat-jobs-playability.ts` checks that real board rotations cannot sell a second unfinished patrol in the same system, while a completed patrol permits another contract. `story-combat-baseline.ts` retains prepared-cruiser and modest-wing success and unprepared-frigate failure across its declared seeds. These scripted runs are not human win-rate or time-to-upgrade measurements; ship prices and ordinary transport income are unchanged.
 
-`part-two-story.ts` covers required-report, active carry-destination and next-chapter offer-port landing access without clearing faction standing (including Ledger Nine at Index −100 for the Freefolk delivery and the Unsworn offer), unavailable campaign explanations, distinct completion text and explicit preparation equipment rewards. Required-report access does not waive ordinary flight or unrelated landing gates.
+`part-two-story.ts` covers required-report, active carry-destination and next-chapter offer-port landing access without clearing faction standing (including Ledger Nine at Index −100 for the Freefolk delivery and the Unsworn offer), unavailable campaign explanations, distinct completion text and explicit preparation equipment rewards. Required-report access does not waive ordinary flight or unrelated landing gates. It also checks Part II text: Sol's description has no zero distance, the Threshold Spire objective uses the port's name, the Ascendant and Ashfall aftercare name their own crews, the memorial names Saint Orra once, and the broadcast mission has one broadcast room.
 
 ### Regional communities and personal recovery
 

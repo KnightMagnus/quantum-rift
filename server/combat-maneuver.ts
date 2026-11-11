@@ -38,10 +38,13 @@ export function maneuverCombat(steering: CombatSteering, attacker: Entity, targe
   const lead = Math.min(1.2, distance / 600);
   const leadX = target.x + (target.vx - attacker.vx) * lead,
     leadY = target.y + (target.vy - attacker.vy) * lead;
+  // Hull-armed NPCs report no outfitted turrets, so in practice they close head-on
+  // and keep their forward guns in arc. Assist follows that policy instead of the
+  // broadside orbit, which idles forward guns and lost most capital mirror duels.
   if (
     attacker.st.size >= 110 &&
     attacker.st.turrets >= 2 &&
-    !(attacker.autoCombat && attacker.combatForward) &&
+    !attacker.autoCombat &&
     distance < maneuverRange * 1.1 &&
     distance > Math.max(140, attacker.st.size)
   ) {
