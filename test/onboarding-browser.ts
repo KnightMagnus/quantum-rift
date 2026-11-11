@@ -169,6 +169,48 @@ try {
   assert.equal(await page.locator('#onboarding').getAttribute('data-stage'), 'briefing');
   await page.locator('[data-intro="skip"]').click();
   assert.equal(await page.locator('#land').isVisible(), true);
+  // Docked after orientation, the first career card must be readable, not under the dock panel.
+  await page.waitForFunction(() => !document.getElementById('tut')!.classList.contains('hidden'));
+  const careerCardHits = await page.evaluate(() => {
+    const card = document.getElementById('tut')!,
+      bounds = card.getBoundingClientRect();
+    return [
+      [0.5, 0.5],
+      [0.1, 0.15],
+      [0.9, 0.15],
+      [0.1, 0.85],
+      [0.9, 0.85],
+    ].map(([horizontal, vertical]) =>
+      card.contains(
+        document.elementFromPoint(
+          bounds.left + bounds.width * horizontal,
+          bounds.top + bounds.height * vertical,
+        ),
+      ),
+    );
+  });
+  assert.deepEqual(
+    careerCardHits,
+    [true, true, true, true, true],
+    'the docked career card is on top of the dock panel',
+  );
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.waitForTimeout(100);
+  assert.equal(
+    await page.evaluate(() => {
+      const card = document.getElementById('tut')!,
+        bounds = card.getBoundingClientRect();
+      return (
+        bounds.right <= innerWidth &&
+        card.contains(
+          document.elementFromPoint(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2),
+        )
+      );
+    }),
+    true,
+    'the docked career card stays readable at 1366x768',
+  );
+  await page.setViewportSize({ width: 1920, height: 1080 });
   // HELP replays the tour directly, without the offer.
   await page.locator('#cbhelp').click();
   await page.locator('#introreplay').click();
@@ -318,6 +360,13 @@ try {
           'Visit other star systems to discover new locations.',
         ),
       );
+    {
+      const slideText = (await page.locator('#onboarding').textContent())!;
+      for (const slip of [/\bits why\b/, /were now inhabitants/, /, Duel,/, /personal station/])
+        assert.doesNotMatch(slideText, slip, `briefing slide ${slide + 1} text`);
+      if (slide === 0) assert.match(slideText, /found themselves in a densely populated region/);
+      if (slide === 9) assert.match(slideText, /it's why this game exists today/);
+    }
     if (slide >= 6) {
       assert.equal(
         await page.locator('#onboarding-title').textContent(),

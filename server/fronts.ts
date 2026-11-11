@@ -88,6 +88,7 @@ import {
   STELLARS,
   FACTIONS,
   MATERIALS,
+  materialArticle,
   GRADES,
 } from '../shared/galaxy.ts';
 import {
@@ -647,7 +648,10 @@ export const FrontsOperations = {
     if (game.crate) {
       const materialType = STORE_MAT[faction] || 'alloy';
       playerData.mats[materialType][game.crate]++;
-      this.toast(session, `Bought a ${materialType} ${GRADES[game.crate]} crate.`);
+      this.toast(
+        session,
+        `Bought ${materialArticle(materialType)} ${materialType} ${GRADES[game.crate]} crate.`,
+      );
     }
     if (game.officer) {
       const radius = Math.random,
