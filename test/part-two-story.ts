@@ -7,6 +7,7 @@ import {
   partTwoBattle,
   partTwoEndings,
   partTwoAftercare,
+  PART_TWO_PAY,
   partTwoMemorial,
   partTwoMemorialText,
 } from '../shared/part-two-story.ts';
@@ -85,7 +86,30 @@ function completeStage() {
 }
 data.story.flags = { main_ending: 'table', crossed_quantum_rift: true };
 for (const mission of PART_TWO) {
+  assert.ok(PART_TWO_PAY[mission.id] > 0, `${mission.id} has authored pay`);
+  assert.equal(mission.pay, PART_TWO_PAY[mission.id], `${mission.id} pays its authored rate`);
+}
+const actOneTopPay = Math.max(
+  ...STORY.filter((item) => /^qv\d$/.test(item.id)).map((item) => item.pay),
+);
+const payOf = (id: string) => PART_TWO.find((mission) => mission.id === id)!.pay;
+assert.ok(payOf('p2-voice') >= actOneTopPay, 'Part II opens at or above the top Act I reward');
+assert.equal(
+  Math.max(...PART_TWO.map((mission) => mission.pay)),
+  payOf('p2-fleet'),
+  'the final battle pays the most',
+);
+assert.ok(payOf('p2-makers') > payOf('p2-voice'), 'pay rises through the main chapters');
+assert.ok(payOf('p2-names') < payOf('p2-voice'), 'the memorial visit pays a token amount');
+const partTwoTotal = PART_TWO.reduce((sum, mission) => sum + mission.pay, 0);
+assert.ok(
+  partTwoTotal >= 5_000_000 && partTwoTotal <= 8_000_000,
+  `Part II total pay stays near forgone freight income: ${partTwoTotal}`,
+);
+let paidTotal = 0;
+for (const mission of PART_TWO) {
   dock(mission.at);
+  const creditsBefore = data.credits;
   story.storyAccept(captain, {
     id: mission.id,
     ...(mission.id === 'p2-fleet' ? { choice: 'armistice' } : {}),
@@ -94,6 +118,8 @@ for (const mission of PART_TWO) {
   let guard = 0;
   while (data.story.active && guard++ < 12) completeStage();
   assert.ok(data.story.done.includes(mission.id), `${mission.title} completes`);
+  assert.equal(data.credits - creditsBefore, mission.pay, `${mission.title} pays on completion`);
+  paidTotal += mission.pay;
   if (mission.id === 'p2-observation')
     assert.equal(
       data.story.flags?.p2_objectives?.independent_backup,
@@ -101,6 +127,7 @@ for (const mission of PART_TWO) {
       'rejecting companionship preserves navigation',
     );
 }
+assert.equal(paidTotal, partTwoTotal, 'a full run pays every chapter once');
 assert.equal(data.story.flags?.p2_ending, 'armistice');
 assert.equal(data.story.flags?.p2_objectives?.final_strike, true);
 assert.equal(data.story.flags?.p2_objectives?.negotiated, true);
