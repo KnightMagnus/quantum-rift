@@ -188,6 +188,7 @@ try {
     await page.waitForFunction(() => G.view && !G.landed);
     await page.evaluate((identifier) => {
       G.navStellar = identifier;
+      G.navPicked = true;
       G.opts.mouseAim = false;
     }, landingScenario2.port);
     const start = Date.now(),
@@ -211,7 +212,7 @@ try {
               ).recordLandingNotice(node.textContent);
       }).observe(document.getElementById('toasts')!, { childList: true });
     });
-    // Wait for the next HUD frame, not the previous departure body's landing label.
+    // Wait for the next HUD frame, not the previous departure body’s landing label.
     await page.waitForFunction(
       (name) => document.getElementById('navto')!.textContent === name + ' (L to land)',
       STELLARS[landingScenario2.port].name,

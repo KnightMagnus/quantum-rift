@@ -42,7 +42,7 @@ Download the latest release, extract it, and follow the launch instructions belo
 
 ### Play with friends
 
-- Form an **Armada** to travel together, share bounties and take on co-op contracts and station defenses. Review team-contract shares and choose Ready before joining. For a shared story fight, helpers opt in and the owner starts assistance; captains on the same chapter and story branch share fight progress, then each reports back for their own rewards.
+- Form an **Armada** to travel together, share bounties and take on co-op contracts and station defenses. Review team-contract shares and choose Ready before joining. For a shared story fight, helpers opt in and the owner starts assistance; captains on the same chapter and story branch share fight progress, then each reports back for their own rewards. Story enemies get tougher for each helper.
 - Keep in touch through friends lists, private messages, local chat and player hails, with privacy and blocking controls.
 - Trade credits, cargo and crafting supplies between captains.
 - Choose your PvP: consensual duels or rated team matches in the **Crucible** arena, rather than open-world player hunting.

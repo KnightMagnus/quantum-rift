@@ -11,15 +11,20 @@ import {
 import { STELLARS } from '../shared/galaxy.ts';
 import type { Entity } from '../server/space.ts';
 import type { SavedStory, StoryFlags } from '../server/save-contracts.ts';
+import { foldLegacyMemorialChapter } from '../server/story.ts';
 
-// Existing saves keep every pre-expansion chapter index, including the former terminal step.
+// Chapters through the campaign keep their indices; the memorial visit is part of the last chapter.
 assert.equal(
-  PART_TWO.findIndex((mission) => mission.id === 'p2-names'),
-  15,
+  PART_TWO.findIndex((mission) => mission.id === 'p2-fleet'),
+  14,
 );
 assert.deepEqual(
-  PART_TWO.slice(16).map((mission) => mission.id),
+  PART_TWO.slice(15).map((mission) => mission.id),
   ['p2-freefolk', 'p2-unsworn', 'p2-aftercare'],
+);
+assert.ok(
+  STORY.every((mission) => mission.id !== 'p2-names'),
+  'the memorial has one scene, not a separate chapter',
 );
 const game = refineryGame();
 const captain = refineryPilot(game, 'Recovery Captain');
@@ -36,7 +41,7 @@ for (const ending of ['border', 'armistice', 'dormancy', 'ascendant', 'ashfall']
   captain.data.story = {
     step: STORY.findIndex((mission) => mission.id === 'p2-freefolk'),
     active: null,
-    done: ['p2-names'],
+    done: ['p2-fleet'],
     flags: {
       main_ending: 'table',
       crossed_quantum_rift: true,
@@ -96,8 +101,16 @@ for (const ending of ['border', 'armistice', 'dormancy', 'ascendant', 'ashfall']
         packet.id === 'p2-aftercare' &&
         packet.done &&
         /clinic/.test(packet.text || '') &&
-        /sealed/.test(packet.text || ''),
+        /sealed/.test(packet.text || '') &&
+        /The memorial lists those who died/.test(packet.text || '') &&
+        /The battery crews send a repaired shield plate/.test(packet.text || ''),
     ),
+    'the closing scene carries the memorial and its saved decision callbacks',
+  );
+  assert.equal(
+    messages.filter((packet) => packet.done && /The memorial lists/.test(packet.text || '')).length,
+    ['border', 'armistice', 'dormancy', 'ascendant', 'ashfall'].indexOf(ending) + 1,
+    'each run reaches exactly one memorial scene',
   );
 }
 assert.deepEqual(other.data, unrelated, 'another captain’s ending and standing remain untouched');
@@ -133,6 +146,107 @@ for (const [field, left, right] of [
     `${field} has a distinct callback`,
   );
 }
+// Saves from before the memorial visit moved into the last chapter keep their place.
+const freefolkStep = STORY.findIndex((entry) => entry.id === 'p2-freefolk');
+const legacyFlags: StoryFlags = {
+  main_ending: 'table',
+  crossed_quantum_rift: true,
+  p2_ending: 'border',
+};
+const legacyCaptain = refineryPilot(game, 'Legacy Captain');
+const legacySaves: Array<[string, SavedStory, number, string | null]> = [
+  [
+    'before the campaign ends',
+    { step: freefolkStep - 1, active: null, done: [], flags: { ...legacyFlags } } as SavedStory,
+    freefolkStep - 1,
+    null,
+  ],
+  [
+    'memorial on offer',
+    {
+      step: freefolkStep,
+      active: null,
+      done: ['p2-fleet'],
+      flags: { ...legacyFlags },
+    } as SavedStory,
+    freefolkStep,
+    null,
+  ],
+  [
+    'memorial accepted',
+    {
+      step: freefolkStep,
+      active: { id: 'p2-names', got: 0, ready: false, spawned: false, stage: 0 },
+      done: ['p2-fleet'],
+      flags: { ...legacyFlags },
+    } as SavedStory,
+    freefolkStep,
+    null,
+  ],
+  [
+    'Freefolk chapter mid-way',
+    {
+      step: freefolkStep + 1,
+      active: { id: 'p2-freefolk', got: 0, ready: false, spawned: false, stage: 1 },
+      done: ['p2-fleet', 'p2-names'],
+      flags: { ...legacyFlags },
+    } as SavedStory,
+    freefolkStep,
+    'p2-freefolk',
+  ],
+  [
+    'last chapter mid-way',
+    {
+      step: freefolkStep + 3,
+      active: { id: 'p2-aftercare', got: 0, ready: false, spawned: false, stage: 2 },
+      done: ['p2-fleet', 'p2-names', 'p2-freefolk', 'p2-unsworn'],
+      flags: { ...legacyFlags },
+    } as SavedStory,
+    freefolkStep + 2,
+    'p2-aftercare',
+  ],
+  [
+    'Part II finished',
+    {
+      step: STORY.length + 1,
+      active: null,
+      done: ['p2-fleet', 'p2-names', 'p2-freefolk', 'p2-unsworn', 'p2-aftercare'],
+      flags: { ...legacyFlags },
+    } as SavedStory,
+    STORY.length,
+    null,
+  ],
+];
+for (const [label, saved, expectedStep, expectedActive] of legacySaves) {
+  legacyCaptain.data.story = saved;
+  const payload = game.features.story.storyPayload(legacyCaptain.data);
+  assert.equal(payload.step, expectedStep, `${label}: chapter index realigned`);
+  assert.equal(payload.active?.id ?? null, expectedActive, `${label}: active chapter kept`);
+  assert.ok(!payload.done.includes('p2-names'), `${label}: retired chapter removed`);
+  if (expectedActive) assert.ok(payload.active!.stage! > 0, `${label}: objective stage kept`);
+  assert.equal(
+    foldLegacyMemorialChapter(legacyCaptain.data.story),
+    false,
+    `${label}: migration runs once`,
+  );
+}
+legacyCaptain.data.story = legacySaves[2][1];
+legacyCaptain.data.story.active = {
+  id: 'p2-names',
+  got: 0,
+  ready: false,
+  spawned: false,
+  stage: 0,
+};
+legacyCaptain.data.story.done = ['p2-fleet'];
+legacyCaptain.data.stellar = 'saint-orra';
+legacyCaptain.data.sys = STELLARS['saint-orra'].system;
+assert.equal(
+  game.features.story.storyOffer(legacyCaptain.data, STELLARS['saint-orra'])?.id,
+  'p2-freefolk',
+  'an unfinished legacy memorial visit continues with the Freefolk chapter',
+);
+
 // A native final-strike spawn has a command opponent, not three anonymous escorts.
 captain.data.story = {
   step: STORY.findIndex((entry) => entry.id === 'p2-fleet'),

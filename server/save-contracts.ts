@@ -188,6 +188,8 @@ export interface FeaturePlayerState {
   fleet?: unknown;
   noShield?: boolean;
   playerHails?: boolean;
+  /** Finished the Unsworn passage job; Confederation shipyards sell this captain Unsworn hulls. */
+  unswornYard?: boolean;
   dmAll?: boolean;
 }
 

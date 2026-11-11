@@ -243,7 +243,8 @@ interface BriefingSlide {
 export function createOnboarding(options: OnboardingOptions) {
   let owner: string | null = null;
   let active = false;
-  let stage: 'tour' | 'briefing' = 'tour';
+  /** First-run offer, optional controls tour, or captain's briefing. */
+  let stage: 'offer' | 'tour' | 'briefing' = 'tour';
   let index = 0;
   let savedTab = 'missions';
   let layoutFrame = 0;
@@ -377,7 +378,7 @@ export function createOnboarding(options: OnboardingOptions) {
     options.finished();
   }
   function advance() {
-    if (stage === 'tour' && index === visibleTourSteps.length - 1) {
+    if (stage === 'offer' || (stage === 'tour' && index === visibleTourSteps.length - 1)) {
       stage = 'briefing';
       index = 0;
     } else if (stage === 'briefing' && index === slides().length - 1) {
@@ -386,8 +387,13 @@ export function createOnboarding(options: OnboardingOptions) {
     } else index++;
     render();
   }
+  function startTour() {
+    stage = 'tour';
+    index = 0;
+    render();
+  }
   function skip() {
-    if (stage === 'tour') {
+    if (stage !== 'briefing') {
       stage = 'briefing';
       index = 0;
       render();
@@ -456,6 +462,13 @@ export function createOnboarding(options: OnboardingOptions) {
     cancelAnimationFrame(layoutFrame);
     root.dataset.stage = stage;
     root.dataset.tourTarget = stage === 'tour' ? visibleTourSteps[index].target : '';
+    if (stage === 'offer') {
+      root.innerHTML = `<div class="intro-callout"><div class="intro-eyebrow">OPTIONAL GUIDE</div><h2 id="onboarding-title">Captain’s Orientation</h2><p>A step-by-step guide to your cockpit buttons, sidebar menus and chat. Skip it to go straight to your Captain’s Briefing. You can replay it from HELP at any time.</p><div class="intro-actions"><button data-intro="tour">Start orientation</button><button data-intro="next" class="intro-next">Captain’s Briefing <span aria-hidden="true">→</span></button></div></div>`;
+      root.querySelector<HTMLButtonElement>('[data-intro="tour"]')!.onclick = startTour;
+      root.querySelector<HTMLButtonElement>('[data-intro="next"]')!.onclick = advance;
+      root.querySelector<HTMLElement>('[data-intro="next"]')!.focus({ preventScroll: true });
+      return;
+    }
     if (stage === 'tour') {
       const step = visibleTourSteps[index];
       if (step.tab) options.selectTab(step.tab);
@@ -496,7 +509,8 @@ export function createOnboarding(options: OnboardingOptions) {
       );
     });
     active = true;
-    stage = visibleTourSteps.length ? 'tour' : 'briefing';
+    // A first run offers the controls tour; HELP replays it directly.
+    stage = !visibleTourSteps.length ? 'briefing' : replay ? 'tour' : 'offer';
     index = 0;
     document.body.classList.add('onboarding-active');
     document.getElementById('land')!.classList.add('hidden');
