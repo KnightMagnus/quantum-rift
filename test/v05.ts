@@ -310,6 +310,74 @@ shipEntity = makeElement('spacer');
 const rep0 = playerData.rep.spacer;
 firstEntry.send({ t: 'board', id: shipEntity.id, act: 'rescue' });
 assertCondition(playerData.rep.spacer === rep0 + 6, 'rescuing a Spacer crew earns standing');
+{
+  const rescued = shipEntity;
+  const portIds = space.ports().map((port) => port.id);
+  assertCondition(
+    space.ships.get(rescued.id) === rescued &&
+      !rescued.disabled &&
+      rescued.boarded &&
+      rescued.armor >= rescued.st.armor * 0.5 &&
+      rescued.ai === 'trade' &&
+      !!rescued.dest?.id &&
+      portIds.includes(rescued.dest.id),
+    'a rescued Spacer ship stays in the system and heads for a landing port',
+  );
+  assertCondition(
+    firstEntry.toasts().some((text: string) => text.includes(`land at ${rescued.dest?.name}`)),
+    'the rescue toast names the port the ship is heading for',
+  );
+  const credits5 = playerData.credits;
+  rescued.disabled = true;
+  firstEntry.send({ t: 'board', id: rescued.id, act: 'rescue' });
+  assertCondition(
+    playerData.credits === credits5 && playerData.rep.spacer === rep0 + 6,
+    'a rescued ship cannot be boarded again for a second reward',
+  );
+  rescued.disabled = false;
+  // Hold traffic spawns and protect the captain so only the rescued ship's own flight is measured.
+  const spawnTimer = space.spawnT;
+  space.spawnT = Number.POSITIVE_INFINITY;
+  requiredFixtureValue(entity).graceT = space.t + 600;
+  let landed = false;
+  for (let tick = 0; tick < 30 * 240 && !landed && space.ships.has(rescued.id); tick++) {
+    space.events.length = 0;
+    space.tick();
+    landed = space.events.some((event) => event[0] === 'land' && event[1] === rescued.id);
+  }
+  assertCondition(
+    landed && !space.ships.has(rescued.id),
+    'the rescued ship flies to the port and lands instead of vanishing',
+  );
+  space.spawnT = spawnTimer;
+  requiredFixtureValue(entity).graceT = 0;
+}
+{
+  const portlessId = Object.keys(systemsById).find(
+    (systemId) =>
+      !systemsById[systemId].arena &&
+      !systemsById[systemId].stellars.some(
+        (stellarBody) => stellarBody.svc?.includes('L') && !stellarBody.site,
+      ),
+  );
+  const portlessSpace = game.spaces[requiredFixtureValue(portlessId)];
+  const stranded = portlessSpace.makeShip({ hull: 711, faction: 'spacer', x: 200, y: 0 });
+  stranded.disabled = true;
+  stranded.armor = 1;
+  portlessSpace.releaseRescuedShip(stranded, 0.5);
+  assertCondition(
+    portlessSpace.ships.get(stranded.id) === stranded &&
+      !stranded.disabled &&
+      stranded.ai === 'leave',
+    'with no port in the system, a rescued ship heads out to jump',
+  );
+  for (let tick = 0; tick < 30 * 120 && portlessSpace.ships.has(stranded.id); tick++)
+    portlessSpace.tick();
+  assertCondition(
+    !portlessSpace.ships.has(stranded.id) && Math.hypot(stranded.x, stranded.y) > 2800,
+    'it flies clear of the planets before it jumps away',
+  );
+}
 shipEntity = makeElement('hollow');
 shipEntity.strength = 1;
 Object.assign(requiredFixtureValue(entity).st, { strength: 9999 });

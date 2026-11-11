@@ -2035,6 +2035,10 @@ every combat matchup or long-running server population.
 
 `quest-recovery.ts` checks owner-only mission-wreck boarding, missing-wreck recovery without duplication, completed-rescue exclusion, NPC hit denial, faction objective credit after patrol kills, abandoned-target recovery without healing, contract-target recovery and patrol completion, and insurance when no able rescuer remains. It also runs actual Assist and weapon physics for both affected capital hulls against a moving target after finite ammunition is exhausted, requiring damage in each 30-second window. `combat-maneuver.ts` covers mixed forward/turret batteries and pursuit of moving targets. These deterministic checks do not establish combat balance or human completion times.
 
+## Rescue limits and rescued ships
+
+`v26.ts` checks the Armada rescue limit: the first two knockdowns in one fight wait for a boarding rescue, the second rescue tells both captains to retreat and regroup, and a third knockdown inside the lockout goes straight to insurance. A new flight, or a knockdown after the lockout, is held for rescue again. `v05.ts` checks that a rescued lawful NPC ship stays in the system, can't be boarded again for a second reward, and flies to a landing port and lands; in a system with no port it flies clear and jumps out. These are scripted cases, not a measure of how long player fights last.
+
 ## Captain objective log
 
 `captain-log.ts` covers current disclosed objective guidance, saved insurance history, HTML escaping, no future-story lookup, and stable eligible-first job ordering without mutating offers. Mission filters remain authoritative display filters, not acceptance permission.
