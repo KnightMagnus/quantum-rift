@@ -183,6 +183,7 @@
     "freefolk-hulls.ts",
     "unsworn-hulls.ts",
     "part-two-story.ts",
+    "part-two-expansion.ts",
     "part-two-communities.ts"
   ],
   "browser": [
@@ -943,6 +944,7 @@
       "helpers/chromium.ts",
       "helpers/browser-fixture.ts"
     ],
+    "part-two-expansion.ts": ["helpers/refinery-fixture.ts"],
     "part-two-communities.ts": []
   },
   "characterization": ["features.ts"],
@@ -1088,9 +1090,10 @@
         "freefolk-hulls.ts",
         "unsworn-hulls.ts",
         "part-two-art-browser.ts",
+        "part-two-expansion.ts",
         "part-two-communities.ts"
       ],
-      "asserts": "Story offers/acceptance, board/travel/kill progression, gifts and Deep unlock. Regional continuation covers graph isolation, authored Sol, mission objectives, fleet eligibility, Type 0 Milky Way traffic and shipyards, and runtime artwork."
+      "asserts": "Story offers/acceptance, board/travel/kill progression, gifts and Deep unlock. Regional continuation covers graph isolation, authored Sol, mission objectives, fleet eligibility, Type 0 Milky Way traffic and shipyards, and runtime artwork. Appended personal recovery chapters retain pre-existing chapter indices; campaign and supply choices select recovery objectives, earned standing settles once, all earlier decisions have personal memorial callbacks, and the final command encounter has a named lead. Regional human identities and measured traffic selection preserve Rift identities."
     },
     {
       "id": "rivals",
@@ -2503,7 +2506,7 @@
       "shared-story.ts"
     ],
     "holdout": ["v09.ts", "v26.ts", "message-routing.ts"],
-    "storyacc": ["v10.ts", "message-routing.ts", "part-two-story.ts"],
+    "storyacc": ["v10.ts", "message-routing.ts", "part-two-story.ts", "part-two-expansion.ts"],
     "social": ["hailing-network.ts", "v26.ts", "message-routing.ts"],
     "trade2": ["cargo-flows.ts", "v26.ts", "message-routing.ts"],
     "duel": ["v26.ts", "message-routing.ts"],

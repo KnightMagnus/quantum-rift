@@ -511,3 +511,9 @@ escort AI. `test/qcs-fleet.ts` covers routing, attrition, restore and runway geo
 ## Flight feedback
 
 `server/flight-feedback.ts` projects existing rescue deadlines and same-system Armada contacts into flight snapshots. `client/flight-feedback.ts` formats ammo/rescue guidance and calculates edge-marker positions; `client/ui.ts` and `client/render.ts` own presentation. `server/coop.ts` delivers catch-up destinations to opted-in followers after delayed arrivals, using the existing client navigation and jump gates.
+
+## Regional communities and recovery chapters
+
+`shared/part-two-story.ts` appends personal recovery chapters without shifting earlier chapter indices. `partTwoAftercare` derives the recovery route from saved campaign and supply decisions; `partTwoMemorial` supplies personal decision callbacks. `server/story.ts` uses the existing encounter, boarding, landed-choice and completion authorities and settles earned community standing once. Shared faction hostility, ports and markets are not rewritten by another captain’s ending.
+
+`shared/portraits.ts` restricts regional human NPCs to the human variation pool while retaining Rift identities and player-selected portraits. `shared/part-two-ships.ts` owns regional traffic proportions; `shared/ships-freefolk.ts` gives civilian hulls one small defensive turret. `shared/milky-way.ts` defines local supply profiles independently of personal campaign flags.

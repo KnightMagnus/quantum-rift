@@ -6,6 +6,7 @@ import {
   PART_TWO_OBJECTIVES,
   partTwoBattle,
   partTwoEndings,
+  partTwoAftercare,
 } from '../shared/part-two-story.ts';
 import { STELLARS, SYS } from '../shared/galaxy.ts';
 import type { StoryFlags } from '../server/save-contracts.ts';
@@ -49,12 +50,18 @@ const decisions: Record<string, string> = {
   'p2-moon': 'family',
   'p2-report': 'joint',
   'p2-makers': 'talks',
+  'p2-freefolk': 'clinic',
+  'p2-unsworn': 'protected',
 };
 function completeStage() {
   const active = data.story.active!;
   const mission = STORY.find((item) => item.id === active.id)!;
   const stages =
-    active.id === 'p2-fleet' ? partTwoBattle(data.story.flags!) : PART_TWO_OBJECTIVES[active.id];
+    active.id === 'p2-fleet'
+      ? partTwoBattle(data.story.flags!)
+      : active.id === 'p2-aftercare'
+        ? partTwoAftercare(data.story.flags!)
+        : PART_TWO_OBJECTIVES[active.id];
   const objective = stages[active.stage || 0];
   if (objective.type !== 'carry') {
     data.sys = objective.sys!;
@@ -153,7 +160,7 @@ assert.equal(data.story.flags?.p2_campaign, 'border');
 assert.equal(data.story.active?.stage, 0, 'withdrawal starts replacement transport recovery');
 assert.equal(data.story.flags?.p2_ending, undefined);
 console.log(
-  'Part II: all 16 missions, all five outcomes, navigation rejection, ending gates and withdrawal passed.',
+  'Part II: all 19 missions, all five outcomes, navigation rejection, ending gates and withdrawal passed.',
 );
 
 // Native simulation spawns actual new hulls and custody requires the Capture interaction.

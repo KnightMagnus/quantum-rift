@@ -10,6 +10,8 @@ import {
   partTwoBattle,
   partTwoEndings,
   partTwoEndingText,
+  partTwoAftercare,
+  partTwoMemorial,
 } from '../shared/part-two-story.ts';
 import { storyReportPort, storyReportGuidance } from '../shared/story-pacing.ts';
 export interface StoryPayload {
@@ -154,7 +156,8 @@ export const StoryOperations = {
    */
   storyOffer(this: StoryCapabilities, playerData: PlayerData, position: { id: string } | null) {
     const savedStory = this.storyInit(playerData),
-      storyMission = STORY[savedStory.step];
+      step = STORY[savedStory.step],
+      storyMission = step && effectiveMission(playerData, step.id);
     if (!storyMission || savedStory.active || !position || storyMission.at !== position.id)
       return null;
     if (
@@ -510,6 +513,12 @@ export const StoryOperations = {
         flags.p2_ending = flags.p2_campaign;
       }
     }
+    if (storyStep.id === 'p2-freefolk') {
+      playerData.rep.freefolk = clampStanding((playerData.rep.freefolk || 0) + 8);
+    }
+    if (storyStep.id === 'p2-unsworn') {
+      playerData.rep.unsworn = clampStanding((playerData.rep.unsworn || 0) + 8);
+    }
     savedStory.active = null;
     savedStory.done.push(storyStep.id);
     savedStory.step++;
@@ -520,6 +529,8 @@ export const StoryOperations = {
       storyStep.pay ? `${credits(storyStep.pay)} credits` : '',
       storyStep.rep ? `${storyStep.rep > 0 ? '+' : ''}${storyStep.rep} Que'vari standing` : '',
     ];
+    if (storyStep.id === 'p2-freefolk') received.push('+8 Freefolk standing');
+    if (storyStep.id === 'p2-unsworn') received.push('+8 Unsworn standing');
     if (storyStep.crate) {
       playerData.mats[storyStep.crate[0]][storyStep.crate[1]]++;
       received.push(`${storyStep.crate[0]} ${GRADES[storyStep.crate[1]]}`);
@@ -549,14 +560,23 @@ export const StoryOperations = {
               savedStory.flags || {},
               !!playerData.officers?.some((officer) => officer.name === 'Seren Of-The-Veil'),
             )
-          : ['p2-fleet', 'p2-names'].includes(storyStep.id)
+          : storyStep.id === 'p2-names'
             ? partTwoEndingText(savedStory.flags || {}) +
-              (storyStep.id === 'p2-names'
-                ? savedStory.flags?.p2_supply === 'grain'
-                  ? ' Saint Orra’s grain line was restored; the frontier battery went short.'
-                  : ' The frontier battery received machinery; Saint Orra endured delayed grain deliveries.'
-                : '')
-            : storyStep.done) +
+              '\n\n' +
+              partTwoMemorial(savedStory.flags || {})
+            : storyStep.id === 'p2-aftercare'
+              ? storyStep.done +
+                '\n\n' +
+                (savedStory.flags?.p2_freefolk === 'clinic'
+                  ? 'Moss’s clinic is treating the returned crews; the family shelter still needs berths.'
+                  : 'Moss’s shelter has room for the returned families; the mobile clinic still needs parts.') +
+                '\n\n' +
+                (savedStory.flags?.p2_unsworn === 'public'
+                  ? 'Dene’s witnesses speak at the open hearing with their consent.'
+                  : 'Dene keeps the witnesses’ names sealed from command.')
+              : storyStep.id === 'p2-fleet'
+                ? partTwoEndingText(savedStory.flags || {})
+                : storyStep.done) +
         crewBeat(playerData, storyStep.id) +
         (received.some(Boolean) ? `\n\nRewards: ${received.filter(Boolean).join(', ')}.` : ''),
       done: true,
@@ -858,9 +878,12 @@ export const StoryOperations = {
                     (storyMission.id.startsWith('p2-') ? session.ent?.y || 0 : 0) +
                     Math.sin(angle) * 1400,
                   ai: 'raid',
-                  name: storyMission.id.startsWith('p2-')
-                    ? 'Armed hardliner escort'
-                    : 'Umbral Hunter',
+                  name:
+                    storyMission.targetName && index === 0
+                      ? storyMission.targetName
+                      : storyMission.id.startsWith('p2-')
+                        ? 'Armed hardliner escort'
+                        : 'Umbral Hunter',
                 });
         entity3.story = session.id;
         entity3.storyKill = true;
@@ -1071,6 +1094,15 @@ function pendingSideDecision(player: PlayerData, stellar: string) {
 
 /** Recruited friends take part without changing their original arc rewards. */
 function crewBeat(player: PlayerData, chapter: string): string {
+  if (chapter.startsWith('p2-') && player.officers?.length) {
+    const officer = player.officers[0];
+    if (chapter === 'p2-names')
+      return `\n\n${officer.name} stands beside you at the memorial. “We should keep our own list. Everyone we brought home, and everyone we could not.”`;
+    if (chapter === 'p2-freefolk')
+      return `\n\n${officer.name} checks Moss’s crew against the rescue log before releasing the pump shipment.`;
+    if (chapter === 'p2-unsworn')
+      return `\n\n${officer.name} deletes the witnesses’ names from the open channel after Dene checks the record.`;
+  }
   const has = (name: string) => player.officers?.some((officer) => officer.name === name);
   if (chapter === 'berth' && player.story.flags?.d1 === 'concord' && has('Ada Castell'))
     return '\n\nAda Castell takes the manifest. "I have seen those lower decks. I should have asked what the berth was for."';
@@ -1128,6 +1160,7 @@ function storyGuidance(player: PlayerData, chapter: string): string {
 }
 
 function stagesFor(playerData: PlayerData, id: string) {
+  if (id === 'p2-aftercare') return partTwoAftercare(playerData.story.flags || {});
   return id === 'p2-fleet'
     ? partTwoBattle(playerData.story.flags || {})
     : PART_TWO_OBJECTIVES[id] || [];
@@ -1139,7 +1172,18 @@ function effectiveMission(playerData: PlayerData, id: string): StoryStep | undef
   const base = STORY.find((mission) => mission.id === id);
   if (!base || !id.startsWith('p2-')) return base;
   const objective = stagesFor(playerData, id)[playerData.story.active?.stage || 0];
-  return objective ? { ...base, ...objective } : base;
+  const named =
+    id === 'p2-fleet' && objective?.mark === 'final_strike'
+      ? {
+          targetName:
+            playerData.story.flags?.p2_campaign === 'ashfall'
+              ? 'Index Last Witness · archive defence command'
+              : playerData.story.flags?.p2_campaign === 'ascendant'
+                ? 'Home Guard · Captain Halden'
+                : 'Ash Mandate · Admiral Rauth',
+        }
+      : {};
+  return objective ? { ...base, ...objective, ...named } : base;
 }
 function battleChoices(flags: StoryFlags) {
   const labels: Record<string, string> = {

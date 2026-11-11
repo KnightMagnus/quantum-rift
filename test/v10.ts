@@ -103,12 +103,12 @@ assertCondition(
   'the Deep is locked until the story opens it',
 );
 assertCondition(
-  STORY.length === 29 &&
-    PART_TWO.length === 16 &&
+  STORY.length === 32 &&
+    PART_TWO.length === 19 &&
     STORY.slice(0, 13).every((mission) => !mission.id.startsWith('p2-')) &&
     STORY.slice(13).every((mission, index) => mission === PART_TWO[index]) &&
     STORY.every((session) => STELLARS[session.at]),
-  'five original missions, eight continuation missions and sixteen Part II missions, all offered at real worlds',
+  'five original missions, eight continuation missions and nineteen Part II missions, all offered at real worlds',
 );
 land(firstEntry, 'threshold');
 const legacyPacket = firstEntry.last('story');
