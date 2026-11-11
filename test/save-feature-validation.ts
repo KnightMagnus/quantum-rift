@@ -247,6 +247,48 @@ assert.deepEqual(
   playersBefore,
   'Invalid committed feature journal rejects before either snapshot is rewritten',
 );
+// A slot that lost its ship or kept an unknown hull lists in Solo and refuses login plainly.
+{
+  const live = game();
+  live.db.create('Good Pilot', 'fixture', live.fresh());
+  const shipless = live.db.create('Shipless Pilot', 'fixture', live.fresh());
+  delete (shipless as Partial<PlayerAccount>).ship;
+  const retired = live.db.create('Retired Hull', 'fixture', live.fresh());
+  retired.ship.hull = 99999;
+  const slots = live.slots();
+  assert.deepEqual(
+    slots.map((slot) => [slot.name, slot.ship]),
+    [
+      ['Good Pilot', 'Gnat Skiff'],
+      ['Shipless Pilot', '?'],
+      ['Retired Hull', '?'],
+    ],
+    'one damaged slot does not stop the save list',
+  );
+  const signIn = (name: string) => {
+    const socket = new FixtureSocket();
+    live.connect(socket, '127.0.0.1');
+    const session = [...live.sessions.values()].at(-1)!;
+    live.onMessage(session, { t: 'hello', name, pass: 'fixture' });
+    return { session, socket };
+  };
+  for (const name of ['Shipless Pilot', 'Retired Hull']) {
+    const before = structuredClone(live.db.get(name));
+    const denied = signIn(name);
+    assert(!denied.session.data, `${name} gets no session`);
+    assert(!denied.socket.out.some((packet) => packet.t === 'welcome'), `${name}: no welcome`);
+    assert(
+      denied.socket.out.some((packet) => packet.t === 'error' && /no usable ship/.test(packet.msg)),
+      `${name} is told the save has no usable ship`,
+    );
+    assert.deepEqual(live.db.get(name), before, `${name}: refused login changes nothing`);
+  }
+  const good = signIn('Good Pilot');
+  assert(
+    good.socket.out.some((packet) => packet.t === 'welcome'),
+    'the good captain still signs in',
+  );
+}
 validateFeaturePlayerSave({
   ...seed,
   mastery: { '703': 1.5 },

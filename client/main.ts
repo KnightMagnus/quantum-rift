@@ -324,8 +324,7 @@ import { coronaRouteBlocked } from '../shared/industrial-rules.ts';
 import { initRefineryUI } from './refinery_ui.ts';
 import { binding, migrateBindings, RESERVED_KEYS } from './action-bindings.ts';
 import { initMiningUI, receiveMining } from './mining_ui.ts';
-import { landingGuidance, landingReady, chooseLandingPort } from './landing_autopilot.ts';
-import { missionTargets } from './missions.ts';
+import { landingGuidance, landingReady, landingDestination } from './landing_autopilot.ts';
 import { FlightEngine } from './engine.ts';
 import { advanceFlightClock } from './flight-clock.ts';
 import { initLoginScene } from './login_scene.ts';
@@ -2414,21 +2413,8 @@ function landRequest(pick?: {
   const clientView = clientGameState.view,
     starSystem = systemsById[clientGameState.sys!];
   if (!clientView || !starSystem) return;
-  const objectives = missionTargets(clientGameState);
-  const highlighted = chooseLandingPort(
-    starSystem.stellars.filter((rawStellarBody) => rawStellarBody.svc!.includes('L')),
-    clientView,
-    {
-      pickedNav: clientGameState.navPicked ? clientGameState.navStellar : null,
-      pinnedStellar:
-        objectives.find((objective) => objective.key === clientGameState.pinnedObjective)
-          ?.stellar ?? null,
-      missionStellars: objectives.flatMap((objective) =>
-        objective.stellar ? [objective.stellar] : [],
-      ),
-    },
-  );
-  // Double-click keeps its destination; L follows the highlighted nav point or mission.
+  const highlighted = landingDestination(clientGameState);
+  // Double-click keeps its destination; L follows the destination the NAV readout shows.
   const position = pick || highlighted;
   const towing = !!(clientGameState.towing || clientGameState.you?.towing)?.attached;
   const distance = position

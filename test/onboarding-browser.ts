@@ -317,6 +317,74 @@ try {
   assert.equal(rootSize!.height, 650);
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#onboarding').getAttribute('data-stage'), 'briefing');
+  // Short laptop screens: the briefing controls stay on screen and clickable on every slide.
+  const shortScreenEvidence = [];
+  for (let slide = 0; slide < 10; slide++) {
+    for (const [width, height] of [
+      [1600, 900],
+      [1366, 768],
+      [1280, 720],
+      [800, 650],
+    ]) {
+      await page.setViewportSize({ width: width!, height: height! });
+      await page.waitForTimeout(60);
+      const controls = await page.evaluate(() => {
+        const deck = document.querySelector('.intro-deck')!.getBoundingClientRect();
+        const buttons = [
+          ...document.querySelectorAll<HTMLButtonElement>('#onboarding footer button'),
+        ].map((button) => {
+          const bounds = button.getBoundingClientRect();
+          const hit = document.elementFromPoint(
+            bounds.left + bounds.width / 2,
+            bounds.top + bounds.height / 2,
+          );
+          return {
+            action: button.dataset.intro,
+            bottom: bounds.bottom,
+            onScreen:
+              bounds.top >= 0 &&
+              bounds.left >= 0 &&
+              bounds.bottom <= innerHeight &&
+              bounds.right <= innerWidth,
+            clickable: !!hit && button.contains(hit),
+          };
+        });
+        return {
+          title: document.getElementById('onboarding-title')!.textContent,
+          deckInside:
+            deck.top >= 0 &&
+            deck.left >= 0 &&
+            deck.bottom <= innerHeight &&
+            deck.right <= innerWidth,
+          buttons,
+        };
+      });
+      shortScreenEvidence.push({ slide, width, height, ...controls });
+      assert.deepEqual(
+        controls.buttons.map((button) => button.action),
+        ['skip', 'back', 'next'],
+      );
+      assert(
+        controls.deckInside &&
+          controls.buttons.every((button) => button.onScreen && button.clickable),
+        JSON.stringify({ slide, width, height, controls }),
+      );
+    }
+    if (slide === 2) {
+      await page.setViewportSize({ width: 1366, height: 768 });
+      await page.waitForTimeout(60);
+      await page.screenshot({ path: path.join(output, 'briefing-3-1366.png') });
+    }
+    if (slide < 9) await page.locator('[data-intro="next"]').click();
+  }
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.waitForTimeout(60);
+  await page.screenshot({ path: path.join(output, 'briefing-10-1280.png') });
+  fileSystem.writeFileSync(
+    path.join(output, 'briefing-short-screens.json'),
+    JSON.stringify(shortScreenEvidence, null, 2),
+  );
+  await page.setViewportSize({ width: 800, height: 650 });
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#onboarding').isVisible(), false);
   await page.setViewportSize({ width: 1920, height: 1080 });

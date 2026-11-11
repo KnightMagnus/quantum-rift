@@ -31,6 +31,8 @@ interface LoginJob {
   database: DB;
   /** Display name from the handshake. */
   name: string;
+  /** Remote address that holds this job's per-address slot. */
+  address: string;
   /** Password retained only until derivation/dispatch completes. */
   password: string;
   /** Synchronous game dispatch after derivation. */
@@ -42,10 +44,14 @@ interface LoginJob {
   /** Reject admission without an account mutation. */
   reject: (error: Error) => void;
 }
+/** Waiting plus active sign-ins one address may hold: half the waiting queue. */
+const SIGN_INS_PER_ADDRESS = 8;
 /** Limits worker-pool pressure without changing durable registration acknowledgments. */
 export class LocalLoginQueue {
   private active = 0;
   private jobs: LoginJob[] = [];
+  /** Waiting and active sign-ins per address, so one address cannot fill the queue. */
+  private pendingByAddress = new Map<string, number>();
   private registrations = new Map<string, { since: number; count: number }>();
   private connections = new Map<string, number>();
   private connectionCount = 0;
@@ -65,7 +71,7 @@ export class LocalLoginQueue {
       else this.connections.delete(address);
     };
   }
-  /** Derive at most two keys at once and retain at most sixteen waiting handshakes. */
+  /** Derive at most two keys at once; retain at most sixteen waiting handshakes and eight per address. */
   run(
     database: DB,
     name: string,
@@ -76,6 +82,8 @@ export class LocalLoginQueue {
   ): Promise<void> {
     if (this.jobs.length >= 16)
       return Promise.reject(new Error('Sign-in is busy. Try again shortly.'));
+    const pending = this.pendingByAddress.get(address) || 0;
+    const addressBusy = new Error('Too many sign-ins from this connection. Try again shortly.');
     if (!database.get(name)) {
       const now = Date.now();
       for (const [key, window] of this.registrations)
@@ -91,10 +99,13 @@ export class LocalLoginQueue {
         return Promise.reject(
           new Error('Too many new captains from this connection. Try again in a minute.'),
         );
+      // A refused handshake must not spend the registration budget.
+      if (pending >= SIGN_INS_PER_ADDRESS) return Promise.reject(addressBusy);
       window.count++;
-    }
+    } else if (pending >= SIGN_INS_PER_ADDRESS) return Promise.reject(addressBusy);
+    this.pendingByAddress.set(address, pending + 1);
     return new Promise<void>((resolve, reject) => {
-      this.jobs.push({ database, name, password, dispatch, isCurrent, resolve, reject });
+      this.jobs.push({ database, name, address, password, dispatch, isCurrent, resolve, reject });
       this.drain();
     });
   }
@@ -146,6 +157,9 @@ export class LocalLoginQueue {
       job.reject(error instanceof Error ? error : new Error('Sign-in unavailable.'));
     } finally {
       job.password = '';
+      const remaining = (this.pendingByAddress.get(job.address) || 1) - 1;
+      if (remaining) this.pendingByAddress.set(job.address, remaining);
+      else this.pendingByAddress.delete(job.address);
       this.active--;
       this.drain();
     }

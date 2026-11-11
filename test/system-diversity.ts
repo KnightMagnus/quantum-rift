@@ -168,6 +168,18 @@ for (const system of deepSystems) {
     );
   for (const sprite of setPieces)
     deepSetPieceUse.set(sprite.img, (deepSetPieceUse.get(sprite.img) || 0) + 1);
+  // Large silhouettes stay apart: centres at least half their combined sprite sizes apart.
+  // Small wrecks may still drift beside a large set piece.
+  const spread = system.gen ? GENERATED_SPREAD : 1;
+  const largeSprites = scene.near.filter((sprite) => sprite.size >= 300);
+  for (const [index, first] of largeSprites.entries())
+    for (const second of largeSprites.slice(index + 1)) {
+      const distance = Math.hypot(first.x - second.x, first.y - second.y) * spread;
+      assert.ok(
+        distance >= (first.size + second.size) / 2,
+        `${system.id}: ${first.img} and ${second.img} do not overlap (${Math.round(distance)} apart)`,
+      );
+    }
 }
 for (const [image, count] of deepSetPieceUse)
   assert.ok(count <= 2, `${image} appears in at most two Deep systems`);
