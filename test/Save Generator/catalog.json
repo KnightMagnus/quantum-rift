@@ -377,19 +377,6 @@
       }
     },
     {
-      "id": 744,
-      "name": "Ina Que'var",
-      "loadout": {
-        "hull": 744,
-        "outfits": { "444": 10, "445": 6, "446": 4, "448": 8 },
-        "ammo": { "340": 80 },
-        "fixed": [],
-        "bonusSpace": 248,
-        "name": "Ina Que'var",
-        "stockOutfits": { "444": 10, "445": 6, "446": 4, "448": 8 }
-      }
-    },
-    {
       "id": 751,
       "name": "Sable Okoro",
       "loadout": {

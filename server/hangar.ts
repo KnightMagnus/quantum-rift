@@ -1029,6 +1029,8 @@ export const HangarOperations = {
       entity2 = space.ships.get(message.id);
     if (entity2 && entity2.player && entity2.rescueT && this.rescueBoard)
       return this.rescueBoard(session, entity2); // patch up a downed Armada captain
+    if (entity2?.hull === 744)
+      return this.toast(session, 'This capital defender cannot be boarded.');
     if (!entity2 || !entity2.disabled || entity2.player || entity2.boarded)
       return this.toast(session, 'Only disabled ships can be boarded.');
     if (entity2.rescueOf && (entity2.rescueOf.owner !== session.id || message.act !== 'rescue'))

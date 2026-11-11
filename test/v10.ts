@@ -214,10 +214,10 @@ const _old = playerData.ship.hull;
 land(firstEntry, 'inalumen');
 firstEntry.send({ t: 'storyacc', id: 'qv5' });
 assertCondition(
-  playerData.ship.hull === 744 &&
+  playerData.ship.hull === _old &&
     playerData.story.done.includes('qv5') &&
     playerData.story.step === 5,
-  'the final reward is yours',
+  'awakening leaves the player ship unchanged',
 );
 assertCondition(
   !game.features.story.storyOffer(playerData, STELLARS.inalumen),
