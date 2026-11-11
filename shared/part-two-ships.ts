@@ -42,6 +42,7 @@ export const PART_TWO_HULLS: ShipHullAsset[] = roster.map(([id, name, size, role
     name,
     size,
     sub: civilian ? 'Civilian vessel' : role === 'capital' ? 'Warship' : 'Patrol vessel',
+    cat: index ? 'Index' : 'Confederation',
     faction: index ? 'index' : 'confederation',
     kind: 'hull',
     npcOnly: index || id === 961,

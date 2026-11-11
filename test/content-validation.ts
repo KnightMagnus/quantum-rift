@@ -119,6 +119,20 @@ assert.deepEqual(
   'hulls without active glow do not require a glow file',
 );
 
+const uncategorized = fixture();
+delete uncategorized.ships[703].cat;
+assert.deepEqual(
+  validateShipContent(uncategorized, () => true).map((diagnostic) => diagnostic.path),
+  ['ships[703].cat'],
+  'a player-visible hull needs a Codex category',
+);
+uncategorized.ships[703].npcOnly = true;
+assert.deepEqual(
+  validateShipContent(uncategorized, () => true),
+  [],
+  'NPC-only hulls stay out of the Codex and need no category',
+);
+
 const mounts = fixture();
 mounts.ships[703].guns = 0;
 assert.match(validateShipContent(mounts, () => true)[0]!.message, /stock guns 1 exceed mounts 0/);
@@ -160,6 +174,11 @@ assert.ok(authoredHull && assets.ships[authoredHull], 'composed catalog includes
 for (const hull of PART_TWO_HULLS) {
   assert.ok(assets.ships[hull.id], `Part II hull ${hull.id} is composed`);
   assert.equal(sources.get(String(hull.id)), 'shared/part-two-ships.ts');
+  assert.equal(
+    hull.cat,
+    hull.faction === 'index' ? 'Index' : 'Confederation',
+    `Part II hull ${hull.id} has a Codex category`,
+  );
 }
 assert.equal(sources.size, Object.keys(assets.ships).length, 'every composed hull has a source');
 const sourced = fixture();
