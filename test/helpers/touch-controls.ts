@@ -134,7 +134,8 @@ export async function runTouchControls(origin: string, output: string): Promise<
         !packets.slice(blockedAt).some((packet) => packet.f1 === 1),
         'dialog taps do not fire through',
       );
-      await page.locator('#gclose').tap();
+      // On narrow screens the blocked fire coordinate can hit the map's Close button.
+      if (await page.locator('#gmap').isVisible()) await page.locator('#gclose').tap();
       await page.locator('#gmap').waitFor({ state: 'hidden' });
       for (const release of ['touchEnd', 'touchCancel'] as const) {
         const started = packets.length;
