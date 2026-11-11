@@ -211,9 +211,10 @@ try {
               ).recordLandingNotice(node.textContent);
       }).observe(document.getElementById('toasts')!, { childList: true });
     });
-    // NAV names the body L is about to land on.
-    await page.waitForFunction(() =>
-      document.getElementById('navto')!.textContent!.endsWith(' (L to land)'),
+    // Wait for the next HUD frame, not the previous departure body's landing label.
+    await page.waitForFunction(
+      (name) => document.getElementById('navto')!.textContent === name + ' (L to land)',
+      STELLARS[landingScenario2.port].name,
     );
     const navReadout = (await page.locator('#navto').textContent())!.replace(' (L to land)', '');
     await page.keyboard.press('l');
