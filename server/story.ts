@@ -3,6 +3,7 @@ import {
   sameStoryStep,
   sharedEncounterOwner,
   resumeStoryEncounter,
+  scaleSharedEncounter,
   storyParticipant,
 } from './shared-story.ts';
 import {
@@ -609,6 +610,7 @@ export const StoryOperations = {
   storyTick(this: StoryCapabilities, session: Session, space: Space, duration: number) {
     if (!sharedEncounterOwner(this, session) && resumeStoryEncounter(session))
       this.storyArrive(session, space);
+    scaleSharedEncounter(this, session, space);
     const active = session.data.story?.active;
     // Check about once a second: a kill target that is out of the fight and far from its
     // captain is brought back, so the objective never depends on chasing it out of the system.

@@ -268,7 +268,7 @@ export function createMilkyWay(): StarSystem[] {
       x: Math.round(Math.cos(angle) * entry.distance_ly * 36),
       y: Math.round(-Math.sin(angle) * entry.distance_ly * 36),
       links: [],
-      desc: `${entry.star}, ${entry.distance_ly} light-years from Sol. The Milky Way's familiar band crosses the sky.`,
+      desc: `${entry.distance_ly ? `${entry.star}, ${entry.distance_ly} light-years from Sol` : entry.star}. The Milky Way's familiar band crosses the sky.`,
       stellars:
         key === 'vigils_rest'
           ? solBodies()

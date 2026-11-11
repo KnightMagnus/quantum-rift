@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { refineryGame, refineryPilot } from './helpers/refinery-fixture.ts';
 import { STORY } from '../shared/story.ts';
-import { storyParticipant } from '../server/shared-story.ts';
+import {
+  liveSharedHelpers,
+  sharedEncounterScale,
+  storyParticipant,
+} from '../server/shared-story.ts';
 import { parseClientAction } from '../shared/wire-commands.ts';
 import type { FixtureSession } from './helpers/refinery-fixture.ts';
 
@@ -370,4 +374,121 @@ assert.equal(
 );
 console.log(
   'Shared story wire ingress, same-step completion, branch denial, recovery and gated following passed.',
+);
+
+// Shared boss fights scale with the live roster and never heal or break targets on change.
+const anchorMission = STORY.find((entry) => entry.id === 'qv4')!;
+const anchorSpace = game.spaces[anchorMission.sys!];
+const anchorParty = [owner, helper, stranger];
+for (const session of anchorParty) {
+  delete session.sharedStory;
+  delete session.storyAssistOwner;
+  delete session.storyAssistFlight;
+}
+for (const actor of anchorSpace.ships.values())
+  if (actor.story && anchorParty.some((session) => actor.story === session.id))
+    anchorSpace.remove(actor);
+for (const session of anchorParty) {
+  session.data.armada = 'test';
+  session.data.story = {
+    step: STORY.indexOf(anchorMission),
+    done: [],
+    active: { id: anchorMission.id, got: 0, spawned: false, ready: false },
+  };
+  session.data.sys = anchorMission.sys!;
+  session.data.stellar = null;
+  game.spawnPlayer(session, 0, 0, 0, 0);
+}
+if (!game.db.world.armadas.test.members.includes(helper.data.name))
+  game.db.world.armadas.test.members.push(helper.data.name);
+const anchor = [...anchorSpace.ships.values()].find(
+  (actor) => actor.story === owner.id && actor.storyKill && actor.storyMission === 'qv4',
+)!;
+assert.ok(anchor, 'Owner arrival spawns the Night Anchor');
+const anchorEscorts = [...anchorSpace.ships.values()].filter(
+  (actor) => actor.owner === anchor.id && !actor.storyAlly,
+);
+assert.equal(anchorEscorts.length, 2, 'The Anchor keeps its two escorts');
+const choir = [...anchorSpace.ships.values()].find(
+  (actor) => actor.storyAlly && actor.owner === owner.ent!.id,
+)!;
+assert.ok(choir, "The owner's Que'vari allies are present");
+const soloAnchor = { ...anchor.st };
+const soloEscort = { ...anchorEscorts[0].st };
+const soloChoir = { ...choir.st };
+const helperArmor = helper.ent!.st.armor;
+// The story tick is the production scaling hook; calling it alone keeps combat from moving health.
+const tickAnchor = () => game.features.story.storyTick(owner, anchorSpace, 0);
+
+anchorSpace.tick();
+assert.equal(anchor.st.armor, soloAnchor.armor, 'No roster leaves the solo encounter unchanged');
+
+armadaAction(helper, 'storyAssist', owner.name!);
+armadaAction(stranger, 'storyAssist', owner.name!);
+armadaAction(owner, 'storyShare');
+assert.equal(liveSharedHelpers(game, owner), 2);
+anchorSpace.tick();
+assert.equal(
+  anchor.st.armor,
+  soloAnchor.armor * sharedEncounterScale(2).durability,
+  'A real space tick applies roster scaling',
+);
+anchor.armor = anchor.st.armor * 0.5;
+anchor.shield = 0;
+tickAnchor();
+const twoHelpers = sharedEncounterScale(2);
+assert.ok(twoHelpers.durability > 1 && twoHelpers.damage > 1);
+assert.equal(anchor.st.armor, soloAnchor.armor * twoHelpers.durability, 'Anchor armor scales');
+assert.equal(anchor.st.shield, soloAnchor.shield * twoHelpers.durability, 'Anchor shield scales');
+assert.equal(anchor.st.damageMul, soloAnchor.damageMul * twoHelpers.damage, 'Anchor damage scales');
+assert.ok(
+  Math.abs(anchor.armor / anchor.st.armor - 0.5) < 0.01,
+  'Scaling up keeps the damaged fraction and does not heal',
+);
+assert.equal(
+  anchorEscorts[0].st.armor,
+  soloEscort.armor * twoHelpers.durability,
+  'Escorts commanded by the Anchor scale with it',
+);
+assert.equal(choir.st.armor, soloChoir.armor, 'Allied story ships keep their solo stats');
+assert.equal(helper.ent!.st.armor, helperArmor, 'Player ships are never scaled');
+const scaledArmor = anchor.st.armor;
+tickAnchor();
+assert.equal(anchor.st.armor, scaledArmor, 'Repeated ticks do not compound scaling');
+
+armadaAction(stranger, 'storyStop');
+tickAnchor();
+assert.equal(liveSharedHelpers(game, owner), 1);
+assert.equal(
+  anchor.st.armor,
+  soloAnchor.armor * sharedEncounterScale(1).durability,
+  'A helper leaving the roster lowers the scale',
+);
+assert.ok(
+  Math.abs(anchor.armor / anchor.st.armor - 0.5) < 0.02,
+  'Scaling down keeps the damaged fraction',
+);
+
+game.sessions.delete(helper.id);
+tickAnchor();
+assert.equal(anchor.st.armor, soloAnchor.armor, 'A disconnected helper no longer counts');
+game.sessions.set(helper.id, helper);
+tickAnchor();
+assert.equal(
+  anchor.st.armor,
+  soloAnchor.armor * sharedEncounterScale(1).durability,
+  'A helper still on the frozen roster counts again once the live checks pass',
+);
+armadaAction(owner, 'storyStop');
+tickAnchor();
+assert.equal(anchor.st.armor, soloAnchor.armor, 'Stopping assistance restores the solo fight');
+assert.equal(anchor.st.damageMul, soloAnchor.damageMul);
+assert.equal(anchorEscorts[0].st.armor, soloEscort.armor);
+assert.deepEqual(
+  sharedEncounterScale(40),
+  sharedEncounterScale(4),
+  'Large rosters stop adding scale at the cap',
+);
+console.log(
+  'Shared story scaling: live roster durability and damage, allies untouched, health fraction kept, withdrawal/disconnect/stop restore passed.',
 );
