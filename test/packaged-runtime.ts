@@ -159,6 +159,8 @@ try {
     'tools/typescript-scope.ts',
     'tools/start.ts',
     'tools/runtime/node27.json',
+    'tools/runtime/install-node.ts',
+    'tools/runtime/contracts.ts',
     'tools/package_archive.py',
   ])
     copy(relative);
@@ -270,6 +272,9 @@ try {
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/client/html.js'));
   assert.ok(manifest.files.some(({ path: filename }) => filename === 'dist/server/seeds.json'));
   for (const required of [
+    'tools/runtime/node27.json',
+    'tools/runtime/install-node.ts',
+    'tools/runtime/contracts.ts',
     'dist/nakama/quantum-rift.js',
     'dist/nakama/quantum-rift.provenance.json',
     'dist/client/connection.js',

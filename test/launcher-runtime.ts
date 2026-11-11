@@ -106,7 +106,8 @@ try {
       assert.equal(result.status, 0, result.stderr);
       assert.ok(
         result.stdout.includes(
-          'fixture-server ' + (scenario === 'pinned-path' ? process.execPath : binary),
+          'fixture-server ' +
+            fileSystem.realpathSync(scenario === 'pinned-path' ? process.execPath : binary),
         ),
         scenario,
       );
