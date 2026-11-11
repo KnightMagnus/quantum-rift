@@ -313,6 +313,29 @@ console.log(
   'Store clarity: exact standing requirements, shared fitting denial and material labels passed.',
 );
 
+// Crate messages use the right article for each material.
+{
+  const toasts: string[] = [];
+  const sendBefore = socket.send.bind(socket);
+  socket.send = (value) => {
+    const packet = typeof value === 'string' ? JSON.parse(value) : value;
+    if (packet.t === 'toast') toasts.push(packet.msg);
+  };
+  playerData.stellar = 'meridian-yards';
+  playerData.sys = STELLARS['meridian-yards'].system;
+  playerData.rep.quantum = 100;
+  playerData.tokens = { quantum: 50 };
+  const alloyBefore = playerData.mats.alloy[1];
+  game.features.fronts.storeBuy(session, { fac: 'quantum', id: 'crate2' });
+  assert.equal(toasts.at(-1), 'Bought an alloy II crate.');
+  assert.equal(playerData.mats.alloy[1], alloyBefore + 1);
+  game.onLoot(game.pref(session), { mat: 'isotope', grade: 2 });
+  assert.equal(toasts.at(-1), 'Salvaged an isotope crate (grade III).');
+  game.onLoot(game.pref(session), { mat: 'crystal', grade: 0 });
+  assert.equal(toasts.at(-1), 'Salvaged a crystal crate (grade I).');
+  socket.send = sendBefore;
+}
+
 filesystem.rmSync(directory, { recursive: true, force: true });
-console.log('Faction store outfits, star charts and fog-of-war routing passed.');
+console.log('Faction store outfits, star charts, crate messages and fog-of-war routing passed.');
 process.exit(0);

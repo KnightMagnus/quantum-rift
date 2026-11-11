@@ -7,6 +7,9 @@ import {
   partTwoBattle,
   partTwoEndings,
   partTwoAftercare,
+  PART_TWO_PAY,
+  partTwoMemorial,
+  partTwoMemorialText,
 } from '../shared/part-two-story.ts';
 import { STELLARS, SYS } from '../shared/galaxy.ts';
 import type { StoryFlags } from '../server/save-contracts.ts';
@@ -83,7 +86,30 @@ function completeStage() {
 }
 data.story.flags = { main_ending: 'table', crossed_quantum_rift: true };
 for (const mission of PART_TWO) {
+  assert.ok(PART_TWO_PAY[mission.id] > 0, `${mission.id} has authored pay`);
+  assert.equal(mission.pay, PART_TWO_PAY[mission.id], `${mission.id} pays its authored rate`);
+}
+const actOneTopPay = Math.max(
+  ...STORY.filter((item) => /^qv\d$/.test(item.id)).map((item) => item.pay),
+);
+const payOf = (id: string) => PART_TWO.find((mission) => mission.id === id)!.pay;
+assert.ok(payOf('p2-voice') >= actOneTopPay, 'Part II opens at or above the top Act I reward');
+assert.equal(
+  Math.max(...PART_TWO.map((mission) => mission.pay)),
+  payOf('p2-fleet'),
+  'the final battle pays the most',
+);
+assert.ok(payOf('p2-makers') > payOf('p2-voice'), 'pay rises through the main chapters');
+assert.ok(payOf('p2-names') < payOf('p2-voice'), 'the memorial visit pays a token amount');
+const partTwoTotal = PART_TWO.reduce((sum, mission) => sum + mission.pay, 0);
+assert.ok(
+  partTwoTotal >= 5_000_000 && partTwoTotal <= 8_000_000,
+  `Part II total pay stays near forgone freight income: ${partTwoTotal}`,
+);
+let paidTotal = 0;
+for (const mission of PART_TWO) {
   dock(mission.at);
+  const creditsBefore = data.credits;
   story.storyAccept(captain, {
     id: mission.id,
     ...(mission.id === 'p2-fleet' ? { choice: 'armistice' } : {}),
@@ -92,6 +118,8 @@ for (const mission of PART_TWO) {
   let guard = 0;
   while (data.story.active && guard++ < 12) completeStage();
   assert.ok(data.story.done.includes(mission.id), `${mission.title} completes`);
+  assert.equal(data.credits - creditsBefore, mission.pay, `${mission.title} pays on completion`);
+  paidTotal += mission.pay;
   if (mission.id === 'p2-observation')
     assert.equal(
       data.story.flags?.p2_objectives?.independent_backup,
@@ -99,6 +127,7 @@ for (const mission of PART_TWO) {
       'rejecting companionship preserves navigation',
     );
 }
+assert.equal(paidTotal, partTwoTotal, 'a full run pays every chapter once');
 assert.equal(data.story.flags?.p2_ending, 'armistice');
 assert.equal(data.story.flags?.p2_objectives?.final_strike, true);
 assert.equal(data.story.flags?.p2_objectives?.negotiated, true);
@@ -384,6 +413,44 @@ assert.match(
   /Mission target destroyed/,
 );
 console.log('Part II report access, memorial, campaign explanations and combat feedback passed.');
+
+// Part II text names places as the map shows them and follows the saved ending.
+{
+  const objectiveText = (id: string) =>
+    (PART_TWO_OBJECTIVES[id] || []).map((objective) => objective.brief).join(' ');
+  assert.equal(SYS['mw-sol'].desc, "Sol. The Milky Way's familiar band crosses the sky.");
+  assert.match(SYS['mw-wolf-359'].desc ?? '', /^Wolf 359, \d+(\.\d+)? light-years from Sol\./);
+  assert.match(objectiveText('p2-moon'), /At the Threshold Spire in the Rift/);
+  assert.match(
+    Object.values(PART_TWO_OBJECTIVES)
+      .flat()
+      .map((objective) => objective.brief)
+      .join(' '),
+    /Under the local ceasefire, rescue/,
+  );
+  const broadcast = PART_TWO.find((mission) => mission.id === 'p2-broadcast')!;
+  assert.doesNotMatch(JSON.stringify(broadcast), /broadcast booth/, 'one broadcast room');
+  const aftercareText = (ending: string) =>
+    partTwoAftercare({ p2_ending: ending } as StoryFlags)
+      .map((objective) => objective.brief)
+      .join(' ');
+  assert.match(aftercareText('ascendant'), /relay and yard crews/);
+  assert.match(aftercareText('ashfall'), /archive crews/);
+  const memorialFlags = { p2_supply: 'grain' } as StoryFlags;
+  assert.equal(
+    `${partTwoMemorialText(memorialFlags)} ${partTwoMemorial(memorialFlags)}`.match(
+      /At Saint Orra/g,
+    )?.length,
+    1,
+    'the memorial names Saint Orra once',
+  );
+  assert.match(
+    partTwoBattle({ p2_campaign: 'dormancy' } as StoryFlags)
+      .map((objective) => objective.brief)
+      .join(' '),
+    /The Index chooses whether to sleep/,
+  );
+}
 
 const harnessCaptain = refineryPilot(game, 'Harness reward');
 const harnessData = harnessCaptain.data;

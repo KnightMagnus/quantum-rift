@@ -188,6 +188,7 @@ try {
     await page.waitForFunction(() => G.view && !G.landed);
     await page.evaluate((identifier) => {
       G.navStellar = identifier;
+      G.navPicked = true;
       G.opts.mouseAim = false;
     }, landingScenario2.port);
     const start = Date.now(),
@@ -212,8 +213,9 @@ try {
       }).observe(document.getElementById('toasts')!, { childList: true });
     });
     // NAV names the body L is about to land on.
-    await page.waitForFunction(() =>
-      document.getElementById('navto')!.textContent!.endsWith(' (L to land)'),
+    await page.waitForFunction(
+      (name) => document.getElementById('navto')!.textContent === name + ' (L to land)',
+      STELLARS[landingScenario2.port].name,
     );
     const navReadout = (await page.locator('#navto').textContent())!.replace(' (L to land)', '');
     await page.keyboard.press('l');
