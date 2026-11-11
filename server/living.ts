@@ -38,6 +38,8 @@ import { clampStanding } from '../shared/reputation.ts';
 import { SYSTEMS, SYS as systemsById, FACTIONS, COMMODITIES } from '../shared/galaxy.ts';
 import { STATES, STATE_SHARE, STATE_MIN, TRADE_IMPACT } from '../shared/living.ts';
 import { credits } from '../shared/rules.ts';
+import { createEconomyRandom } from './economy-random.ts';
+import type { RandomStream } from '../shared/deterministic-random.ts';
 
 /**
  * Clamp a numeric value between minimum and maximum bounds.
@@ -49,13 +51,29 @@ import { credits } from '../shared/rules.ts';
 const clamp = (value: number, firstValue: number, secondValue: number): number =>
   Math.max(firstValue, Math.min(secondValue, value));
 
+/** Economy stream for each Living service, created on its first system-state roll. */
+const economyStreams = new WeakMap<LivingCapabilities, RandomStream>();
+
+/**
+ * Return the Living service's own economy stream. System-state rolls must not draw from
+ * `Math.random`, which remains the simulation stream.
+ * @param service - Living service capabilities that own the stream.
+ * @returns Economy random stream.
+ */
+function economyRandom(service: LivingCapabilities): RandomStream {
+  let stream = economyStreams.get(service);
+  if (!stream) economyStreams.set(service, (stream = createEconomyRandom()));
+  return stream;
+}
+
 /**
  * Pick a random item from an array.
- * @param firstValue - Array of items.
+ * @param random - Stream to draw from.
+ * @param items - Array of items.
  * @returns Chosen item.
  */
-const pick = <ValueType>(firstValue: ValueType[]): ValueType =>
-  firstValue[Math.floor(Math.random() * firstValue.length)];
+const pick = <ValueType>(random: RandomStream, items: ValueType[]): ValueType =>
+  items[Math.floor(random.next() * items.length)];
 
 /**
  * Headline generators for system events.
@@ -144,7 +162,7 @@ export const LivingOperations = {
           (factionId) =>
             FACTIONS[factionId] && !FACTIONS[factionId].region && factionId !== 'umbral',
         );
-    return pool.length ? pick(pool) : null;
+    return pool.length ? pick(economyRandom(this), pool) : null;
   },
   /**
    * Advance the living galaxy simulation tick, updating system states and generating news.
@@ -152,7 +170,8 @@ export const LivingOperations = {
   livingTick(this: LivingCapabilities) {
     this.livingInit();
     const worldData = this.db.world,
-      currentTime = Date.now();
+      currentTime = Date.now(),
+      random = economyRandom(this);
     let changed = false;
     for (const [starSystem, livingState] of Object.entries(worldData.states))
       if (livingState.until <= currentTime) {
@@ -171,7 +190,7 @@ export const LivingOperations = {
       Object.keys(worldData.states).length < want && tries < limit;
       tries++
     ) {
-      const pick2 = pick(this.marketSystems()),
+      const pick2 = pick(random, this.marketSystems()),
         starSystem = systemsById[pick2];
       if (worldData.states[pick2] || (worldData.stateCool[pick2] || 0) > currentTime) continue;
       const kinds = Object.entries(STATES).filter(
@@ -185,7 +204,7 @@ export const LivingOperations = {
           (entryKey !== 'pirates' || !FACTIONS[starSystem.faction].pirate),
       );
       let total = kinds.reduce((firstValue, [, systemState]) => firstValue + systemState.weight, 0),
-        roll = Math.random() * total,
+        roll = random.next() * total,
         kind = kinds[0][0];
       for (const [entryKey, systemState] of kinds) {
         roll -= systemState.weight;
@@ -199,7 +218,7 @@ export const LivingOperations = {
           kind,
           start: currentTime,
           until:
-            currentTime + (STATE_MIN[0] + Math.random() * (STATE_MIN[1] - STATE_MIN[0])) * 60000,
+            currentTime + (STATE_MIN[0] + random.next() * (STATE_MIN[1] - STATE_MIN[0])) * 60000,
           got: 0,
           need: systemState2.need ? systemState2.need!.qty : 0,
         };

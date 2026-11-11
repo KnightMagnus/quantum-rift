@@ -149,6 +149,7 @@
     "performance-budgets.ts",
     "combat-maneuver.ts",
     "combat-playability.ts",
+    "economy-random-isolation.ts",
     "story-combat-baseline.ts",
     "combat-jobs-playability.ts",
     "combat-balance-ratings.ts",
@@ -1164,8 +1165,8 @@
       "id": "living-galaxy",
       "owners": ["server/living.ts"],
       "services": ["living"],
-      "tests": ["v24.ts", "v25.ts", "v252.ts"],
-      "asserts": "Living-state timers/resolution, trade impact/depth, supply jobs and war/newcomer behavior."
+      "tests": ["v24.ts", "v25.ts", "v252.ts", "economy-random-isolation.ts"],
+      "asserts": "Living-state timers/resolution, trade impact/depth, supply jobs and war/newcomer behavior. System-state rolls use their own economy stream: extra trade ports do not move the ambient simulation stream, and fixed-seed combat and Index survey runs match with and without them."
     },
     {
       "id": "quests",

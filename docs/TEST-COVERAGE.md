@@ -1743,6 +1743,16 @@ The simulation uses isolated in-memory storage and a virtual clock at the normal
 physics tick rate. It does not establish human win rates or test every
 loadout, faction, system or multiplayer combination.
 
+`economy-random-isolation.ts` checks that living-economy system states draw from their
+own stream (`server/economy-random.ts`). Game construction takes the same ambient draws
+with the original and the full trade-port roster across eight seeds, and a fixed seed
+reproduces the economy states. Later state re-rolls, including after a reconnect, take
+no ambient draws. Solo/friend saves and authoritative checkpoints keep active states
+across reload and store no stream state; a restarted Game takes a new root seed. A
+fixed-seed combat arrival and an Index survey tour match with and without the extra
+ports. The survey run holds its own system's state fixed, because which systems get a
+state still depends on the roster.
+
 `combat-jobs-playability.ts` covers mission and reward behavior. The combat tests
 run in the unit regression lane through the canonical manifest; their supporting
 helper is registered under `combat-playability.ts`. Existing combat, difficulty
