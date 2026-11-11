@@ -1248,6 +1248,7 @@ input.trade-amount[type='number'] {
 }
 /* Recessed reading surfaces in the auxiliary menus. */
 #ctrllist,
+#ctrlstranded,
 #optkeys {
   padding: 10px;
   background: #0b171d;
@@ -2058,6 +2059,17 @@ body.tray-open #flightstatus {
 #ctrlbox .ctrlin > * {
   flex-shrink: 0;
   min-width: 0;
+}
+#ctrlstranded {
+  margin-top: 10px;
+}
+#ctrlstranded .osect {
+  margin-top: 0;
+}
+#ctrlstranded p {
+  margin: 6px 0 0;
+  font-size: 15.5px;
+  line-height: 1.4;
 }
 #ctrlbox .ctrlfoot {
   flex-wrap: wrap;

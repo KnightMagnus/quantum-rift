@@ -1335,6 +1335,17 @@ spending replacement budget. The mixed-hull accelerated 60-second fixture is not
 wall-clock soak or proof of every combat interleaving. Existing story and faction
 regressions retain reward, equipment, neutrality and finite-source coverage.
 
+## Stranding escape
+
+`v101.ts` logs captains out in flight. In a system with no landable world the
+captain is docked at their last landing in that port's system, keeps the fuel
+they had in flight and signs back in docked there. With no recorded landing they
+dock at the starting port. A system with a landable world still docks them
+locally. `ui-polish-browser.ts` checks that Controls shows the stranding note and
+that it fits at narrow and scaled sizes. The logout cases use an in-process game
+with fake sockets. Host friends and Nakama use the same `Game.disconnect` path but
+are not run here.
+
 ## `station-progression`: timer advancement
 
 `station-progress.ts` exercises the real `Game.checkStation` entry point with a
