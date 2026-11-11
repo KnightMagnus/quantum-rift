@@ -71,6 +71,23 @@ for (const hull of HAIL_MACHINE_HULLS) {
   assert.equal(reply.portraitId, undefined);
 }
 
+// Region and non-answering factions hail with their own portrait, never a player face.
+for (const [faction, hull, face] of [
+  ['swarm', 718, 'generic-swarm-01'],
+  ['frontier', 703, 'generic-frontier-01'],
+  ['deep', 703, 'generic-deep-01'],
+  ['eclipse', 703, 'generic-eclipse-01'],
+] as const) {
+  const entity = space.makeShip({ hull, faction, x: 10100, y: 10000, name: `${faction} caller` });
+  packets.length = 0;
+  game.features.hail.hail(session, { t: 'hail', id: entity.id });
+  const reply = packets.filter((packet) => packet.t === 'hail').at(-1)!;
+  assert(reply, `Real outgoing hail replies for a ${faction} ship`);
+  assert.equal(reply.machineHull, undefined);
+  assert.equal(reply.portraitId, face, `${faction} hail shows its own faction portrait`);
+  space.remove(entity);
+}
+
 // A dense saved mixed roster goes through production steering, physics and fleet ticks.
 let clock = 0;
 const hulls = [910, 911, 912, 916, 919, 921, 923];
@@ -403,5 +420,5 @@ filesystem.writeFileSync(
   JSON.stringify({ ticks: 1800, hulls, minimumClearance, remaining: world.remaining }, null, 2),
 );
 console.log(
-  'Index presentation: every non-human hull retains ship-only live/archive hails; mixed large hulls remain separated through 60 seconds of actual steering/physics and restore.',
+  'Index presentation: every non-human hull retains ship-only live/archive hails; region and non-answering factions hail with their own portrait; mixed large hulls remain separated through 60 seconds of actual steering/physics and restore.',
 );

@@ -144,6 +144,8 @@ const clamp = (value: number, firstValue: number, secondValue: number): number =
 const pick = <ValueType>(radius: () => number, firstValue: ValueType[]): ValueType =>
   firstValue[Math.floor(radius() * firstValue.length)];
 
+/** Armor share a rescued NPC ship flies off with: above the disabled threshold and the distress-hail threshold. */
+const RESCUED_SHIP_REPAIR = 0.5;
 /**
  * Cache of shortest jump distance maps by starting system ID.
  */
@@ -1071,10 +1073,11 @@ export const HangarOperations = {
       }
       return '';
     };
-    const done = () => {
+    /** Finishes the boarding; a released ship stays in the system and flies off on its own. */
+    const done = (releasedShip = false) => {
       if (this.specOnBoard) this.specOnBoard(session);
       entity2.boarded = true;
-      space.remove(entity2, 'jump');
+      if (!releasedShip) space.remove(entity2, 'jump');
       this.tut(session, 'board');
       if (this.goal) this.goal(session, 'boarded');
       this.db.touch();
@@ -1229,10 +1232,26 @@ export const HangarOperations = {
           );
           const credits3 = 500 + Math.round((entity2.strength || 10) * 5);
           playerData.credits += credits3;
+          const fliesOn =
+            !entity2.rescueOf &&
+            !entity2.mission &&
+            !entity2.story &&
+            !entity2.storyBoard &&
+            !entity2.arcOf &&
+            !entity2.fighterOf;
+          if (fliesOn) space.releaseRescuedShip(entity2, RESCUED_SHIP_REPAIR);
+          const course = !fliesOn
+            ? ''
+            : entity2.dest?.name
+              ? ` They patch up their drive and head in to land at ${entity2.dest.name}.`
+              : ' They patch up their drive and head out to jump.';
           this.toast(
             session,
-            `Rescued the ${shipHullAsset.name}'s crew. ${factionDef.short} standing +6, and a ${credits(credits3)} credit reward.`,
+            `Rescued the ${shipHullAsset.name}'s crew. ${factionDef.short} standing +6, and a ${credits(credits3)} credit reward.${course}`,
           );
+          this.log(playerData, `Rescued the crew of a ${shipHullAsset.name}.`);
+          this.officerXp(session, 20);
+          return done(fliesOn);
         } else {
           const credits4 = Math.round(
             ((entity2.strength || 10) * 25 + 500) * 0.8 * (1 + (captainBonus2.lootPct || 0) / 100),

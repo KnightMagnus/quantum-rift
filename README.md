@@ -30,7 +30,7 @@ Download the latest release, extract it, and follow the launch instructions belo
 ### Fly and fight
 
 - Choose from a wide range of ships, including specialty vessels, with guns, beams, missiles, point defense and drones.
-- Master momentum-based flight or use optional combat assist. Autopilot handles landing and plotted jump routes. Use **J** or the on-screen **JUMP** button to follow a plotted route. Press **L** to land at a selected world or mission destination, or the nearest port when neither is selected.
+- Master momentum-based flight or use optional combat assist. Autopilot handles landing and plotted jump routes. Use **J** or the on-screen **JUMP** button to follow a plotted route. Press **L** to land at the destination NAV shows: a selected world, a mission destination or the system's main port.
 - Face enemies that retreat, call for help or bring capital-ship firepower. Friendly fire has consequences.
 
 ### Build a station and crew

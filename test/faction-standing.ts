@@ -77,6 +77,24 @@ for (const [initial, expected] of [
 playerData.rep.quantum = 199;
 send({ t: 'store', fac: 'quantum', id: 'writ' });
 assert.equal(playerData.rep.quantum, 209);
+// The writ is for captains in bad standing: it sells at any standing, down to the floor.
+for (const [initial, expected] of [
+  [-35, -25],
+  [-100, -90],
+  [-1, 9],
+]) {
+  playerData.rep.quantum = initial;
+  const tokensBefore: number = playerData.tokens.quantum;
+  send({ t: 'store', fac: 'quantum', id: 'writ' });
+  assert.equal(playerData.rep.quantum, expected, `writ sells at standing ${initial}`);
+  assert.equal(playerData.tokens.quantum, tokensBefore - 12, 'writ still costs its tokens');
+}
+// Other store items keep their standing gates below 0.
+playerData.rep.quantum = -35;
+const crateBefore = JSON.stringify([playerData.mats, playerData.tokens]);
+send({ t: 'store', fac: 'quantum', id: 'crate2' });
+assert.equal(JSON.stringify([playerData.mats, playerData.tokens]), crateBefore);
+playerData.rep.quantum = 209;
 assert.equal(repLabel(playerData.rep.quantum), 'Exalted');
 playerData.rep.quantum = 299;
 send({ t: 'store', fac: 'quantum', id: 'writ' });
@@ -178,6 +196,52 @@ game.features.fronts.jobDone(
   player,
 );
 assert.equal(playerData.rep.quantum, 262, 'commission finale retains high standing');
+// Commission steps pay tokens and job standing to the commissioning faction, not the port's.
+const foreignPort = STELLARS['waystation-hub'];
+assert.equal(SYS[foreignPort.system].faction, 'spacer');
+for (const step of [0, 1, 2]) {
+  playerData.stellar = foreignPort.id;
+  playerData.sys = foreignPort.system;
+  playerData.rep.quantum = 0;
+  playerData.rep.spacer = 0;
+  playerData.tokens = { quantum: 0, spacer: 0 };
+  playerData.chains = { quantum: step };
+  playerData.missions = [
+    mockMission({
+      id: `chain-quantum-${step}`,
+      type: 'survey',
+      chain: { fac: 'quantum', step },
+      title: `Commission step ${step + 1}`,
+      done: true,
+      reward: 24000,
+    }),
+  ];
+  game.completeOnLanding(session, foreignPort);
+  const finale = step === 2;
+  assert.equal(playerData.chains.quantum, step + 1);
+  assert.equal(
+    playerData.rep.quantum,
+    2 + (finale ? 12 : 0),
+    `commission step ${step + 1} standing goes to the commissioning faction`,
+  );
+  assert.equal(
+    playerData.tokens.quantum,
+    3 + (finale ? 10 : 0),
+    `commission step ${step + 1} tokens go to the commissioning faction`,
+  );
+  assert.equal(playerData.rep.spacer, 0, 'filing port faction gains no commission standing');
+  assert.equal(playerData.tokens.spacer, 0, 'filing port faction gains no commission tokens');
+}
+// An ordinary job filed at the same port still pays the port's faction.
+playerData.missions = [
+  mockMission({ id: 'spacer-job', type: 'bounty', done: true, title: 'Spacer job', reward: 1000 }),
+];
+game.completeOnLanding(session, foreignPort);
+assert.equal(playerData.rep.spacer, 2);
+assert.equal(playerData.tokens.spacer, 1);
+playerData.stellar = 'meridian-yards';
+playerData.sys = STELLARS[playerData.stellar].system;
+playerData.tokens = { quantum: 1000 };
 playerData.rep.quantum = 250;
 const standingSide = fixtureQuest({
   qid: 'standing-side',

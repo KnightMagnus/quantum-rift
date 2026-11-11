@@ -94,6 +94,100 @@ assert.throws(() => new Database(corrupt), SyntaxError);
 assert.equal(fileSystem.readFileSync(path.join(corrupt, 'players.json'), 'utf8'), '{broken');
 assert.equal(fileSystem.readFileSync(path.join(corrupt, 'world.json'), 'utf8'), '{broken');
 
+// A missing save file restores the player/world pair from the newest valid backup.
+const backupPlayers = JSON.stringify({
+  veteran: { name: 'Veteran', salt: '00', hash: '00', created: 1, credits: 2_500_000 },
+});
+const backupWorld = JSON.stringify({ sites: { 'fixture-site': 'veteran' } });
+function savesWithBackups(prefix: string) {
+  const saves = tempDataDir(prefix);
+  const older = path.join(saves, 'backups', '2026-01-01T00-00-00');
+  const newerDamaged = path.join(saves, 'backups', '2026-01-01T00-30-00');
+  fileSystem.mkdirSync(older, { recursive: true });
+  fileSystem.mkdirSync(newerDamaged, { recursive: true });
+  fileSystem.writeFileSync(path.join(older, 'players.json'), backupPlayers);
+  fileSystem.writeFileSync(path.join(older, 'world.json'), backupWorld);
+  fileSystem.writeFileSync(path.join(newerDamaged, 'players.json'), '{broken');
+  fileSystem.writeFileSync(path.join(newerDamaged, 'world.json'), backupWorld);
+  return saves;
+}
+const warnings: string[] = [];
+const realWarn = console.warn;
+const realError = console.error;
+console.warn = (...parts: unknown[]) => void warnings.push(parts.join(' '));
+console.error = (...parts: unknown[]) => void warnings.push(parts.join(' '));
+try {
+  for (const kept of [undefined, 'players.json', 'world.json'] as const) {
+    warnings.length = 0;
+    const saves = savesWithBackups('rift-restore-');
+    const keptText =
+      kept === 'players.json'
+        ? '{"newer":{"name":"Newer","salt":"00","hash":"00","created":2}}'
+        : '{"sites":{}}';
+    if (kept) fileSystem.writeFileSync(path.join(saves, kept), keptText);
+    const reopened = new Database(saves);
+    assert.equal(
+      requiredFixtureValue(reopened.get('veteran')).credits,
+      2_500_000,
+      'returning captain keeps backed-up credits, kept=' + kept,
+    );
+    assert.equal(reopened.get('newer'), null, 'players and world come from one backup');
+    assert.deepEqual(reopened.world.sites, { 'fixture-site': 'veteran' }, 'station claim restored');
+    assert.equal(fileSystem.readFileSync(reopened.file, 'utf8'), backupPlayers);
+    assert.equal(fileSystem.readFileSync(reopened.wfile, 'utf8'), backupWorld);
+    const asideFiles = fileSystem.readdirSync(saves).filter((name) => name.includes('.unpaired-'));
+    if (kept) {
+      assert.equal(asideFiles.length, 1, 'present file is kept, not overwritten');
+      assert.ok(asideFiles[0].startsWith(kept + '.unpaired-'));
+      assert.equal(fileSystem.readFileSync(path.join(saves, asideFiles[0]), 'utf8'), keptText);
+    } else assert.deepEqual(asideFiles, []);
+    assert.ok(warnings.some((line) => line.includes('Skipping save backup 2026-01-01T00-30-00')));
+    assert.ok(warnings.some((line) => line.includes('from backup 2026-01-01T00-00-00')));
+    assert.equal(
+      requiredFixtureValue(new Database(saves).get('veteran')).credits,
+      2_500_000,
+      'second start loads the restored files without restoring again',
+    );
+    assert.equal(
+      fileSystem.readdirSync(saves).filter((name) => name.includes('.unpaired-')).length,
+      asideFiles.length,
+    );
+  }
+
+  // A committed journal holds both halves and wins over any backup.
+  const journaled = savesWithBackups('rift-restore-journal-');
+  fileSystem.writeFileSync(
+    path.join(journaled, 'checkpoint.json'),
+    JSON.stringify({
+      version: 1,
+      players: JSON.stringify({ fixture: { name: 'Fixture', credits: 123 } }),
+      world: JSON.stringify({ sites: { other: 'fixture' } }),
+    }),
+  );
+  const fromJournal = new Database(journaled);
+  assert.equal(requiredFixtureValue(fromJournal.get('fixture')).credits, 123);
+  assert.equal(fromJournal.get('veteran'), null);
+
+  // Without a usable backup, the missing file still starts fresh and says so.
+  warnings.length = 0;
+  const unbacked = tempDataDir('rift-restore-none-');
+  fileSystem.writeFileSync(path.join(unbacked, 'players.json'), backupPlayers);
+  const partial = new Database(unbacked);
+  assert.equal(requiredFixtureValue(partial.get('veteran')).credits, 2_500_000);
+  assert.deepEqual(partial.world.sites, {});
+  assert.ok(warnings.some((line) => line.includes('world.json is missing and no usable backup')));
+
+  // A new save folder stays quiet and empty.
+  warnings.length = 0;
+  const fresh = tempDataDir('rift-restore-fresh-');
+  assert.deepEqual(Object.keys(new Database(fresh).players), []);
+  assert.deepEqual(fileSystem.readdirSync(fresh), []);
+  assert.deepEqual(warnings, []);
+} finally {
+  console.warn = realWarn;
+  console.error = realError;
+}
+
 const game = new Game(
   JSON.parse(fileSystem.readFileSync(new URL('../shared/assets.json', import.meta.url), 'utf8')),
   new Database(tempDataDir('rift-auth-')),
@@ -218,6 +312,6 @@ assert.equal(
   'disconnect commits progress immediately without waiting for autosave',
 );
 console.log(
-  'Persistence/auth: password salts/checks, atomic roundtrip, rolling backups, malformed recovery, registration/relogin/throttle and safe save import passed.',
+  'Persistence/auth: password salts/checks, atomic roundtrip, rolling backups, malformed recovery, missing-file backup restore, registration/relogin/throttle and safe save import passed.',
 );
 process.exit(0);

@@ -2,10 +2,13 @@ import type { CoopCapabilities } from './features.ts';
 import type { Session } from './game.ts';
 import type { Entity, ShipStats, Space } from './space.ts';
 import type { CoopMessage } from './coop-contracts.ts';
+import type { SavedStory } from './save-contracts.ts';
+import { partTwoStages } from '../shared/part-two-story.ts';
 
 const suppressedEncounters = new WeakSet<Session>();
 
-/** Extra durability each live helper adds, as a share of the encounter's solo durability. */
+/**
+ * Extra durability each live helper adds, as a share of the encounter's solo durability. */
 export const SHARED_DURABILITY_PER_HELPER = 1;
 /** Extra outgoing damage each live helper adds, as a share of the encounter's solo damage. */
 export const SHARED_DAMAGE_PER_HELPER = 0.1;
@@ -25,16 +28,12 @@ interface SharedEncounterScaling {
 const scaledActors = new WeakMap<Entity, SharedEncounterScaling>();
 const scaledOwners = new WeakSet<Session>();
 
-/** Shared credit never accepts a different chapter, stage or story branch. */
+/** Shared credit needs the same chapter, stage and objective. Earlier choices count only
+ * when they change this stage's objective, such as the Part II campaign or aftercare route.
+ */
 export function sameStoryStep(owner: Session, helper: Session): boolean {
   const left = owner.data.story;
   const right = helper.data.story;
-  const choices = (session: Session) =>
-    JSON.stringify(
-      Object.entries(session.data.story?.flags || {})
-        .filter(([, value]) => typeof value === 'string')
-        .sort(([left], [right]) => left.localeCompare(right)),
-    );
   return !!(
     left?.active &&
     right?.active &&
@@ -42,8 +41,16 @@ export function sameStoryStep(owner: Session, helper: Session): boolean {
     left.step === right.step &&
     left.active.id === right.active.id &&
     (left.active.stage || 0) === (right.active.stage || 0) &&
-    choices(owner) === choices(helper)
+    stageObjectiveKey(left) === stageObjectiveKey(right)
   );
+}
+
+/** Serialized objective of the active stage; empty for chapters whose content ignores choices. */
+function stageObjectiveKey(story: SavedStory): string {
+  const active = story.active!;
+  if (!active.id.startsWith('p2-')) return '';
+  const objective = partTwoStages(story.flags || {}, active.id)[active.stage || 0];
+  return JSON.stringify(objective || null);
 }
 
 /** A suppressed personal encounter resumes after consent or the frozen flight ends. */
@@ -263,12 +270,11 @@ export function sharedStoryAction(
       helper.data.sys === session.data.sys,
   );
   if (!helpers.length) return game.toast(session, 'Ask helpers to choose READY TO HELP first.');
+  const progressHelpers = helpers.filter((helper) => sameStoryStep(session, helper));
   session.sharedStory = {
     mission: active.id,
     stage: active.stage || 0,
-    progressHelpers: helpers
-      .filter((helper) => sameStoryStep(session, helper))
-      .map((helper) => helper.id),
+    progressHelpers: progressHelpers.map((helper) => helper.id),
     ownerEntity: session.ent.id,
     helperEntities: Object.fromEntries(helpers.map((helper) => [helper.id, helper.ent!.id])),
     armada: session.data.armada!,
@@ -277,8 +283,7 @@ export function sharedStoryAction(
     until: Date.now() + 15 * 60_000,
   };
   // Remove duplicate mission actors without kills, bounties or progression.
-  for (const helper of helpers) {
-    if (!sameStoryStep(session, helper)) continue;
+  for (const helper of progressHelpers) {
     const removed = new Set<number>();
     for (const actor of space.ships.values())
       if (actor.story === helper.id && (actor.storyMission === active.id || actor.storyAlly))
@@ -296,6 +301,12 @@ export function sharedStoryAction(
       participant,
       `Shared story fight started by ${session.name}: ${helpers.map((helper) => helper.name).join(', ')}. Assistance lasts up to 15 minutes while both captains remain connected, in-system and in the Armada. Captains on the same chapter, stage and branch share objective progress; each reports their own chapter for rewards. Other helpers receive ordinary combat bounties. Story enemies get tougher for each helper still in the fight.`,
     );
+  for (const helper of helpers)
+    if (!progressHelpers.includes(helper))
+      game.toast(
+        helper,
+        `${session.name}'s fight is not your current story step, so it won't advance your chapter. Your own encounter stays in the system.`,
+      );
 }
 
 /** Membership withdrawal is permanent for a frozen roster, even if the captain later rejoins. */
