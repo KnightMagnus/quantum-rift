@@ -44,7 +44,10 @@ stock gun and turret overflow, player-visible hulls without a Codex category, mi
 files and nonlocal artwork paths. Diagnostics carry the authoring file; refit and
 Armada hull references and outfit weapon references are checked against the
 composed catalog. CLI checks exercise successful validation, failed staged-asset
-validation and invalid arguments.
+validation and invalid arguments. It also checks that composed hulls, Specialists
+and Index machines have distinct display names, that no wingmate ship shares a hull
+name, and that wingmates, arc officers and named Part II characters have distinct
+first names, with Captain Rooke's first name kept out of the officer name pools.
 
 NPC-only hulls retain the existing player-mount exception; unknown weapons still
 fail. Fixed weapons without corresponding outfits do not consume shop mounts,
