@@ -124,3 +124,7 @@ controls. Run the registered save-generator import/login and browser regressions
 keep the native Windows EXE build/export check in CI. Import/export must remain
 Solo-only and unavailable to online players. Do not remove the tool or its checks
 until the human explicitly requests its removal after beta.
+
+## Node.js verification runtime
+
+Use the latest build of the Node.js major required by package.json. If that major is unreleased, use its latest official nightly and verify the download against the official SHA-256 checksum. Do not substitute an older major for build or regression verification.

@@ -1,6 +1,8 @@
 {
   "schema": 1,
   "unit": [
+    "reliability-recovery.ts",
+    "quevari-defender.ts",
     "traffic-variety.ts",
     "generated-system-layout.ts",
     "coverage-inventory.ts",
@@ -979,7 +981,8 @@
         "save-feature-validation.ts",
         "save-postgres-restore.ts",
         "local-login.ts",
-        "gameplay-safety.ts"
+        "gameplay-safety.ts",
+        "reliability-recovery.ts"
       ],
       "asserts": "Password hashing/salts, registration/authentication/throttle/duplicate eviction, save import/export, prototype safety, atomic player/world roundtrip and rolling backup retention; Windows directory-sync capability, pending-journal recovery, denied file durability and both launch modes. Empty default seeds in online/Solo startup, preserved existing accounts/credentials and claims, explicit operator fixtures, no name-based radio unlocks; Python-generated saves across every hull/site/tier/port, real import/login and file-picker UI, invalid settings and overwrite denial, station-claim conflict/release/reload safety. Escape logout confirmation online/Solo, modal priority, cancel and prior pause, durable flight disconnect, cleared credentials/private UI state, refreshed Solo slots, repeated account switching without reload or auto-reconnect. Ordered detached cargo/tutorial migration and disposable restore rehearsal preserve source bytes, reject corrupt/unsupported ledgers, tutorial state and malformed/unreadable local snapshots, and retain journal freeze/reopen behavior; production native CAS fixture drills cover frozen retries, pre/postcommit restart, stale writers and exact co-op fleet/directive refunds without duplicate balances or log entries. Core import catalog/reference/balance validation, known active story/research/arc lookups and continuous loan fields, and one complete replacement checkpoint preserve fractions and legacy defaults, deny invalid inventory before journal installation, and recover old-or-complete-new slots and station ownership across four real SIGKILL boundaries. Present-field feature validation rejects corrupt compatibility state before local/native load, journal recovery, import and login mutations; committed synthetic default/dock/progress fixtures exercise real login and repeat reloads. Disposable native PostgreSQL pg_dump/pg_restore preserves storage permissions/CAS versions and authenticated identity, exact refunds and restart logs in a separate database. Local network handshakes use bounded background password derivation, scoped credentials, durable admission, disconnect cancellation and bounded new-account/socket admission."
     },
@@ -1033,7 +1036,13 @@
       "id": "fronts",
       "owners": ["server/fronts.ts"],
       "services": ["fronts"],
-      "tests": ["v06.ts", "v09.ts", "faction-standing.ts", "quest-recovery.ts"],
+      "tests": [
+        "v06.ts",
+        "v09.ts",
+        "faction-standing.ts",
+        "quest-recovery.ts",
+        "reliability-recovery.ts"
+      ],
       "asserts": "Invasion start/damage/win, anomalies/events/goals, faction store standing and convoy/rescue/survey/smuggling jobs."
     },
     {
@@ -1217,7 +1226,7 @@
       "id": "mining-existing",
       "owners": ["server/space.ts", "server/game.ts"],
       "services": [],
-      "tests": ["v04.ts", "v05.ts", "v252.ts"],
+      "tests": ["v04.ts", "v05.ts", "v252.ts", "reliability-recovery.ts"],
       "asserts": "Existing asteroid damage/ore pickup/processing/charting, officer mining bonus and visible mining guidance. Staged cutting/survey behavior is mapped separately under mining-cutting."
     },
     {
@@ -1971,6 +1980,7 @@
         "server/space.ts",
         "server/game.ts",
         "server/story.ts",
+        "server/quevari-defender.ts",
         "server/jobs.ts",
         "shared/story.ts",
         "shared/story-continuation.ts",
@@ -1982,21 +1992,24 @@
         "server/index-fleet.ts",
         "shared/index-fleet.ts",
         "server/shared-story.ts",
-        "shared/story-pacing.ts"
+        "shared/story-pacing.ts",
+        "server/hail.ts"
       ],
       "services": ["story", "quests", "nhal", "indexFleet"],
       "tests": [
         "story-continuation.ts",
         "story-encounters.ts",
+        "quevari-defender.ts",
         "quest-recovery.ts",
         "eventide.ts",
         "story-realities-browser.ts",
         "index-presentation.ts",
         "ui-polish-browser.ts",
         "shared-story.ts",
-        "story-pacing.ts"
+        "story-pacing.ts",
+        "reliability-recovery.ts"
       ],
-      "asserts": "Docked chapter choices and landing completions refresh port offers without autoaccepting; bounded same-port quest deliveries settle once; explicitly authored surveys and salvage advance in flight while physical deliveries and final scenes remain docked. Owner-scoped encounter destruction credit independent of bounty and final hitter, exact-step and once-only guards, absent-owner denial, surviving-target death/reentry and bounded disengaged-target recovery; captain-scoped decisions, finale availability branches, denial and persistence; declared child helpers/story-clarity.ts covers faction/count arrival grammar, zero/nonzero rewards, unfinished investigation hints and optional officer finale text; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups. Mixed large Index hull envelopes retain separated saved-roster berths under actual neutral movement without reissuing health or replacement budgets. Table departure preserves the player ship at a resumable safe Rift standoff, denies unavailable hulls, freezes only the viewing captain and wing with bounded protection, rejects early completion and releases once after a validated acknowledgment. The automatically accepted preparation objective projects actual completed components, fitting and crossing without occupying quest slots or granting items. Shared fights freeze explicit opt-in helpers; only owner progresses; disconnect, departure, expiry and late opt-in deny access. Non-choice completed combat reports accept same-faction public landings; ordinary transport on the active route receives a listed preparation premium."
+      "asserts": "Capital defender awakening preserves player hulls and docks, spawns a single Que\u2019vari local patrol with no retreat/age-out, denies boarding and preserves legacy hull records with one-time compensation. Docked chapter choices and landing completions refresh port offers without autoaccepting; bounded same-port quest deliveries settle once; explicitly authored surveys and salvage advance in flight while physical deliveries and final scenes remain docked. Owner-scoped encounter destruction credit independent of bounty and final hitter, exact-step and once-only guards, absent-owner denial, surviving-target death/reentry and bounded disengaged-target recovery; captain-scoped decisions, finale availability branches, denial and persistence; declared child helpers/story-clarity.ts covers faction/count arrival grammar, zero/nonzero rewards, unfinished investigation hints and optional officer finale text; faction investigations, keepers and unique harness progression; hidden place gating and reversible reward-free crossing; bounded native Nhal and transforming Index workgroups. Mixed large Index hull envelopes retain separated saved-roster berths under actual neutral movement without reissuing health or replacement budgets. Table departure preserves the player ship at a resumable safe Rift standoff, denies unavailable hulls, freezes only the viewing captain and wing with bounded protection, rejects early completion and releases once after a validated acknowledgment. The automatically accepted preparation objective projects actual completed components, fitting and crossing without occupying quest slots or granting items. Shared story controls pass the wire parser and real message boundary. Shared fights freeze explicit opt-in helpers; same-step, same-branch helpers share objective progress without duplicate encounters or duplicate credit; disconnect, departure, expiry and late opt-in deny access. Follow routing warns the named leader and helper when story access blocks the destination. Non-choice completed combat reports accept same-faction public landings; ordinary transport on the active route receives a listed preparation premium. The awakened capital defender remains local under threat, forced departure AI and direct jump removal; retirement archives legacy loadouts and compensates their value without cargo or passenger loss."
     },
     {
       "id": "release-platform-gates",
