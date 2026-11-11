@@ -26,6 +26,10 @@ export interface StoredShip {
 }
 /** Per-captain choices never mutate shared faction or market state. */
 export interface StoryFlags {
+  /** Allocation of recovered Freefolk life-support pumps. */
+  p2_freefolk?: 'shelter' | 'clinic';
+  /** Consent policy for the rescued Unsworn witnesses. */
+  p2_unsworn?: 'public' | 'protected';
   p2_entry?: 'hearing' | 'salvage' | 'refugees';
   p2_route?: 'private' | 'vey' | 'command';
   p2_supply?: 'grain' | 'battery';

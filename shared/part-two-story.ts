@@ -12,6 +12,8 @@ export type PartTwoObjective = {
   brief: string;
   capture?: boolean;
   mark?: string;
+  /** Named lead target; additional ships remain escorts. */
+  targetName?: string;
 };
 const port = (id: string) => `mw-${id}`;
 const haul = (dest: string, brief: string, mark?: string): PartTwoObjective => ({
@@ -128,7 +130,10 @@ export const PART_TWO_OBJECTIVES: Record<string, PartTwoObjective[]> = {
   ],
   'p2-moon': [
     haul('vigils-rest', 'Compare the lunar observatory logs with Earthlight measurements.'),
-    haul('threshold', 'Ask Terra to appoint its own delegates, including nonhuman witnesses.'),
+    haul(
+      'threshold',
+      'Ask Terra to appoint a human delegation carrying recorded testimony from its Rift neighbours.',
+    ),
     haul(
       'ledger-nine',
       'Deliver Terra’s independently accredited delegation. No mandate transfers its sovereignty.',
@@ -155,6 +160,53 @@ export const PART_TWO_OBJECTIVES: Record<string, PartTwoObjective[]> = {
     haul(
       'black-anchorage',
       'Hear the Keeper of Departures and the Measure aboard Gargantua Prime.',
+    ),
+  ],
+  'p2-freefolk': [
+    {
+      ...rescue(
+        'ledger-nine',
+        'ledger-nine',
+        2,
+        'Rescue Captain Lia Moss’s two stranded repair tenders, then meet her at Ledger Nine.',
+        'freefolk_crews',
+      ),
+      hull: 1043,
+      faction: 'freefolk',
+    },
+    haul(
+      'ferrum',
+      'Ask Holt for the replacement life-support pumps promised to the rescued crews.',
+    ),
+    haul(
+      'ledger-nine',
+      'Bring the pumps to Lia Moss; choose whether her crew repairs the shelter or the mobile clinic.',
+      'freefolk_pumps',
+    ),
+  ],
+  'p2-unsworn': [
+    {
+      ...rescue(
+        'ferrum',
+        'hearthline',
+        2,
+        'Recover Amara Dene’s two disabled Unsworn transports outside Ferrum, then bring the testimony to Hearthline.',
+        'unsworn_survivors',
+      ),
+      hull: 1051,
+      faction: 'unsworn',
+    },
+    haul(
+      'vigils-rest',
+      'Present Dene’s testimony to Saye. Choose a public hearing or protected private evidence.',
+      'unsworn_testimony',
+    ),
+  ],
+  'p2-aftercare': [
+    haul(
+      'saint-orra',
+      'Deliver the reconstruction manifest to Saint Orra and meet Rooke at the memorial.',
+      'aftercare',
     ),
   ],
   'p2-names': [haul('saint-orra', 'Visit Saint Orra’s memorial and the people who survived.')],
@@ -391,7 +443,7 @@ export const PART_TWO: StoryMission[] = [
     'p2-broadcast',
     'A Victory Broadcast',
     'hearthline',
-    'Rauth wants your endorsement. Both Pale Meridian records are still in your hold. Decide who receives independent copies.',
+    'Rauth meets you in the broadcast booth. “You saw what they did at Pale Meridian. Tell the fleet.” Saye sets the second recorder beside the first. “Then tell them what we did before that.” Rauth keeps his hand on the microphone. “There will be another attack while you argue.” Both records are in your custody. You must choose who receives copies.',
     'The broadcast office records your instructions.',
     'p2_records',
     [
@@ -431,7 +483,7 @@ export const PART_TWO: StoryMission[] = [
     'What the Moon Saw',
     'ledger-nine',
     'The lunar instruments still catch Earthlight: the discarded outcome where Earth stayed, showing through the Deep. The living Earth is in the Rift. Terra must choose its own delegation and the terms of contact.',
-    'Terra’s delegates include nonhuman witnesses. They authorise contact themselves; no one has ceded their sovereignty.',
+    'Terra’s human delegates carry recorded testimony from their Rift neighbours. They authorise contact themselves; no one has ceded their sovereignty.',
     'p2_contact',
     [
       ['family', 'Protect family contact'],
@@ -487,4 +539,172 @@ export const PART_TWO: StoryMission[] = [
     'Go to Saint Orra. Read the memorial and meet the survivors before returning to flight.',
     'The memorial records the saved outcome, not the outcome anyone promised.',
   ),
+  mission(
+    'p2-freefolk',
+    'People Between Ports',
+    'saint-orra',
+    'Lia Moss calls from a Freefolk repair tender. “Our ship has a human captain, a human crew and an Index engine. Everyone sees the engine first.” Two tenders have lost power near Ledger Nine. Recover their crews, then help Moss find replacement life-support pumps. She has promised the same pumps to a shelter and a mobile clinic.',
+    'Moss signs the receipt herself. “Put our names on it. Not dependent assets. People.” The rescued crews can work again.',
+    'p2_freefolk',
+    [
+      ['shelter', 'Repair the family shelter; the mobile clinic must wait'],
+      ['clinic', 'Repair the mobile clinic; the shelter stays crowded'],
+    ],
+  ),
+  mission(
+    'p2-unsworn',
+    'An Oath Not Taken',
+    'ledger-nine',
+    'Amara Dene waits beside the dock registry. “Refusing an oath did not make us stop being human. It made our names disappear from the passenger lists.” Two Unsworn transports are disabled near Ferrum. Rescue them and carry their testimony to Saye. Dene will not surrender their names without deciding how the evidence will be used.',
+    'Saye accepts the testimony without demanding an oath. Dene checks that the witnesses, not command, hold the original.',
+    'p2_unsworn',
+    [
+      ['public', 'Let the consenting witnesses speak at an open hearing'],
+      ['protected', 'Keep the testimony sealed to protect their families'],
+    ],
+  ),
+  mission(
+    'p2-aftercare',
+    'The Work That Remains',
+    'vigils-rest',
+    'Rooke brings a reconstruction manifest instead of a battle order. “The crews you saved still need somewhere to live. The crews we lost still have families.” Complete the recovery work your campaign left behind, then meet him at Saint Orra.',
+    'At Saint Orra, Rooke reads the returned crews into the harbour register. Moss and Dene stand with their own people. The memorial keeps the names of those who did not return.',
+  ),
 ];
+
+/** Personal recovery work follows the saved campaign; shared ports and hostility stay unchanged. */
+export function partTwoAftercare(flags: StoryFlags): PartTwoObjective[] {
+  const harsh = ['ashfall', 'ascendant'].includes(flags.p2_ending || '');
+  return [
+    {
+      ...rescue(
+        harsh ? 'pale-meridian' : 'sirius-bastion',
+        'ledger-nine',
+        harsh ? 3 : 2,
+        harsh
+          ? 'Recover the surviving archive crews displaced by your offensive; report at Ledger Nine.'
+          : 'Recover the stranded ceasefire inspectors and report at Ledger Nine.',
+        'aftercare_crews',
+      ),
+      hull: 1045,
+      faction: 'freefolk',
+    },
+    haul(
+      flags.p2_supply === 'battery' ? 'ferrum' : 'hearthline',
+      flags.p2_supply === 'battery'
+        ? 'Collect overdue grain-line machinery from Holt at Ferrum.'
+        : 'Collect the frontier repair parts held at Hearthline.',
+      'aftercare_supplies',
+    ),
+    ...PART_TWO_OBJECTIVES['p2-aftercare'],
+  ];
+}
+
+/** Every recorded choice is acknowledged by the people affected, not by changing the shared world. */
+export function partTwoMemorial(flags: StoryFlags): string {
+  const lines: string[] = [
+    'At Saint Orra, Rooke keeps two lists: crews returned and people still missing.',
+  ];
+  const responses: Array<[keyof StoryFlags, Record<string, string>]> = [
+    [
+      'p2_entry',
+      {
+        hearing:
+          'Saye preserved the hearing transcript as the first public record of your arrival.',
+        salvage:
+          'The dockworkers who hid your arrival sign their real names below the salvage clearance.',
+        refugees: 'The families who vouched for your arrival have a berth beside the memorial.',
+      },
+    ],
+    [
+      'p2_route',
+      {
+        private:
+          'Vey’s visitors still request passage from you; command never received the calibration.',
+        vey: 'Vey files each escorted crossing under the limits you gave her.',
+        command:
+          'Rauth’s transit authorisation is displayed beside the casualty report; you gave command the complete procedure.',
+      },
+    ],
+    [
+      'p2_supply',
+      {
+        grain:
+          'The grain-line workers bring bread. Holt still has a queue for the frontier battery.',
+        battery:
+          'The battery crews send a repaired shield plate. The grain-line families still wait for machinery.',
+      },
+    ],
+    [
+      'p2_prisoners',
+      {
+        free: 'The freed conscripts attend in civilian clothes.',
+        transfer: 'Vey returns the transferred prisoners’ signed custody receipts.',
+        sentence:
+          'Dene leaves empty places for the conscripts whose sentence you allowed to stand.',
+        unsworn: 'The escaped conscripts arrive with Dene, without uniforms or an oath.',
+      },
+    ],
+    [
+      'p2_records',
+      {
+        publish: 'Both Pale Meridian records play in the public reading room.',
+        delegates: 'Civilian delegates hold both original records; neither fleet can recall them.',
+        official: 'Saye keeps the unbroadcast recorder beside the official account you endorsed.',
+      },
+    ],
+    [
+      'p2_witness',
+      {
+        reject:
+          'Maren Tell brings the independent navigation backup; War Ledger does not speak for you.',
+        disclose: 'War Ledger’s full disclosure is filed with the civilian witnesses.',
+        rebuild:
+          'War Ledger submits corrections to its account. Trust is still work, not a verdict.',
+      },
+    ],
+    [
+      'p2_relay',
+      {
+        independent:
+          'The independent relay carries family messages between the inspection reports.',
+        custody: 'The relay’s human custodians send their inspection log under your name.',
+        destroy:
+          'Moss brings a casing from the relay you destroyed; its local archive is not recoverable.',
+      },
+    ],
+    [
+      'p2_contact',
+      {
+        family: 'Terra’s first messages are read privately by the families who asked for them.',
+        scholarly: 'Saye gives Terra’s researchers copies of the observatory logs.',
+        disclosure:
+          'The delegates publish their account in their own names, not as annexed citizens.',
+      },
+    ],
+    [
+      'p2_expedition',
+      {
+        joint: 'Human and Index witnesses sign the expedition log separately.',
+        military: 'Vey returns the military expedition’s sealed orders to the public archive.',
+        private: 'Your private expedition log is deposited with Saye, beyond fleet command.',
+      },
+    ],
+    [
+      'p2_makers',
+      {
+        talks:
+          'The makers’ admissions remain on the hearing record; their testimony grants them no authority.',
+        stand_down: 'The agreed waking conditions are copied beside the handover records.',
+        maps: 'The old maps bear your release authorisation and the campaign casualty count.',
+        border:
+          'The border crews send the civilian line’s watch register, not a victory proclamation.',
+      },
+    ],
+  ];
+  for (const [field, options] of responses) {
+    const value = flags[field];
+    if (typeof value === 'string' && options[value]) lines.push(options[value]);
+  }
+  return lines.join('\n\n');
+}

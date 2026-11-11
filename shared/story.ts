@@ -12,6 +12,8 @@ export type StoryMission = {
   /** Mission objective archetype. */
   type: string;
   capture?: boolean;
+  /** Named lead opponent for an authored encounter. */
+  targetName?: string;
 
   /** Destination station ID for courier/transport missions. */
   dest?: string;
@@ -61,7 +63,9 @@ export type StoryMission = {
     | 'p2_relay'
     | 'p2_contact'
     | 'p2_expedition'
-    | 'p2_makers';
+    | 'p2_makers'
+    | 'p2_freefolk'
+    | 'p2_unsworn';
   choices?: Array<{ value: string; label: string }>;
 
   /** Narrative dialog text presented when offered. */
