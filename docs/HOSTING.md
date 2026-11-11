@@ -78,7 +78,9 @@ The host’s `friend-data/` contains the shared world and captain accounts, usin
 the local database journal. Restart with the same directory to continue that
 universe. Stop the server cleanly before copying its entire save directory for a
 backup or moving it to another host. Keep backups private: they include account
-credentials as well as progress.
+credentials as well as progress. If `players.json` or `world.json` is missing at
+startup, the server restores both from the newest usable copy in `backups/` and
+prints which one it used.
 
 Run only one host per save directory, even on different ports. Before opening
 the database, the server exclusively creates `.friend-host.lock/` in that
