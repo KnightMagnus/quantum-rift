@@ -221,6 +221,10 @@ export function validateNarrativeContent(
     visited.add(id);
   };
   for (const id of sides.keys()) visit(id);
+  source = 'shared/galaxy.ts (composed ports)';
+  for (const port of Object.values(STELLARS))
+    for (const commodity of Object.keys(port.prices || {}))
+      reference(commodity, `stellars[${port.id}].prices.${commodity}`, commodities, 'commodity');
   source = 'shared/radio-stations.ts';
   reference(SCIENTIST_STORY, 'SCIENTIST_STORY', sideIds, 'side story');
   return diagnostics;

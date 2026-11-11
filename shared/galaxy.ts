@@ -1508,7 +1508,7 @@ const blackAnchorage: StarSystem = {
       r: 400,
       svc: 'LTORB',
       tech: 4,
-      prices: { food: 0, equipment: 0, medicine: 0 },
+      prices: { food: 0, equipment: 0, medical: 0 },
       desc: 'The makers’ ark arrived whole. The refuge supports translation and archival analysis. Opening its throat to a fleet would endanger everyone aboard.',
     },
   ],

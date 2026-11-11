@@ -23,7 +23,7 @@ function body(
     art,
     kind,
     color: '#8da8bc',
-    prices: { food: 0, equipment: 0, medicine: 0, metal: 0 },
+    prices: { food: 0, equipment: 0, medical: 0, metal: 0 },
     svc: kind === 'station' ? 'LTORBY' : 'L',
     tech: 3,
   };

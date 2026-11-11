@@ -640,3 +640,17 @@ assert.match(usage.stderr, /Usage:/);
 console.log(
   'Composed ship and narrative content, malformed references, prerequisite cycles, fitting and CLI diagnostics pass.',
 );
+
+const port = Object.values(STELLARS).find((entry) => entry.prices)!;
+port.prices!.medicine = 0;
+try {
+  assert.ok(
+    validateNarrativeContent(assets).some(
+      (diagnostic) =>
+        diagnostic.path === `stellars[${port.id}].prices.medicine` &&
+        diagnostic.message.includes('unknown commodity'),
+    ),
+  );
+} finally {
+  delete port.prices!.medicine;
+}
