@@ -240,7 +240,6 @@ shooter.inp = { fire1: 1, fire2: 1 };
 shooter.guns = [
   { p: { range: 100, speed: 600, reload: 1 }, ammo: Infinity, cd: 0, sec: false },
   { p: { range: 1000, speed: 600, rocket: true }, ammo: 10, cd: 0, sec: true },
-  { p: { bay: true }, ammo: 3, cd: 0, sec: true },
 ].map(mockWeaponMount);
 enemyEntity.x = 500;
 shooter.a = Math.PI / 2;
@@ -260,11 +259,7 @@ assert.equal(
   1,
   'assist fires an aligned in-range secondary while primary is out of range',
 );
-assert.equal(
-  fired[0][1],
-  shooter.guns[1],
-  'the secondary mount fires, not the manual-only fighter bay',
-);
+assert.equal(fired[0][1], shooter.guns[1], 'the in-range secondary mount fires');
 fired.length = 0;
 enemyEntity.x = 50;
 shooter.a = Math.PI;
@@ -298,6 +293,30 @@ assert.equal(fired.length, 2, 're-enabling restores ordinary automated firing');
 enemyEntity.disabled = true;
 Space.prototype.weapons.call(weaponSpace, shooter);
 assert.equal(fired.length, 2, 'disabled target gets no new intentional shot');
+// Assist launches fighter bays at its target the way NPC carriers do.
+// Manual pilots still launch and recall them only with F (toggleDrones).
+enemyEntity.disabled = false;
+const fighterBay = mockWeaponMount({ p: { bay: true }, ammo: 3, cd: 0, sec: true });
+shooter.guns = [fighterBay];
+fired.length = 0;
+Space.prototype.weapons.call(weaponSpace, shooter);
+assert.deepEqual(
+  fired.map((call) => [call[1], call[2]]),
+  [[fighterBay, enemyEntity]],
+  'Assist launches its fighter bay at the combat target',
+);
+service.command(leader, { op: 'missiles', on: false });
+fired.length = 0;
+Space.prototype.weapons.call(weaponSpace, shooter);
+assert.equal(fired.length, 1, 'the missile toggle does not hold fighter bays');
+service.command(leader, { op: 'missiles', on: true });
+shooter.autoCombat = false;
+shooter.inp = { fire1: 1, fire2: 1 };
+shooter._f2 = 1;
+fired.length = 0;
+Space.prototype.weapons.call(weaponSpace, shooter);
+assert.equal(fired.length, 0, 'manual flight never launches bays from the trigger');
+shooter.autoCombat = true;
 // Guided secondaries must not spend finite ammo outside their nominal travel range.
 enemyEntity.disabled = false;
 shooter.guns = [
@@ -630,7 +649,7 @@ assert.equal(
 selectionAssist.stop(selectedSession);
 assert.equal(selectedLead.autoCombat, false);
 console.log(
-  'Combat assist: fleet/group power, focus/handoff, authority revocation, stop orders, stale aggression, range/arc, preselected-target pursuit and secondary firing and manual-only bays passed.',
+  'Combat assist: fleet/group power, focus/handoff, authority revocation, stop orders, stale aggression, range/arc, preselected-target pursuit and secondary firing and Assist fighter-bay launches passed.',
 );
 
 // Both NPCs and Assist use the shared primary-range flight policy.

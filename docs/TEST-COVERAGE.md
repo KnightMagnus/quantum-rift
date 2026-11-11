@@ -1734,7 +1734,7 @@ uncontested survival does not count. Combat Assist stops attacking disabled ship
 so a disable need not become a kill. Newcomer protection is explicitly disabled.
 The early-game lead uses its stock loadout; the larger fleets also receive all
 station research and Epic level-10, rank-3 combat officers. Combat Assist steers
-and fires, with nearest-hostile acquisition, but no retreat or manual bay launch.
+and fires, with nearest-hostile acquisition and automatic bay launch, but no retreat.
 The simulation uses isolated in-memory storage and a virtual clock at the normal
 physics tick rate. It does not establish human win rates or test every
 loadout, faction, system or multiplayer combination.
@@ -1849,12 +1849,15 @@ health multiplier as an experiment; `--export PATH` retains full bounded capture
 The scripted 3,200-unit retreat policy is not a human skill or optimal-kiting claim.
 
 `combat-maneuver.ts` calls the existing `Space.fight` entry point with a live
-steering fixture. Thirty hand-authored cases check primary/secondary battery
+steering fixture. Hand-authored cases check primary/secondary battery
 selection, empty ammo and point-defense/bay exclusion, the unarmed fallback,
 relative-velocity lead, approach/retreat thresholds, capital circling parity and
 speed cutoffs. Assertions preserve attacker input, mount and target identities,
 trigger fields and assignment order. NPC and player-owned attackers use the same
-policy. The fixture replaces steering without constructing another simulation.
+policy. Assist capitals with outfitted turrets steer the same path as a hull-armed
+NPC capital, which reports no outfitted turrets, instead of circling. `combat-assist.ts`
+checks that Assist launches fighter bays at its target, that the missile setting does
+not hold bays, and that manual trigger input never launches them. The fixture replaces steering without constructing another simulation.
 
 The same assertions pass before and after the move to
 `server/combat-maneuver.ts`. The existing registered `combat-playability.ts`

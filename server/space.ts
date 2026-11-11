@@ -2674,7 +2674,9 @@ export class Space {
         (!entity2 || !this.game.combatAssist.valid(this, this.root(entity), entity2))
       )
         continue;
-      if (weapon.bay && entity.player) continue; // bays launch and recall on a tap of F (toggleDrones)
+      // Manual pilots launch and recall bays with F (toggleDrones). Assist launches them
+      // at its target the same way NPC carriers do.
+      if (weapon.bay && entity.player && !automated) continue;
       const wantFire = entity.autoCombat
         ? !!entity2
         : entity.player
