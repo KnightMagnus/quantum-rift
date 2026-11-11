@@ -78,7 +78,18 @@ export interface LegacyFleet {
   name: string;
   leader: string;
 }
+/** Version-one deterministic gameplay streams stored with the world checkpoint. */
+export interface RandomStreamsState {
+  /** Algorithm/identity schema version. Unknown versions must not be silently reseeded. */
+  version: 1;
+  /** Root seed shared by independently derived stream identities. */
+  rootSeed: number;
+  /** Current algorithm state for each initialized identity. */
+  states: Record<string, number>;
+}
 export interface FeatureWorldState {
+  /** Absent on legacy worlds; initialized once without changing existing gameplay data. */
+  randomStreams?: RandomStreamsState;
   colonies: Record<string, ColonyState>;
   orders: ExchangeOrder[];
   nextOrder: number;

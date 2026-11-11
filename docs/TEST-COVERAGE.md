@@ -1743,15 +1743,22 @@ The simulation uses isolated in-memory storage and a virtual clock at the normal
 physics tick rate. It does not establish human win rates or test every
 loadout, faction, system or multiplayer combination.
 
-`economy-random-isolation.ts` checks that living-economy system states draw from their
-own stream (`server/economy-random.ts`). Game construction takes the same ambient draws
-with the original and the full trade-port roster across eight seeds, and a fixed seed
-reproduces the economy states. Later state re-rolls, including after a reconnect, take
-no ambient draws. Solo/friend saves and authoritative checkpoints keep active states
-across reload and store no stream state; a restarted Game takes a new root seed. A
-fixed-seed combat arrival and an Index survey tour match with and without the extra
-ports. The survey run holds its own system's state fixed, because which systems get a
-state still depends on the roster.
+`economy-random-isolation.ts` checks checkpointed economy and per-system simulation
+streams (`server/random-streams.ts`). Game construction takes the same ambient draws
+with the original and full trade-port rosters across eight seeds. Extra economy draws
+and another system's draws do not advance the selected simulation. The same root seed
+reproduces each stream; Solo/friend saves and authoritative checkpoints resume their
+exact positions after reload. Reconnect retains the existing world streams. Fixed-seed
+combat arrival and Index survey runs match with and without extra ports. The survey
+holds its own living state fixed because market allocation is still roster-dependent.
+`economy-random-native.ts` bundles the production stream and checkpoint adapters into
+a test-only RPC runtime. Actual ES5 execution in Nakama/Goja matches Node sequence
+values and PostgreSQL state through reauthentication and a real Nakama process
+restart. It does not replace integrated Game match/network/recovery coverage.
+See [RNG ownership](RANDOM-STREAMS.md) for identities, migration and remaining ambient
+call sites. The initialization fixture changes only `world.states`: dedicated economy
+seed derivation replaces the old roster-dependent global draws. Other initialization,
+world generation and topology contracts remain unchanged.
 
 `combat-jobs-playability.ts` covers mission and reward behavior. The combat tests
 run in the unit regression lane through the canonical manifest; their supporting

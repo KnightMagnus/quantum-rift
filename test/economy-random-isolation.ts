@@ -11,7 +11,7 @@ import type { GameStorage } from '../server/game-storage.ts';
 import type { Entity } from '../server/space.ts';
 import { DT } from '../shared/rules.ts';
 import { SYS } from '../shared/galaxy.ts';
-import { createEconomyRandom, economyStreamSeed } from '../server/economy-random.ts';
+import { initializeRandomStreams, randomStream } from '../server/random-streams.ts';
 import { DB as Database } from '../server/db.ts';
 import { NakamaDatabase } from '../server/nakama-storage.ts';
 import { Game } from '../server/game.ts';
@@ -109,29 +109,50 @@ function warmup(storage: GameStorage, seed: number): Warmup {
 }
 
 try {
-  // The stream contract: same seed, same sequence; no ambient draws once seeded.
+  // Named streams own independent, persisted state with repeatable seed derivation.
   {
     seedAmbient(1);
-    const first = createEconomyRandom(186),
-      second = createEconomyRandom(186),
-      other = createEconomyRandom(187);
+    const storage = new Database(saveDirectory());
+    const repeatedStorage = new Database(saveDirectory());
+    initializeRandomStreams(storage, 186);
+    initializeRandomStreams(repeatedStorage, 186);
+    const first = randomStream(storage, 'living-economy');
+    const simulation = randomStream(storage, 'simulation:emberlight');
+    const otherSystem = randomStream(storage, 'simulation:other');
+    const second = randomStream(repeatedStorage, 'living-economy');
+    const repeatedSimulation = randomStream(repeatedStorage, 'simulation:emberlight');
     const sequence = Array.from({ length: 64 }, () => first.next());
     assert.deepEqual(
       Array.from({ length: 64 }, () => second.next()),
       sequence,
-      'one seed reproduces the economy sequence',
     );
-    assert.notDeepEqual(
-      Array.from({ length: 64 }, () => other.next()),
-      sequence,
-      'another seed gives another sequence',
+    for (let draw = 0; draw < 1000; draw++) {
+      first.next();
+      otherSystem.next();
+    }
+    assert.deepEqual(
+      Array.from({ length: 64 }, () => simulation.next()),
+      Array.from({ length: 64 }, () => repeatedSimulation.next()),
+      'economy and another system cannot advance this simulation stream',
     );
-    for (let draw = 0; draw < 1000; draw++) first.next();
-    assert.equal(ambientDraws, 0, 'economy draws never advance the ambient stream');
-    assert.notEqual(economyStreamSeed(186), 186, 'the stream identity is mixed into its seed');
-    createEconomyRandom();
-    assert.equal(ambientDraws, 1, 'an unseeded economy stream takes exactly one ambient draw');
+    assert.equal(ambientDraws, 0, 'explicitly seeded streams consume no ambient draws');
+    initializeRandomStreams(new Database(saveDirectory()));
+    assert.equal(ambientDraws, 1, 'legacy migration takes exactly one ambient root seed');
     restoreAmbient();
+  }
+
+  // Invalid persisted versions and malformed stream states never silently reseed.
+  for (const invalid of [
+    { version: 2, rootSeed: 186, states: {} },
+    { version: 1, rootSeed: -1, states: {} },
+    { version: 1, rootSeed: 186, states: [] },
+    { version: 1, rootSeed: 186, states: { 'living-economy': NaN } },
+    null,
+  ]) {
+    const storage = new Database(saveDirectory());
+    storage.world.randomStreams = invalid as never;
+    assert.throws(() => initializeRandomStreams(storage), /invalid gameplay random state/);
+    assert.equal(storage.world.randomStreams, invalid, 'rejected state is preserved for recovery');
   }
 
   // Warmup with extra trade ports leaves the simulation stream where it was.
@@ -191,7 +212,7 @@ try {
     );
   }
 
-  // Save/load and service restart: states persist, the stream does not.
+  // Save/load and service restart retain both active states and every stream position.
   for (const [mode, open] of [
     ['Solo/friend save', () => new Database(saveDirectory())],
     ['authoritative checkpoint', () => new NakamaDatabase(memoryBackend())],
@@ -199,16 +220,30 @@ try {
     const storage = open();
     const first = warmup(storage, seed);
     const savedStates = structuredClone(first.game.db.world.states);
+    const economy = randomStream(storage, 'living-economy');
+    const simulation = randomStream(storage, 'simulation:emberlight');
+    economy.next();
+    simulation.next();
     first.game.db.touch();
     first.game.db.flush();
     const reopened =
       storage instanceof Database ? new Database(storage.dir) : reopenCheckpoint(storage);
+    assert.deepEqual(
+      reopened.world.randomStreams,
+      storage.world.randomStreams,
+      `${mode}: all stream state survives checkpoint reload`,
+    );
     const restarted = warmup(reopened, seed + 1);
     assert.deepEqual(restarted.game.db.world.states, savedStates, `${mode}: states survive reload`);
-    assert.equal(
-      Object.keys(restarted.game.db.world).filter((key) => /random|rng|seed/i.test(key)).length,
-      0,
-      `${mode}: no economy stream state is saved`,
+    assert.deepEqual(
+      Array.from({ length: 64 }, () => randomStream(reopened, 'living-economy').next()),
+      Array.from({ length: 64 }, () => economy.next()),
+      `${mode}: economy resumes exactly`,
+    );
+    assert.deepEqual(
+      Array.from({ length: 64 }, () => randomStream(reopened, 'simulation:emberlight').next()),
+      Array.from({ length: 64 }, () => simulation.next()),
+      `${mode}: simulation resumes exactly`,
     );
   }
   restoreAmbient();

@@ -38,8 +38,8 @@ import { clampStanding } from '../shared/reputation.ts';
 import { SYSTEMS, SYS as systemsById, FACTIONS, COMMODITIES } from '../shared/galaxy.ts';
 import { STATES, STATE_SHARE, STATE_MIN, TRADE_IMPACT } from '../shared/living.ts';
 import { credits } from '../shared/rules.ts';
-import { createEconomyRandom } from './economy-random.ts';
-import type { RandomStream } from '../shared/deterministic-random.ts';
+import { randomStream } from './random-streams.ts';
+import type { GameplayRandom } from './random-streams.ts';
 
 /**
  * Clamp a numeric value between minimum and maximum bounds.
@@ -51,19 +51,9 @@ import type { RandomStream } from '../shared/deterministic-random.ts';
 const clamp = (value: number, firstValue: number, secondValue: number): number =>
   Math.max(firstValue, Math.min(secondValue, value));
 
-/** Economy stream for each Living service, created on its first system-state roll. */
-const economyStreams = new WeakMap<LivingCapabilities, RandomStream>();
-
-/**
- * Return the Living service's own economy stream. System-state rolls must not draw from
- * `Math.random`, which remains the simulation stream.
- * @param service - Living service capabilities that own the stream.
- * @returns Economy random stream.
- */
-function economyRandom(service: LivingCapabilities): RandomStream {
-  let stream = economyStreams.get(service);
-  if (!stream) economyStreams.set(service, (stream = createEconomyRandom()));
-  return stream;
+/** Economy draws are checkpointed independently of every system simulation. */
+function economyRandom(service: LivingCapabilities): GameplayRandom {
+  return randomStream(service.db, 'living-economy');
 }
 
 /**
@@ -72,7 +62,7 @@ function economyRandom(service: LivingCapabilities): RandomStream {
  * @param items - Array of items.
  * @returns Chosen item.
  */
-const pick = <ValueType>(random: RandomStream, items: ValueType[]): ValueType =>
+const pick = <ValueType>(random: GameplayRandom, items: ValueType[]): ValueType =>
   items[Math.floor(random.next() * items.length)];
 
 /**
