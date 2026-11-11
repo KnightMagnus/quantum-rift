@@ -1,5 +1,5 @@
 import type { PlayerData } from './game.ts';
-import type { Space } from './space.ts';
+import type { Entity, Space } from './space.ts';
 import { STELLARS } from '../shared/galaxy.ts';
 import { STORY_SHIP } from '../shared/story.ts';
 import { loadoutValue, makeLoadout, type GameAssets, type ShipLoadout } from '../shared/rules.ts';
@@ -29,6 +29,23 @@ export function migrateLegacyFlagships(assets: GameAssets, player: PlayerData): 
   return changed;
 }
 
+/** Hull identity, not its current AI order, owns the capital defender’s travel restriction. */
+export function isQuevariDefender(entity: Pick<Entity, 'hull' | 'player'>): boolean {
+  return Number(entity.hull) === STORY_SHIP && !entity.player;
+}
+
+/** Hails and generic NPC orders cannot turn the defender into departing traffic. */
+export function keepQuevariPatrol(entity: Entity): void {
+  if (!isQuevariDefender(entity)) return;
+  if (entity.ai !== 'patrol') {
+    entity.ai = 'patrol';
+    entity.dest = null;
+  }
+  entity.owner = null;
+  entity.noDisable = true;
+  entity.life = Infinity;
+}
+
 /** A single local patrol wakes after any captain completes the awakening. */
 export function ensureQuevariDefender(space: Space): void {
   if (space.id !== STELLARS.inalumen.system) return;
@@ -48,6 +65,5 @@ export function ensureQuevariDefender(space: Space): void {
     y: port.y,
   });
   // Ordinary faction targeting defends the capital. Never retreat or age into a jump-out.
-  defender.noDisable = true;
-  defender.life = Infinity;
+  keepQuevariPatrol(defender);
 }

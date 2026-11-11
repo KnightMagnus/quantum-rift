@@ -1,4 +1,4 @@
-import { ensureQuevariDefender } from './quevari-defender.ts';
+import { ensureQuevariDefender, isQuevariDefender, keepQuevariPatrol } from './quevari-defender.ts';
 import { storyParticipant } from './shared-story.ts';
 import {
   syncStationDefenses,
@@ -1000,6 +1000,10 @@ export class Space {
    * @param reason Visual flash effect trigger reason (e.g. 'jump').
    */
   remove(entity: Entity, reason?: string): void {
+    if (reason === 'jump' && isQuevariDefender(entity)) {
+      keepQuevariPatrol(entity);
+      return;
+    }
     if (entity.player && entity.player.s.ent === entity && this.game.db.world.towing)
       this.game.features.towing.detach(entity.player.s);
     if (!entity.dead && entity.convoyOf && reason === 'jump')
@@ -1908,6 +1912,7 @@ export class Space {
    */
   ai(entity: Entity): void {
     if (entity.player) return;
+    keepQuevariPatrol(entity);
     if (entity.stationDefense) return steerStationDefense(this, entity);
     if (entity.storySinger) {
       entity.inp = {};

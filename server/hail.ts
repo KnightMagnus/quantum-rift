@@ -1,3 +1,4 @@
+import { isQuevariDefender } from './quevari-defender.ts';
 import { hailMachineHull } from '../shared/hail-machine.ts';
 import { npcPortrait, genericPortrait } from '../shared/portraits.ts';
 export interface HailOperations {
@@ -314,6 +315,7 @@ export const HailOperations = {
         );
       }
       case 'threat': {
+        if (isQuevariDefender(root)) return announce('We guard Ina Lumen. We will not leave.');
         const mine = this.myPower(playerData),
           theirs =
             (root.pw || 10) +

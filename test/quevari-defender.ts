@@ -70,6 +70,43 @@ assert.ok(!pilot.data.dock.some((stored) => Number(stored.ship.hull) === 744));
 assert.ok(game.A.ships[744].npcOnly);
 assert.ok(!(game.yard(STELLARS.inalumen, pilot.data) || []).includes(744));
 
+// Forged hail choices still cross the normal wire/handler boundary.
+defender.disabled = false;
+defender.pw = 1;
+defender.x = pilot.ent!.x = 3200;
+defender.y = pilot.ent!.y = 0;
+assert.ok(game.features.hostile.myPower(pilot.data) > defender.pw * 1.6);
+game.onMessage(pilot, { t: 'hailopt', id: defender.id, k: 'threat' });
+assert.ok(JSON.stringify(pilot.sock.out.at(-1)).includes('We will not leave.'));
+assert.equal(defender.ai, 'patrol');
+const creditsBeforeHire = pilot.data.credits;
+game.onMessage(pilot, { t: 'hailopt', id: defender.id, k: 'mercenary' });
+assert.equal(defender.owner, null, 'forged hire action cannot take control of the named defender');
+assert.equal(pilot.data.credits, creditsBeforeHire);
+for (const departure of ['flee', 'leave', 'trade', 'escort']) {
+  defender.ai = departure;
+  defender.dest = { x: 5000, y: 0, out: true };
+  defender.target = null;
+  defender.think = 0;
+  defender.life = 0;
+  defender.noDisable = false;
+  capital.ai(defender);
+  assert.equal(defender.ai, 'patrol', `${departure} cannot override the local patrol`);
+  assert.equal(capital.ships.get(defender.id), defender);
+  assert.equal(defender.dead, false);
+  assert.equal(defender.life, Infinity);
+  assert.equal(defender.noDisable, true);
+}
+const eventsBeforeJump = capital.events.length;
+capital.remove(defender, 'jump');
+assert.equal(
+  capital.ships.get(defender.id),
+  defender,
+  'jump-removal boundary refuses capital defender travel',
+);
+assert.equal(defender.dead, false);
+assert.equal(capital.events.length, eventsBeforeJump, 'denied departure emits no jump flash');
+
 // Old owners retain an exact recovery record and receive the full assessed hull/fitting value.
 const capitalWithoutResidentAccounts = new Space(game, capital.id);
 const savedAccounts = game.db.players;
