@@ -381,6 +381,7 @@ import {
   hud as renderHud,
   clearFlightStatus,
   toast,
+  clearHeldToasts,
   ask as showConfirmation,
   chatLine,
   showLanded,
@@ -3712,6 +3713,7 @@ async function logOut(reason = '') {
     'hailopts',
   ])
     elementById2(identifier).replaceChildren();
+  clearHeldToasts();
   // Clear persistent panel drafts too (for example, a former captain's tow recipient).
   document
     .querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input, textarea')

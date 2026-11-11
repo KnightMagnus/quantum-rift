@@ -133,7 +133,8 @@ import {
   route,
   price,
 } from '../shared/rules.ts';
-import { galaxy, mapHit, mapFit, stationDesign } from './render.ts';
+import { galaxy, mapHit, mapFit, stationDesign, storyPopupHoldMs } from './render.ts';
+import { createNoticeHold } from './notice-hold.ts';
 import { captainMap, captainRoute } from './map-fog.ts';
 import { crewHtml, hangarHtml, researchHtml, materialsHtml } from './hangar_ui.ts';
 import { specialistsHtml } from './spec_ui.ts';
@@ -607,11 +608,27 @@ export function ask(message: string, confirmed: () => void, askOptions: AskOptio
   elementById('askno').onclick = () => done(false);
   overlays.open('askbox');
 }
+/** Holds notices while the Rift crossing animation plays, like story pop-ups. */
+const toastHold = createNoticeHold({
+  holdMs: () => (clientGameState ? storyPopupHoldMs(clientGameState) : 0),
+  show: showToast,
+});
 /**
- * Renders a transient notification toast banner on screen with an audio sting.
- * @param message2 Notification message text
+ * Shows a notification toast, or holds it until the Rift crossing animation ends.
+ * @param message Notification message text
  */
 export function toast(message: string): void {
+  toastHold.notice(message);
+}
+/** Drops toasts still held for the Rift crossing, so they never reach the next session. */
+export function clearHeldToasts(): void {
+  toastHold.clear();
+}
+/**
+ * Renders a transient notification toast banner on screen with an audio sting.
+ * @param message Notification message text
+ */
+function showToast(message: string): void {
   const entryKey = TOAST_SND.find(([regExp]) => regExp.test(message)),
     kind = entryKey ? entryKey[1] : 'toast';
   window.dispatchEvent(new CustomEvent('rift-toast-sound', { detail: kind }));
