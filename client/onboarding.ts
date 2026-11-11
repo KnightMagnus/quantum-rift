@@ -71,7 +71,7 @@ const tourSteps: TourStep[] = [
   {
     target: '[data-tab="station"]',
     title: 'Personal Station',
-    text: 'The STATION tab lets you manage your personal station. You can claim an abandoned station and upgrade it.',
+    text: 'The STATION tab lets you manage your Personal Station. You can claim an abandoned station and upgrade it.',
     tab: 'station',
   },
   {
@@ -94,8 +94,8 @@ const tourSteps: TourStep[] = [
   },
   {
     target: '#traytoggle',
-    title: 'Sidebar',
-    text: 'The TRAY button opens and closes the sidebar, which contains the system map and menu tabs.',
+    title: 'Tray',
+    text: 'The TRAY button opens and closes the tray, which holds the system map and menu tabs.',
   },
   {
     target: '#cbhelp',
@@ -243,7 +243,8 @@ interface BriefingSlide {
 export function createOnboarding(options: OnboardingOptions) {
   let owner: string | null = null;
   let active = false;
-  let stage: 'tour' | 'briefing' = 'tour';
+  /** First-run offer, optional controls tour, or captain's briefing. */
+  let stage: 'offer' | 'tour' | 'briefing' = 'tour';
   let index = 0;
   let savedTab = 'missions';
   let layoutFrame = 0;
@@ -260,14 +261,14 @@ export function createOnboarding(options: OnboardingOptions) {
     {
       chapter: '01 / Station',
       title: 'Welcome to the Rift',
-      text: 'You are a new Captain fresh out of the Quantum Station Flight School, a Quantum Concord megastructure in a region of space known only as “The Rift” to its human inhabitants. Three hundred years ago, Earth’s people watched its skies change in an instant, and they were now inhabitants of a densely populated area of folded space. To this day, the perpetrators of this mass-teleportation are unknown.',
+      text: 'You are a new Captain fresh out of the Quantum Station Flight School, a Quantum Concord megastructure in a region of space known only as “The Rift” to its human inhabitants. Three hundred years ago, Earth’s people watched its skies change in an instant and found themselves in a densely populated region of folded space. To this day, the perpetrators of this mass-teleportation are unknown.',
       image: 'station.webp',
       caption: 'Quantum Station, Concordia',
     },
     {
       chapter: '02 / Activities',
       title: 'Activities',
-      text: 'Captains can take full advantage of the galaxy in whatever playstyle they choose. You can trade cargo, take jobs, hunt pirates, explore the Rift, recruit a crew, and claim a personal station to call home. In online mode, you can form Armadas with your friends, Duel, or face off for real in The Crucible.',
+      text: 'Captains can take full advantage of the galaxy in whatever playstyle they choose. You can trade cargo, take jobs, hunt pirates, explore the Rift, recruit a crew, and claim a Personal Station to call home. In online mode, you can form Armadas with your friends, duel, or face off for real in The Crucible.',
       image: 'jobs.webp',
       caption: 'Landed Menu',
     },
@@ -288,7 +289,7 @@ export function createOnboarding(options: OnboardingOptions) {
     },
     {
       chapter: '04 / Combat',
-      title: 'Targeting and weapons',
+      title: 'Targeting and Weapons',
       text: 'Click a ship or use the targeting controls to select it. The target panel shows its distance, shields, and armor. Hold primary fire to shoot. Secondary fire uses your equipped secondary weapon. Your own shields and armor appear in the ship status panel.',
       image: 'combat.webp',
       caption: 'Ship combat',
@@ -342,7 +343,7 @@ export function createOnboarding(options: OnboardingOptions) {
     {
       chapter: '08 / Stations',
       title: 'Personal Stations',
-      text: 'You can claim an abandoned station hull and upgrade it. The STATION tab contains your personal station controls.',
+      text: 'You can claim an abandoned station hull and upgrade it. The STATION tab contains your Personal Station controls.',
       image: 'station-hull.webp',
       caption: 'Abandoned Station Hull',
     },
@@ -356,7 +357,7 @@ export function createOnboarding(options: OnboardingOptions) {
     {
       chapter: '10 / Explore',
       title: 'Explore the Rift!',
-      text: "There's plenty more to do in the Rift, but I'd rather you discover it for yourself! That's what has drawn me to space games ever since I played Escape Velocity Nova as a kid, and its why this game exists today.",
+      text: "There's plenty more to do in the Rift, but I'd rather you discover it for yourself! That's what has drawn me to space games ever since I played Escape Velocity Nova as a kid, and it's why this game exists today.",
       image: 'station.webp',
       caption: 'Quantum Station, Concordia',
       disclosure:
@@ -377,7 +378,7 @@ export function createOnboarding(options: OnboardingOptions) {
     options.finished();
   }
   function advance() {
-    if (stage === 'tour' && index === visibleTourSteps.length - 1) {
+    if (stage === 'offer' || (stage === 'tour' && index === visibleTourSteps.length - 1)) {
       stage = 'briefing';
       index = 0;
     } else if (stage === 'briefing' && index === slides().length - 1) {
@@ -386,8 +387,13 @@ export function createOnboarding(options: OnboardingOptions) {
     } else index++;
     render();
   }
+  function startTour() {
+    stage = 'tour';
+    index = 0;
+    render();
+  }
   function skip() {
-    if (stage === 'tour') {
+    if (stage !== 'briefing') {
       stage = 'briefing';
       index = 0;
       render();
@@ -456,6 +462,13 @@ export function createOnboarding(options: OnboardingOptions) {
     cancelAnimationFrame(layoutFrame);
     root.dataset.stage = stage;
     root.dataset.tourTarget = stage === 'tour' ? visibleTourSteps[index].target : '';
+    if (stage === 'offer') {
+      root.innerHTML = `<div class="intro-callout"><div class="intro-eyebrow">OPTIONAL GUIDE</div><h2 id="onboarding-title">Captain’s Orientation</h2><p>A step-by-step guide to your cockpit buttons, sidebar menus and chat. Skip it to go straight to your Captain’s Briefing. You can replay it from HELP at any time.</p><div class="intro-actions"><button data-intro="tour">Start orientation</button><button data-intro="next" class="intro-next">Captain’s Briefing <span aria-hidden="true">→</span></button></div></div>`;
+      root.querySelector<HTMLButtonElement>('[data-intro="tour"]')!.onclick = startTour;
+      root.querySelector<HTMLButtonElement>('[data-intro="next"]')!.onclick = advance;
+      root.querySelector<HTMLElement>('[data-intro="next"]')!.focus({ preventScroll: true });
+      return;
+    }
     if (stage === 'tour') {
       const step = visibleTourSteps[index];
       if (step.tab) options.selectTab(step.tab);
@@ -496,7 +509,8 @@ export function createOnboarding(options: OnboardingOptions) {
       );
     });
     active = true;
-    stage = visibleTourSteps.length ? 'tour' : 'briefing';
+    // A first run offers the controls tour; HELP replays it directly.
+    stage = !visibleTourSteps.length ? 'briefing' : replay ? 'tour' : 'offer';
     index = 0;
     document.body.classList.add('onboarding-active');
     document.getElementById('land')!.classList.add('hidden');
