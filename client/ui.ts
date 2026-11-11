@@ -1,6 +1,6 @@
 import { ammoReadout, rescueReadout } from './flight-feedback.ts';
 import { overlays } from './overlay-controller.ts';
-import { storySystemVisible, storyDescription } from '../shared/story-world.ts';
+import { storySystemVisible, storyDescription, codexHullVisible } from '../shared/story-world.ts';
 import { ui as playInterfaceSound } from './audio.ts';
 import { landscapeScene } from '../shared/landscapes.ts';
 import type { PlayerPayload, LandedPayload } from './main.ts';
@@ -1131,13 +1131,12 @@ function renderCodex(): void {
   let items;
   if (codexCat === 'Ships')
     items = Object.values(clientGameState.A!.ships)
-      .filter((shipHullAsset) => !shipHullAsset.npcOnly)
-      .filter(
-        (shipHullAsset) =>
-          shipHullAsset.id !== 744 ||
-          (clientGameState.you &&
-            clientGameState.you!.story &&
-            clientGameState.you!.story.done.includes('qv5')),
+      .filter((shipHullAsset) =>
+        codexHullVisible(
+          shipHullAsset,
+          clientGameState.you?.story,
+          clientGameState.you?.ship?.hull,
+        ),
       )
       .sort((shipHullAsset, shipHullAsset2) => shipHullAsset.cost - shipHullAsset2.cost)
       .map((shipHullAsset) => ({
@@ -1206,8 +1205,16 @@ function renderCodex(): void {
  * @param entryKey Item key prefix + ID (e.g. 's701' for ship, 'o50' for outfit)
  */
 function codexDetail(entryKey: string): void {
-  // Story equipment is not a discoverable catalog entry, even through a stale row.
-  if (entryKey[0] !== 's' && allOutfits(clientGameState.A!)[+entryKey.slice(1)]?.eff?.riftHarness) {
+  // Story equipment and hidden hulls are not discoverable catalog entries, even through a stale row.
+  const detailHull = entryKey[0] === 's' ? clientGameState.A!.ships[+entryKey.slice(1)] : null;
+  const hiddenHull =
+    entryKey[0] === 's' &&
+    (!detailHull ||
+      !codexHullVisible(detailHull, clientGameState.you?.story, clientGameState.you?.ship?.hull));
+  if (
+    hiddenHull ||
+    (entryKey[0] !== 's' && allOutfits(clientGameState.A!)[+entryKey.slice(1)]?.eff?.riftHarness)
+  ) {
     renderCodex();
     return;
   }
