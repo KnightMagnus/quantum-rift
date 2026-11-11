@@ -125,10 +125,16 @@ const attacker = space.makeShip({
   y: 0,
 });
 attacker.armor = attacker.st.armor / 2;
+const beforeDefeatLog = defeat.data.log.length;
 space.kill(defeat.ent!, attacker);
-assert.match(defeat.data.log.at(-1)!.text, /Enemy battery: 123/);
-assert.match(defeat.data.log.at(-1)!.text, /50% hull/);
-assert.match(defeat.data.log.at(-1)!.text, /Before retrying/);
+const defeatReports = defeat.data.log
+  .slice(beforeDefeatLog)
+  .filter((entry) => entry.text.startsWith('Ship destroyed'));
+assert.equal(defeatReports.length, 1, 'Death records exactly one new defeat report');
+assert.match(defeatReports[0].text, /Enemy battery: 123/);
+assert.match(defeatReports[0].text, /Other damage: 42/);
+assert.match(defeatReports[0].text, /Known attacker: 50% hull/);
+assert.match(defeatReports[0].text, /Before retrying/);
 
 const nhalMission = STORY.find((entry) => entry.id === 'dreamer')!;
 for (const session of [owner, helper]) {
