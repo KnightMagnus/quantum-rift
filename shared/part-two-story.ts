@@ -388,7 +388,6 @@ export const PART_TWO_PAY: Record<string, number> = {
   'p2-road': 500000,
   'p2-makers': 500000,
   'p2-fleet': 1000000,
-  'p2-names': 50000,
   'p2-freefolk': 400000,
   'p2-unsworn': 400000,
   'p2-aftercare': 300000,

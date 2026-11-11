@@ -8,8 +8,7 @@ import {
   partTwoEndings,
   partTwoAftercare,
   PART_TWO_PAY,
-  partTwoMemorial,
-  partTwoMemorialText,
+  partTwoAftercareScene,
 } from '../shared/part-two-story.ts';
 import { STELLARS, SYS } from '../shared/galaxy.ts';
 import type { StoryFlags } from '../server/save-contracts.ts';
@@ -100,7 +99,7 @@ assert.equal(
   'the final battle pays the most',
 );
 assert.ok(payOf('p2-makers') > payOf('p2-voice'), 'pay rises through the main chapters');
-assert.ok(payOf('p2-names') < payOf('p2-voice'), 'the memorial visit pays a token amount');
+assert.equal(PART_TWO_PAY['p2-names'], undefined, 'the retired memorial has no separate pay');
 const partTwoTotal = PART_TWO.reduce((sum, mission) => sum + mission.pay, 0);
 assert.ok(
   partTwoTotal >= 5_000_000 && partTwoTotal <= 8_000_000,
@@ -455,9 +454,10 @@ console.log('Part II report access, memorial, campaign explanations and combat f
   assert.match(aftercareText('ashfall'), /archive crews/);
   const memorialFlags = { p2_supply: 'grain' } as StoryFlags;
   assert.equal(
-    `${partTwoMemorialText(memorialFlags)} ${partTwoMemorial(memorialFlags)}`.match(
-      /At Saint Orra/g,
-    )?.length,
+    partTwoAftercareScene(
+      memorialFlags,
+      PART_TWO.find((mission) => mission.id === 'p2-aftercare')!.done,
+    ).match(/At Saint Orra/g)?.length,
     1,
     'the memorial names Saint Orra once',
   );
