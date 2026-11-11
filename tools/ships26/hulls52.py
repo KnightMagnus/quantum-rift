@@ -295,7 +295,7 @@ def wm_swiftsure():   # Juniper Hale: a twin-boom racer, all engine, in race-ora
         e, g = engine(x, -0.9, 0, 0.09, GAMBER, DARK); eng += e; glo += g
     e, g = engine(0, -0.55, 0, 0.05, GAMBER, DARK); eng += e; glo += g
     return M + eng, glo, [light(0.44, -0.6, 0.05, LGREEN, 0.025), light(-0.44, -0.6, 0.05, LRED, 0.025)], 86
-def wm_lifeline():   # Tomas Eriksen-Kai: a long-range rescue ship, a hab ring of drone cradles and two tractor arms
+def wm_lifeline():   # Henrik Eriksen-Kai: a long-range rescue ship, a hab ring of drone cradles and two tractor arms
     hull = mat((0.9, 0.9, 0.88), metal=0.35, rough=0.35, panel=1.0, grime=0.4, stripe=(0.46, 0.54, (0.2, 0.75, 0.35)))
     M = [fuse([(1.0, 0, 0, 0, 2), (0.75, 0.1, 0.08, 0, 2.6), (0.2, 0.13, 0.1, 0, 3), (-0.6, 0.15, 0.11, 0, 3), (-0.88, 0.12, 0.09, 0, 2.6)], hull)]
     M += [hoop(0.38, 0.05, hull, c=(0, -0.15, 0.0)), hoop(0.38, 0.02, mat((0.3, 0.9, 0.45), emissive=(0.3, 0.9, 0.45)), c=(0, -0.15, 0.05))]

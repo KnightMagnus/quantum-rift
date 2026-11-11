@@ -6,6 +6,9 @@ import { fileURLToPath } from 'node:url';
 import { augmentAssets, type GameAssets } from '../shared/rules.ts';
 import { STELLARS, SYS } from '../shared/galaxy.ts';
 import { SCIENTIST_STORY } from '../shared/radio-stations.ts';
+import { ARCS } from '../shared/arcs.ts';
+import { OFFICER_NAMES } from '../shared/hangar.ts';
+import { PART_TWO } from '../shared/part-two-story.ts';
 import {
   authoredNarrativeContent,
   validateNarrativeContent,
@@ -654,3 +657,53 @@ try {
 } finally {
   delete port.prices!.medicine;
 }
+
+// Players tell ships and characters apart by display name, so names must not collide.
+const hullsByName = new Map<string, string[]>();
+for (const [id, ship] of Object.entries(assets.ships)) {
+  hullsByName.set(ship.name, [...(hullsByName.get(ship.name) ?? []), id]);
+}
+assert.deepEqual(
+  [...hullsByName].filter(([, ids]) => ids.length > 1),
+  [],
+  'every composed hull, Specialist and Index machine has its own display name',
+);
+const wingmates = Object.values(assets.ships).filter((ship) => ship.sub?.startsWith('Wingmate: '));
+assert.ok(wingmates.length >= 6, 'wingmate roster is composed');
+for (const wingmate of wingmates) {
+  const wingmateShip = wingmate.sub!.slice('Wingmate: '.length);
+  assert.ok(
+    !hullsByName.has(wingmateShip),
+    `wingmate ship ${wingmateShip} is not also a hull name`,
+  );
+}
+const partTwoText = JSON.stringify(PART_TWO);
+const partTwoCharacters = ['Greta Tell'];
+for (const character of partTwoCharacters) {
+  assert.ok(partTwoText.includes(character), `Part II names ${character}`);
+}
+assert.ok(!partTwoText.includes('Maren Tell'), 'Part II no longer names Maren Tell');
+// Captain Rooke is introduced in the Part II ally fleet rather than the mission catalog.
+const storyServer = readFileSync(new URL('../server/story.ts', import.meta.url), 'utf8');
+assert.ok(storyServer.includes("name: 'Captain Tomas Rooke'"));
+const namedCharacters = [
+  ...wingmates.map((ship) => ship.name),
+  ...Object.values(ARCS)
+    .filter(Boolean)
+    .map((arc) => arc.officer[0]),
+  ...partTwoCharacters,
+  'Tomas Rooke',
+];
+const firstNames = namedCharacters.map((name) => name.split(' ')[0]!);
+assert.deepEqual(
+  firstNames.filter((first, index) => firstNames.indexOf(first) !== index),
+  [],
+  `wingmates, arc officers and Part II characters have distinct first names: ${namedCharacters.join(', ')}`,
+);
+for (const [pool, [givenNames]] of Object.entries(OFFICER_NAMES)) {
+  assert.ok(
+    !givenNames.includes('Tomas'),
+    `${pool} officer pool does not reuse Captain Rooke's first name`,
+  );
+}
+console.log('Hull, wingmate and named character display names are distinct.');
