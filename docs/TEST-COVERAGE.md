@@ -183,12 +183,12 @@ real-process network checks in the unit/server lane and a browser check in the
 browser lane. The fixtures use isolated synthetic accounts and a private friend
 save directory, not player saves or a running Nakama service.
 
-| Program                  | Behavior contract                                                                                                                                                                                              |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `friend-host-config.ts`  | Loopback default, explicit bind/port, incompatible mode/save/seed rejection, protected-store aliases, origin denial, empty developer seeds and mode-paired local transport selection                           |
-| `friend-save-owner.ts`   | Two hosts on different ports cannot own one save directory; clean-stop restart and fail-closed stale-lock recovery, private POSIX save permissions and HTTP/WebSocket Host denial                              |
-| `friend-host-network.ts` | Three password-protected captains on one real server, private output, missing/wrong-password denial, Solo endpoint/pause denial, shared flight/input progress, reconnect and account/world restart persistence |
-| `friend-host-browser.ts` | Real browser password sign-in, same-origin gameplay socket, physical flight with bounded latency, input cadence, reconnect and runtime-error checks                                                            |
+| Program                  | Behavior contract                                                                                                                                                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `friend-host-config.ts`  | Loopback default, explicit bind/port, incompatible mode/save/seed rejection, protected-store aliases, origin denial, empty developer seeds and mode-paired local transport selection                                                        |
+| `friend-save-owner.ts`   | Two hosts on different ports cannot own one save directory; clean-stop restart, a crashed same-computer host's lock cleared on restart, uncertain leftover locks fail closed, private POSIX save permissions and HTTP/WebSocket Host denial |
+| `friend-host-network.ts` | Three password-protected captains on one real server, private output, missing/wrong-password denial, Solo endpoint/pause denial, shared flight/input progress, reconnect and account/world restart persistence                              |
+| `friend-host-browser.ts` | Real browser password sign-in, same-origin gameplay socket, physical flight with bounded latency, input cadence, reconnect and runtime-error checks                                                                                         |
 
 The program contracts are separate from individual run results or hosted-CI
 status. Loopback processes and browser latency fixtures do not prove
