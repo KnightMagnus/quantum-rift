@@ -2099,9 +2099,18 @@ export class Space {
                   y: pick(this.sys.stellars).y + random2(-400, 400),
                 }
               : { x: random2(-2000, 2000), y: random2(-2000, 2000) };
-        this.steer(entity, entity.dest.x, entity.dest.y, false);
-        entity.inp.thrust =
-          entity.inp.thrust && Math.hypot(entity.vx, entity.vy) < entity.st.maxSpeed * 0.6 ? 1 : 0;
+        const distance = this.steer(entity, entity.dest.x, entity.dest.y, false);
+        // Story kill targets cap cruise by speed toward the destination, not total speed: one
+        // coasting away at full speed must still thrust to turn back, or its objective drifts
+        // out of the system. Ambient traffic keeps the total-speed cap its encounter balance uses.
+        let cruiseSpeed = Math.hypot(entity.vx, entity.vy);
+        if (entity.storyKill)
+          cruiseSpeed =
+            distance > 1
+              ? ((entity.dest.x - entity.x) * entity.vx + (entity.dest.y - entity.y) * entity.vy) /
+                distance
+              : 0;
+        entity.inp.thrust = entity.inp.thrust && cruiseSpeed < entity.st.maxSpeed * 0.6 ? 1 : 0;
         break;
       }
       case 'escort': {
