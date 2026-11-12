@@ -1243,7 +1243,8 @@ accelerated soak does not establish wall-clock or multihour endurance.
 only allowlisted fields for the previewed commodity and keeps chat, names,
 passwords, tokens and other cargo out of the exported text. It covers the
 entry-count, 30-minute lifetime, per-entry and file byte limits, a full 50-entry
-order-heavy export/replay round trip, stop/clear behavior and bounded build labels.
+order-heavy export/replay round trip, stop/clear behavior and bounded build labels,
+including Stable Beta labels and rejection of appended private text.
 Corrupt JSON, non-object roots,
 oversized text (measured in UTF-8 bytes), other formats, other versions, unknown
 fields, missing/null required terms, other-commodity data, unsupported subsystems

@@ -208,6 +208,8 @@ for (const betaLabel of [
   '0.12 MP Beta 10',
   '0.6 Unstable Beta',
   '0.6.1 Unstable Beta',
+  '0.8 Stable Beta',
+  '0.8.1 Stable Beta',
 ]) {
   assert.equal(captureBuild(betaLabel), betaLabel);
   const betaRecorder = new DiagnosticRecorder(now);
@@ -220,6 +222,9 @@ for (const betaLabel of [
 }
 for (const unsafeBeta of [
   '0.6 Unstable Beta Private Captain',
+  '0.8 Stable Beta Private Captain',
+  '0.8 Stable Beta\n',
+  '0.8 Stable Beta 1',
   '0.6 Unstable Beta\n',
   '0.6 Unstable Beta ',
   '0.6 Unstable Beta 1',

@@ -106,7 +106,7 @@ export type DiagnosticCaptureParse =
 
 const COMMODITY_PATTERN = /^[a-z][a-z0-9_]{0,47}$/;
 const BUILD_PATTERN = /^[0-9A-Za-z][0-9A-Za-z.+-]{0,31}$/;
-const UNSTABLE_BETA_BUILD_PATTERN = /^0\.\d+(?:\.\d+)? Unstable Beta$/;
+const NAMED_BETA_BUILD_PATTERN = /^0\.\d+(?:\.\d+)? (?:Unstable|Stable) Beta$/;
 const MULTIPLAYER_BETA_BUILD_PATTERN = /^0\.\d+(?:\.\d+)? MP Beta [1-9]\d*$/;
 const MAX_MAGNITUDE = 1e15;
 
@@ -301,7 +301,7 @@ export function captureBuild(version: unknown): string {
     version.trim() === version &&
     (BUILD_PATTERN.test(version) ||
       MULTIPLAYER_BETA_BUILD_PATTERN.test(version) ||
-      UNSTABLE_BETA_BUILD_PATTERN.test(version))
+      NAMED_BETA_BUILD_PATTERN.test(version))
     ? version
     : 'unknown';
 }

@@ -14,18 +14,18 @@ const version: string = JSON.parse(
 ).publicVersion;
 assert.match(
   version,
-  /^0\.\d+(?:(?:\.\d+){1,2}|(?:\.\d+)? MP Beta [1-9]\d*|(?:\.\d+)? Unstable Beta)?$/,
-  'beta labels include numeric releases, numbered MP betas and unstable betas',
+  /^0\.\d+(?:(?:\.\d+){1,2}|(?:\.\d+)? MP Beta [1-9]\d*|(?:\.\d+)? (?:Unstable|Stable) Beta)?$/,
+  'beta labels include numeric releases, numbered MP betas and stable or unstable betas',
 );
 const packageVersion = JSON.parse(
   fileSystem.readFileSync(path.join(root, 'package.json'), 'utf8'),
 ).version;
 assert.equal(
   packageVersion,
-  version.endsWith(' Unstable Beta')
+  / (?:Unstable|Stable) Beta$/.test(version)
     ? version.replace(
-        /^(0\.\d+)(\.\d+)? Unstable Beta$/,
-        (_, base, patch) => `${base}${patch ?? '.0'}-unstable-beta`,
+        /^(0\.\d+)(\.\d+)? (Unstable|Stable) Beta$/,
+        (_, base, patch, stability) => `${base}${patch ?? '.0'}-${stability.toLowerCase()}-beta`,
       )
     : version.includes(' MP Beta ')
       ? version.replace(

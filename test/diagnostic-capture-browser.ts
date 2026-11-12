@@ -240,6 +240,8 @@ try {
       '0.5.1 MP Beta 1',
       '0.6 Unstable Beta',
       '0.6.1 Unstable Beta',
+      '0.8 Stable Beta',
+      '0.8.1 Stable Beta',
       '0.4.2.1',
       '0.5.0-mp-beta.1',
       'Private Captain',
@@ -247,6 +249,9 @@ try {
       '0.5 MP Beta 1 Private Captain',
       '0.5 MP Beta 1\n',
       '0.6 Unstable Beta Private Captain',
+      '0.8 Stable Beta Private Captain',
+      '0.8 Stable Beta\n',
+      '0.8 Stable Beta 1',
       '0.6 Unstable Beta\n',
     ];
     const observed = labels.map((label) => {
@@ -261,6 +266,8 @@ try {
     '0.5.1 MP Beta 1',
     '0.6 Unstable Beta',
     '0.6.1 Unstable Beta',
+    '0.8 Stable Beta',
+    '0.8.1 Stable Beta',
     '0.4.2.1',
     '0.5.0-mp-beta.1',
     null,
