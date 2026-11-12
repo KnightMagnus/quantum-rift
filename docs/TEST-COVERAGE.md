@@ -1747,6 +1747,23 @@ The simulation uses isolated in-memory storage and a virtual clock at the normal
 physics tick rate. It does not establish human win rates or test every
 loadout, faction, system or multiplayer combination.
 
+`economy-random-isolation.ts` checks checkpointed economy and per-system simulation
+streams (`server/random-streams.ts`). Game construction takes the same ambient draws
+with the original and full trade-port rosters across eight seeds. Extra economy draws
+and another system's draws do not advance the selected simulation. The same root seed
+reproduces each stream; Solo/friend saves and authoritative checkpoints resume their
+exact positions after reload. Reconnect retains the existing world streams. Fixed-seed
+combat arrival and Index survey runs match with and without extra ports. The survey
+holds its own living state fixed because market allocation is still roster-dependent.
+`economy-random-native.ts` bundles the production stream and checkpoint adapters into
+a test-only RPC runtime. Actual ES5 execution in Nakama/Goja matches Node sequence
+values and PostgreSQL state through reauthentication and a real Nakama process
+restart. It does not replace integrated Game match/network/recovery coverage.
+See [RNG ownership](RANDOM-STREAMS.md) for identities, migration and remaining ambient
+call sites. The initialization fixture changes only `world.states`: dedicated economy
+seed derivation replaces the old roster-dependent global draws. Other initialization,
+world generation and topology contracts remain unchanged.
+
 `combat-jobs-playability.ts` covers mission and reward behavior. The combat tests
 run in the unit regression lane through the canonical manifest; their supporting
 helper is registered under `combat-playability.ts`. Existing combat, difficulty

@@ -166,6 +166,7 @@ const raidSpace = (power: number, danger: number, faction = 'hollow') => {
   const spawned: number[][] = [];
   let group: number[] = [];
   const space = Object.assign(Object.create(Space.prototype) as Space, {
+    random: { next: () => Math.random() },
     id: 'raid-fixture',
     sys: { id: 'raid-fixture', danger, faction, links: [], stellars: [] },
     A: assets,
@@ -233,6 +234,7 @@ for (const [power, danger] of [
 // Confederation or Index patrol can ever spawn beside them.
 const regionalSpace = (systemId: string, power: number) => {
   const space = Object.assign(Object.create(Space.prototype) as Space, {
+    random: { next: () => Math.random() },
     id: systemId,
     sys: systemsById[systemId],
     A: assets,

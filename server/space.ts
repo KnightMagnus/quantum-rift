@@ -1,3 +1,5 @@
+import { randomStream } from './random-streams.ts';
+import type { GameplayRandom } from './random-streams.ts';
 import { ensureQuevariDefender, isQuevariDefender, keepQuevariPatrol } from './quevari-defender.ts';
 import { storyParticipant } from './shared-story.ts';
 import {
@@ -681,22 +683,6 @@ const distance0 = (entity: Entity, positionX: number, positionY: number): number
   Math.hypot(positionX - entity.x, positionY - entity.y);
 const faction2 = Object.keys(FACTIONS);
 /**
- * Generates a random float in range [a, b).
- * @param firstValue Minimum bound.
- * @param secondValue Maximum bound.
- * @returns Random float.
- */
-const random2 = (firstValue: number, secondValue: number): number =>
-  firstValue + Math.random() * (secondValue - firstValue);
-/**
- * Picks a random element from an array.
- * @param entries2 Source array.
- * @returns Randomly selected element.
- */
-const pick = <ValueType>(entries: ValueType[]): ValueType =>
-  entries[Math.floor(Math.random() * entries.length)];
-
-/**
  * Live 2D space simulation for a single star system.
  * Simulates ships, physics, weapons fire, projectile trajectories, laser beams,
  * floating debris/loot, asteroid fields, and NPC combat AI.
@@ -708,7 +694,18 @@ function trafficUbiquity(): Map<number, number> {
     Object.values(TRAFFIC).flatMap((traffic) => [traffic.traders, traffic.war]),
   ));
 }
+/** Draw a range value from the caller's owned stream. */
+const randomRange = (random: GameplayRandom, minimum: number, maximum: number): number =>
+  minimum + random.next() * (maximum - minimum);
+
+/** Pick an item without consuming another system's sequence. */
+const pick = <ValueType>(random: GameplayRandom, entries: ValueType[]): ValueType =>
+  entries[Math.floor(random.next() * entries.length)];
+
 export class Space {
+  /** Persisted stream owned by this system; waking other systems cannot advance it. */
+  readonly random: GameplayRandom;
+
   /** Parent game server engine instance. */
   declare game: Game;
 
@@ -800,6 +797,7 @@ export class Space {
    */
   constructor(game: Game, systemId: string) {
     this.game = game;
+    this.random = randomStream(game.db, `simulation:${systemId}`);
     this.A = game.A;
     this.sys = systemsById[systemId];
     this.id = systemId;
@@ -952,7 +950,7 @@ export class Space {
       state: entity.state || 'fly',
       jumpT: 0,
       mission: entity.mission || null,
-      life: random2(150, 300),
+      life: randomRange(this.random, 150, 300),
       cargo: entity.cargo || 0,
       strength: this.A.ships[loadout.hull].strength || 10,
     } as Omit<Entity, 'pw'> & { pw?: number };
@@ -960,7 +958,7 @@ export class Space {
     currentEntity.role = shipHullAsset.role;
     if (!currentEntity.player) {
       const factionDef = FACTIONS[currentEntity.faction] || {},
-        radius = Math.random();
+        radius = this.random.next();
       currentEntity.pers =
         entity.pers ||
         (factionDef.pirate
@@ -993,7 +991,7 @@ export class Space {
         w: +width,
         n: count,
         p: weapon,
-        cd: random2(0, weapon.reload),
+        cd: randomRange(this.random, 0, weapon.reload),
         ammo,
         snd: weaponSound(weaponAsset),
         sec: weapon.homing || weapon.rocket || weapon.bay,
@@ -1025,7 +1023,7 @@ export class Space {
     const ports = this.ports();
     if (ports.length) {
       entity.ai = 'trade';
-      entity.dest = pick(ports);
+      entity.dest = pick(this.random, ports);
     } else {
       entity.ai = 'leave';
       entity.dest = null;
@@ -1389,11 +1387,11 @@ export class Space {
     if (['table', 'quantum-rift', 'founding-vigil'].includes(starSystem.id)) return null;
     if (starSystem.region === 'milky-way') {
       if (starSystem.id === 'mw-black-anchorage') return null;
-      const traffic = milkyWayTraffic(starSystem.faction, Math.random());
+      const traffic = milkyWayTraffic(starSystem.faction, this.random.next());
       const lead = this.spawnGroup(traffic.kind, traffic.faction, traffic.pool, initial);
       // Sol is much larger than the Rift: stage regional traffic near an actual port.
       if (lead && starSystem.id === 'mw-sol') {
-        const port = pick(this.ports());
+        const port = pick(this.random, this.ports());
         if (port)
           for (const entity of this.ships.values())
             if (entity === lead || entity.owner === lead.id) {
@@ -1411,19 +1409,19 @@ export class Space {
           (entity) => entity.faction === 'eclipse' && !entity.dead,
         ) &&
         this.game.features.hostile?.eclipseChance &&
-        Math.random() < this.game.features.hostile.eclipseChance(starSystem, this.m)
+        this.random.next() < this.game.features.hostile.eclipseChance(starSystem, this.m)
       )
         return this.spawnEclipse(initial);
       return this.game.features.nhal?.spawnTraffic(this, initial) ?? null;
     }
     if (
       (starSystem.faction === 'vashari' || starSystem.faction === 'frontier') &&
-      Math.random() < 0.14 * (this.m ? this.m.swarm : 1)
+      this.random.next() < 0.14 * (this.m ? this.m.swarm : 1)
     )
       return this.spawnSwarm(initial);
     if (
       this.game.features.hostile.eclipseChance &&
-      Math.random() < this.game.features.hostile.eclipseChance(starSystem, this.m)
+      this.random.next() < this.game.features.hostile.eclipseChance(starSystem, this.m)
     )
       return this.spawnEclipse(initial);
     let faction3 = starSystem.faction;
@@ -1438,14 +1436,14 @@ export class Space {
         }
         this.nearFacs = [...neutralSystems, 'spacer', 'spacer'];
       }
-      const roll = Math.random();
+      const roll = this.random.next();
       if (faction3 === 'deep') faction3 = roll < 0.7 ? 'umbral' : 'hollow';
-      else faction3 = roll < 0.12 * starSystem.danger ? 'hollow' : pick(this.nearFacs);
+      else faction3 = roll < 0.12 * starSystem.danger ? 'hollow' : pick(this.random, this.nearFacs);
     }
     const traffic = TRAFFIC[faction3];
     let kind,
       faction32 = faction3,
-      roll = Math.random();
+      roll = this.random.next();
     const livingState = this.game.features.living.stateOf
         ? this.game.features.living.stateOf(this.id)
         : null,
@@ -1455,7 +1453,7 @@ export class Space {
       livingState.kind === 'war' &&
       livingState.enemy &&
       TRAFFIC[livingState.enemy] &&
-      Math.random() < 0.35
+      this.random.next() < 0.35
     ) {
       const lead = this.spawnGroup(
         'patrol',
@@ -1468,7 +1466,7 @@ export class Space {
           if (entity === lead || entity.owner === lead.id) entity.warFleet = true;
       return lead;
     } // tagged, so newcomers are spared
-    if (livingState && livingState.kind === 'pirates' && Math.random() < 0.3) roll = -1; // force a raid roll below
+    if (livingState && livingState.kind === 'pirates' && this.random.next() < 0.3) roll = -1; // force a raid roll below
     if (FACTIONS[faction3].pirate) kind = 'raid';
     else if (
       (starSystem.danger >= 2 || roll < 0) &&
@@ -1476,7 +1474,9 @@ export class Space {
     ) {
       kind = 'raid';
       faction32 =
-        Math.random() < 0.3 && starSystem.danger >= 3 && !starSystem.farside ? 'umbral' : 'hollow';
+        this.random.next() < 0.3 && starSystem.danger >= 3 && !starSystem.farside
+          ? 'umbral'
+          : 'hollow';
     } else if (roll < 0.68 && traffic.traders.length) kind = 'trade';
     else if (roll < 0.82) {
       kind = 'trade';
@@ -1525,10 +1525,10 @@ export class Space {
     if (hull === undefined || !this.A.ships[hull]) return;
     const count =
       kind === 'trade'
-        ? Math.random() < 0.22
-          ? 2 + (Math.random() < 0.4 ? 1 : 0)
+        ? this.random.next() < 0.22
+          ? 2 + (this.random.next() < 0.4 ? 1 : 0)
           : 1
-        : (Math.random() < 0.4 ? 2 : 1) + (kind === 'raid' && starSystem.danger > 3 ? 1 : 0); // some traders run in small convoys
+        : (this.random.next() < 0.4 ? 2 : 1) + (kind === 'raid' && starSystem.danger > 3 ? 1 : 0); // some traders run in small convoys
     let hulls = [hull];
     for (let index = 1; index < count; index++)
       hulls.push(
@@ -1544,19 +1544,19 @@ export class Space {
     for (const [index, height] of hulls.entries()) {
       let positionX, positionY, firstValue, value;
       if (initial) {
-        positionX = random2(-1800, 1800);
-        positionY = random2(-1800, 1800);
-        firstValue = random2(-Math.PI, Math.PI);
+        positionX = randomRange(this.random, -1800, 1800);
+        positionY = randomRange(this.random, -1800, 1800);
+        firstValue = randomRange(this.random, -Math.PI, Math.PI);
         value = 30;
-      } else if (kind === 'trade' && this.ports().length && Math.random() < 0.45) {
+      } else if (kind === 'trade' && this.ports().length && this.random.next() < 0.45) {
         // take off from a spaceport
-        const stellarBody = pick(this.ports());
-        positionX = stellarBody.x + random2(-40, 40);
-        positionY = stellarBody.y + random2(-40, 40);
-        firstValue = random2(-Math.PI, Math.PI);
+        const stellarBody = pick(this.random, this.ports());
+        positionX = stellarBody.x + randomRange(this.random, -40, 40);
+        positionY = stellarBody.y + randomRange(this.random, -40, 40);
+        firstValue = randomRange(this.random, -Math.PI, Math.PI);
         value = 10;
       } else {
-        const angle = random2(-Math.PI, Math.PI);
+        const angle = randomRange(this.random, -Math.PI, Math.PI);
         positionX = Math.sin(angle) * 2600;
         positionY = -Math.cos(angle) * 2600;
         firstValue = wrap(angle + Math.PI);
@@ -1661,7 +1661,7 @@ export class Space {
    * @returns Chosen hull ID, or undefined for an empty pool.
    */
   pickTrafficHull(pool: readonly number[], civilian: boolean): number | undefined {
-    if (!civilian) return pick([...pool]);
+    if (!civilian) return pick(this.random, [...pool]);
     const flying = new Map<number, number>();
     for (const entity of this.ships.values())
       if (!entity.dead && !entity.player && typeof entity.hull === 'number')
@@ -1672,7 +1672,7 @@ export class Space {
       (candidate) =>
         (flying.get(candidate) || 0) +
         recent.filter((recentHull) => recentHull === candidate).length,
-      Math.random(),
+      this.random.next(),
       trafficUbiquity(),
     );
     if (hull !== undefined) {
@@ -1700,8 +1700,8 @@ export class Space {
       kind === 'trade',
     );
     if (!hull) return;
-    const angle = random2(-Math.PI, Math.PI),
-      count = 1 + (Math.random() < 0.5 ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0);
+    const angle = randomRange(this.random, -Math.PI, Math.PI),
+      count = 1 + (this.random.next() < 0.5 ? 1 : 0) + (this.random.next() < 0.25 ? 1 : 0);
     let hulls = [hull];
     for (let index = 1; index < count; index++)
       hulls.push(
@@ -1717,8 +1717,8 @@ export class Space {
     if (kind === 'raid' || kind === 'patrol') hulls = this.fitAmbientRaid(hulls, pool);
     let lead = null;
     for (const [index, groupHull] of hulls.entries()) {
-      const positionX = initial ? random2(-1800, 1800) : Math.sin(angle) * 2600,
-        positionY = initial ? random2(-1800, 1800) : -Math.cos(angle) * 2600,
+      const positionX = initial ? randomRange(this.random, -1800, 1800) : Math.sin(angle) * 2600,
+        positionY = initial ? randomRange(this.random, -1800, 1800) : -Math.cos(angle) * 2600,
         wrap2 = wrap(angle + Math.PI);
       const entity = this.makeShip({
         hull: groupHull,
@@ -1748,7 +1748,7 @@ export class Space {
   spawnSwarm(initial?: boolean): Entity | null {
     if ([...this.ships.values()].some((entity) => !entity.dead && entity.faction === 'swarm'))
       return null;
-    const count = 4 + Math.floor(Math.random() * 4);
+    const count = 4 + Math.floor(this.random.next() * 4);
     const hulls = this.fitAmbientRaid(
       [765, ...Array.from({ length: count }, (_, index) => (index % 3 ? 718 : 765))],
       [718, 765],
@@ -1760,14 +1760,14 @@ export class Space {
     if ([...this.ships.values()].some((entity) => !entity.dead && entity.faction === 'eclipse'))
       return null;
     const hulls = this.fitAmbientRaid(
-      [Math.random() < 0.35 ? 763 : 762, 762, 761, 761],
+      [this.random.next() < 0.35 ? 763 : 762, 762, 761, 761],
       [761, 762, 763],
     );
     return this.spawnIncursion(hulls, 'eclipse', initial);
   }
   /** Materializes an already budgeted incursion without bypassing its fitted hull list. */
   spawnIncursion(hulls: number[], faction: string, initial?: boolean): Entity | null {
-    const angle = Math.random() * Math.PI * 2;
+    const angle = this.random.next() * Math.PI * 2;
     const distance = initial ? 1800 : 2600;
     let lead: Entity | null = null;
     for (const [index, hull] of hulls.entries()) {
@@ -1803,7 +1803,7 @@ export class Space {
    */
   spawnMissionTarget(mission: Mission): Entity | null {
     const hull = mission.hull,
-      angle = random2(-Math.PI, Math.PI);
+      angle = randomRange(this.random, -Math.PI, Math.PI);
     const entity = this.makeShip({
       hull,
       faction: mission.faction,
@@ -1977,7 +1977,7 @@ export class Space {
       return;
     }
     if (entity.think <= 0) {
-      entity.think = 0.4 + Math.random() * 0.3;
+      entity.think = 0.4 + this.random.next() * 0.3;
       if (entity.recall) {
         entity.target = null;
       } else {
@@ -2077,9 +2077,13 @@ export class Space {
       case 'trade': {
         if (!entity.dest)
           entity.dest =
-            this.ports().length && Math.random() < 0.75
-              ? pick(this.ports())
-              : { x: random2(-3000, 3000), y: random2(-3000, 3000), out: true }; // traders fly to worlds they can land on
+            this.ports().length && this.random.next() < 0.75
+              ? pick(this.random, this.ports())
+              : {
+                  x: randomRange(this.random, -3000, 3000),
+                  y: randomRange(this.random, -3000, 3000),
+                  out: true,
+                }; // traders fly to worlds they can land on
         const steer2 = this.steer(
           entity,
           entity.dest.x,
@@ -2123,12 +2127,15 @@ export class Space {
       case 'raid': {
         if (!entity.dest || Math.hypot(entity.dest.x - entity.x, entity.dest.y - entity.y) < 200)
           entity.dest =
-            Math.random() < 0.5 && this.sys.stellars.length
+            this.random.next() < 0.5 && this.sys.stellars.length
               ? {
-                  x: pick(this.sys.stellars).x + random2(-400, 400),
-                  y: pick(this.sys.stellars).y + random2(-400, 400),
+                  x: pick(this.random, this.sys.stellars).x + randomRange(this.random, -400, 400),
+                  y: pick(this.random, this.sys.stellars).y + randomRange(this.random, -400, 400),
                 }
-              : { x: random2(-2000, 2000), y: random2(-2000, 2000) };
+              : {
+                  x: randomRange(this.random, -2000, 2000),
+                  y: randomRange(this.random, -2000, 2000),
+                };
         const distance = this.steer(entity, entity.dest.x, entity.dest.y, false);
         // Story kill targets cap cruise by speed toward the destination, not total speed: one
         // coasting away at full speed must still thrust to turn back, or its objective drifts
@@ -2402,7 +2409,7 @@ export class Space {
     }
     if (weapon.homing || weapon.rocket) weaponMount.ammo--;
     weaponMount.cd = weapon.reload / Math.max(1, weaponMount.n);
-    const angle2 = angle + (Math.random() - 0.5) * weapon.inacc;
+    const angle2 = angle + (this.random.next() - 0.5) * weapon.inacc;
     const damageMultiplier = entity.st.damageMul || 1;
     if (weapon.beam) {
       const range2 = weapon.range;
@@ -2681,7 +2688,7 @@ export class Space {
           }
         }
         if (best) {
-          if (Math.random() < 0.35) {
+          if (this.random.next() < 0.35) {
             best.life = 0;
             this.events.push(['hit', Math.round(best.x), Math.round(best.y), weaponMount.w]);
           }
@@ -3041,7 +3048,7 @@ export class Space {
         this.game.you(owner);
       }
     }
-    if (!entity.fighterOf && Math.random() < (entity2 && entity2.hull === 810 ? 0.82 : 0.55))
+    if (!entity.fighterOf && this.random.next() < (entity2 && entity2.hull === 810 ? 0.82 : 0.55))
       this.dropLoot(entity, entity2);
   }
   /**
@@ -3072,19 +3079,19 @@ export class Space {
       : undefined;
     const text = entity.strength || 10,
       items = [];
-    items.push({ credits: Math.round(text * random2(15, 40)) });
-    if (Math.random() < 0.35)
+    items.push({ credits: Math.round(text * randomRange(this.random, 15, 40)) });
+    if (this.random.next() < 0.35)
       items.push({
-        mat: pick(MATERIALS),
-        grade: Math.min(4, Math.floor(Math.random() * (1 + text / 300))),
+        mat: pick(this.random, MATERIALS),
+        grade: Math.min(4, Math.floor(this.random.next() * (1 + text / 300))),
       });
     for (const item of items)
       this.loot.push({
         id: NEXT++,
-        x: entity.x + random2(-30, 30),
-        y: entity.y + random2(-30, 30),
-        vx: entity.vx * 0.3 + random2(-20, 20),
-        vy: entity.vy * 0.3 + random2(-20, 20),
+        x: entity.x + randomRange(this.random, -30, 30),
+        y: entity.y + randomRange(this.random, -30, 30),
+        vx: entity.vx * 0.3 + randomRange(this.random, -20, 20),
+        vy: entity.vy * 0.3 + randomRange(this.random, -20, 20),
         it: { ...item, combatPickup },
         t: this.t,
         kind: item.mat ? 1 : 0,
@@ -3116,7 +3123,7 @@ export class Space {
         (entity) => !entity.player && !entity.owner,
       ).length;
       if (this.spawnT <= 0) {
-        this.spawnT = random2(2, 5);
+        this.spawnT = randomRange(this.random, 2, 5);
         if (length2 < want) this.spawnTraffic(false);
       }
     }

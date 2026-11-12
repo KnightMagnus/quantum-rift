@@ -19,8 +19,9 @@ import { STATE_SHARE } from '../shared/living.ts';
 // Characterization checks ordering, stacking, schema, payloads and session normalization.
 // capture-features runs in a separate process with fixed time and RNG. The baseline
 // permits passengerSeats, stockOutfits, armadaFollow=false, empty versioned
-// cargoLots/storageLots and storage. Living-state allocation accounts for the six
-// additional markets in the seeded selection pool. All other fields must match.
+// cargoLots/storageLots and storage. Living-state allocation uses the independently derived economy stream over the
+// full market roster. Only world.states was recaptured for that seed-boundary change;
+// all other initialization fields and generation/topology contracts must match.
 const actual = JSON.parse(
   execFileSync(
     process.execPath,

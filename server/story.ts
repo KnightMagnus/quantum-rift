@@ -906,6 +906,7 @@ export const StoryOperations = {
           ai: singers ? 'story-singer' : 'escort',
           owner: entity!.id,
           name: singers ? 'Thalassi open-channel choir' : "Que'vari Choir-of-War",
+          bonus: storyMission.id === 'qv4' ? { damagePct: 30 } : undefined,
         });
         entity5.life = 1e9;
         entity5.storyAlly = true;

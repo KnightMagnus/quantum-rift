@@ -468,186 +468,186 @@
       }
     ],
     "states": {
-      "meridian": {
+      "praeenna": {
+        "k": "pirates",
+        "got": 0,
+        "need": 8,
+        "until": 1781506517116.6638,
+        "enemy": null
+      },
+      "valora-prime": {
         "k": "refugees",
         "got": 0,
         "need": 100,
-        "until": 1781506347925.5845,
-        "enemy": null
-      },
-      "cinderverge": {
-        "k": "plague",
-        "got": 0,
-        "need": 100,
-        "until": 1781505848145.8237,
-        "enemy": null
-      },
-      "abyssal": {
-        "k": "boom",
-        "got": 0,
-        "need": 0,
-        "until": 1781504932623.0461,
-        "enemy": null
-      },
-      "new-landing": {
-        "k": "famine",
-        "got": 0,
-        "need": 140,
-        "until": 1781505652884.583,
-        "enemy": null
-      },
-      "gloam": {
-        "k": "festival",
-        "got": 0,
-        "need": 0,
-        "until": 1781504714668.473,
-        "enemy": null
-      },
-      "greyline": {
-        "k": "plague",
-        "got": 0,
-        "need": 100,
-        "until": 1781505575548.4763,
-        "enemy": null
-      },
-      "vrrhive": {
-        "k": "festival",
-        "got": 0,
-        "need": 0,
-        "until": 1781504897603.0708,
-        "enemy": null
-      },
-      "second-signal": {
-        "k": "famine",
-        "got": 0,
-        "need": 140,
-        "until": 1781505290629.0603,
-        "enemy": null
-      },
-      "resonance": {
-        "k": "famine",
-        "got": 0,
-        "need": 140,
-        "until": 1781505840882.2659,
-        "enemy": null
-      },
-      "outer-landing": {
-        "k": "rush",
-        "got": 0,
-        "need": 160,
-        "until": 1781506052605.323,
-        "enemy": null
-      },
-      "slagforge": {
-        "k": "pirates",
-        "got": 0,
-        "need": 8,
-        "until": 1781505047209.7625,
-        "enemy": null
-      },
-      "kraggard": {
-        "k": "pirates",
-        "got": 0,
-        "need": 8,
-        "until": 1781506400799.3413,
-        "enemy": null
-      },
-      "gutteryard-den": {
-        "k": "plague",
-        "got": 0,
-        "need": 100,
-        "until": 1781505028779.5278,
-        "enemy": null
-      },
-      "thrumhive": {
-        "k": "festival",
-        "got": 0,
-        "need": 0,
-        "until": 1781505231494.8022,
-        "enemy": null
-      },
-      "stray-harbor": {
-        "k": "boom",
-        "got": 0,
-        "need": 0,
-        "until": 1781505579557.8386,
-        "enemy": null
-      },
-      "qgate": {
-        "k": "boom",
-        "got": 0,
-        "need": 0,
-        "until": 1781505951495.9983,
-        "enemy": null
-      },
-      "free-expanse": {
-        "k": "plague",
-        "got": 0,
-        "need": 100,
-        "until": 1781506020729.51,
-        "enemy": null
-      },
-      "sparith-facet": {
-        "k": "plague",
-        "got": 0,
-        "need": 100,
-        "until": 1781505622037.0908,
-        "enemy": null
-      },
-      "iriace": {
-        "k": "boom",
-        "got": 0,
-        "need": 0,
-        "until": 1781506151067.0762,
-        "enemy": null
-      },
-      "coldharbor": {
-        "k": "famine",
-        "got": 0,
-        "need": 140,
-        "until": 1781504878523.5479,
-        "enemy": null
-      },
-      "maghelm-hold": {
-        "k": "famine",
-        "got": 0,
-        "need": 140,
-        "until": 1781505313500.0234,
-        "enemy": null
-      },
-      "broken-reach": {
-        "k": "plague",
-        "got": 0,
-        "need": 100,
-        "until": 1781506367970.272,
-        "enemy": null
-      },
-      "facetfall": {
-        "k": "rush",
-        "got": 0,
-        "need": 160,
-        "until": 1781505612457.622,
-        "enemy": null
-      },
-      "far-mile": {
-        "k": "famine",
-        "got": 0,
-        "need": 140,
-        "until": 1781506666868.2703,
-        "enemy": null
-      },
-      "gravehole": {
-        "k": "famine",
-        "got": 0,
-        "need": 140,
-        "until": 1781505492268.8489,
+        "until": 1781505824166.229,
         "enemy": null
       },
       "emberlight": {
         "k": "refugees",
         "got": 0,
         "need": 100,
-        "until": 1781506536301.4453,
+        "until": 1781505981197.544,
+        "enemy": null
+      },
+      "glasswake": {
+        "k": "boom",
+        "got": 0,
+        "need": 0,
+        "until": 1781506791604.1365,
+        "enemy": null
+      },
+      "thrumhive": {
+        "k": "plague",
+        "got": 0,
+        "need": 100,
+        "until": 1781504864500.763,
+        "enemy": null
+      },
+      "sparvane": {
+        "k": "boom",
+        "got": 0,
+        "need": 0,
+        "until": 1781504871740.1907,
+        "enemy": null
+      },
+      "shoaldeep": {
+        "k": "war",
+        "got": 0,
+        "need": 10,
+        "until": 1781506005207.283,
+        "enemy": "hollow"
+      },
+      "bilgeyard": {
+        "k": "famine",
+        "got": 0,
+        "need": 140,
+        "until": 1781504843859.823,
+        "enemy": null
+      },
+      "outer-landing": {
+        "k": "boom",
+        "got": 0,
+        "need": 0,
+        "until": 1781505351562.5884,
+        "enemy": null
+      },
+      "wild-signal": {
+        "k": "famine",
+        "got": 0,
+        "need": 140,
+        "until": 1781505397934.3938,
+        "enemy": null
+      },
+      "opalvane": {
+        "k": "festival",
+        "got": 0,
+        "need": 0,
+        "until": 1781505849361.0093,
+        "enemy": null
+      },
+      "shoalpool": {
+        "k": "pirates",
+        "got": 0,
+        "need": 8,
+        "until": 1781505244100.5764,
+        "enemy": null
+      },
+      "broken-reach": {
+        "k": "famine",
+        "got": 0,
+        "need": 140,
+        "until": 1781506476083.6711,
+        "enemy": null
+      },
+      "elasai": {
+        "k": "famine",
+        "got": 0,
+        "need": 140,
+        "until": 1781505600587.7969,
+        "enemy": null
+      },
+      "burnt-chance": {
+        "k": "plague",
+        "got": 0,
+        "need": 100,
+        "until": 1781505355598.182,
+        "enemy": null
+      },
+      "hookhole": {
+        "k": "boom",
+        "got": 0,
+        "need": 0,
+        "until": 1781505822834.833,
+        "enemy": null
+      },
+      "outer-chance": {
+        "k": "plague",
+        "got": 0,
+        "need": 100,
+        "until": 1781505174747.466,
+        "enemy": null
+      },
+      "aureole": {
+        "k": "festival",
+        "got": 0,
+        "need": 0,
+        "until": 1781506392947.111,
+        "enemy": null
+      },
+      "opalace-facet": {
+        "k": "rush",
+        "got": 0,
+        "need": 160,
+        "until": 1781506613654.3052,
+        "enemy": null
+      },
+      "hesper": {
+        "k": "boom",
+        "got": 0,
+        "need": 0,
+        "until": 1781505991856.8428,
+        "enemy": null
+      },
+      "ebbreef": {
+        "k": "boom",
+        "got": 0,
+        "need": 0,
+        "until": 1781505442562.1772,
+        "enemy": null
+      },
+      "caravanserai": {
+        "k": "refugees",
+        "got": 0,
+        "need": 100,
+        "until": 1781506204517.1897,
+        "enemy": null
+      },
+      "wheelwright": {
+        "k": "boom",
+        "got": 0,
+        "need": 0,
+        "until": 1781505466608.2795,
+        "enemy": null
+      },
+      "greyline": {
+        "k": "festival",
+        "got": 0,
+        "need": 0,
+        "until": 1781505424603.115,
+        "enemy": null
+      },
+      "caravantrack": {
+        "k": "rush",
+        "got": 0,
+        "need": 160,
+        "until": 1781505399749.7327,
+        "enemy": null
+      },
+      "free-landing": {
+        "k": "famine",
+        "got": 0,
+        "need": 140,
+        "until": 1781506022350.8796,
         "enemy": null
       }
     },

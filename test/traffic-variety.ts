@@ -41,7 +41,7 @@ try {
   const db = new DB(directory);
   const game = new Game(JSON.parse(filesystem.readFileSync('shared/assets.json', 'utf8')), db);
   const starters = new Set([703, 704, 706]);
-  /** Deterministic Math.random replacement so both runs see the same rolls. */
+  /** Deterministic source so both traffic comparisons see the same rolls. */
   const seeded = (seed: number) => () => {
     seed = (seed + 0x6d2b79f5) | 0;
     let value = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -53,9 +53,12 @@ try {
   const sample = (system: string, uniform: boolean) => {
     Math.random = seeded(7);
     const space = game.spaces[system];
+    const originalNext = space.random.next;
+    space.random.next = seeded(7);
     space.recentTrafficHulls = [];
     const varied = space.pickTrafficHull.bind(space);
-    if (uniform) space.pickTrafficHull = (pool) => pool[Math.floor(Math.random() * pool.length)];
+    if (uniform)
+      space.pickTrafficHull = (pool) => pool[Math.floor(space.random.next() * pool.length)];
     const seen = new Map<number, number>();
     for (let wave = 0; wave < 60; wave++) {
       for (const entity of space.ships.values()) if (!entity.player) space.remove(entity);
@@ -65,6 +68,7 @@ try {
           seen.set(entity.hull, (seen.get(entity.hull) || 0) + 1);
     }
     space.pickTrafficHull = varied;
+    space.random.next = originalNext;
     Math.random = originalRandom;
     const total = [...seen.values()].reduce((sum, count) => sum + count, 0);
     const starterCount = [...seen.entries()]

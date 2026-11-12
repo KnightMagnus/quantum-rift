@@ -1,4 +1,3 @@
-import { withLegacyMarketWarmup } from './legacy-market-warmup.ts';
 import assert from 'node:assert/strict';
 import { performance } from 'node:perf_hooks';
 import filesystem from 'node:fs';
@@ -181,22 +180,17 @@ export function simulateCombatPlayability(
     };
     const database = new NakamaDatabase(backend);
     const callbacks = new AuthorityCallbacks(() => now);
-    // Keep fixed combat seeds independent of unrelated market warmup additions.
-    // Live market eligibility is covered by features.ts and system-diversity.ts.
-    const game = withLegacyMarketWarmup(
-      () =>
-        new Game(
-          JSON.parse(
-            filesystem.readFileSync(new URL('../../shared/assets.json', import.meta.url), 'utf8'),
-          ),
-          database,
-          {
-            automaticClock: false,
-            seedDefinitions: [],
-            randomUUID: () => `00000000-0000-4000-8000-${String(++uuid).padStart(12, '0')}`,
-            defer: (callback, delay) => callbacks.schedule(callback, delay),
-          },
-        ),
+    const game = new Game(
+      JSON.parse(
+        filesystem.readFileSync(new URL('../../shared/assets.json', import.meta.url), 'utf8'),
+      ),
+      database,
+      {
+        automaticClock: false,
+        seedDefinitions: [],
+        randomUUID: () => `00000000-0000-4000-8000-${String(++uuid).padStart(12, '0')}`,
+        defer: (callback, delay) => callbacks.schedule(callback, delay),
+      },
     );
     game.connect(new DiscardConnection());
     const session = [...game.sessions.values()].at(-1)!;

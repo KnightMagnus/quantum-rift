@@ -30,6 +30,7 @@ assert.ok(
 );
 const space = Object.assign(Object.create(Space.prototype) as Space, {
   id: 'fixture',
+  random: { next: () => Math.random() },
   A: assets,
   t: 0,
   sys: { danger: 6, faction: 'umbral' },

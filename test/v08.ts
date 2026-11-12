@@ -420,12 +420,12 @@ await import('../shared/roles.ts').then(async ({ ROLES_INFO, roleMult }) => {
   swarmPatrol.s.data.sys = message3.id;
   swarmPatrol.s.data.stellar = null;
   game.spawnPlayer(swarmPatrol.s, 0, 0, 0, 0);
-  const originalRandom = Math.random;
+  const originalRandom = message3.random.next;
   try {
-    Math.random = () => 0; // Select the Vashari swarm traffic branch deterministically.
+    message3.random.next = () => 0; // Select the Vashari swarm traffic branch deterministically.
     message3.spawnTraffic(false);
   } finally {
-    Math.random = originalRandom;
+    message3.random.next = originalRandom;
   }
   const found = [...message3.ships.values()].some((ship) => ship.faction === 'swarm');
   assertCondition(
