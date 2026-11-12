@@ -276,6 +276,9 @@ try {
     null,
     null,
     null,
+    null,
+    null,
+    null,
   ]);
   const unavailable = await page.evaluate(async () => {
     const module = await import('/performance-report.js');

@@ -16,7 +16,7 @@ export function setPerformanceBuild(version: string): void {
   const supportedLabel =
     /^\d+(\.\d+){1,3}([+-][\w.-]+)?$/.test(version) ||
     /^0\.\d+(?:\.\d+)? MP Beta [1-9]\d*$/.test(version) ||
-    /^0\.\d+(?:\.\d+)? Unstable Beta$/.test(version);
+    /^0\.\d+(?:\.\d+)? (?:Unstable|Stable) Beta$/.test(version);
   build = supportedLabel && version.trim() === version ? version.slice(0, 80) : null;
 }
 

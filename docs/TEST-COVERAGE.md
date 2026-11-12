@@ -1266,7 +1266,7 @@ server settlement and other subsystem replay remain out of scope.
 
 ### Browser performance report
 
-`browser-performance.ts` checks deterministic interval percentiles and stutter thresholds, default-off behavior, visibility interruptions, stop/clear/restart and duration/frame limits. The registered `diagnostic-capture-browser.ts` also records actual scene updates through Settings, downloads and parses the report, checks loading/display metadata and identity/URL exclusion, and reaches the controls in a narrow viewport. No report upload or browser-storage persistence is allowed. This is capture behavior coverage, not a physical-device performance threshold or proof of GPU presentation timing.
+`browser-performance.ts` checks deterministic interval percentiles and stutter thresholds, default-off behavior, visibility interruptions, stop/clear/restart and duration/frame limits. The registered `diagnostic-capture-browser.ts` also records actual scene updates through Settings, downloads and parses the report, checks loading/display metadata and identity/URL exclusion, accepts Stable and Unstable Beta build labels while rejecting appended identity text and trailing newlines, and reaches the controls in a narrow viewport. No report upload or browser-storage persistence is allowed. This is capture behavior coverage, not a physical-device performance threshold or proof of GPU presentation timing.
 
 ## HUD containment and availability
 
